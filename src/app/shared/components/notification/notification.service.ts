@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
+import { NotificationType } from './notifications-enum';
 
 interface Notification {
   message: string;
-  type: 'success' | 'error' | 'info';
+  type: NotificationType;
 }
 
 @Injectable({
@@ -13,7 +14,7 @@ export class NotificationService {
   private notificationSubject = new BehaviorSubject<Notification | null>(null);
   notification$ = this.notificationSubject.asObservable();
 
-  showNotification(message: string, type: 'success' | 'error' | 'info' = 'info') {
+  showNotification(message: string, type: NotificationType = NotificationType.INFO) {
     this.notificationSubject.next({ message, type });
 
     // Esconde a notificação após 5 segundos

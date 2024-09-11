@@ -2,10 +2,10 @@ import { Injectable } from '@angular/core';
 import { CanActivate, Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { map, take } from 'rxjs/operators';
-import { AuthService } from '../services/auth.service';
 import { Firestore } from '@angular/fire/firestore';
 import { FirestoreService } from '../../core/services/firestore.service';
 import DefaultUser from '../../core/models/default-user.model';
+import { AuthService } from '../../core/services/auth.service';
 
 @Injectable({
   providedIn: 'root'

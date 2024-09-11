@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Student } from '../../../../core/models/student.model';
 import { Router, Routes } from '@angular/router';
-import { AuthService } from '../../../../auth/services/auth.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { RoleManagementService } from '../../service/role-management.service';
 import { RoleService } from '../../service/role.service';
 import { Role } from '../../../../core/models/role.model';

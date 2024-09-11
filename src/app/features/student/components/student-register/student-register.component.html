@@ -2,7 +2,12 @@
   <div class="form-group">
     <label for="name">Nome</label>
     <input id="name" formControlName="name" class="form-control" />
-    <div *ngIf="studentForm.get('name')?.invalid && studentForm.get('name')?.touched" class="text-danger">
+    <div
+      *ngIf="
+        studentForm.get('name')?.invalid && studentForm.get('name')?.touched
+      "
+      class="text-danger"
+    >
       Nome é obrigatório.
     </div>
   </div>
@@ -10,6 +15,14 @@
   <div class="form-group">
     <label for="phone1">Fone 1</label>
     <input id="phone1" formControlName="phone1" class="form-control" />
+    <div
+      *ngIf="
+        studentForm.get('phone1')?.invalid && studentForm.get('phone1')?.touched
+      "
+      class="text-danger"
+    >
+      Fone 1 é obrigatório.
+    </div>
   </div>
 
   <div class="form-group">
@@ -19,8 +32,18 @@
 
   <div class="form-group">
     <label for="email">E-mail</label>
-    <input id="email" formControlName="email" class="form-control" type="email" />
-    <div *ngIf="studentForm.get('email')?.invalid && studentForm.get('email')?.touched" class="text-danger">
+    <input
+      id="email"
+      formControlName="email"
+      class="form-control"
+      type="email"
+    />
+    <div
+      *ngIf="
+        studentForm.get('email')?.invalid && studentForm.get('email')?.touched
+      "
+      class="text-danger"
+    >
       E-mail inválido.
     </div>
   </div>
@@ -28,58 +51,141 @@
   <div class="form-group">
     <label for="cpf">CPF</label>
     <input id="cpf" formControlName="cpf" class="form-control" />
+    <div
+      *ngIf="studentForm.get('cpf')?.invalid && studentForm.get('cpf')?.touched"
+      class="text-danger"
+    >
+      CPF inválido.
+    </div>
   </div>
 
   <div class="form-group">
     <label for="rg">RG</label>
     <input id="rg" formControlName="rg" class="form-control" />
+    <div
+      *ngIf="studentForm.get('rg')?.invalid && studentForm.get('rg')?.touched"
+      class="text-danger"
+    >
+      RG é obrigatório.
+    </div>
   </div>
 
   <div class="form-group">
     <label for="cep">CEP</label>
     <input id="cep" formControlName="cep" class="form-control" />
+    <div
+      *ngIf="studentForm.get('cep')?.invalid && studentForm.get('cep')?.touched"
+      class="text-danger"
+    >
+      CEP é obrigatório.
+    </div>
   </div>
 
   <div class="form-group">
     <label for="street">Rua</label>
     <input id="street" formControlName="street" class="form-control" />
+    <div
+      *ngIf="
+        studentForm.get('street')?.invalid && studentForm.get('street')?.touched
+      "
+      class="text-danger"
+    >
+      Rua é obrigatória.
+    </div>
   </div>
 
   <div class="form-group">
     <label for="neighborhood">Bairro</label>
-    <input id="neighborhood" formControlName="neighborhood" class="form-control" />
+    <input
+      id="neighborhood"
+      formControlName="neighborhood"
+      class="form-control"
+    />
+    <div
+      *ngIf="
+        studentForm.get('neighborhood')?.invalid &&
+        studentForm.get('neighborhood')?.touched
+      "
+      class="text-danger"
+    >
+      Bairro é obrigatório.
+    </div>
   </div>
 
   <div class="form-group">
     <label for="city">Cidade</label>
     <input id="city" formControlName="city" class="form-control" />
+    <div
+      *ngIf="
+        studentForm.get('city')?.invalid && studentForm.get('city')?.touched
+      "
+      class="text-danger"
+    >
+      Cidade é obrigatória.
+    </div>
   </div>
 
   <div class="form-group">
     <label for="state">Estado</label>
     <input id="state" formControlName="state" class="form-control" />
+    <div
+      *ngIf="
+        studentForm.get('state')?.invalid && studentForm.get('state')?.touched
+      "
+      class="text-danger"
+    >
+      Estado é obrigatório.
+    </div>
   </div>
 
   <div class="form-group">
     <label for="number">Número</label>
     <input id="number" formControlName="number" class="form-control" />
+    <div
+      *ngIf="
+        studentForm.get('number')?.invalid && studentForm.get('number')?.touched
+      "
+      class="text-danger"
+    >
+      Número é obrigatório.
+    </div>
   </div>
 
   <div class="form-group">
     <label for="birthday">Data de Nascimento</label>
-    <input id="birthday" formControlName="birthday" class="form-control" type="date" />
+    <input
+      id="birthday"
+      formControlName="birthday"
+      class="form-control"
+      type="date"
+    />
+    <div
+      *ngIf="
+        studentForm.get('birthday')?.invalid &&
+        studentForm.get('birthday')?.touched
+      "
+      class="text-danger"
+    >
+      Data de nascimento é obrigatória.
+    </div>
   </div>
 
   <div class="form-group">
     <label for="yearsOld">Idade</label>
-    <input id="yearsOld" formControlName="yearsOld" class="form-control" type="number" />
-  </div>
-
-  <div class="form-group">
-    <label for="password">Senha</label>
-    <input id="password" formControlName="password" class="form-control" type="password" />
-    <div *ngIf="studentForm.get('password')?.invalid && studentForm.get('password')?.touched" class="text-danger">
-      Senha é obrigatória.
+    <input
+      id="yearsOld"
+      formControlName="yearsOld"
+      class="form-control"
+      type="number"
+    />
+    <div
+      *ngIf="
+        studentForm.get('yearsOld')?.invalid &&
+        studentForm.get('yearsOld')?.touched
+      "
+      class="text-danger"
+    >
+      Idade é obrigatória e deve ser maior que zero.
     </div>
   </div>
 
@@ -93,22 +199,49 @@
 
   <div class="form-group">
     <label for="responsible">Responsável</label>
-    <input id="responsible" formControlName="responsible" class="form-control" />
+    <input
+      id="responsible"
+      formControlName="responsible"
+      class="form-control"
+    />
   </div>
 
   <div class="form-group">
     <label for="responsibleRg">RG do Responsável</label>
-    <input id="responsibleRg" formControlName="responsibleRg" class="form-control" />
+    <input
+      id="responsibleRg"
+      formControlName="responsibleRg"
+      class="form-control"
+    />
   </div>
 
   <div class="form-group">
     <label for="responsibleCpf">CPF do Responsável</label>
-    <input id="responsibleCpf" formControlName="responsibleCpf" class="form-control" />
+    <input
+      id="responsibleCpf"
+      formControlName="responsibleCpf"
+      class="form-control"
+    />
+    <div
+      *ngIf="
+        studentForm.get('responsibleCpf')?.invalid &&
+        studentForm.get('responsibleCpf')?.touched
+      "
+      class="text-danger"
+    >
+      CPF do responsável inválido.
+    </div>
   </div>
 
   <div class="form-group">
     <label for="profilePic">Foto de Perfil</label>
-    <input id="profilePic" formControlName="profilePic" class="form-control" type="file" (change)="onFileChange($event)" />
+    <input
+      id="profilePic"
+      formControlName="profilePic"
+      class="form-control"
+      type="file"
+      (change)="onFileChange($event)"
+    />
   </div>
 
   <div class="form-group">
@@ -122,12 +255,82 @@
   <div class="form-group">
     <label for="polo">Polo</label>
     <input id="polo" formControlName="polo" class="form-control" />
+    <div
+      *ngIf="
+        studentForm.get('polo')?.invalid && studentForm.get('polo')?.touched
+      "
+      class="text-danger"
+    >
+      Polo é obrigatório.
+    </div>
   </div>
 
   <div class="form-group">
     <label for="description">Observações</label>
-    <textarea id="description" formControlName="description" class="form-control"></textarea>
+    <textarea
+      id="description"
+      formControlName="description"
+      class="form-control"
+    ></textarea>
   </div>
 
-  <button type="submit" class="btn btn-primary" [disabled]="studentForm.invalid">Cadastrar Aluno</button>
+  <div class="form-group">
+    <label for="password">Senha</label>
+    <input
+      id="password"
+      formControlName="password"
+      class="form-control"
+      type="password"
+    />
+    <div
+      *ngIf="
+        studentForm.get('password')?.invalid &&
+        studentForm.get('password')?.touched
+      "
+      class="text-danger"
+    >
+      <div *ngIf="studentForm.get('password')?.errors?.['required']">
+        Senha é obrigatória.
+      </div>
+      <div *ngIf="studentForm.get('password')?.errors?.['minlength']">
+        A senha deve ter pelo menos 6 caracteres.
+      </div>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="confirmPassword">Confirmar Senha</label>
+    <input
+      id="confirmPassword"
+      formControlName="confirmPassword"
+      class="form-control"
+      type="password"
+    />
+    <div
+      *ngIf="
+        studentForm.get('confirmPassword')?.invalid &&
+        studentForm.get('confirmPassword')?.touched
+      "
+      class="text-danger"
+    >
+      <div *ngIf="studentForm.get('confirmPassword')?.errors?.['required']">
+        Confirmação de senha é obrigatória.
+      </div>
+    </div>
+  </div>
+
+  <div
+    *ngIf="studentForm.errors?.['passwordMismatch'] && (studentForm.get('password')?.touched || studentForm.get('confirmPassword')?.touched)"
+    class="text-danger"
+  >
+    As senhas não coincidem.
+  </div>
+
+  <button
+    type="submit"
+    class="btn btn-primary"
+    [disabled]="studentForm.invalid"
+  >
+    Cadastrar Aluno
+  </button>
 </form>

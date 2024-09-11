@@ -3,9 +3,8 @@ import { Component, OnInit } from '@angular/core';
 import { Student } from '../../../../core/models/student.model';
 import { StudentManagementService } from '../../services/student-management.service';
 import { Router, Routes } from '@angular/router';
-import { AuthService } from '../../../../auth/services/auth.service';
 import { StudentService } from '../../services/student.service';
-
+import { AuthService } from '../../../../core/services/auth.service';
 @Component({
   selector: 'app-student-list',
   standalone: true,

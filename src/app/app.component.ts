@@ -3,6 +3,8 @@ import { NotificationService } from './shared/components/notification/notificati
 import { NotificationComponent } from './shared/components/notification/notification.component';
 import { RouterOutlet } from '@angular/router';
 import { AsyncPipe } from '@angular/common';
+import { NotificationType } from './shared/components/notification/notifications-enum';
+
 
 @Component({
   selector: 'app-root',
@@ -20,6 +22,6 @@ export class AppComponent {
       this.notificationVisible = !!notification;
     });
 
-    this.notificationService.showNotification('Sistema iniciado com sucesso!', 'success');
+    this.notificationService.showNotification('Sistema iniciado com sucesso!',NotificationType.SUCCESS );
   }
 }

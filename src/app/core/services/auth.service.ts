@@ -1,4 +1,3 @@
-import { LoginComponent } from '../login/login.component';
 import { inject, Injectable } from '@angular/core';
 import { Auth, authState, createUserWithEmailAndPassword, deleteUser, getAuth, sendEmailVerification, sendPasswordResetEmail, signInWithCredential, signInWithCustomToken, signInWithEmailAndPassword, updateCurrentUser, updateEmail, updatePassword, updateProfile, User, user } from '@angular/fire/auth';
 import { Subscription } from 'rxjs';
@@ -15,6 +14,11 @@ export class AuthService {
     this.userSubscription = this.user$.subscribe((aUser: any | null) => {
      console.log(aUser);
     })
+  }
+
+  async getIdToken(): Promise<string | null> {
+    const currentUser = await this.auth.currentUser;
+    return currentUser ? currentUser.getIdToken() : null;
   }
 
   getCurrentUser(){
