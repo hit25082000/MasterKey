@@ -1,0 +1,7 @@
+<label for="daySelector">Selecione os dias da semana:</label>
+<div>
+  <label *ngFor="let day of weekDays">
+    <input type="checkbox" [checked]="isDaySelected(day)" (change)="toggleDaySelection(day)" />
+    {{ day }}
+  </label>
+</div>

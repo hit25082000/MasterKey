@@ -1,0 +1,25 @@
+<h2>Lista de Alunos</h2>
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Foto</th>
+      <th>Nome</th>
+      <th>Fone</th>
+      <th>CyearsOld</th>
+      <th>Polo</th>
+      <th>Status</th>
+      <th>Ação</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (student of students; track student.cpf) {
+      <tr>
+        <td>{{ student.id }}</td><td> <img width="25" [src]="student.profilePic" alt=""> </td><td>{{ student.name }}</td><td>{{ student.phone1 }}</td><td>{{ student.city }}</td><td>{{ student.polo }} </td><td>{{ student.status }}</td>
+
+        <td><button (click)="editStudent(student.id)">Editar</button><button (click)="deleteStudent(student.id)">Excluir</button></td>
+
+      </tr>
+    }
+  </tbody>
+</table>

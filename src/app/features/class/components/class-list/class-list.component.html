@@ -1,0 +1,18 @@
+<h2>Lista de Funções</h2>
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Nome</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (class of classes; track class.name) {
+      <tr>
+        <td>{{ class.id }}</td><td> {{ class.name }}  </td>
+
+        <td><button (click)="edit(class.id)">Editar</button><button (click)="delete(class.id)">Excluir</button></td>
+      </tr>
+    }
+  </tbody>
+</table>

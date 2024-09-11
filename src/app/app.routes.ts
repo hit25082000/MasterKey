@@ -1,0 +1,100 @@
+import { Routes } from "@angular/router";
+import { AdminComponent } from "./pages/admin/admin.component";
+import { ClassroomComponent } from "./pages/classroom/classroom.component";
+import { EcommerceComponent } from "./pages/ecommerce/ecommerce.component";
+import { NotFoundComponent } from "./pages/not-found/not-found.component";
+import { StudentDetailsComponent } from "./features/student/components/student-details/student-details.component";
+import { StudentListComponent } from "./features/student/components/student-list/student-list.component";
+import { LoginComponent } from "./auth/login/login.component";
+import { DashboardComponent } from "./features/dashboard/dashboard.component";
+import { StudentRegisterComponent } from "./features/student/components/student-register/student-register.component";
+import { CourseRegisterComponent } from "./features/course/components/course-register/course-register.component";
+import { CourseListComponent } from "./features/course/components/course-list/course-list.component";
+import { CourseDetailsComponent } from "./features/course/components/course-details/course-details.component";
+import { RoleListComponent } from "./features/role/components/role-list/role-list.component";
+import { RoleRegisterComponent } from "./features/role/components/role-register/role-register.component";
+import { ClassRegisterComponent } from "./features/class/components/class-register/class-register.component";
+import { ClassListComponent } from "./features/class/components/class-list/class-list.component";
+import { ClassDetailsComponent } from "./features/class/components/class-details/class-details.component";
+import { UnauthorizedComponent } from './pages/unauthorized/unauthorized.component';
+import { AuthGuard } from "./auth/guards/auth.guard";
+import { RoleGuard } from "./auth/guards/role.guard";
+
+export const routes: Routes = [
+  {path: '',
+    component: EcommerceComponent},
+    {path: 'admin',
+      component: AdminComponent,
+      canActivate: [AuthGuard],
+      children: [
+      {
+        path: '',
+        redirectTo: 'dashboard',
+        pathMatch: 'full'
+      },
+      {
+        path: 'dashboard',
+        component: DashboardComponent,
+      },
+      {
+        path: 'student-detail/:id',
+        component: StudentDetailsComponent,
+      },
+      {
+        path: 'student-list',
+        component: StudentListComponent,
+      },
+      {
+        path: 'student-register',
+        component: StudentRegisterComponent,
+      },
+      {
+        path: 'course-detail/:id',
+        component: CourseDetailsComponent,
+      },
+      {
+        path: 'course-list',
+        component: CourseListComponent,
+      },
+      {
+        path: 'course-register',
+        component: CourseRegisterComponent,
+      },
+      {
+        path: 'class-detail/:id',
+        component: ClassDetailsComponent,
+      },
+      {
+        path: 'class-list',
+        component: ClassListComponent,
+      },
+      {
+        path: 'class-register',
+        component: ClassRegisterComponent,
+      },
+      {
+        path: 'role-detail/:id',
+        component: CourseDetailsComponent,
+      },
+      {
+        path: 'role-list',
+        component: RoleListComponent,
+      },
+      {
+        path: 'role-register',
+        component: RoleRegisterComponent,
+      },
+    ],
+    },
+    {path: 'login',
+      component: LoginComponent},
+  {path: 'classroom',
+    component: ClassroomComponent,
+    canActivate: [AuthGuard, RoleGuard],
+  },
+  {path: 'ecommerce',
+    component: EcommerceComponent,
+  },
+  {path: 'unauthorized', component: UnauthorizedComponent},
+  {path: '**', component: NotFoundComponent},
+];

@@ -1,0 +1,32 @@
+<div class="sidenav" [class.expanded]="isExpanded" (mouseenter)="expandSidenav()" (mouseleave)="collapseSidenav()">
+  <ul>
+    <li>
+      <button (click)="toggleDropdown('dashboard')"><i class="icon"></i> <span class="label">Alunos</span></button>
+      <ul *ngIf="isDropdownOpen('dashboard')" class="dropdown">
+        <li><a [routerLink]="['/admin/student-register']">Cadastrar aluno</a></li>
+        <li><a [routerLink]="['/admin/student-list']">Lista de alunos</a></li>
+      </ul>
+    </li>
+    <li>
+      <button (click)="toggleDropdown('usuarios')"><i class="icon"></i> <span class="label">Cursos</span></button>
+      <ul *ngIf="isDropdownOpen('usuarios')" class="dropdown">
+        <li><a [routerLink]="['/admin/course-register']">Criar Curso</a></li>
+        <li><a [routerLink]="['/admin/course-list']">Listar Cursos</a></li>
+      </ul>
+    </li>
+    <li>
+      <button (click)="toggleDropdown('roles')"><i class="icon"></i> <span class="label">Funcionarios</span></button>
+      <ul *ngIf="isDropdownOpen('roles')" class="dropdown">
+        <li><a [routerLink]="['/admin/role-register']">Adicionar Funcionario</a></li>
+        <li><a [routerLink]="['/admin/role-list']">Listar Funcionarios</a></li>
+      </ul>
+    </li>
+    <li>
+      <button (click)="toggleDropdown('classes')"><i class="icon"></i> <span class="label">Turmas</span></button>
+      <ul *ngIf="isDropdownOpen('classes')" class="dropdown">
+        <li><a [routerLink]="['/admin/class-register']">Adicionar Turma</a></li>
+        <li><a [routerLink]="['/admin/class-list']">Listar Turmas</a></li>
+      </ul>
+    </li>
+  </ul>
+</div>

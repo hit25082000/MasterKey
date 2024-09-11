@@ -1,0 +1,22 @@
+<h2>Lista de Funções</h2>
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Nome</th>
+      <th>Permissões</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (package of packages; track package.name) {
+      <tr>
+        <td>{{ package.id }}</td><td> {{ package.name }}  </td><td>
+          @for(permission of package.courses; track permission) {
+            {{permission}}
+          }
+        </td>
+        <td><button (click)="editStudent(package.id)">Editar</button><button (click)="deleteStudent(package.id)">Excluir</button></td>
+      </tr>
+    }
+  </tbody>
+</table>

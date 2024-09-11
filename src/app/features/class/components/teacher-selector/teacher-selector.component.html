@@ -1,0 +1,8 @@
+<div class="teacher-selector">
+  <h4>Selecione um Professor</h4>
+  <ul>
+    <li *ngFor="let teacher of allTeachers()" (click)="onSelectTeacher(teacher.id)" [class.selected]="teacher.id === selectedTeacherId()">
+      {{ teacher.name }}
+    </li>
+  </ul>
+</div>

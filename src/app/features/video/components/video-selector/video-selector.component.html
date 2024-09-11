@@ -1,0 +1,13 @@
+<div class="video-selector">
+
+  <app-search-bar [dataList]="allVideos()" #searchBarComponent></app-search-bar>
+
+  <div *ngFor="let video of searchBarComponent.filteredList(); let i = index" class="form-group">
+    <label>
+      <input type="checkbox"
+             [checked]="selectedVideoIds().includes(video.id)"
+             (change)="onCheckboxChange(video.id, $event)" />
+      {{ video.title }} ({{ video.duration }} minutos)
+    </label>
+  </div>
+</div>

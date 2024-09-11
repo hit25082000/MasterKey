@@ -1,0 +1,12 @@
+<form [formGroup]="permissionForm" (ngSubmit)="onSubmit()">
+  <div class="form-group">
+    <label for="permissions">Selecione as permissões:</label>
+    <select id="permissions" formControlName="selectedPermissions" multiple class="form-control">
+      <option *ngFor="let permission of permissions" [value]="permission">
+        {{ permission }}
+      </option>
+    </select>
+  </div>
+
+  <button type="submit" class="btn btn-primary mt-3">Salvar Permissões</button>
+</form>

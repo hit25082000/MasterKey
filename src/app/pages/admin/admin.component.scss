@@ -1,0 +1,10 @@
+.content {
+  margin-left: 60px; // Alinhe com a largura da sidenav quando está colapsada
+  padding: 20px;
+  transition: margin-left 0.3s ease;
+
+   .expanded ~ & {
+    margin-left: 240px; // Alinhe com a largura da sidenav quando expandida
+  }
+}
+

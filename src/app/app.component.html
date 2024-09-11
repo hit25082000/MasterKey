@@ -1,0 +1,8 @@
+<main class="main">
+</main>
+<router-outlet />
+<app-notification
+  [message]="(notificationService.notification$ | async)?.message ?? ''"
+  [type]="(notificationService.notification$ | async)?.type || 'info'"
+  [(visible)]="notificationVisible">
+</app-notification>

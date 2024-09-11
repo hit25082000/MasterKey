@@ -1,0 +1,12 @@
+<div class="video-selector">
+  <app-search-bar [dataList]="nonSelectedCourses()" #searchBarComponent></app-search-bar>
+
+  <div *ngFor="let class of searchBarComponent.filteredList(); let i = index" class="form-group">
+    <label>
+      <input type="checkbox"
+             [checked]="selectedCourseIds().includes(class.id)"
+             (change)="onCheckboxChange(class.id, $event)" />
+      {{ class.name }}
+    </label>
+  </div>
+</div>

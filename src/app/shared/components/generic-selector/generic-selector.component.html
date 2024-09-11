@@ -1,0 +1,12 @@
+<div class="generic-selector">
+  <app-search-bar [dataList]="items()" #searchBarComponent ></app-search-bar>
+
+  <div *ngFor="let item of searchBarComponent.filteredList()" class="form-group">
+    <label>
+      <input type="checkbox"
+             [checked]="isSelected(item)"
+             (change)="onCheckboxChange(item, $event)" />
+      {{ item[displayProperty()] }}
+    </label>
+  </div>
+</div>

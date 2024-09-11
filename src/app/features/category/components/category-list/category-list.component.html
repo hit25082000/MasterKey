@@ -1,0 +1,22 @@
+<h2>Lista de Funções</h2>
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Nome</th>
+      <th>Cursos</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (category of categorys; track category.name) {
+      <tr>
+        <td>{{ category.id }}</td><td> {{ category.name }}  </td><td>
+          @for(permission of category.courses; track permission) {
+            {{permission}}
+          }
+        </td>
+        <td><button (click)="edit(category.id)">Editar</button><button (click)="delete(category.id)">Excluir</button></td>
+      </tr>
+    }
+  </tbody>
+</table>

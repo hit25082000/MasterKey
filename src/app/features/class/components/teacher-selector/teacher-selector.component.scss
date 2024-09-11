@@ -1,0 +1,15 @@
+.teacher-selector ul {
+  list-style: none;
+  padding: 0;
+}
+
+.teacher-selector li {
+  padding: 10px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+.teacher-selector li.selected {
+  background-color: #cce5ff;
+  border-color: #007bff;
+}
