@@ -55,8 +55,8 @@ export class MeetingComponent implements OnInit {
 
       // Enviar a solicitação para o backend (API) para criar a reunião
       this.http.post('/api/create-meeting', meetingData).subscribe(
-        response => console.log('Reunião criada com sucesso!', response),
-        error => console.error('Erro ao criar reunião:', error)
+       // response =>,
+        //error =>
       );
     }
   }

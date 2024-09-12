@@ -6,26 +6,33 @@ export enum LogCategory {
   STUDENT_LOGIN = 'student_login',
   USER_REGISTRATION = 'user_registration',
   USER_EDIT = 'user_edit',
+  USER_DELETE = 'user_delete',
   // Adicione outras categorias conforme necessário
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class SystemLogService {
   private logCollection = 'system_logs';
 
   constructor(private firestoreService: FirestoreService) {}
 
-  logAction(category: LogCategory, action: string, details: any): Observable<any> {
+  logAction(
+    category: LogCategory,
+    action: string,
+    details: any
+  ): Observable<any> {
     const logEntry = {
       timestamp: new Date().toISOString(),
       category,
       action,
-      details
+      details,
     };
 
-    return from(this.firestoreService.addToCollection(this.logCollection, logEntry));
+    return from(
+      this.firestoreService.addToCollection(this.logCollection, logEntry)
+    );
   }
 
   logStudentLogin(studentId: string): Observable<any> {
@@ -33,11 +40,24 @@ export class SystemLogService {
   }
 
   logUserRegistration(userId: string, logDetails: string): Observable<any> {
-    return this.logAction(LogCategory.USER_REGISTRATION, 'Registro', { userId, logDetails });
+    return this.logAction(LogCategory.USER_REGISTRATION, 'Registro', {
+      userId,
+      logDetails,
+    });
   }
 
   logUserEdit(userId: string, changedFields: string[]): Observable<any> {
-    return this.logAction(LogCategory.USER_EDIT, 'Edição', { userId, changedFields });
+    return this.logAction(LogCategory.USER_EDIT, 'Edição', {
+      userId,
+      changedFields,
+    });
+  }
+
+  logUserDelete(userId: string, logDetails: string): Observable<any> {
+    return this.logAction(LogCategory.USER_DELETE, 'Remoção', {
+      userId,
+      logDetails,
+    });
   }
 
   async registerStudentAbsence(studentId: string): Promise<void> {
@@ -48,18 +68,23 @@ export class SystemLogService {
     const attendanceData = {
       studentId,
       date: new Date().toISOString(),
-      status: 'absent'
+      status: 'absent',
     };
 
-    await this.firestoreService.addToCollection('student_attendance', attendanceData);
+    await this.firestoreService.addToCollection(
+      'student_attendance',
+      attendanceData
+    );
   }
 
   // Método para obter logs de login de estudantes
   getStudentLoginLogs(): Observable<any[]> {
-    return from(this.firestoreService.getDocumentsByAttribute(
-      this.logCollection,
-      'category',
-      LogCategory.STUDENT_LOGIN
-    ));
+    return from(
+      this.firestoreService.getDocumentsByAttribute(
+        this.logCollection,
+        'category',
+        LogCategory.STUDENT_LOGIN
+      )
+    );
   }
 }

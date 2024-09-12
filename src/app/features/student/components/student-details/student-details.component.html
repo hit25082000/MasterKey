@@ -327,20 +327,18 @@
     <h4>Turmas Cadastradas</h4>
     <div *ngFor="let class of classSelector.selectedClasses()">
       <p>
-        <strong>{{ class.name }}</strong> - {{ class.teacher }} minutos
+        <strong>{{ class.name }}</strong> - {{ class.teacher }}
       </p>
       <p>
-        <Button
-          (click)="classSelector.removeStudentFromClass(studentId, class.id)"
-          >Remover</Button
-        >
+        <button (click)="classSelector.removeClass(class.id)">Remover</button>
       </p>
     </div>
   </div>
   <button
-    (click)="classSelector.addStudentToClasses(studentId); classModal.toggle()"
+    (click)="classSelector.updateStudentClasses()"
+    [disabled]="classSelector.isSaving()"
   >
-    Salvar
+    {{ classSelector.isSaving() ? "Salvando..." : "Salvar Turmas" }}
   </button>
 </app-modal>
 
@@ -348,11 +346,11 @@
 <app-modal #courseModal>
   <h4>Selecionar Cursos e Pacotes</h4>
   <app-course-selector
-    [defaultSelect]="courses()"
+    [studentId]="studentId"
     #courseSelector
   ></app-course-selector>
   <app-package-selector
-    [defaultSelect]="packages()"
+    [studentId]="studentId"
     #packageSelector
   ></app-package-selector>
 
@@ -363,8 +361,7 @@
         <strong>{{ course.name }}</strong> - {{ course.description }}
       </p>
       <p>
-        <Button
-          (click)="courseSelector.removeCourseFromStudent(studentId, course.id)"
+        <Button (click)="courseSelector.removeCourse(course.id)"
           >Remover</Button
         >
       </p>
@@ -377,10 +374,7 @@
         <strong>{{ package.name }}</strong> - {{ package.description }}
       </p>
       <p>
-        <Button
-          (click)="
-            packageSelector.removePackageFromStudent(studentId, package.id)
-          "
+        <Button (click)="packageSelector.removePackage(package.id)"
           >Remover</Button
         >
       </p>
@@ -389,8 +383,8 @@
 
   <button
     (click)="
-      courseSelector.addCoursesToStudent(studentId);
-      packageSelector.addPackagesToStudent(studentId);
+      courseSelector.updateStudentCourses();
+      packageSelector.updateStudentPackages();
       courseModal.toggle()
     "
   >

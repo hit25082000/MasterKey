@@ -1,13 +1,20 @@
-<div class="video-selector">
+<div class="package-selector">
+  <app-search-bar
+    [dataList]="nonSelectedPackages()"
+    #searchBarComponent
+  ></app-search-bar>
 
-  <app-search-bar [dataList]="nonSelectedPackages()" #searchBarComponent></app-search-bar>
-
-  <div *ngFor="let class of searchBarComponent.filteredList(); let i = index" class="form-group">
+  <div
+    *ngFor="let package of searchBarComponent.filteredList()"
+    class="form-group"
+  >
     <label>
-      <input type="checkbox"
-             [checked]="selectedPackageIds().includes(class.id)"
-             (change)="onCheckboxChange(class.id, $event)" />
-      {{ class.name }}
+      <input
+        type="checkbox"
+        [checked]="selectedPackageIds().has(package.id)"
+        (change)="onCheckboxChange(package.id, $event)"
+      />
+      {{ package.name }}
     </label>
   </div>
 </div>

@@ -24,7 +24,6 @@ export class RoleListComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     try {
       this.roles = await this.roleService.getAll();
-      console.log(this.roles)
     } catch (err) {
       //this.error = 'Erro ao carregar os alunos';
       console.error(err);

@@ -1,19 +1,51 @@
 import { inject, Injectable } from '@angular/core';
-import { Auth, authState, createUserWithEmailAndPassword, deleteUser, getAuth, sendEmailVerification, sendPasswordResetEmail, signInWithCredential, signInWithCustomToken, signInWithEmailAndPassword, updateCurrentUser, updateEmail, updatePassword, updateProfile, User, user } from '@angular/fire/auth';
-import { Subscription } from 'rxjs';
+import {
+  Auth,
+  authState,
+  createUserWithEmailAndPassword,
+  deleteUser,
+  getAuth,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  signInWithCredential,
+  signInWithCustomToken,
+  signInWithEmailAndPassword,
+  updateCurrentUser,
+  updateEmail,
+  updatePassword,
+  updateProfile,
+  User,
+  user,
+} from '@angular/fire/auth';
+import { Firestore, doc, getDoc } from '@angular/fire/firestore';
+import { Subscription, BehaviorSubject } from 'rxjs';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthService {
   private auth: Auth = inject(Auth);
+  private firestore: Firestore = inject(Firestore);
   user$ = user(this.auth);
   userSubscription: Subscription;
+  userInfo = new BehaviorSubject<any>(null);
 
   constructor() {
-    this.userSubscription = this.user$.subscribe((aUser: any | null) => {
-     console.log(aUser);
-    })
+    this.userSubscription = this.user$.subscribe(async (aUser: User | null) => {
+      if (aUser) {
+        const userDoc = await this.getUserFromFirestore(aUser.uid);
+        this.userInfo.next(userDoc);
+        this.getCurrentUser();
+      } else {
+        this.userInfo.next(null);
+      }
+    });
+  }
+
+  private async getUserFromFirestore(uid: string) {
+    const userDocRef = doc(this.firestore, 'users', uid);
+    const userDocSnap = await getDoc(userDocRef);
+    return userDocSnap.exists() ? userDocSnap.data() : null;
   }
 
   async getIdToken(): Promise<string | null> {
@@ -21,38 +53,43 @@ export class AuthService {
     return currentUser ? currentUser.getIdToken() : null;
   }
 
-  getCurrentUser(){
-    return this.auth.currentUser;
+  getCurrentUser() {
+    return this.userInfo.value;
   }
 
-  async register(email : string,password : string){
-    var userCredential = await createUserWithEmailAndPassword(this.auth, email, password)
-
-    return sendEmailVerification(userCredential.user)
+  async register(email: string, password: string) {
+    const userCredential = await createUserWithEmailAndPassword(
+      this.auth,
+      email,
+      password
+    );
+    await sendEmailVerification(userCredential.user);
+    // O onAuthStateChanged já atualizará o currentUserSubject
+    return userCredential;
   }
 
-  login(email : string,password : string){
-    return signInWithEmailAndPassword(this.auth,email, password);
+  login(email: string, password: string) {
+    return signInWithEmailAndPassword(this.auth, email, password);
   }
 
-  logout(){
-    this.auth.signOut()
+  logout() {
+    this.auth.signOut();
   }
 
-  passwordReset(email : string){
+  passwordReset(email: string) {
     sendPasswordResetEmail(this.auth, email)
-    .then(() => {
-      // Password reset email sent!
-      // ..
-    })
-    .catch((error) => {
-      const errorCode = error.code;
-      const errorMessage = error.message;
-      // ..
-    });
-    }
+      .then(() => {
+        // Password reset email sent!
+        // ..
+      })
+      .catch((error) => {
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        // ..
+      });
+  }
 
   ngOnDestroy() {
-    this.auth.signOut()
+    this.auth.signOut();
   }
 }

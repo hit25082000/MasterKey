@@ -5,6 +5,8 @@
 /tmp
 /out-tsc
 /bazel-out
+/mk_api
+serviceAccountKey.json
 
 # Node
 /node_modules

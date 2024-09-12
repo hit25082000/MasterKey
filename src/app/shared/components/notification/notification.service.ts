@@ -8,13 +8,16 @@ interface Notification {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class NotificationService {
   private notificationSubject = new BehaviorSubject<Notification | null>(null);
   notification$ = this.notificationSubject.asObservable();
 
-  showNotification(message: string, type: NotificationType = NotificationType.INFO) {
+  showNotification(
+    message: string,
+    type: NotificationType = NotificationType.INFO
+  ) {
     this.notificationSubject.next({ message, type });
 
     // Esconde a notificação após 5 segundos

@@ -74,9 +74,7 @@ export class ClassDetailsComponent implements OnInit {
     if (this.classForm.valid && this.classForm.dirty) {
       try {
         await this.classManagementService.update(this.classId, this.classForm.value);
-        console.log('Aluno atualizado com sucesso!');
       } catch (error) {
-        console.error('Erro ao atualizar aluno:', error);
         this.error = 'Erro ao atualizar aluno';
       }
     }

@@ -11,20 +11,28 @@ import { CommonModule } from '@angular/common';
       <button (click)="close()">Fechar</button>
     </div>
   `,
-  styles: [`
-    .notification {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 15px;
-      border-radius: 5px;
-      color: white;
-      max-width: 300px;
-    }
-    .success { background-color: #4CAF50; }
-    .error { background-color: #f44336; }
-    .info { background-color: #2196F3; }
-  `]
+  styles: [
+    `
+      .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px;
+        border-radius: 5px;
+        color: white;
+        max-width: 300px;
+      }
+      .success {
+        background-color: #4caf50;
+      }
+      .error {
+        background-color: #f44336;
+      }
+      .info {
+        background-color: #2196f3;
+      }
+    `,
+  ],
 })
 export class NotificationComponent {
   @Input() message: string = '';

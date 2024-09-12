@@ -69,9 +69,7 @@ export class CategoryDetailsComponent implements OnInit {
     if (this.packageForm.valid && this.packageForm.dirty) {
       try {
         await this.categoryManagementService.update(this.packageId, this.packageForm.value, this.selectedFile);
-        console.log('Aluno atualizado com sucesso!');
       } catch (error) {
-        console.error('Erro ao atualizar aluno:', error);
         this.error = 'Erro ao atualizar aluno';
       }
     }

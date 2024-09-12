@@ -85,9 +85,7 @@ export class StudentDetailsComponent implements OnInit {
     if (this.studentForm.valid && this.studentForm.dirty) {
       try {
         await this.studentManagementService.update(this.studentId, this.studentForm.value,this.selectedFile);
-        console.log('Aluno atualizado com sucesso!');
       } catch (error) {
-        console.error('Erro ao atualizar aluno:', error);
         this.error = 'Erro ao atualizar aluno';
       }
     }

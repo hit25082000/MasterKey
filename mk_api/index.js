@@ -1,16 +1,17 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const cors = require('cors')({ origin: true });
+const serviceAccount = require("./serviceAccountKey.json");
 
-// Inicializa o app Firebase Admin
-admin.initializeApp();
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
 
-// Middleware para verificar autenticação
 async function authenticateRequest(req, res, next) {
   const idToken = req.headers.authorization?.split('Bearer ')[1];
 
   if (!idToken) {
-    return res.status(401).send('Unauthorized: No token provided.');
+    return res.status(401).json({ error: 'Não autorizado: Token não fornecido.' });
   }
 
   try {
@@ -18,93 +19,92 @@ async function authenticateRequest(req, res, next) {
     req.user = decodedToken;
     next();
   } catch (error) {
-    return res.status(403).send('Forbidden: Invalid or expired token.');
+    return res.status(403).json({ error: 'Proibido: Token inválido ou expirado.' });
   }
 }
 
-// Função para criar um usuário
 exports.createUser = functions.https.onRequest((req, res) => {
-  return cors(req, res, async () => {
-    await authenticateRequest(req, res, async () => {
-      const { email, password } = req.body;
+  cors(req, res, async () => {
+    try {
+      await authenticateRequest(req, res, async () => {
+        const { email, password, displayName, phoneNumber, photoURL } = req.body;
 
-      if (!email || !password) {
-        return res.status(400).send('Email and password are required.');
-      }
+        if (!email || !password) {
+          return res.status(400).json({ error: 'Email e senha são obrigatórios.' });
+        }
 
-      try {
         const userRecord = await admin.auth().createUser({
-          email: email,
-          password: password,
+          email,
+          password,
+          displayName,
+          phoneNumber,
+          photoURL
         });
-        return res.status(201).json(userRecord);
-      } catch (error) {
-        return res.status(500).send(`Error creating new user: ${error.message}`);
-      }
-    });
+        res.status(201).json(userRecord);
+      });
+    } catch (error) {
+      res.status(500).json({ error: `Erro ao criar novo usuário: ${error.message}` });
+    }
   });
 });
 
-// Função para obter a lista de usuários
 exports.getUsers = functions.https.onRequest((req, res) => {
-  return cors(req, res, async () => {
-    await authenticateRequest(req, res, async () => {
-      try {
+  cors(req, res, async () => {
+    try {
+      await authenticateRequest(req, res, async () => {
         const listUsersResult = await admin.auth().listUsers(1000);
         const users = listUsersResult.users.map(userRecord => ({
           uid: userRecord.uid,
           email: userRecord.email,
           displayName: userRecord.displayName,
         }));
-        return res.status(200).json(users);
-      } catch (error) {
-        return res.status(500).send(`Error fetching users: ${error.message}`);
-      }
-    });
+        res.status(200).json(users);
+      });
+    } catch (error) {
+      res.status(500).json({ error: `Erro ao buscar usuários: ${error.message}` });
+    }
   });
 });
 
-// Função para deletar um usuário
 exports.deleteUser = functions.https.onRequest((req, res) => {
-  return cors(req, res, async () => {
-    await authenticateRequest(req, res, async () => {
-      const { uid } = req.body;
+  cors(req, res, async () => {
+    try {
+      await authenticateRequest(req, res, async () => {
+        const { uid } = req.body;
 
-      if (!uid) {
-        return res.status(400).send('User UID is required.');
-      }
+        if (!uid) {
+          return res.status(400).json({ error: 'UID do usuário é obrigatório.' });
+        }
 
-      try {
         await admin.auth().deleteUser(uid);
-        return res.status(200).send('User deleted successfully.');
-      } catch (error) {
-        return res.status(500).send(`Error deleting user: ${error.message}`);
-      }
-    });
+        res.status(200).json({ message: 'Usuário deletado com sucesso.' });
+      });
+    } catch (error) {
+      res.status(500).json({ error: `Erro ao deletar usuário: ${error.message}` });
+    }
   });
 });
 
-// Função para atualizar um usuário
 exports.updateUser = functions.https.onRequest((req, res) => {
-  return cors(req, res, async () => {
-    await authenticateRequest(req, res, async () => {
-      const { uid, email, password, displayName } = req.body;
+  cors(req, res, async () => {
+    try {
+      await authenticateRequest(req, res, async () => {
+        const { uid, email, password, displayName } = req.body;
 
-      if (!uid) {
-        return res.status(400).send('User UID is required.');
-      }
+        if (!uid) {
+          return res.status(400).json({ error: 'UID do usuário é obrigatório.' });
+        }
 
-      try {
         const updateData = {};
         if (email) updateData.email = email;
         if (password) updateData.password = password;
         if (displayName) updateData.displayName = displayName;
 
         const userRecord = await admin.auth().updateUser(uid, updateData);
-        return res.status(200).json(userRecord);
-      } catch (error) {
-        return res.status(500).send(`Error updating user: ${error.message}`);
-      }
-    });
+        res.status(200).json(userRecord);
+      });
+    } catch (error) {
+      res.status(500).json({ error: `Erro ao atualizar usuário: ${error.message}` });
+    }
   });
 });

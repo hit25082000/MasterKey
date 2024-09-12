@@ -22,7 +22,6 @@ export class CategoryListComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     try {
       this.categorys = await this.categoryService.getAll();
-      console.log(this.categorys)
     } catch (err) {
       //this.error = 'Erro ao carregar os alunos';
       console.error(err);

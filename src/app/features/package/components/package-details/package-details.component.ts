@@ -68,9 +68,7 @@ export class PackageDetailsComponent implements OnInit {
     if (this.packageForm.valid && this.packageForm.dirty) {
       try {
         await this.packageManagementService.update(this.packageId, this.packageForm.value);
-        console.log('Aluno atualizado com sucesso!');
       } catch (error) {
-        console.error('Erro ao atualizar aluno:', error);
         this.error = 'Erro ao atualizar aluno';
       }
     }

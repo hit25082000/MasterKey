@@ -1,99 +1,106 @@
 import { StudentManagementService } from './../../../student/services/student-management.service';
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal, computed,  input, inject } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  signal,
+  computed,
+  input,
+  inject,
+} from '@angular/core';
 import { SearchBarComponent } from '../../../../shared/components/search-bar/search-bar.component';
 import { Course } from '../../../../core/models/course.model';
 import { CourseService } from '../../../course/services/course.service';
 import { StudentService } from '../../../student/services/student.service';
-import { Student } from '../../../../core/models/student.model';
+import { NotificationService } from '../../../../shared/components/notification/notification.service';
+import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
 
 @Component({
   selector: 'app-course-selector',
   standalone: true,
-  imports: [CommonModule,SearchBarComponent],
+  imports: [CommonModule, SearchBarComponent],
   templateUrl: './course-selector.component.html',
-  styleUrls: ['./course-selector.component.scss']
+  styleUrls: ['./course-selector.component.scss'],
 })
 export class CourseSelectorComponent implements OnInit {
-  defaultSelect = input<string[]>([]);
+  studentId = input<string>('');
   allCourses = signal<Course[]>([]);
-  selectedCourseIds = signal<string[]>([]);
-  nonSelectedCourseIds = signal<string[]>([]);
-  studentManagementService = inject(StudentManagementService)
-  courseService = inject(CourseService)
-  studentService = inject(StudentService)
+  selectedCourseIds = signal<Set<string>>(new Set());
+
+  private courseService = inject(CourseService);
+  private studentManagementService = inject(StudentManagementService);
+  private studentService = inject(StudentService);
+  private notificationService = inject(NotificationService);
 
   selectedCourses = computed(() => {
-    return this.allCourses().filter(studentCourse => this.selectedCourseIds().includes(studentCourse.id));
+    return this.allCourses().filter((course) =>
+      this.selectedCourseIds().has(course.id)
+    );
   });
 
   nonSelectedCourses = computed(() => {
-    return this.allCourses().filter(studentCourse => this.nonSelectedCourseIds().includes(studentCourse.id));
+    return this.allCourses().filter(
+      (course) => !this.selectedCourseIds().has(course.id)
+    );
   });
 
+  isSaving = signal(false);
+
   async ngOnInit() {
-    this.loadAllCourses().then(()=>{
-      this.autoSelect(this.defaultSelect())
-    })
-  }
-
-  async loadAllCourses() {
-    const courses: Course[] = await this.courseService.getAll()
-
-    this.allCourses.set(courses);
-  }
-
-  autoSelect(defaultSelect : string[]){
-    if(defaultSelect.length > 0){
-      this.selectedCourseIds.set(defaultSelect);
+    await this.loadAllCourses();
+    if (this.studentId()) {
+      await this.loadSelectedCourses();
     }
+  }
 
-    var nonSelectedIds : string[] = this.allCourses().map(item => item.id)
+  private async loadAllCourses() {
+    this.allCourses.set(await this.courseService.getAll());
+  }
 
-    this.selectedCourseIds().forEach((selectedId)=>{
-      nonSelectedIds = nonSelectedIds.filter(item => item !== selectedId)
-    })
-
-    this.nonSelectedCourseIds.set(nonSelectedIds);
+  private async loadSelectedCourses() {
+    const student = await this.studentService.getById(this.studentId());
+    this.selectedCourseIds.set(new Set(student.courses || []));
   }
 
   onCheckboxChange(courseId: string, event: Event): void {
     const checkbox = event.target as HTMLInputElement;
+    const updatedSelection = new Set(this.selectedCourseIds());
+    checkbox.checked
+      ? updatedSelection.add(courseId)
+      : updatedSelection.delete(courseId);
+    this.selectedCourseIds.set(updatedSelection);
+  }
 
-    if (checkbox.checked) {
-      this.selectedCourseIds.set([...this.selectedCourseIds(), courseId]);
-      this.nonSelectedCourseIds.set(this.nonSelectedCourseIds().filter(id => id !== courseId));
-    } else {
-      this.selectedCourseIds.set(this.selectedCourseIds().filter(id => id !== courseId));
-      this.nonSelectedCourseIds.set([...this.nonSelectedCourseIds(), courseId]);
+  async updateStudentCourses() {
+    const studentId = this.studentId();
+    if (!studentId) return;
+
+    this.isSaving.set(true);
+
+    try {
+      const student = await this.studentService.getById(studentId);
+      student.courses = Array.from(this.selectedCourseIds());
+      await this.studentManagementService.update(studentId, student);
+      this.notificationService.showNotification(
+        'Cursos atualizados com sucesso',
+        NotificationType.SUCCESS
+      );
+      await this.loadAllCourses();
+      await this.loadSelectedCourses();
+    } catch (error) {
+      this.notificationService.showNotification(
+        'Erro ao atualizar cursos',
+        NotificationType.ERROR
+      );
+    } finally {
+      this.isSaving.set(false);
     }
   }
 
-  async addCoursesToStudent(studentId : string){
-    // if(this.defaultSelect().map == this.selectedCourseIds()){
-    //   return;
-    // }
-
-    const newStudent = await this.studentService.getById(studentId)
-
-    newStudent.courses = this.selectedCourseIds()
-
-    this.studentManagementService.update(newStudent.id, newStudent)
-  }
-
-  async removeCourseFromStudent(studentId : string, courseId : string){
-    this.selectedCourseIds.set(this.selectedCourseIds().filter(id => id !== courseId));
-    this.nonSelectedCourseIds.set([...this.nonSelectedCourseIds(), courseId]);
-
-    const newStudent: Student = await this.studentService.getById(studentId)
-
-    if(!newStudent.courses){
-      return;
-    }
-
-    if(newStudent.courses.includes(courseId)){
-      newStudent.courses = newStudent.courses.filter(course => course !== studentId);
-      this.studentManagementService.update(studentId, newStudent)
-    }
+  async removeCourse(courseId: string) {
+    const updatedSelection = new Set(this.selectedCourseIds());
+    updatedSelection.delete(courseId);
+    this.selectedCourseIds.set(updatedSelection);
+    await this.updateStudentCourses();
   }
 }

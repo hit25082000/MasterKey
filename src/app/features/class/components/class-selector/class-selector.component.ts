@@ -1,104 +1,103 @@
 import { ClassManagementService } from './../../services/class-management.service';
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal, computed, WritableSignal, input, inject } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  signal,
+  computed,
+  WritableSignal,
+  input,
+  inject,
+} from '@angular/core';
 import { SearchBarComponent } from '../../../../shared/components/search-bar/search-bar.component';
 import { Class } from '../../../../core/models/class.model';
 import { ClassService } from '../../services/class.service';
-
-export interface Video {
-  id: string;
-  title: string;
-  duration: number; // Duração em minutos
-  url: string;
-}
+import { NotificationService } from '../../../../shared/components/notification/notification.service';
+import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
 
 @Component({
   selector: 'app-class-selector',
   standalone: true,
-  imports: [CommonModule,SearchBarComponent],
+  imports: [CommonModule, SearchBarComponent],
   templateUrl: './class-selector.component.html',
-  styleUrls: ['./class-selector.component.scss']
+  styleUrls: ['./class-selector.component.scss'],
 })
 export class ClassSelectorComponent implements OnInit {
   studentId = input<string>('');
   allClasses = signal<Class[]>([]); // Signal para a lista de vídeos
-  selectedClassIds = signal<string[]>([]); // Signal para os IDs dos vídeos selecionados
-  nonSelectedClassIds = signal<string[]>([]); // Signal para os IDs dos vídeos selecionados
-  classManagementService = inject(ClassManagementService)
-  classService = inject(ClassService)
+  selectedClassIds = signal<Set<string>>(new Set()); // Signal para os IDs dos vídeos selecionados
+
+  private classService = inject(ClassService);
+  private classManagementService = inject(ClassManagementService);
+  private notificationService = inject(NotificationService);
 
   selectedClasses = computed(() => {
-    return this.allClasses().filter(studentClass => this.selectedClassIds().includes(studentClass.id));
+    return this.allClasses().filter((c) => this.selectedClassIds().has(c.id));
   });
 
   nonSelectedClasses = computed(() => {
-    return this.allClasses().filter(studentClass => this.nonSelectedClassIds().includes(studentClass.id));
+    return this.allClasses().filter((c) => !this.selectedClassIds().has(c.id));
   });
 
+  isSaving = signal(false); // Novo signal para controlar o estado de carregamento
+
   async ngOnInit() {
-    this.loadAllClasses();
-    if(this.studentId() != ''){
-      await this.loadSelectedClasses()
+    await this.loadAllClasses();
+    if (this.studentId()) {
+      await this.loadSelectedClasses();
     }
   }
 
-  async loadSelectedClasses(){
-    this.classService.getStudentClasses(this.studentId()).then(classes => {
-      var selectedIds : string[] = []
-      var nonSelectedIds : string[] = this.allClasses().map(item => item.id)
-
-      classes.forEach((selectedClassItem : Class)=>{
-        selectedIds.push(selectedClassItem.id)
-      })
-
-      selectedIds.forEach((selectedId)=>{
-        nonSelectedIds = nonSelectedIds.filter(item => item !== selectedId)
-      })
-
-      this.selectedClassIds.set(selectedIds)
-      this.nonSelectedClassIds.set(nonSelectedIds)
-
-      console.log(this.nonSelectedClassIds())
-      console.log(this.nonSelectedClasses())
-    })
+  private async loadAllClasses() {
+    this.allClasses.set(await this.classService.getAll());
   }
 
-  async loadAllClasses() {
-    const classes: Class[] = await this.classService.getAll()
-
-    this.allClasses.set(classes);
+  private async loadSelectedClasses() {
+    const classes = await this.classService.getStudentClasses(this.studentId());
+    this.selectedClassIds.set(new Set(classes.map((c) => c.id)));
   }
 
-  onCheckboxChange(classId: string, event: Event): void {
-    const checkbox = event.target as HTMLInputElement;
+  onCheckboxChange(classId: string, isChecked: Event): void {
+    const checkbox = isChecked.target as HTMLInputElement;
 
-    if (checkbox.checked) {
-      this.selectedClassIds.set([...this.selectedClassIds(), classId]);
-      this.nonSelectedClassIds.set(this.nonSelectedClassIds().filter(id => id !== classId));
-    } else {
-      this.selectedClassIds.set(this.selectedClassIds().filter(id => id !== classId));
-      this.nonSelectedClassIds.set([...this.nonSelectedClassIds(), classId]);
+    const updatedSelection = new Set(this.selectedClassIds());
+    checkbox.checked
+      ? updatedSelection.add(classId)
+      : updatedSelection.delete(classId);
+    this.selectedClassIds.set(updatedSelection);
+  }
+
+  async updateStudentClasses() {
+    const studentId = this.studentId();
+    if (!studentId) return;
+
+    this.isSaving.set(true); // Inicia o carregamento
+
+    try {
+      await this.classManagementService.updateStudentClasses(
+        studentId,
+        Array.from(this.selectedClassIds())
+      );
+      this.notificationService.showNotification(
+        'Classes atualizadas com sucesso',
+        NotificationType.SUCCESS
+      );
+      await this.loadAllClasses();
+      await this.loadSelectedClasses();
+    } catch (error) {
+      this.notificationService.showNotification(
+        'Erro ao atualizar classes',
+        NotificationType.ERROR
+      );
+    } finally {
+      this.isSaving.set(false); // Finaliza o carregamento
     }
   }
 
-  addStudentToClasses(studentId : string){
-    this.allClasses().forEach(studentClass => {
-      if(!studentClass.students.includes(studentId)){
-        studentClass.students.push(studentId)
-        this.classManagementService.update(studentClass.id,studentClass)
-      }
-    });
-  }
-
-  async removeStudentFromClass(studentId : string, classId : string){
-    this.selectedClassIds.set(this.selectedClassIds().filter(id => id !== classId));
-    this.nonSelectedClassIds.set([...this.nonSelectedClassIds(), classId]);
-
-    const newClass: Class = await this.classService.getById(classId)
-
-    if(newClass.students.includes(studentId)){
-      newClass.students = newClass.students.filter(classStudent => classStudent !== studentId);
-      this.classManagementService.update(classId, newClass)
-    }
+  async removeClass(classId: string) {
+    const updatedSelection = new Set(this.selectedClassIds());
+    updatedSelection.delete(classId);
+    this.selectedClassIds.set(updatedSelection);
+    await this.updateStudentClasses();
   }
 }

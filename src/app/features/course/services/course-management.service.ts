@@ -11,7 +11,6 @@ export class CourseManagementService {
 
   create(course: Course) {
      this.firestore.getDocumentsByAttribute('courses','name',course.name).then((courseList)=>{
-      console.log(courseList)
       if(courseList.length == 0){
         this.firestore.addToCollection('courses', course);
      }
@@ -26,12 +25,9 @@ export class CourseManagementService {
 
       if (oldcourse) {
 
-          console.log('Diferenças encontradas. Atualizando o estudante...');
           await this.firestore.updateDocument('course',id, newcourse);
-          console.log('Estudante atualizado com sucesso!');
         }
     } catch (error) {
-      console.error('Erro ao comparar e atualizar o estudante:', error);
     }
   }
 }

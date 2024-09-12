@@ -22,10 +22,8 @@ export class ClassListComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     try {
       this.classes = await this.classService.getAll();
-      console.log(this.classes)
     } catch (err) {
       //this.error = 'Erro ao carregar os alunos';
-      console.error(err);
     } finally {
       //this.loading = false;
     }

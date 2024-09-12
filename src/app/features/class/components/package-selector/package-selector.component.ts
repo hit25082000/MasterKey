@@ -1,113 +1,120 @@
 import { StudentManagementService } from './../../../student/services/student-management.service';
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal, computed,  input, inject } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  signal,
+  computed,
+  input,
+  inject,
+} from '@angular/core';
 import { SearchBarComponent } from '../../../../shared/components/search-bar/search-bar.component';
 import { Package } from '../../../../core/models/package.model';
 import { PackageService } from '../../../package/services/package.service';
 import { StudentService } from '../../../student/services/student.service';
-import { Student } from '../../../../core/models/student.model';
+import { NotificationService } from '../../../../shared/components/notification/notification.service';
+import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
 
 @Component({
   selector: 'app-package-selector',
   standalone: true,
-  imports: [CommonModule,SearchBarComponent],
+  imports: [CommonModule, SearchBarComponent],
   templateUrl: './package-selector.component.html',
-  styleUrls: ['./package-selector.component.scss']
+  styleUrls: ['./package-selector.component.scss'],
 })
 export class PackageSelectorComponent implements OnInit {
-  defaultSelect = input<string[]>([]);
+  studentId = input<string>('');
   allPackages = signal<Package[]>([]);
-  selectedPackageIds = signal<string[]>([]);
-  nonSelectedPackageIds = signal<string[]>([]);
-  studentManagementService = inject(StudentManagementService)
-  packageService = inject(PackageService)
-  studentService = inject(StudentService)
+  selectedPackageIds = signal<Set<string>>(new Set());
+
+  private packageService = inject(PackageService);
+  private studentManagementService = inject(StudentManagementService);
+  private studentService = inject(StudentService);
+  private notificationService = inject(NotificationService);
 
   selectedPackages = computed(() => {
-    return this.allPackages().filter(studentPackage => this.selectedPackageIds().includes(studentPackage.id));
+    return this.allPackages().filter((pkg) =>
+      this.selectedPackageIds().has(pkg.id)
+    );
   });
 
   nonSelectedPackages = computed(() => {
-    return this.allPackages().filter(studentPackage => this.nonSelectedPackageIds().includes(studentPackage.id));
+    return this.allPackages().filter(
+      (pkg) => !this.selectedPackageIds().has(pkg.id)
+    );
   });
 
+  isSaving = signal(false);
+
   async ngOnInit() {
-    this.loadAllPackages();
-    this.autoSelect(this.defaultSelect())
+    await this.loadAllPackages();
+    if (this.studentId()) {
+      await this.loadSelectedPackages();
+    }
   }
 
-  async loadAllPackages() {
-    const classes: Package[] = await this.packageService.getAll()
-
-    this.allPackages.set(classes);
+  private async loadAllPackages() {
+    this.allPackages.set(await this.packageService.getAll());
   }
 
-  autoSelect(defaultSelect : string[]){
-    this.selectedPackageIds.set(defaultSelect);
-    var nonSelectedIds : string[] = this.allPackages().map(item => item.id)
-
-    this.selectedPackageIds().forEach((selectedId)=>{
-      nonSelectedIds = nonSelectedIds.filter(item => item !== selectedId)
-    })
-
-    this.nonSelectedPackageIds.set(nonSelectedIds);
+  private async loadSelectedPackages() {
+    const student = await this.studentService.getById(this.studentId());
+    this.selectedPackageIds.set(new Set(student.packages || []));
   }
 
   onCheckboxChange(packageId: string, event: Event): void {
     const checkbox = event.target as HTMLInputElement;
-
-    if (checkbox.checked) {
-      this.selectedPackageIds.set([...this.selectedPackageIds(), packageId]);
-      this.nonSelectedPackageIds.set(this.nonSelectedPackageIds().filter(id => id !== packageId));
-    } else {
-      this.selectedPackageIds.set(this.selectedPackageIds().filter(id => id !== packageId));
-      this.nonSelectedPackageIds.set([...this.nonSelectedPackageIds(), packageId]);
-    }
+    const updatedSelection = new Set(this.selectedPackageIds());
+    checkbox.checked
+      ? updatedSelection.add(packageId)
+      : updatedSelection.delete(packageId);
+    this.selectedPackageIds.set(updatedSelection);
   }
 
-  async addPackagesToStudent(studentId: string) {
-    if (this.defaultSelect() === this.selectedPackageIds()) {
-      return;
-    }
+  async updateStudentPackages() {
+    const studentId = this.studentId();
+    if (!studentId) return;
 
-    const student: Student = await this.studentService.getById(studentId);
-    const newPackages = this.selectedPackageIds();
-    const addedPackages = newPackages.filter(id => !student.packages?.includes(id));
+    this.isSaving.set(true);
 
-    student.packages = newPackages;
+    try {
+      const student = await this.studentService.getById(studentId);
+      student.packages = Array.from(this.selectedPackageIds());
 
-    // Adicionar cursos dos pacotes recém adicionados
-    const coursesToAdd = this.allPackages()
-  .filter(pkg => addedPackages.includes(pkg.id))
-  .flatMap(pkg => pkg.courses.map(course => course.id)); // Assume que Course tem uma propriedade 'id'
-
-  student.courses = [...new Set([...(student.courses || []), ...coursesToAdd])];
-
-    await this.studentManagementService.update(student.id, student);
-  }
-
-  async removePackageFromStudent(studentId: string, packageId: string) {
-    this.selectedPackageIds.update(ids => ids.filter(id => id !== packageId));
-    this.nonSelectedPackageIds.update(ids => [...ids, packageId]);
-
-    const student: Student = await this.studentService.getById(studentId);
-
-    if (!student.packages) {
-      return;
-    }
-
-    if (student.packages.includes(packageId)) {
-      student.packages = student.packages.filter(id => id !== packageId);
-
-      // Remover cursos associados apenas a este pacote
-      const packageToRemove = this.allPackages().find(pkg => pkg.id === packageId);
-      if (packageToRemove) {
-        const remainingPackages = student.packages.map(id => this.allPackages().find(pkg => pkg.id === id));
-        const remainingCourses = new Set(remainingPackages.flatMap(pkg => pkg?.courses.map(course => course.id) || []));
-student.courses = student.courses?.filter(courseId => remainingCourses.has(courseId));
-      }
+      // Atualizar cursos baseado nos pacotes selecionados
+      const selectedPackages = this.allPackages().filter((pkg) =>
+        this.selectedPackageIds().has(pkg.id)
+      );
+      const coursesFromPackages = new Set(
+        selectedPackages.flatMap((pkg) =>
+          pkg.courses.map((course) => course.id)
+        )
+      );
+      student.courses = Array.from(
+        new Set([...(student.courses || []), ...coursesFromPackages])
+      );
 
       await this.studentManagementService.update(studentId, student);
+      this.notificationService.showNotification(
+        'Pacotes atualizados com sucesso',
+        NotificationType.SUCCESS
+      );
+      await this.loadAllPackages();
+      await this.loadSelectedPackages();
+    } catch (error) {
+      this.notificationService.showNotification(
+        'Erro ao atualizar pacotes',
+        NotificationType.ERROR
+      );
+    } finally {
+      this.isSaving.set(false);
     }
+  }
+
+  async removePackage(packageId: string) {
+    const updatedSelection = new Set(this.selectedPackageIds());
+    updatedSelection.delete(packageId);
+    this.selectedPackageIds.set(updatedSelection);
+    await this.updateStudentPackages();
   }
 }
