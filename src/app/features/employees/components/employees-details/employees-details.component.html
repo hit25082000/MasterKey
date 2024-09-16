@@ -1,0 +1,280 @@
+<div *ngIf="loading" class="loading-spinner">
+  <!-- Indicador de carregamento, pode ser um spinner ou mensagem -->
+  Carregando dados do funcionario...
+</div>
+
+<!-- <div *ngIf="classes.lenght > 0" class="loading-spinner">
+  Carregando dados do funcionario...
+</div> -->
+
+<form *ngIf="!loading" [formGroup]="employeesForm" (ngSubmit)="onSubmit()">
+  <div class="form-group">
+    <label for="nome">Nome</label>
+    <input id="nome" formControlName="nome" class="form-control" />
+    <div
+      *ngIf="
+        employeesForm.get('nome')?.invalid && employeesForm.get('nome')?.touched
+      "
+      class="text-danger"
+    >
+      Nome é obrigatório.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="email">E-mail</label>
+    <input
+      id="email"
+      formControlName="email"
+      class="form-control"
+      type="email"
+    />
+    <div
+      *ngIf="
+        employeesForm.get('email')?.invalid && employeesForm.get('email')?.touched
+      "
+      class="text-danger"
+    >
+      E-mail inválido.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="cep">CEP</label>
+    <input id="cep" formControlName="cep" class="form-control" />
+    <div
+      *ngIf="employeesForm.get('cep')?.invalid && employeesForm.get('cep')?.touched"
+      class="text-danger"
+    >
+      CEP é obrigatório.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="cpf">CPF</label>
+    <input id="cpf" formControlName="cpf" class="form-control" />
+    <div
+      *ngIf="employeesForm.get('cpf')?.invalid && employeesForm.get('cpf')?.touched"
+      class="text-danger"
+    >
+      CPF inválido.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="phone1">Fone 1</label>
+    <input id="phone1" formControlName="phone1" class="form-control" />
+    <div
+      *ngIf="
+        employeesForm.get('phone1')?.invalid && employeesForm.get('phone1')?.touched
+      "
+      class="text-danger"
+    >
+      Telefone 1 é obrigatório.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="phone2">Fone 2</label>
+    <input id="phone2" formControlName="phone2" class="form-control" />
+  </div>
+
+  <div class="form-group">
+    <label for="rg">RG</label>
+    <input id="rg" formControlName="rg" class="form-control" />
+    <div
+      *ngIf="employeesForm.get('rg')?.invalid && employeesForm.get('rg')?.touched"
+      class="text-danger"
+    >
+      RG é obrigatório.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="street">Rua</label>
+    <input id="street" formControlName="street" class="form-control" />
+    <div
+      *ngIf="
+        employeesForm.get('street')?.invalid && employeesForm.get('street')?.touched
+      "
+      class="text-danger"
+    >
+      Rua é obrigatória.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="neighborhood">Bairro</label>
+    <input
+      id="neighborhood"
+      formControlName="neighborhood"
+      class="form-control"
+    />
+    <div
+      *ngIf="
+        employeesForm.get('neighborhood')?.invalid &&
+        employeesForm.get('neighborhood')?.touched
+      "
+      class="text-danger"
+    >
+      Bairro é obrigatório.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="city">Cidade</label>
+    <input id="city" formControlName="city" class="form-control" />
+    <div
+      *ngIf="
+        employeesForm.get('city')?.invalid && employeesForm.get('city')?.touched
+      "
+      class="text-danger"
+    >
+      Cidade é obrigatória.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="state">Estado</label>
+    <input id="state" formControlName="state" class="form-control" />
+    <div
+      *ngIf="
+        employeesForm.get('state')?.invalid && employeesForm.get('state')?.touched
+      "
+      class="text-danger"
+    >
+      Estado é obrigatório.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="number">Número</label>
+    <input id="number" formControlName="number" class="form-control" />
+    <div
+      *ngIf="
+        employeesForm.get('number')?.invalid && employeesForm.get('number')?.touched
+      "
+      class="text-danger"
+    >
+      Número é obrigatório.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="birthday">Data de Nascimento</label>
+    <input
+      id="birthday"
+      formControlName="birthday"
+      class="form-control"
+      type="date"
+    />
+    <div
+      *ngIf="
+        employeesForm.get('birthday')?.invalid &&
+        employeesForm.get('birthday')?.touched
+      "
+      class="text-danger"
+    >
+      Data de nascimento é obrigatória.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="yearsOld">Idade</label>
+    <input
+      id="yearsOld"
+      formControlName="yearsOld"
+      class="form-control"
+      type="number"
+    />
+    <div
+      *ngIf="
+        employeesForm.get('yearsOld')?.invalid &&
+        employeesForm.get('yearsOld')?.touched
+      "
+      class="text-danger"
+    >
+      Idade é obrigatória e deve ser maior que zero.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="password">Senha</label>
+    <input
+      id="password"
+      formControlName="password"
+      class="form-control"
+      type="password"
+    />
+    <div
+      *ngIf="
+        employeesForm.get('password')?.invalid &&
+        employeesForm.get('password')?.touched
+      "
+      class="text-danger"
+    >
+      Senha é obrigatória e deve ter pelo menos 6 caracteres.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="status">Status</label>
+    <select id="status" formControlName="status" class="form-control">
+      <option value="ativo">Ativo</option>
+      <option value="inativo">Inativo</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="profilePic">Foto de Perfil</label>
+    <input
+      id="profilePic"
+      formControlName="profilePic"
+      class="form-control"
+      type="file"
+      (change)="onFileChange($event)"
+    />
+  </div>
+
+  <div class="form-group">
+    <label for="sex">Sexo</label>
+    <select id="sex" formControlName="sex" class="form-control">
+      <option value="masculino">Masculino</option>
+      <option value="feminino">Feminino</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="polo">Polo</label>
+    <input id="polo" formControlName="polo" class="form-control" />
+    <div
+      *ngIf="
+        employeesForm.get('polo')?.invalid && employeesForm.get('polo')?.touched
+      "
+      class="text-danger"
+    >
+      Polo é obrigatório.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="description">Observações</label>
+    <textarea
+      id="description"
+      formControlName="description"
+      class="form-control"
+    ></textarea>
+  </div>
+
+  <button
+    type="submit"
+    class="btn btn-primary"
+    [disabled]="employeesForm.invalid || employeesForm.pristine"
+  >
+    Cadastrar Funcionarios
+  </button>
+</form>
+
+<div *ngIf="error" class="text-danger">
+  {{ error }}
+</div>
