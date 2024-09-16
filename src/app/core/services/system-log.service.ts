@@ -46,10 +46,10 @@ export class SystemLogService {
     });
   }
 
-  logUserEdit(userId: string, changedFields: string[]): Observable<any> {
+  logUserEdit(userId: string, logDetails: string): Observable<any> {
     return this.logAction(LogCategory.USER_EDIT, 'Edição', {
       userId,
-      changedFields,
+      logDetails,
     });
   }
 

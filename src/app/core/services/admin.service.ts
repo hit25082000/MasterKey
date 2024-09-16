@@ -34,7 +34,6 @@ export class AdminService {
     const body = {
       email: user.email,
       password: user.password,
-      displayName: user.name,
     };
 
     return this.getHeaders().pipe(
@@ -48,14 +47,12 @@ export class AdminService {
     const body = {
       uid: user.id,
       email: user.email,
-      phoneNumber: user.phone1,
       password: user.password,
-      displayName: user.name,
-      photoURL: user.profilePic,
     };
+
     return this.getHeaders().pipe(
       switchMap((headers) =>
-        this.http.post(`${this.apiUrl}/editUser`, body, { headers })
+        this.http.post(`${this.apiUrl}/updateUser`, body, { headers })
       )
     );
   }

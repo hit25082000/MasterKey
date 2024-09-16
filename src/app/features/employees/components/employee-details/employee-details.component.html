@@ -3,17 +3,13 @@
   Carregando dados do funcionario...
 </div>
 
-<!-- <div *ngIf="classes.lenght > 0" class="loading-spinner">
-  Carregando dados do funcionario...
-</div> -->
-
-<form *ngIf="!loading" [formGroup]="employeesForm" (ngSubmit)="onSubmit()">
+<form *ngIf="!loading" [formGroup]="employeeForm" (ngSubmit)="onSubmit()">
   <div class="form-group">
-    <label for="nome">Nome</label>
-    <input id="nome" formControlName="nome" class="form-control" />
+    <label for="name">Nome</label>
+    <input id="name" formControlName="name" class="form-control" />
     <div
       *ngIf="
-        employeesForm.get('nome')?.invalid && employeesForm.get('nome')?.touched
+        employeeForm.get('name')?.invalid && employeeForm.get('name')?.touched
       "
       class="text-danger"
     >
@@ -31,7 +27,7 @@
     />
     <div
       *ngIf="
-        employeesForm.get('email')?.invalid && employeesForm.get('email')?.touched
+        employeeForm.get('email')?.invalid && employeeForm.get('email')?.touched
       "
       class="text-danger"
     >
@@ -43,7 +39,9 @@
     <label for="cep">CEP</label>
     <input id="cep" formControlName="cep" class="form-control" />
     <div
-      *ngIf="employeesForm.get('cep')?.invalid && employeesForm.get('cep')?.touched"
+      *ngIf="
+        employeeForm.get('cep')?.invalid && employeeForm.get('cep')?.touched
+      "
       class="text-danger"
     >
       CEP é obrigatório.
@@ -54,7 +52,9 @@
     <label for="cpf">CPF</label>
     <input id="cpf" formControlName="cpf" class="form-control" />
     <div
-      *ngIf="employeesForm.get('cpf')?.invalid && employeesForm.get('cpf')?.touched"
+      *ngIf="
+        employeeForm.get('cpf')?.invalid && employeeForm.get('cpf')?.touched
+      "
       class="text-danger"
     >
       CPF inválido.
@@ -66,7 +66,8 @@
     <input id="phone1" formControlName="phone1" class="form-control" />
     <div
       *ngIf="
-        employeesForm.get('phone1')?.invalid && employeesForm.get('phone1')?.touched
+        employeeForm.get('phone1')?.invalid &&
+        employeeForm.get('phone1')?.touched
       "
       class="text-danger"
     >
@@ -83,7 +84,7 @@
     <label for="rg">RG</label>
     <input id="rg" formControlName="rg" class="form-control" />
     <div
-      *ngIf="employeesForm.get('rg')?.invalid && employeesForm.get('rg')?.touched"
+      *ngIf="employeeForm.get('rg')?.invalid && employeeForm.get('rg')?.touched"
       class="text-danger"
     >
       RG é obrigatório.
@@ -95,7 +96,8 @@
     <input id="street" formControlName="street" class="form-control" />
     <div
       *ngIf="
-        employeesForm.get('street')?.invalid && employeesForm.get('street')?.touched
+        employeeForm.get('street')?.invalid &&
+        employeeForm.get('street')?.touched
       "
       class="text-danger"
     >
@@ -112,8 +114,8 @@
     />
     <div
       *ngIf="
-        employeesForm.get('neighborhood')?.invalid &&
-        employeesForm.get('neighborhood')?.touched
+        employeeForm.get('neighborhood')?.invalid &&
+        employeeForm.get('neighborhood')?.touched
       "
       class="text-danger"
     >
@@ -126,7 +128,7 @@
     <input id="city" formControlName="city" class="form-control" />
     <div
       *ngIf="
-        employeesForm.get('city')?.invalid && employeesForm.get('city')?.touched
+        employeeForm.get('city')?.invalid && employeeForm.get('city')?.touched
       "
       class="text-danger"
     >
@@ -139,7 +141,7 @@
     <input id="state" formControlName="state" class="form-control" />
     <div
       *ngIf="
-        employeesForm.get('state')?.invalid && employeesForm.get('state')?.touched
+        employeeForm.get('state')?.invalid && employeeForm.get('state')?.touched
       "
       class="text-danger"
     >
@@ -152,7 +154,8 @@
     <input id="number" formControlName="number" class="form-control" />
     <div
       *ngIf="
-        employeesForm.get('number')?.invalid && employeesForm.get('number')?.touched
+        employeeForm.get('number')?.invalid &&
+        employeeForm.get('number')?.touched
       "
       class="text-danger"
     >
@@ -170,8 +173,8 @@
     />
     <div
       *ngIf="
-        employeesForm.get('birthday')?.invalid &&
-        employeesForm.get('birthday')?.touched
+        employeeForm.get('birthday')?.invalid &&
+        employeeForm.get('birthday')?.touched
       "
       class="text-danger"
     >
@@ -189,8 +192,8 @@
     />
     <div
       *ngIf="
-        employeesForm.get('yearsOld')?.invalid &&
-        employeesForm.get('yearsOld')?.touched
+        employeeForm.get('yearsOld')?.invalid &&
+        employeeForm.get('yearsOld')?.touched
       "
       class="text-danger"
     >
@@ -208,8 +211,8 @@
     />
     <div
       *ngIf="
-        employeesForm.get('password')?.invalid &&
-        employeesForm.get('password')?.touched
+        employeeForm.get('password')?.invalid &&
+        employeeForm.get('password')?.touched
       "
       class="text-danger"
     >
@@ -249,7 +252,7 @@
     <input id="polo" formControlName="polo" class="form-control" />
     <div
       *ngIf="
-        employeesForm.get('polo')?.invalid && employeesForm.get('polo')?.touched
+        employeeForm.get('polo')?.invalid && employeeForm.get('polo')?.touched
       "
       class="text-danger"
     >
@@ -269,9 +272,9 @@
   <button
     type="submit"
     class="btn btn-primary"
-    [disabled]="employeesForm.invalid || employeesForm.pristine"
+    [disabled]="employeeForm.invalid || employeeForm.pristine"
   >
-    Cadastrar Funcionarios
+    Salvar
   </button>
 </form>
 

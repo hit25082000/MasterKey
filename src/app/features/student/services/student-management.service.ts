@@ -110,7 +110,7 @@ export class StudentManagementService {
     if (error instanceof Error || error instanceof HttpErrorResponse) {
       return new Error(error.message);
     }
-    return new Error('Erro desconhecido ao deletar estudante');
+    return new Error('Erro desconhecido');
   }
 
   private logSuccessfulRegistration(student: Student) {
