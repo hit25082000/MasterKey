@@ -11,15 +11,18 @@ import { ReactiveFormsModule } from '@angular/forms';
 @Component({
   selector: 'app-role-list',
   standalone: true,
-  imports: [CommonModule,ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './role-list.component.html',
-  styleUrl: './role-list.component.scss'
+  styleUrl: './role-list.component.scss',
 })
 export class RoleListComponent implements OnInit {
-  roles : Role[] = []
+  roles: Role[] = [];
 
-  constructor(private roleService : RoleService,private auth : AuthService,
-    private router: Router){}
+  constructor(
+    private roleService: RoleService,
+    private auth: AuthService,
+    private router: Router
+  ) {}
 
   async ngOnInit(): Promise<void> {
     try {
@@ -32,11 +35,11 @@ export class RoleListComponent implements OnInit {
     }
   }
 
-  deleteStudent(id : string){
-    this.roleService.delete(id)
+  deleteRole(id: string) {
+    this.roleService.delete(id);
   }
 
-  editStudent(id : string){
+  editRole(id: string) {
     this.router.navigate(['/admin/role-detail', id]);
   }
 }

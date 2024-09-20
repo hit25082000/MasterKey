@@ -30,29 +30,39 @@ export class AdminService {
     );
   }
 
-  createUser(user: BaseUser): Observable<any> {
+  createUser(user: BaseUser, icon: string | null): Observable<any> {
     const body = {
       email: user.email,
       password: user.password,
+      userData: user,
+      iconFile: icon,
     };
 
     return this.getHeaders().pipe(
       switchMap((headers) =>
-        this.http.post(`${this.apiUrl}/createUser`, body, { headers })
+        this.http.post(`${this.apiUrl}/createUserWithProfile`, body, {
+          headers,
+        })
       )
     );
   }
 
-  updateUser(user: BaseUser): Observable<any> {
+  updateUser(user: BaseUser, icon: string | null): Observable<any> {
     const body = {
       uid: user.id,
       email: user.email,
       password: user.password,
+      userData: user,
+      iconFile: icon,
     };
+
+    console.log(body);
 
     return this.getHeaders().pipe(
       switchMap((headers) =>
-        this.http.post(`${this.apiUrl}/updateUser`, body, { headers })
+        this.http.post(`${this.apiUrl}/updateUserWithProfile`, body, {
+          headers,
+        })
       )
     );
   }
@@ -60,7 +70,11 @@ export class AdminService {
   deleteUser(uid: string): Observable<any> {
     return this.getHeaders().pipe(
       switchMap((headers) =>
-        this.http.post(`${this.apiUrl}/deleteUser`, { uid }, { headers })
+        this.http.post(
+          `${this.apiUrl}/deleteUserWithProfile`,
+          { uid },
+          { headers }
+        )
       )
     );
   }

@@ -7,7 +7,8 @@ import { AdminService } from '../../../core/services/admin.service';
 import { StudentService } from './student.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { SystemLogService } from '../../../core/services/system-log.service';
-import { firstValueFrom } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom, Observable } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 
 @Injectable({
@@ -15,44 +16,23 @@ import { HttpErrorResponse } from '@angular/common/http';
 })
 export class StudentManagementService {
   constructor(
-    private firestore: FirestoreService,
+    private http: HttpClient,
     private authService: AuthService,
-    private systemLog: SystemLogService,
-    private storage: StorageService,
-    private auth: AuthService,
-    private admin: AdminService,
-    private studentService: StudentService
+    private studentService: StudentService,
+    private adminService: AdminService,
+    private systemLog: SystemLogService
   ) {}
 
-  async create(student: Student, icon: File | null): Promise<string> {
+  async create(student: Student, icon: File | null): Promise<any> {
     try {
-      const emailAlreadyUsed = await this.firestore.getDocumentsByAttribute(
-        'users',
-        'email',
-        student.email
-      );
+      const iconBase64 = icon ? await this.fileToBase64(icon) : null;
 
-      if (emailAlreadyUsed.length > 0) {
-        throw new Error('Email já utilizado!');
-      }
+      this.adminService.createUser(student, iconBase64).subscribe(() => {
+        this.logSuccessfulRegistration(student);
 
-      const adminUser = await firstValueFrom(this.admin.createUser(student));
-      student.id = adminUser.uid;
-
-      if (icon != null) {
-        student.profilePic = await this.storage.uploadIcon(icon, student.id);
-      }
-
-      await this.firestore.addToCollectionWithId('users', student.id, student);
-      this.logSuccessfulRegistration(student);
-      return 'Estudante criado com sucesso!';
+        return 'Estudante criado com sucesso!';
+      });
     } catch (error) {
-      if (student.id) {
-        await this.admin.deleteUser(student.id).toPromise();
-      }
-      if (student.profilePic) {
-        await this.storage.deleteIcon(student.id);
-      }
       throw this.handleError(error);
     }
   }
@@ -61,49 +41,53 @@ export class StudentManagementService {
     id: string,
     newStudent: Student,
     icon?: File | null
-  ): Promise<string> {
+  ): Promise<any> {
     try {
+      const iconBase64 = icon ? await this.fileToBase64(icon) : null;
       const oldStudent = await this.studentService.getById(id);
-      if (!oldStudent) {
-        throw new Error('Estudante não encontrado');
-      }
+      var logDetails = this.getDifferences(newStudent, oldStudent);
 
-      if (icon != null) {
-        newStudent.profilePic = await this.storage.uploadIcon(
-          icon,
-          newStudent.id
-        );
-      }
+      this.adminService.updateUser(newStudent, iconBase64).subscribe(() => {
+        this.logSuccessfulUpdate(newStudent, logDetails);
 
-      await firstValueFrom(this.admin.updateUser(newStudent));
-      await this.firestore.updateDocument('users', id, newStudent);
-
-      return 'Estudante atualizado com sucesso!';
+        return 'Estudante atualizado com sucesso!';
+      });
     } catch (error) {
       throw this.handleError(error);
     }
   }
 
-  async delete(userId: string): Promise<string> {
+  async delete(userId: string): Promise<any> {
     try {
       const student = await this.studentService.getById(userId);
-      if (!student) {
-        throw new Error('Usuário não encontrado');
-      }
 
-      await Promise.all([
-        this.firestore.deleteDocument('users', userId),
-        this.admin.deleteUser(userId).toPromise(),
-        student.profilePic
-          ? this.storage.deleteIcon(student.id)
-          : Promise.resolve(),
-      ]);
+      this.adminService.deleteUser(userId).subscribe(() => {
+        this.logSuccessfulDelete(student);
 
-      this.logSuccessfulDelete(student);
-      return 'Estudante deletado com sucesso!';
+        return 'Estudante deletado com sucesso!';
+      });
     } catch (error) {
       throw this.handleError(error);
     }
+  }
+
+  getDifferences<T>(oldEmp: T, newEmp: T) {
+    const differences: Partial<T> = {};
+    for (const key in newEmp) {
+      if (newEmp[key as keyof T] !== oldEmp[key as keyof T]) {
+        differences[key as keyof T] = newEmp[key as keyof T] as any; // {{ edit_1 }}
+      }
+    }
+    return differences;
+  }
+
+  private async fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
   }
 
   private handleError(error: unknown): Error {
@@ -122,6 +106,17 @@ export class StudentManagementService {
     }) em ${new Date().toLocaleString()}`;
 
     this.systemLog.logUserRegistration(student.id, logDetails);
+  }
+
+  private logSuccessfulUpdate(student: Student, chagedData: Partial<Student>) {
+    const currentUser = this.authService.getCurrentUser();
+    const logDetails = `Usuário ${currentUser?.name} (ID: ${
+      currentUser?.id
+    }) alterou os dados ${JSON.stringify(chagedData)} do funcionario ${
+      student.name
+    } (ID: ${student.id}) em ${new Date().toLocaleString()}`;
+
+    this.systemLog.logUserEdit(student.id, logDetails);
   }
 
   private logSuccessfulDelete(student: Student) {

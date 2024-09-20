@@ -86,9 +86,7 @@ export class PackageSelectorComponent implements OnInit {
         this.selectedPackageIds().has(pkg.id)
       );
       const coursesFromPackages = new Set(
-        selectedPackages.flatMap((pkg) =>
-          pkg.courses.map((course) => course.id)
-        )
+        selectedPackages.flatMap((pkg) => pkg.courses.map((course) => course))
       );
       student.courses = Array.from(
         new Set([...(student.courses || []), ...coursesFromPackages])

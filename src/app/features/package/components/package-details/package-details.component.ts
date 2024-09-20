@@ -1,7 +1,13 @@
 import { PackageService } from '../../services/package.service';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormArray,
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { RoleService } from '../../../role/service/role.service';
 import { Role } from '../../../../core/models/role.model';
@@ -14,7 +20,7 @@ import { CourseService } from '../../../course/services/course.service';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './package-details.component.html',
-  styleUrls: ['./package-details.component.scss']
+  styleUrls: ['./package-details.component.scss'],
 })
 export class PackageDetailsComponent implements OnInit {
   packageForm!: FormGroup;
@@ -22,14 +28,14 @@ export class PackageDetailsComponent implements OnInit {
   loading: boolean = true;
   error: string = '';
   permissionForm!: FormGroup;
-  courseList : Course[] = [];
+  courseList: Course[] = [];
 
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private roleService: RoleService,
     private packageManagementService: PackageManagementService,
-    private packageService : PackageService
+    private packageService: PackageService
   ) {}
 
   async ngOnInit() {
@@ -43,7 +49,7 @@ export class PackageDetailsComponent implements OnInit {
 
     try {
       const packageItem = await this.packageService.getById(this.packageId);
-      this.courseList = packageItem.courses
+      this.courseList = packageItem.courses;
 
       this.packageForm = this.fb.group({
         id: [{ value: packageItem.id, disabled: true }, Validators.required], // ID é desabilitado pois não pode ser editado
@@ -52,7 +58,7 @@ export class PackageDetailsComponent implements OnInit {
         status: [packageItem.status, Validators.required],
         workHours: [packageItem.workHours, Validators.required],
         description: [packageItem.description, Validators.required],
-        courses: this.fb.array([packageItem.courses])
+        courses: this.fb.array([packageItem.courses]),
       });
 
       this.loading = false; // Dados carregados, ocultar indicador de carregamento
@@ -64,10 +70,12 @@ export class PackageDetailsComponent implements OnInit {
   }
 
   async onSubmit(): Promise<void> {
-
     if (this.packageForm.valid && this.packageForm.dirty) {
       try {
-        await this.packageManagementService.update(this.packageId, this.packageForm.value);
+        await this.packageManagementService.update(
+          this.packageId,
+          this.packageForm.value
+        );
       } catch (error) {
         this.error = 'Erro ao atualizar aluno';
       }

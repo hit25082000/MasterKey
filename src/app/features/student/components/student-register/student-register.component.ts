@@ -15,11 +15,12 @@ import { passwordMatchValidator } from '../../../../shared/Validators/password-m
 import { AuthService } from '../../../../core/services/auth.service';
 import { Student } from '../../../../core/models/student.model';
 import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
+import { LoadingOverlayComponent } from '../../../../shared/components/loading-overlay/loading-overlay.component';
 
 @Component({
   selector: 'app-student-register',
   standalone: true,
-  imports: [ReactiveFormsModule, CommonModule],
+  imports: [ReactiveFormsModule, CommonModule, LoadingOverlayComponent],
   templateUrl: './student-register.component.html',
   styleUrls: ['./student-register.component.scss'],
 })
@@ -87,9 +88,8 @@ export class StudentRegisterComponent implements OnInit {
             NotificationType.SUCCESS
           );
 
-          this.loading = false;
-
           setTimeout(() => {
+            this.loading = false;
             this.router.navigate(['/admin/student-list']);
           }, 1000);
         })

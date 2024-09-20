@@ -26,6 +26,19 @@
       </ul>
     </li>
     <li>
+      <button (click)="toggleDropdown('package')">
+        <i class="icon"></i> <span class="label">Pacotes</span>
+      </button>
+      <ul *ngIf="isDropdownOpen('package')" class="dropdown">
+        <li>
+          <a [routerLink]="['/admin/package-register']">Adicionar Pacote</a>
+        </li>
+        <li>
+          <a [routerLink]="['/admin/package-list']">Listar Pacotes</a>
+        </li>
+      </ul>
+    </li>
+    <li>
       <button (click)="toggleDropdown('roles')">
         <i class="icon"></i> <span class="label">Permissões</span>
       </button>
@@ -36,6 +49,7 @@
         <li><a [routerLink]="['/admin/role-list']">Listar Permissões</a></li>
       </ul>
     </li>
+
     <li>
       <button (click)="toggleDropdown('employee')">
         <i class="icon"></i> <span class="label">Funcionarios</span>

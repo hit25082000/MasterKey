@@ -9,14 +9,19 @@
   </thead>
   <tbody>
     @for (role of roles; track role.name) {
-      <tr>
-        <td>{{ role.id }}</td><td> {{ role.name }}  </td><td>
-          @for(permission of role.permissions; track permission) {
-            {{permission}}
-          }
-        </td>
-        <td><button (click)="editStudent(role.id)">Editar</button><button (click)="deleteStudent(role.id)">Excluir</button></td>
-      </tr>
+    <tr>
+      <td>{{ role.id }}</td>
+      <td>{{ role.name }}</td>
+      <td>
+        @for(permission of role.permissions; track permission) {
+        {{ permission }}
+        }
+      </td>
+      <td>
+        <button (click)="editRole(role.id)">Editar</button>
+        <button (click)="deleteRole(role.id)">Excluir</button>
+      </td>
+    </tr>
     }
   </tbody>
 </table>

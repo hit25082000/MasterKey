@@ -12,6 +12,7 @@ import { CourseRegisterComponent } from './features/course/components/course-reg
 import { CourseListComponent } from './features/course/components/course-list/course-list.component';
 import { CourseDetailsComponent } from './features/course/components/course-details/course-details.component';
 import { RoleListComponent } from './features/role/components/role-list/role-list.component';
+import { RoleDetailsComponent } from './features/role/components/role-details/role-details.component';
 import { RoleRegisterComponent } from './features/role/components/role-register/role-register.component';
 import { ClassRegisterComponent } from './features/class/components/class-register/class-register.component';
 import { ClassListComponent } from './features/class/components/class-list/class-list.component';
@@ -22,6 +23,9 @@ import { RoleGuard } from './auth/guards/role.guard';
 import { EmployeeListComponent } from './features/employees/components/employee-list/employee-list.component';
 import { EmployeeDetailsComponent } from './features/employees/components/employee-details/employee-details.component';
 import { EmployeeRegisterComponent } from './features/employees/components/employee-register/employee-register.component';
+import { PackageListComponent } from './features/package/components/package-list/package-list.component';
+import { PackageDetailsComponent } from './features/package/components/package-details/package-details.component';
+import { PackageRegisterComponent } from './features/package/components/package-register/package-register.component';
 
 export const routes: Routes = [
   { path: '', component: EcommerceComponent },
@@ -64,6 +68,18 @@ export const routes: Routes = [
         component: CourseRegisterComponent,
       },
       {
+        path: 'package-detail/:id',
+        component: PackageDetailsComponent,
+      },
+      {
+        path: 'package-list',
+        component: PackageListComponent,
+      },
+      {
+        path: 'package-register',
+        component: PackageRegisterComponent,
+      },
+      {
         path: 'class-detail/:id',
         component: ClassDetailsComponent,
       },
@@ -77,7 +93,7 @@ export const routes: Routes = [
       },
       {
         path: 'role-detail/:id',
-        component: CourseDetailsComponent,
+        component: RoleDetailsComponent,
       },
       {
         path: 'role-list',

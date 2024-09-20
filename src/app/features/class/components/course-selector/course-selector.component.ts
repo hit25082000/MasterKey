@@ -97,10 +97,16 @@ export class CourseSelectorComponent implements OnInit {
     }
   }
 
-  async removeCourse(courseId: string) {
+  async removeCourseFromStudent(courseId: string) {
     const updatedSelection = new Set(this.selectedCourseIds());
     updatedSelection.delete(courseId);
     this.selectedCourseIds.set(updatedSelection);
     await this.updateStudentCourses();
+  }
+
+  async removeCourse(courseId: string) {
+    const updatedSelection = new Set(this.selectedCourseIds());
+    updatedSelection.delete(courseId);
+    this.selectedCourseIds.set(updatedSelection);
   }
 }

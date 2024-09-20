@@ -1,6 +1,11 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { StudentManagementService } from '../../services/student-management.service';
 import { CommonModule } from '@angular/common';
 import { StudentService } from '../../services/student.service';
@@ -13,9 +18,16 @@ import { PackageService } from '../../../package/services/package.service';
 @Component({
   selector: 'app-student-detail',
   standalone: true,
-  imports: [CommonModule, CourseSelectorComponent, PackageSelectorComponent, ReactiveFormsModule,ModalComponent,ClassSelectorComponent],
+  imports: [
+    CommonModule,
+    CourseSelectorComponent,
+    PackageSelectorComponent,
+    ReactiveFormsModule,
+    ModalComponent,
+    ClassSelectorComponent,
+  ],
   templateUrl: './student-details.component.html',
-  styleUrls: ['./student-details.component.scss']
+  styleUrls: ['./student-details.component.scss'],
 })
 export class StudentDetailsComponent implements OnInit {
   studentForm!: FormGroup;
@@ -43,11 +55,14 @@ export class StudentDetailsComponent implements OnInit {
 
     try {
       const student = await this.studentService.getById(this.studentId);
-      this.courses.set(student.courses == undefined ? [''] : student.courses)
-      this.packages.set(student.packages == undefined ? [''] : student.packages)
+      this.courses.set(student.courses == undefined ? [''] : student.courses);
+      this.packages.set(
+        student.packages == undefined ? [''] : student.packages
+      );
 
       // Inicializar o formulário após os dados serem carregados
       this.studentForm = this.fb.group({
+        id: [student.id],
         nome: [student?.name || '', Validators.required],
         phone1: [student?.phone1 || ''],
         phone2: [student?.phone2 || ''],
@@ -70,7 +85,7 @@ export class StudentDetailsComponent implements OnInit {
         profilePic: [null],
         sex: [student?.sex || 'masculino', Validators.required],
         polo: [student?.polo || ''],
-        description: [student?.description || '']
+        description: [student?.description || ''],
       });
 
       this.loading = false; // Dados carregados, ocultar indicador de carregamento
@@ -84,7 +99,11 @@ export class StudentDetailsComponent implements OnInit {
   async onSubmit(): Promise<void> {
     if (this.studentForm.valid && this.studentForm.dirty) {
       try {
-        await this.studentManagementService.update(this.studentId, this.studentForm.value,this.selectedFile);
+        await this.studentManagementService.update(
+          this.studentId,
+          this.studentForm.value,
+          this.selectedFile
+        );
       } catch (error) {
         this.error = 'Erro ao atualizar aluno';
       }
@@ -100,7 +119,9 @@ export class StudentDetailsComponent implements OnInit {
 
   async onPackageSelectionChange(newSelectedPackages: string[]) {
     const student = await this.studentService.getById(this.studentId);
-    const addedPackages = newSelectedPackages.filter(id => !this.packages().includes(id));
+    const addedPackages = newSelectedPackages.filter(
+      (id) => !this.packages().includes(id)
+    );
 
     // Atualizar pacotes
     this.packages.set(newSelectedPackages);
@@ -108,8 +129,8 @@ export class StudentDetailsComponent implements OnInit {
     // Adicionar cursos dos novos pacotes
     const allPackages = await this.packageService.getAll();
     const coursesToAdd = allPackages
-      .filter(pkg => addedPackages.includes(pkg.id))
-      .flatMap(pkg => pkg.courses.map(course => course.id)); // Assume que cada curso tem uma propriedade 'id'
+      .filter((pkg) => addedPackages.includes(pkg.id))
+      .flatMap((pkg) => pkg.courses.map((course) => course)); // Assume que cada curso tem uma propriedade 'id'
 
     const updatedCourses = [...new Set([...this.courses(), ...coursesToAdd])];
     this.courses.set(updatedCourses);

@@ -1,5 +1,5 @@
 import { QuerySnapshot } from '@angular/fire/firestore';
-import Employee from '../../../core/models/employee.model';
+import Employee from './../../../core/models/employee.model';
 import { Injectable } from '@angular/core';
 import { FirestoreService } from '../../../core/services/firestore.service';
 import { StorageService } from '../../../core/services/storage.service';
@@ -7,6 +7,7 @@ import { AdminService } from '../../../core/services/admin.service';
 import { EmployeeService } from './employee.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { SystemLogService } from '../../../core/services/system-log.service';
+import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -15,47 +16,22 @@ import { HttpErrorResponse } from '@angular/common/http';
 })
 export class EmployeeManagementService {
   constructor(
-    private firestore: FirestoreService,
+    private http: HttpClient,
     private authService: AuthService,
-    private systemLog: SystemLogService,
-    private storage: StorageService,
-    private admin: AdminService,
-    private employeeService: EmployeeService
+    private employeeService: EmployeeService,
+    private adminService: AdminService,
+    private systemLog: SystemLogService
   ) {}
 
   async create(employee: Employee, icon: File | null): Promise<string> {
     try {
-      const emailAlreadyUsed = await this.firestore.getDocumentsByAttribute(
-        'users',
-        'email',
-        employee.email
-      );
+      const iconBase64 = icon ? await this.fileToBase64(icon) : null;
 
-      if (emailAlreadyUsed.length > 0) {
-        throw new Error('Email já utilizado!');
-      }
+      await this.adminService.createUser(employee, iconBase64);
 
-      const adminUser = await firstValueFrom(this.admin.createUser(employee));
-      employee.id = adminUser.uid;
-
-      if (icon != null) {
-        employee.profilePic = await this.storage.uploadIcon(icon, employee.id);
-      }
-
-      await this.firestore.addToCollectionWithId(
-        'users',
-        employee.id,
-        employee
-      );
       this.logSuccessfulRegistration(employee);
       return 'Estudante criado com sucesso!';
     } catch (error) {
-      if (employee.id) {
-        await this.admin.deleteUser(employee.id).toPromise();
-      }
-      if (employee.profilePic) {
-        await this.storage.deleteIcon(employee.id);
-      }
       throw this.handleError(error);
     }
   }
@@ -66,24 +42,15 @@ export class EmployeeManagementService {
     icon?: File | null
   ): Promise<string> {
     try {
+      const iconBase64 = icon ? await this.fileToBase64(icon) : null;
+
       const oldEmployee = await this.employeeService.getById(id);
-      if (!oldEmployee) {
-        throw new Error('Estudante não encontrado');
-      }
 
-      if (icon != null) {
-        newEmployee.profilePic = await this.storage.uploadIcon(
-          icon,
-          newEmployee.id
-        );
-      }
+      await this.adminService.updateUser(newEmployee, iconBase64);
 
-      await firstValueFrom(this.admin.updateUser(newEmployee));
-      await this.firestore.updateDocument('users', id, newEmployee);
+      var logDetails = this.getDifferences(newEmployee, oldEmployee);
 
-      var changes = this.getDifferences(newEmployee, oldEmployee);
-
-      this.logSuccessfulUpdate(newEmployee, changes);
+      this.logSuccessfulUpdate(newEmployee, logDetails);
       return 'Estudante atualizado com sucesso!';
     } catch (error) {
       throw this.handleError(error);
@@ -92,36 +59,34 @@ export class EmployeeManagementService {
 
   async delete(userId: string): Promise<string> {
     try {
-      const employee = await this.employeeService.getById(userId);
-      if (!employee) {
-        throw new Error('Usuário não encontrado');
-      }
-
-      await Promise.all([
-        this.firestore.deleteDocument('users', userId),
-        this.admin.deleteUser(userId).toPromise(),
-        employee.profilePic
-          ? this.storage.deleteIcon(employee.id)
-          : Promise.resolve(),
-      ]);
-
-      this.logSuccessfulDelete(employee);
+      await this.adminService.deleteUser(userId).subscribe(() => {
+        this.employeeService.getById(userId).then((employee) => {
+          this.logSuccessfulDelete(employee);
+        });
+      });
       return 'Estudante deletado com sucesso!';
     } catch (error) {
       throw this.handleError(error);
     }
   }
 
-  getDifferences(oldEmp: Employee, newEmp: Employee) {
-    const differences: Partial<Employee> = {};
+  getDifferences<T>(oldEmp: T, newEmp: T) {
+    const differences: Partial<T> = {};
     for (const key in newEmp) {
-      if (newEmp[key as keyof Employee] !== oldEmp[key as keyof Employee]) {
-        differences[key as keyof Employee] = newEmp[
-          key as keyof Employee
-        ] as any; // {{ edit_1 }}
+      if (newEmp[key as keyof T] !== oldEmp[key as keyof T]) {
+        differences[key as keyof T] = newEmp[key as keyof T] as any; // {{ edit_1 }}
       }
     }
     return differences;
+  }
+
+  private async fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
   }
 
   private handleError(error: unknown): Error {
@@ -135,7 +100,7 @@ export class EmployeeManagementService {
     const currentUser = this.authService.getCurrentUser();
     const logDetails = `Usuário ${currentUser?.name} (ID: ${
       currentUser?.id
-    }) cadastrou o funcionario ${employee.name} (ID: ${
+    }) cadastrou o estudante ${employee.name} (ID: ${
       employee.id
     }) em ${new Date().toLocaleString()}`;
 
@@ -160,7 +125,7 @@ export class EmployeeManagementService {
     const currentUser = this.authService.getCurrentUser();
     const logDetails = `Usuário ${currentUser?.name} (ID: ${
       currentUser?.id
-    }) removeu o funcionario ${employee.name} (ID: ${
+    }) removeu o estudante ${employee.name} (ID: ${
       employee.id
     }) em ${new Date().toLocaleString()}`;
 
