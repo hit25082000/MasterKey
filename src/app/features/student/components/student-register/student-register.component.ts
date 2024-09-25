@@ -33,9 +33,7 @@ export class StudentRegisterComponent implements OnInit {
     private notificationService: NotificationService,
     private fb: FormBuilder,
     private studentManagement: StudentManagementService,
-    private router: Router,
-    private systemLogService: SystemLogService,
-    private authService: AuthService
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -82,12 +80,11 @@ export class StudentRegisterComponent implements OnInit {
 
       this.studentManagement
         .create(newStudent, this.selectedFile)
-        .then(() => {
+        .then((success) => {
           this.notificationService.showNotification(
-            'Estudante cadastrado com sucesso!',
+            success,
             NotificationType.SUCCESS
           );
-
           setTimeout(() => {
             this.loading = false;
             this.router.navigate(['/admin/student-list']);

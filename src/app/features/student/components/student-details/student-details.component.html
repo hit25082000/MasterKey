@@ -1,11 +1,4 @@
-<div *ngIf="loading" class="loading-spinner">
-  <!-- Indicador de carregamento, pode ser um spinner ou mensagem -->
-  Carregando dados do estudante...
-</div>
-
-<!-- <div *ngIf="classes.lenght > 0" class="loading-spinner">
-  Carregando dados do estudante...
-</div> -->
+<app-loading-overlay [isLoading]="loading"></app-loading-overlay>
 
 <form *ngIf="!loading" [formGroup]="studentForm" (ngSubmit)="onSubmit()">
   <div class="form-group">
@@ -307,13 +300,9 @@
     class="btn btn-primary"
     [disabled]="studentForm.invalid || studentForm.pristine"
   >
-    Cadastrar Aluno
+    Atualizar
   </button>
 </form>
-
-<div *ngIf="error" class="text-danger">
-  {{ error }}
-</div>
 
 <button (click)="classModal.toggle()">Turmas</button>
 <app-modal #classModal>

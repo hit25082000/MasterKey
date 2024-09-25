@@ -28,7 +28,7 @@ export class PackageDetailsComponent implements OnInit {
   loading: boolean = true;
   error: string = '';
   permissionForm!: FormGroup;
-  courseList: Course[] = [];
+  courseList: string[] = [];
 
   constructor(
     private fb: FormBuilder,

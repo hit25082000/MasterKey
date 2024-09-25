@@ -25,4 +25,12 @@ export class StudentService {
   async getById(id: string): Promise<Student> {
     return await this.firestore.getDocument<Student>('users', id);
   }
+
+  async getPackages(id: string): Promise<string[]> {
+    return await this.firestore.getDocument<string[]>('student_packages', id);
+  }
+
+  async getCourses(id: string): Promise<string[]> {
+    return await this.firestore.getDocument<string[]>('student_courses', id);
+  }
 }

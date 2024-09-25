@@ -58,8 +58,8 @@ export class CourseSelectorComponent implements OnInit {
   }
 
   private async loadSelectedCourses() {
-    const student = await this.studentService.getById(this.studentId());
-    this.selectedCourseIds.set(new Set(student.courses || []));
+    const courses = await this.studentService.getCourses(this.studentId());
+    this.selectedCourseIds.set(new Set(courses || []));
   }
 
   onCheckboxChange(courseId: string, event: Event): void {
@@ -80,7 +80,7 @@ export class CourseSelectorComponent implements OnInit {
     try {
       const student = await this.studentService.getById(studentId);
       student.courses = Array.from(this.selectedCourseIds());
-      await this.studentManagementService.update(studentId, student);
+      await this.studentManagementService.update(student);
       this.notificationService.showNotification(
         'Cursos atualizados com sucesso',
         NotificationType.SUCCESS

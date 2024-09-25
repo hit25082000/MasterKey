@@ -1,4 +1,4 @@
-import { QuerySnapshot } from '@angular/fire/firestore';
+import { QuerySnapshot, Firestore } from '@angular/fire/firestore';
 import { Student } from './../../../core/models/student.model';
 import { Injectable } from '@angular/core';
 import { FirestoreService } from '../../../core/services/firestore.service';
@@ -16,11 +16,11 @@ import { HttpErrorResponse } from '@angular/common/http';
 })
 export class StudentManagementService {
   constructor(
-    private http: HttpClient,
     private authService: AuthService,
     private studentService: StudentService,
     private adminService: AdminService,
-    private systemLog: SystemLogService
+    private systemLog: SystemLogService,
+    private firestoreService: FirestoreService
   ) {}
 
   async create(student: Student, icon: File | null): Promise<any> {
@@ -37,20 +37,22 @@ export class StudentManagementService {
     }
   }
 
-  async update(
-    id: string,
-    newStudent: Student,
-    icon?: File | null
-  ): Promise<any> {
+  async update(newStudent: Student, icon?: File | null): Promise<string> {
     try {
       const iconBase64 = icon ? await this.fileToBase64(icon) : null;
-      const oldStudent = await this.studentService.getById(id);
+      const oldStudent = await this.studentService.getById(newStudent.id);
       var logDetails = this.getDifferences(newStudent, oldStudent);
 
-      this.adminService.updateUser(newStudent, iconBase64).subscribe(() => {
-        this.logSuccessfulUpdate(newStudent, logDetails);
-
-        return 'Estudante atualizado com sucesso!';
+      return new Promise((resolve, reject) => {
+        this.adminService.updateUser(newStudent, iconBase64).subscribe(
+          () => {
+            this.logSuccessfulUpdate(newStudent, logDetails);
+            resolve('Estudante atualizado com sucesso!');
+          },
+          (error) => {
+            reject(this.handleError(error));
+          }
+        );
       });
     } catch (error) {
       throw this.handleError(error);
@@ -128,5 +130,29 @@ export class StudentManagementService {
     }) em ${new Date().toLocaleString()}`;
 
     this.systemLog.logUserDelete(student.id, logDetails);
+  }
+
+  async updatePackagesAndCourses(
+    studentId: string,
+    courses: string[],
+    packages: string[]
+  ): Promise<string> {
+    try {
+      await this.firestoreService.updateDocument('student_courses', studentId, {
+        courses,
+      });
+
+      await this.firestoreService.updateDocument(
+        'student_packages',
+        studentId,
+        {
+          packages,
+        }
+      );
+
+      return 'Pacotes e Cursos atualizados!';
+    } catch (error) {
+      throw this.handleError(error);
+    }
   }
 }

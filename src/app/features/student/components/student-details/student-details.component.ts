@@ -1,3 +1,5 @@
+import { NotificationService } from './../../../../shared/components/notification/notification.service';
+import { NotificationType } from './../../../../shared/components/notification/notifications-enum';
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -14,6 +16,7 @@ import { ClassSelectorComponent } from '../../../class/components/class-selector
 import { CourseSelectorComponent } from '../../../class/components/course-selector/course-selector.component';
 import { PackageSelectorComponent } from '../../../class/components/package-selector/package-selector.component';
 import { PackageService } from '../../../package/services/package.service';
+import { LoadingOverlayComponent } from '../../../../shared/components/loading-overlay/loading-overlay.component';
 
 @Component({
   selector: 'app-student-detail',
@@ -25,6 +28,7 @@ import { PackageService } from '../../../package/services/package.service';
     ReactiveFormsModule,
     ModalComponent,
     ClassSelectorComponent,
+    LoadingOverlayComponent,
   ],
   templateUrl: './student-details.component.html',
   styleUrls: ['./student-details.component.scss'],
@@ -33,22 +37,27 @@ export class StudentDetailsComponent implements OnInit {
   studentForm!: FormGroup;
   studentId!: string;
   loading: boolean = true;
-  error: string = '';
   selectedFile: File | null = null;
+  packages = signal<string[]>([]);
+  courses = signal<string[]>([]);
 
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private studentService: StudentService,
     private studentManagementService: StudentManagementService,
-    private packageService: PackageService
+    private packageService: PackageService,
+    private notificationService: NotificationService
   ) {}
 
   async ngOnInit() {
     this.studentId = this.route.snapshot.paramMap.get('id')!;
 
     if (!this.studentId) {
-      this.error = 'ID do estudante não encontrado';
+      this.notificationService.showNotification(
+        'Estudante não encontrado',
+        NotificationType.ERROR
+      );
       this.loading = false;
       return;
     }
@@ -60,7 +69,6 @@ export class StudentDetailsComponent implements OnInit {
         student.packages == undefined ? [''] : student.packages
       );
 
-      // Inicializar o formulário após os dados serem carregados
       this.studentForm = this.fb.group({
         id: [student.id],
         nome: [student?.name || '', Validators.required],
@@ -89,23 +97,38 @@ export class StudentDetailsComponent implements OnInit {
       });
 
       this.loading = false; // Dados carregados, ocultar indicador de carregamento
-    } catch (err) {
-      this.error = 'Erro ao carregar os dados do aluno';
-      console.error(err);
+    } catch (error) {
+      this.notificationService.showNotification(
+        'Erro ao consultar dados do estudante: ' + error,
+        NotificationType.ERROR
+      );
       this.loading = false;
     }
   }
 
   async onSubmit(): Promise<void> {
+    this.loading = true;
     if (this.studentForm.valid && this.studentForm.dirty) {
       try {
-        await this.studentManagementService.update(
-          this.studentId,
+        const success = await this.studentManagementService.update(
           this.studentForm.value,
           this.selectedFile
         );
+        this.notificationService.showNotification(
+          success,
+          NotificationType.SUCCESS
+        );
+
+        this.loading = false;
       } catch (error) {
-        this.error = 'Erro ao atualizar aluno';
+        console.error(error);
+        this.notificationService.showNotification(
+          error instanceof Error
+            ? error.message
+            : 'Erro desconhecido ao atualizar estudante',
+          NotificationType.ERROR
+        );
+        this.loading = false;
       }
     }
   }
@@ -114,30 +137,39 @@ export class StudentDetailsComponent implements OnInit {
     this.selectedFile = event.target.files[0];
   }
 
-  packages = signal<string[]>([]);
-  courses = signal<string[]>([]);
-
   async onPackageSelectionChange(newSelectedPackages: string[]) {
-    const student = await this.studentService.getById(this.studentId);
     const addedPackages = newSelectedPackages.filter(
       (id) => !this.packages().includes(id)
     );
 
-    // Atualizar pacotes
     this.packages.set(newSelectedPackages);
 
-    // Adicionar cursos dos novos pacotes
     const allPackages = await this.packageService.getAll();
     const coursesToAdd = allPackages
       .filter((pkg) => addedPackages.includes(pkg.id))
-      .flatMap((pkg) => pkg.courses.map((course) => course)); // Assume que cada curso tem uma propriedade 'id'
+      .flatMap((pkg) => pkg.courses.map((course) => course));
 
     const updatedCourses = [...new Set([...this.courses(), ...coursesToAdd])];
     this.courses.set(updatedCourses);
 
-    // Atualizar o estudante no banco de dados
-    student.packages = newSelectedPackages;
-    student.courses = updatedCourses;
-    await this.studentManagementService.update(this.studentId, student);
+    await this.studentManagementService
+      .updatePackagesAndCourses(
+        this.studentId,
+        updatedCourses,
+        newSelectedPackages
+      )
+      .then((success) => {
+        this.notificationService.showNotification(
+          success,
+          NotificationType.SUCCESS
+        );
+      })
+      .catch((error) => {
+        console.log(error);
+        this.notificationService.showNotification(
+          error,
+          NotificationType.ERROR
+        );
+      });
   }
 }
