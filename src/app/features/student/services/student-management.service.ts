@@ -132,25 +132,11 @@ export class StudentManagementService {
     this.systemLog.logUserDelete(student.id, logDetails);
   }
 
-  async updatePackagesAndCourses(
-    studentId: string,
-    courses: string[],
-    packages: string[]
-  ): Promise<string> {
+  async updateCourses(newStudent: Student): Promise<string> {
     try {
-      await this.firestoreService.updateDocument('student_courses', studentId, {
-        courses,
-      });
+      this.firestoreService.updateDocument('users', newStudent.id, newStudent);
 
-      await this.firestoreService.updateDocument(
-        'student_packages',
-        studentId,
-        {
-          packages,
-        }
-      );
-
-      return 'Pacotes e Cursos atualizados!';
+      return '';
     } catch (error) {
       throw this.handleError(error);
     }

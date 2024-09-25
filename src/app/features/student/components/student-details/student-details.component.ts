@@ -1,4 +1,5 @@
 import { NotificationService } from './../../../../shared/components/notification/notification.service';
+import { LoadingOverlayComponent } from '../../../../shared/components/loading-overlay/loading-overlay.component';
 import { NotificationType } from './../../../../shared/components/notification/notifications-enum';
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -16,7 +17,6 @@ import { ClassSelectorComponent } from '../../../class/components/class-selector
 import { CourseSelectorComponent } from '../../../class/components/course-selector/course-selector.component';
 import { PackageSelectorComponent } from '../../../class/components/package-selector/package-selector.component';
 import { PackageService } from '../../../package/services/package.service';
-import { LoadingOverlayComponent } from '../../../../shared/components/loading-overlay/loading-overlay.component';
 
 @Component({
   selector: 'app-student-detail',
@@ -138,6 +138,7 @@ export class StudentDetailsComponent implements OnInit {
   }
 
   async onPackageSelectionChange(newSelectedPackages: string[]) {
+    const student = await this.studentService.getById(this.studentId);
     const addedPackages = newSelectedPackages.filter(
       (id) => !this.packages().includes(id)
     );
@@ -152,12 +153,11 @@ export class StudentDetailsComponent implements OnInit {
     const updatedCourses = [...new Set([...this.courses(), ...coursesToAdd])];
     this.courses.set(updatedCourses);
 
+    student.packages = newSelectedPackages;
+    student.courses = updatedCourses;
+
     await this.studentManagementService
-      .updatePackagesAndCourses(
-        this.studentId,
-        updatedCourses,
-        newSelectedPackages
-      )
+      .update(student)
       .then((success) => {
         this.notificationService.showNotification(
           success,
