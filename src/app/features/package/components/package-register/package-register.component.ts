@@ -12,7 +12,7 @@ import { PackageManagementService } from '../../services/package-management.serv
 import { Package } from '../../../../core/models/package.model';
 import { CourseService } from '../../../course/services/course.service';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
-import { CourseSelectorComponent } from '../../../class/components/course-selector/course-selector.component';
+import { CourseSelectorComponent } from '../../../course/components/course-selector/course-selector.component';
 
 @Component({
   selector: 'app-package-create',
@@ -40,7 +40,6 @@ export class PackageRegisterComponent implements OnInit {
       name: ['', Validators.required], // Campo nome, obrigatório
       price: ['', Validators.required], // Campo nome, obrigatório
       description: ['', Validators.required], // Campo nome, obrigatório
-      status: ['', Validators.required], // Campo nome, obrigatório
       workHours: ['', Validators.required], // Campo nome, obrigatório
       courses: [[]], // Inicializa como array vazio
     });

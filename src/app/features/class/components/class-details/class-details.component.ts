@@ -1,14 +1,19 @@
 import { PackageService } from '../../../package/services/package.service';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import {  FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Course } from '../../../../core/models/course.model';
 import { ClassManagementService } from '../../services/class-management.service';
-import { ModalComponent } from "../../../../shared/components/modal/modal.component";
-import { ClassSelectorComponent } from "../class-selector/class-selector.component";
-import { StudentsSelectorComponent } from '../students-selector/students-selector.component';
-import { TeacherSelectorComponent } from '../teacher-selector/teacher-selector.component';
+import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { ClassSelectorComponent } from '../class-selector/class-selector.component';
+import { StudentsSelectorComponent } from './../../../student/components/students-selector/students-selector.component';
+import { TeacherSelectorComponent } from '../../../employees/components/teacher-selector/teacher-selector.component';
 import { Student } from '../../../../core/models/student.model';
 import { ClassService } from '../../services/class.service';
 import { DayWeekSelectorComponent } from '../day-week-selector/day-week-selector.component';
@@ -16,9 +21,17 @@ import { DayWeekSelectorComponent } from '../day-week-selector/day-week-selector
 @Component({
   selector: 'app-class-detail',
   standalone: true,
-  imports: [CommonModule, DayWeekSelectorComponent, StudentsSelectorComponent, TeacherSelectorComponent, ReactiveFormsModule, ModalComponent, ClassSelectorComponent],
+  imports: [
+    CommonModule,
+    DayWeekSelectorComponent,
+    StudentsSelectorComponent,
+    TeacherSelectorComponent,
+    ReactiveFormsModule,
+    ModalComponent,
+    ClassSelectorComponent,
+  ],
   templateUrl: './class-details.component.html',
-  styleUrls: ['./class-details.component.scss']
+  styleUrls: ['./class-details.component.scss'],
 })
 export class ClassDetailsComponent implements OnInit {
   classForm!: FormGroup;
@@ -32,7 +45,7 @@ export class ClassDetailsComponent implements OnInit {
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private classManagementService: ClassManagementService,
-    private classService : ClassService
+    private classService: ClassService
   ) {}
 
   async ngOnInit() {
@@ -46,8 +59,7 @@ export class ClassDetailsComponent implements OnInit {
 
     try {
       const classItem = await this.classService.getById(this.classId);
-      this.studentList = classItem.students
-      this.teacherId = classItem.teacher
+      this.teacherId = classItem.teacher;
 
       this.classForm = this.fb.group({
         id: [{ value: classItem.id, disabled: true }, Validators.required],
@@ -56,7 +68,6 @@ export class ClassDetailsComponent implements OnInit {
         dayWeek: [classItem.dayWeek, Validators.required],
         startDate: [classItem.startDate, Validators.required],
         finishDate: [classItem.finishDate, Validators.required],
-        status: [classItem.status, Validators.required],
         room: [classItem.room, Validators.required],
         students: [classItem.students, Validators.required],
         teacher: [classItem.teacher, Validators.required],
@@ -73,7 +84,10 @@ export class ClassDetailsComponent implements OnInit {
   async onSubmit(): Promise<void> {
     if (this.classForm.valid && this.classForm.dirty) {
       try {
-        await this.classManagementService.update(this.classId, this.classForm.value);
+        await this.classManagementService.update(
+          this.classId,
+          this.classForm.value
+        );
       } catch (error) {
         this.error = 'Erro ao atualizar aluno';
       }

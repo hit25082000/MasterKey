@@ -1,59 +1,77 @@
-import { PackageService } from '../../../package/services/package.service';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { RoleService } from '../../../role/service/role.service';
-import { Role } from '../../../../core/models/role.model';
 import { Course } from '../../../../core/models/course.model';
-import { CourseService } from '../../../course/services/course.service';
+import { Package } from '../../../../core/models/package.model';
 import { CategoryManagementService } from '../../services/category-management.service';
 import { CategoryService } from '../../services/category.service';
+import { NotificationService } from '../../../../shared/components/notification/notification.service';
+import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
+import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { CourseSelectorComponent } from '../../../course/components/course-selector/course-selector.component';
+import { PackageSelectorComponent } from '../../../package/components/package-selector/package-selector.component';
 
 @Component({
   selector: 'app-category-detail',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    ModalComponent,
+    CourseSelectorComponent,
+    PackageSelectorComponent,
+  ],
   templateUrl: './category-details.component.html',
-  styleUrls: ['./category-details.component.scss']
+  styleUrls: ['./category-details.component.scss'],
 })
 export class CategoryDetailsComponent implements OnInit {
-  packageForm!: FormGroup;
-  packageId!: string;
+  categoryForm!: FormGroup;
+  categoryId!: string;
   loading: boolean = true;
   error: string = '';
-  courseList : Course[] = [];
   selectedFile: File | null = null;
+
+  @ViewChild('courseSelector') courseSelector!: CourseSelectorComponent;
+  @ViewChild('packageSelector') packageSelector!: PackageSelectorComponent;
 
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
+    private router: Router,
     private categoryManagementService: CategoryManagementService,
-    private categoryService : CategoryService
+    private categoryService: CategoryService,
+    private notificationService: NotificationService
   ) {}
 
   async ngOnInit() {
-    this.packageId = this.route.snapshot.paramMap.get('id')!;
+    this.categoryId = this.route.snapshot.paramMap.get('id')!;
 
-    if (!this.packageId) {
-      this.error = 'ID da função não encontrada.';
+    if (!this.categoryId) {
+      this.error = 'ID da categoria não encontrada.';
       this.loading = false;
       return;
     }
 
     try {
-      const category = await this.categoryService.getById(this.packageId);
+      const category = await this.categoryService.getById(this.categoryId);
 
-      this.packageForm = this.fb.group({
-        id: [{ value: category.id, disabled: true }, Validators.required], // ID é desabilitado pois não pode ser editado
+      this.categoryForm = this.fb.group({
+        id: [{ value: category.id, disabled: true }, Validators.required],
         name: [category.name, Validators.required],
-        image: [category.image, Validators.required],
-        courses: this.fb.array([category.courses])
+        image: [category.image],
+        courses: [category.courses],
+        packages: [category.packages],
       });
 
-      this.loading = false; // Dados carregados, ocultar indicador de carregamento
+      this.loading = false;
     } catch (err) {
-      this.error = 'Erro ao carregar os dados do aluno';
+      this.error = 'Erro ao carregar os dados da categoria';
       console.error(err);
       this.loading = false;
     }
@@ -64,13 +82,40 @@ export class CategoryDetailsComponent implements OnInit {
   }
 
   async onSubmit(): Promise<void> {
-
-    if (this.packageForm.valid && this.packageForm.dirty) {
+    this.loading = true;
+    const updatedCategory = {
+      ...this.categoryForm.value,
+      courses: this.courseSelector.selectedCourses().map((course) => course.id),
+      packages: this.packageSelector.selectedPackages().map((pkg) => pkg.id),
+    };
+    if (
+      this.categoryForm.valid //validar mudança
+    ) {
       try {
-        await this.categoryManagementService.update(this.packageId, this.packageForm.value, this.selectedFile);
+        await this.categoryManagementService.update(
+          this.categoryId,
+          updatedCategory,
+          this.selectedFile
+        );
+        this.notificationService.showNotification(
+          'Categoria atualizada com sucesso',
+          NotificationType.SUCCESS
+        );
+        this.router.navigate(['/admin/category-list']);
       } catch (error) {
-        this.error = 'Erro ao atualizar aluno';
+        this.notificationService.showNotification(
+          'Erro ao atualizar categoria. Por favor, tente novamente.',
+          NotificationType.ERROR
+        );
+      } finally {
+        this.loading = false;
       }
+    } else {
+      this.notificationService.showNotification(
+        'Por favor, preencha todos os campos obrigatórios corretamente.',
+        NotificationType.ERROR
+      );
+      this.loading = false;
     }
   }
 }

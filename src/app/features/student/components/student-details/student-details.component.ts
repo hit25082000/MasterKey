@@ -14,8 +14,8 @@ import { CommonModule } from '@angular/common';
 import { StudentService } from '../../services/student.service';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { ClassSelectorComponent } from '../../../class/components/class-selector/class-selector.component';
-import { CourseSelectorComponent } from '../../../class/components/course-selector/course-selector.component';
-import { PackageSelectorComponent } from '../../../class/components/package-selector/package-selector.component';
+import { CourseSelectorComponent } from '../../../course/components/course-selector/course-selector.component';
+import { PackageSelectorComponent } from '../../../package/components/package-selector/package-selector.component';
 import { PackageService } from '../../../package/services/package.service';
 
 @Component({
@@ -141,18 +141,23 @@ export class StudentDetailsComponent implements OnInit {
     this.packages.set(newSelectedPackages);
 
     // Salvar pacotes na nova coleção
-    await this.studentManagementService.updateStudentPackages(studentId, newSelectedPackages);
+    await this.studentManagementService.updateStudentPackages(
+      studentId,
+      newSelectedPackages
+    );
 
     // Atualizar cursos com base nos pacotes selecionados
     const allPackages = await this.packageService.getAll();
     const coursesToAdd = allPackages
-        .filter((pkg) => newSelectedPackages.includes(pkg.id))
-        .flatMap((pkg) => pkg.courses.map((course) => course));
+      .filter((pkg) => newSelectedPackages.includes(pkg.id))
+      .flatMap((pkg) => pkg.courses.map((course) => course));
 
     const updatedCourses = [...new Set([...this.courses(), ...coursesToAdd])];
     this.courses.set(updatedCourses);
 
-
-    await this.studentManagementService.updateStudentCourses(studentId, updatedCourses);
+    await this.studentManagementService.updateStudentCourses(
+      studentId,
+      updatedCourses
+    );
   }
 }

@@ -6,6 +6,5 @@ export interface Package {
   name: string;
   price: number;
   description: string;
-  status: string;
   workHours: number;
 }

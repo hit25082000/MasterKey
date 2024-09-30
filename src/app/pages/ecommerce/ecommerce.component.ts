@@ -9,7 +9,7 @@ import { Package } from '../../core/models/package.model';
   standalone: true,
   imports: [RouterLink, CommonModule],
   templateUrl: './ecommerce.component.html',
-  styleUrl: './ecommerce.component.scss'
+  styleUrl: './ecommerce.component.scss',
 })
 export class EcommerceComponent implements OnInit {
   courses: Course[] = [];
@@ -47,7 +47,6 @@ export class EcommerceComponent implements OnInit {
         description: 'Inclui cursos de HTML, CSS e JavaScript',
         price: 299.99,
         courses: [], // Adicione uma lista de cursos
-        status: 'ativo', // Defina um status
         workHours: 40, // Defina as horas de trabalho
       },
       // ... mais pacotes

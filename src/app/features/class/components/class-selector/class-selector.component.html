@@ -1,7 +1,7 @@
 <div class="class-selector">
-  <!-- Seleção de classes para um estudante -->
-  <ng-container *ngIf="studentId()">
-    <h4>Selecionar Classes</h4>
+  @if (studentId()) {
+  <ng-container>
+    <h4>Selecionar Turmas</h4>
     <app-search-bar
       [dataList]="nonSelectedClasses()"
       #searchBarComponent
@@ -21,7 +21,7 @@
       </label>
     </div>
 
-    <h4>Classes Selecionadas</h4>
+    <h4>Turmas Selecionadas</h4>
     <div *ngFor="let class of selectedClasses()">
       <p>
         <strong>{{ class.name }}</strong>
@@ -29,15 +29,11 @@
       <button (click)="removeClass(class.id)">Remover</button>
     </div>
 
-    <button
-      (click)="updateStudentClasses()"
-      [disabled]="isSaving()"
-    >
+    <button (click)="updateStudentClasses()" [disabled]="isSaving()">
       {{ isSaving() ? "Salvando..." : "Salvar Classes" }}
     </button>
   </ng-container>
-
-  <!-- Seleção de estudantes para uma classe -->
+  } @if (classId()) {
   <ng-container *ngIf="classId()">
     <h4>Selecionar Estudantes</h4>
     <app-search-bar
@@ -62,16 +58,14 @@
     <h4>Estudantes Selecionados</h4>
     <div *ngFor="let studentId of selectedStudentIds()">
       <p>
-        <strong>{{ (allStudents() | find: studentId)?.name }}</strong>
+        <strong>{{ (allStudents() | find : studentId)?.name }}</strong>
       </p>
       <button (click)="removeStudent(studentId)">Remover</button>
     </div>
 
-    <button
-      (click)="updateClassStudents()"
-      [disabled]="isSaving()"
-    >
+    <button (click)="updateClassStudents()" [disabled]="isSaving()">
       {{ isSaving() ? "Salvando..." : "Salvar Estudantes" }}
     </button>
   </ng-container>
+  }
 </div>

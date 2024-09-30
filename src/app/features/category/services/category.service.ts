@@ -9,9 +9,7 @@ import { Category } from '../../../core/models/category.model';
   providedIn: 'root',
 })
 export class CategoryService {
-  constructor(
-    private firestore: FirestoreService
-  ) {}
+  constructor(private firestore: FirestoreService) {}
 
   getAll(): Promise<Category[]> {
     return this.firestore.getCollection<Category>('categorys');
@@ -19,5 +17,17 @@ export class CategoryService {
 
   async getById(id: string): Promise<Category> {
     return await this.firestore.getDocument<Category>('categorys', id);
+  }
+
+  async getCourses(id: string) {
+    const courses = (await this.firestore.getDocument('categorys', id)) as any;
+
+    return courses.courses;
+  }
+
+  async getPackages(id: string) {
+    const packages = (await this.firestore.getDocument('categorys', id)) as any;
+
+    return packages.packages;
   }
 }

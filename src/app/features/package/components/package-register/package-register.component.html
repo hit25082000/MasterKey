@@ -53,18 +53,6 @@
       Carga Horaria é obrigatório.
     </div>
   </div>
-  <div class="form-group">
-    <label for="status">Situação</label>
-    <input id="status" formControlName="status" class="form-control" />
-    <div
-      *ngIf="
-        packageForm.get('status')?.invalid && packageForm.get('status')?.touched
-      "
-      class="text-danger"
-    >
-      Situação é obrigatório.
-    </div>
-  </div>
 
   <button type="button" (click)="courseModal.toggle()">Cursos</button>
 
@@ -92,6 +80,6 @@
     class="btn btn-primary"
     [disabled]="packageForm.invalid"
   >
-    Criar Pacote
+    Criar
   </button>
 </form>

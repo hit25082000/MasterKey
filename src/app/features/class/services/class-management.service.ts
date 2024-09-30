@@ -32,9 +32,15 @@ export class ClassManagementService {
     }
   }
 
-  async updateStudentClasses(studentId: string, classIds: string[]): Promise<string> {
+  async updateStudentClasses(
+    studentId: string,
+    classIds: string[]
+  ): Promise<string> {
     try {
-      await this.firestore.addToCollectionWithId('student_packages', studentId, { classIds });
+      await Promise.all(
+        classIds.map((classId) => this.addStudentToClass(classId, studentId))
+      );
+
       return 'Pacotes atualizados com sucesso!';
     } catch (error) {
       throw this.handleError(error);
@@ -42,22 +48,24 @@ export class ClassManagementService {
   }
 
   async addStudentToClass(classId: string, studentId: string): Promise<void> {
-    const classItem = (await this.firestore.getDocument(
-      'class_students',
-      classId
-    )) as Class;
-    console.log(classItem);
-    if (classItem) {
-    classItem.students.includes(studentId)
-      ? null
-      : classItem.students.push(studentId);
+    let classItem = await this.firestore.getDocument('class_students', classId);
 
-      classItem.students.push(studentId);
-      await this.firestore.updateDocument('class_students', classId, classItem);
+    if (!classItem) {
+      // Cria um novo item de classe se não existir
+      classItem = { students: [] };
     }
+
+    if (!classItem.students.includes(studentId)) {
+      classItem.students.push(studentId);
+    }
+
+    await this.firestore.updateDocument('class_students', classId, classItem);
   }
 
-  async removeStudentFromClass(classId: string, studentId: string): Promise<void> {
+  async removeStudentFromClass(
+    classId: string,
+    studentId: string
+  ): Promise<void> {
     const classItem = (await this.firestore.getDocument(
       'class_students',
       classId
@@ -70,7 +78,10 @@ export class ClassManagementService {
     }
   }
 
-  async updateClassStudents(classId: string, studentIds: string[]): Promise<void> {
+  async updateClassStudents(
+    classId: string,
+    studentIds: string[]
+  ): Promise<void> {
     await this.firestore.updateDocument('class_students', classId, studentIds);
   }
 

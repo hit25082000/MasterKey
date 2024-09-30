@@ -27,10 +27,10 @@ export class StudentService {
   }
 
   async getPackages(id: string): Promise<any> {
-    return await this.firestore.getDocumentRelation('student_packages', id);
+    return await this.firestore.getDocument('student_packages', id);
   }
 
   async getCourses(id: string): Promise<any> {
-    return await this.firestore.getDocumentRelation('student_courses', id);
+    return await this.firestore.getDocument('student_courses', id);
   }
 }

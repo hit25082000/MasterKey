@@ -20,7 +20,7 @@
       <button (click)="toggleDropdown('courses')">
         <i class="icon"></i> <span class="label">Cursos</span>
       </button>
-      <ul *ngIf="isDropdownOpen('usuarios')" class="dropdown">
+      <ul *ngIf="isDropdownOpen('courses')" class="dropdown">
         <li><a [routerLink]="['/admin/course-register']">Criar Curso</a></li>
         <li><a [routerLink]="['/admin/course-list']">Listar Cursos</a></li>
       </ul>
@@ -30,8 +30,12 @@
         <i class="icon"></i> <span class="label">Categorias</span>
       </button>
       <ul *ngIf="isDropdownOpen('categorys')" class="dropdown">
-        <li><a [routerLink]="['/admin/category-register']">Criar Categorias</a></li>
-        <li><a [routerLink]="['/admin/category-list']">Listar Categorias</a></li>
+        <li>
+          <a [routerLink]="['/admin/category-register']">Criar Categorias</a>
+        </li>
+        <li>
+          <a [routerLink]="['/admin/category-list']">Listar Categorias</a>
+        </li>
       </ul>
     </li>
     <li>

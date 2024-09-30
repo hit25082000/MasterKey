@@ -58,16 +58,28 @@
       Carga Horaria é obrigatório.
     </div>
   </div>
+
+  <button type="button" (click)="courseModal.toggle()">Cursos</button>
+
+  <app-modal #courseModal>
+    <h4>Selecionar Cursos</h4>
+    <app-course-selector
+      [packageId]="packageId"
+      #courseSelector
+    ></app-course-selector>
+  </app-modal>
+
   <div class="form-group">
-    <label for="status">Situação</label>
-    <input id="status" formControlName="status" class="form-control" />
-    <div
-      *ngIf="
-        packageForm.get('status')?.invalid && packageForm.get('status')?.touched
-      "
-      class="text-danger"
-    >
-      Situação é obrigatório.
+    <h4>Cursos Selecionados</h4>
+    <div *ngFor="let course of courseSelector.selectedCourses()">
+      <p>
+        <strong>{{ course.name }}</strong> - {{ course.description }}
+      </p>
+      <p>
+        <Button type="button" (click)="courseSelector.removeCourse(course.id)"
+          >Remover</Button
+        >
+      </p>
     </div>
   </div>
 
@@ -76,6 +88,6 @@
     class="btn btn-primary"
     [disabled]="packageForm.invalid"
   >
-    Cadastrar Aluno
+    Alterar
   </button>
 </form>

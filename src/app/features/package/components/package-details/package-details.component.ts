@@ -14,11 +14,18 @@ import { Role } from '../../../../core/models/role.model';
 import { PackageManagementService } from '../../services/package-management.service';
 import { Course } from '../../../../core/models/course.model';
 import { CourseService } from '../../../course/services/course.service';
+import { CourseSelectorComponent } from '../../../course/components/course-selector/course-selector.component';
+import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 
 @Component({
   selector: 'app-role-detail',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    CourseSelectorComponent,
+    ModalComponent,
+  ],
   templateUrl: './package-details.component.html',
   styleUrls: ['./package-details.component.scss'],
 })
@@ -55,7 +62,6 @@ export class PackageDetailsComponent implements OnInit {
         id: [{ value: packageItem.id, disabled: true }, Validators.required], // ID é desabilitado pois não pode ser editado
         name: [packageItem.name, Validators.required],
         price: [packageItem.price, Validators.required],
-        status: [packageItem.status, Validators.required],
         workHours: [packageItem.workHours, Validators.required],
         description: [packageItem.description, Validators.required],
         courses: this.fb.array([packageItem.courses]),

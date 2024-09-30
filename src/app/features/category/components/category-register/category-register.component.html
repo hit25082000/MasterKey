@@ -1,17 +1,73 @@
 <form [formGroup]="categoryForm" (ngSubmit)="onSubmit()">
-
   <div class="form-group">
     <label for="name">Nome</label>
     <input id="name" formControlName="name" class="form-control" />
-    <div *ngIf="categoryForm.get('name')?.invalid && categoryForm.get('name')?.touched" class="text-danger">
+    <div
+      *ngIf="
+        categoryForm.get('name')?.invalid && categoryForm.get('name')?.touched
+      "
+      class="text-danger"
+    >
       Nome é obrigatório.
     </div>
   </div>
 
   <div class="form-group">
     <label for="image">Foto da Area</label>
-    <input id="image" formControlName="image" class="form-control" type="file" (change)="onFileChange($event)" />
+    <input
+      id="image"
+      formControlName="image"
+      class="form-control"
+      type="file"
+      (change)="onFileChange($event)"
+    />
   </div>
 
-  <button type="submit" class="btn btn-primary" [disabled]="categoryForm.invalid">Criar</button>
+  <button type="button" (click)="modalCourse.toggle()">
+    Selecionar Cursos
+  </button>
+  <button type="button" (click)="modalPackage.toggle()">
+    Selecionar Pacotes
+  </button>
+  <app-modal #modalCourse>
+    <app-course-selector
+      [packageId]="categoryId"
+      #courseSelector
+    ></app-course-selector>
+  </app-modal>
+
+  <!-- Exibir cursos selecionados -->
+  <div *ngIf="courseSelector.selectedCourses().length > 0">
+    <h4>Cursos Selecionados:</h4>
+    <ul>
+      <li *ngFor="let course of courseSelector.selectedCourses()">
+        {{ course.name }}
+      </li>
+    </ul>
+  </div>
+
+  <app-modal #modalPackage>
+    <app-package-selector
+      [studentId]="categoryId"
+      #packageSelector
+    ></app-package-selector>
+  </app-modal>
+
+  <!-- Exibir pacotes selecionados -->
+  <div *ngIf="packageSelector.selectedPackages().length > 0">
+    <h4>Pacotes Selecionados:</h4>
+    <ul>
+      <li *ngFor="let package of packageSelector.selectedPackages()">
+        {{ package.name }}
+      </li>
+    </ul>
+  </div>
+
+  <button
+    type="submit"
+    class="btn btn-primary"
+    [disabled]="categoryForm.invalid"
+  >
+    Criar
+  </button>
 </form>

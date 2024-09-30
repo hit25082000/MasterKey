@@ -1,33 +1,64 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, FormControl, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  FormControl,
+  Validators,
+  ReactiveFormsModule,
+  FormsModule,
+} from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Course } from '../../../../core/models/course.model';
+import { Package } from '../../../../core/models/package.model';
 import { CourseService } from '../../../course/services/course.service';
 import { CategoryManagementService } from '../../services/category-management.service';
 import { Category } from '../../../../core/models/category.model';
 import { Router } from '@angular/router';
 import { NotificationService } from '../../../../shared/components/notification/notification.service';
 import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
+import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { CourseSelectorComponent } from '../../../course/components/course-selector/course-selector.component';
+import { PackageSelectorComponent } from '../../../package/components/package-selector/package-selector.component';
+import { ViewChild } from '@angular/core';
 
 @Component({
   selector: 'app-category-create',
   standalone: true,
-  imports: [ReactiveFormsModule,CommonModule,FormsModule],
+  imports: [
+    ReactiveFormsModule,
+    CommonModule,
+    FormsModule,
+    ModalComponent,
+    CourseSelectorComponent,
+    PackageSelectorComponent,
+  ],
   templateUrl: './category-register.component.html',
-  styleUrls: ['./category-register.component.scss']
+  styleUrls: ['./category-register.component.scss'],
 })
 export class CategoryRegisterComponent implements OnInit {
   categoryForm!: FormGroup;
-  courseList : Course[] = [];
+  courseList: Course[] = [];
   selectedFile: File | null = null;
   loading = false;
 
-  constructor(private fb: FormBuilder, private categoryManagementService : CategoryManagementService, private notificationService : NotificationService, private router : Router) {}
+  @ViewChild('courseSelector') courseSelector!: CourseSelectorComponent;
+  @ViewChild('packageSelector') packageSelector!: PackageSelectorComponent;
+
+  categoryId: string = '';
+
+  constructor(
+    private fb: FormBuilder,
+    private categoryManagementService: CategoryManagementService,
+    private notificationService: NotificationService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     this.categoryForm = this.fb.group({
       name: ['', Validators.required],
       image: [null],
+      courses: [[]],
+      packages: [[]],
     });
   }
 
@@ -38,13 +69,19 @@ export class CategoryRegisterComponent implements OnInit {
   onSubmit() {
     this.loading = true;
     if (this.categoryForm.valid) {
-      const newCategory: Category = this.categoryForm.value;
+      const newCategory: Category = {
+        ...this.categoryForm.value,
+        courses: this.courseSelector
+          .selectedCourses()
+          .map((course) => course.id),
+        packages: this.packageSelector.selectedPackages().map((pkg) => pkg.id),
+      };
 
       this.categoryManagementService
         .create(newCategory, this.selectedFile)
-        .then((success) => {
+        .then((response) => {
           this.notificationService.showNotification(
-            success,
+            response,
             NotificationType.SUCCESS
           );
           setTimeout(() => {
@@ -54,8 +91,7 @@ export class CategoryRegisterComponent implements OnInit {
         })
         .catch((error) => {
           this.notificationService.showNotification(
-            'Erro ao criar categoria. Por favor, tente novamente: ' +
-              error.message,
+            'Erro ao criar categoria. Por favor, tente novamente: ' + error,
             NotificationType.ERROR
           );
           this.loading = false;

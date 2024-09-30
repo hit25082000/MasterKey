@@ -1,4 +1,4 @@
-import { StudentManagementService } from './../../../student/services/student-management.service';
+import { StudentManagementService } from '../../../student/services/student-management.service';
 import { CommonModule } from '@angular/common';
 import {
   Component,
@@ -10,10 +10,11 @@ import {
 } from '@angular/core';
 import { SearchBarComponent } from '../../../../shared/components/search-bar/search-bar.component';
 import { Package } from '../../../../core/models/package.model';
-import { PackageService } from '../../../package/services/package.service';
+import { PackageService } from '../../services/package.service';
 import { StudentService } from '../../../student/services/student.service';
 import { NotificationService } from '../../../../shared/components/notification/notification.service';
 import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
+import { CategoryService } from '../../../category/services/category.service';
 
 @Component({
   selector: 'app-package-selector',
@@ -24,12 +25,14 @@ import { NotificationType } from '../../../../shared/components/notification/not
 })
 export class PackageSelectorComponent implements OnInit {
   studentId = input<string>('');
+  categoryId = input<string>('');
   allPackages = signal<Package[]>([]);
   selectedPackageIds = signal<Set<string>>(new Set());
 
   private packageService = inject(PackageService);
   private studentManagementService = inject(StudentManagementService);
   private studentService = inject(StudentService);
+  private categoryService = inject(CategoryService);
   private notificationService = inject(NotificationService);
 
   selectedPackages = computed(() => {
@@ -49,7 +52,10 @@ export class PackageSelectorComponent implements OnInit {
   async ngOnInit() {
     await this.loadAllPackages();
     if (this.studentId()) {
-      await this.loadSelectedPackages();
+      await this.loadStudentPackages();
+    }
+    if (this.categoryId()) {
+      await this.loadCategoryPackages();
     }
   }
 
@@ -57,9 +63,18 @@ export class PackageSelectorComponent implements OnInit {
     this.allPackages.set(await this.packageService.getAll());
   }
 
-  private async loadSelectedPackages() {
-    const { packages } = await this.studentService.getPackages(this.studentId());
-    if(packages != undefined){
+  private async loadStudentPackages() {
+    const { packages } = await this.studentService.getPackages(
+      this.studentId()
+    );
+    if (packages != undefined) {
+      this.selectedPackageIds.set(new Set(Array.from(packages) || []));
+    }
+  }
+
+  private async loadCategoryPackages() {
+    const packages = await this.categoryService.getPackages(this.categoryId());
+    if (packages != undefined) {
       this.selectedPackageIds.set(new Set(Array.from(packages) || []));
     }
   }
@@ -80,14 +95,17 @@ export class PackageSelectorComponent implements OnInit {
     this.isSaving.set(true);
 
     try {
-      await this.studentManagementService.updateStudentPackages(studentId, Array.from(this.selectedPackageIds()));
+      await this.studentManagementService.updateStudentPackages(
+        studentId,
+        Array.from(this.selectedPackageIds())
+      );
 
       this.notificationService.showNotification(
         'Pacotes atualizados com sucesso',
         NotificationType.SUCCESS
       );
       await this.loadAllPackages();
-      await this.loadSelectedPackages();
+      await this.loadStudentPackages();
     } catch (error) {
       this.notificationService.showNotification(
         'Erro ao atualizar pacotes',

@@ -84,10 +84,13 @@ export class ClassSelectorComponent implements OnInit {
     this.isSaving.set(true);
 
     try {
-      await this.classManagementService.updateStudentClasses(studentId, Array.from(this.selectedClassIds()));
+      await this.classManagementService.updateStudentClasses(
+        studentId,
+        Array.from(this.selectedClassIds())
+      );
 
       this.notificationService.showNotification(
-        'Classes atualizadas com sucesso',
+        'Turmas atualizadas com sucesso',
         NotificationType.SUCCESS
       );
       await this.loadAllClasses();
@@ -106,7 +109,20 @@ export class ClassSelectorComponent implements OnInit {
     const updatedSelection = new Set(this.selectedClassIds());
     updatedSelection.delete(classId);
     this.selectedClassIds.set(updatedSelection);
-    await this.classManagementService.removeStudentFromClass(classId,this.studentId());
+    await this.classManagementService
+      .removeStudentFromClass(classId, this.studentId())
+      .then(() => {
+        this.notificationService.showNotification(
+          'Turmas atualizadas com sucesso',
+          NotificationType.SUCCESS
+        );
+      })
+      .catch((erro) => {
+        this.notificationService.showNotification(
+          'Erro ao atualizar classes: ' + erro,
+          NotificationType.ERROR
+        );
+      });
   }
 
   private async loadAllStudents() {
@@ -150,7 +166,15 @@ export class ClassSelectorComponent implements OnInit {
     updatedSelection.delete(studentId);
     this.selectedStudentIds.set(updatedSelection);
     for (const classId of this.selectedClassIds()) {
-      await this.classManagementService.removeStudentFromClass(classId,this.studentId());
+      await this.classManagementService.removeStudentFromClass(
+        classId,
+        this.studentId()
+      );
     }
+
+    this.notificationService.showNotification(
+      'Turmas atualizadas com sucesso',
+      NotificationType.SUCCESS
+    );
   }
 }
