@@ -27,8 +27,12 @@ export class FirestoreService {
 
   async getDocument<T>(path: string,id : string): Promise<any> {
     const docItem = await getDoc(doc(this.firestore, path, id));
-
     return { ...docItem.data(), id: docItem.id };
+  }
+
+  async getDocumentRelation<T>(path: string,id : string): Promise<any> {
+    const docItem = await getDoc(doc(this.firestore, path, id));
+    return { ...docItem.data()};
   }
 
   async getUser<T>(id : string): Promise<any> {
@@ -43,6 +47,7 @@ export class FirestoreService {
 
     const querySnapshot = await getDocs(q);
     querySnapshot.forEach((doc) => {
+      if(doc.data())
       list.push({...doc.data(),id: doc.id})
     });
 

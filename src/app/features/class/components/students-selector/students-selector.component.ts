@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal, computed, input, forwardRef } from '@angular/core';
+import { Component, OnInit, signal, computed, input, forwardRef, inject } from '@angular/core';
 import { SearchBarComponent } from '../../../../shared/components/search-bar/search-bar.component';
 import { Student } from '../../../../core/models/student.model';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import { StudentService } from '../../../student/services/student.service';
 
 @Component({
   selector: 'app-student-selector',
@@ -18,7 +19,8 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 })
 export class StudentsSelectorComponent implements OnInit {
   allStudents = signal<Student[]>([]); // Signal para a lista de vídeos
-  selectedStudentsIds = signal<string[]>([]); // Signal para os IDs dos vídeos selecionados
+  selectedStudentsIds = signal<string[]>([]);
+  studentService = inject(StudentService)
 
   selectedStudents = computed(() => {
     return this.allStudents().filter(student => this.selectedStudentsIds().includes(student.id));
@@ -27,34 +29,12 @@ export class StudentsSelectorComponent implements OnInit {
   private onChange: (value: string[]) => void = () => {};
   private onTouched: () => void = () => {};
 
-  ngOnInit(): void {
-    this.loadAllStudents();
+  async ngOnInit() {
+    await this.loadAllStudents();
   }
 
-  loadAllStudents(): void {
-    const students: Student[] = [
-      {
-        id: '1', name: 'Introdução',
-        phone1: '',
-        email: '',
-        cpf: '',
-        rg: '',
-        cep: '',
-        street: '',
-        neighborhood: '',
-        city: '',
-        state: '',
-        number: '',
-        birthday: '',
-        yearsOld: 0,
-        password: '',
-        status: '',
-        sex: '',
-        polo: '',
-        role: ''
-      },
-    ];
-    this.allStudents.set(students);
+  async loadAllStudents() {
+    this.allStudents.set(await this.studentService.getAll());
   }
 
   autoSelect(defaultSelect : string[]){

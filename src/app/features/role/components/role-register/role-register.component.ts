@@ -1,7 +1,7 @@
 import { RoleManagementService } from './../../service/role-management.service';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Permission } from '../permission-select/permission.enum';
+import { RoutePermission } from '../permission-select/permission.enum';
 import { Role } from '../../../../core/models/role.model';
 import { CommonModule } from '@angular/common';
 
@@ -14,7 +14,7 @@ import { CommonModule } from '@angular/common';
 })
 export class RoleRegisterComponent implements OnInit {
   roleForm!: FormGroup;
-  permissionsList = Object.values(Permission); // Converte os valores do enum em um array
+  permissionsList = Object.values(RoutePermission); // Converte os valores do enum em um array
 
   constructor(private fb: FormBuilder, private roleManagementService : RoleManagementService) {}
 

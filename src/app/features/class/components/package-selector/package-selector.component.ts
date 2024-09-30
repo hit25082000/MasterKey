@@ -58,8 +58,10 @@ export class PackageSelectorComponent implements OnInit {
   }
 
   private async loadSelectedPackages() {
-    const packages = await this.studentService.getPackages(this.studentId());
-    this.selectedPackageIds.set(new Set(packages || []));
+    const { packages } = await this.studentService.getPackages(this.studentId());
+    if(packages != undefined){
+      this.selectedPackageIds.set(new Set(Array.from(packages) || []));
+    }
   }
 
   onCheckboxChange(packageId: string, event: Event): void {
@@ -78,21 +80,8 @@ export class PackageSelectorComponent implements OnInit {
     this.isSaving.set(true);
 
     try {
-      const student = await this.studentService.getById(studentId);
-      student.packages = Array.from(this.selectedPackageIds());
+      await this.studentManagementService.updateStudentPackages(studentId, Array.from(this.selectedPackageIds()));
 
-      // Atualizar cursos baseado nos pacotes selecionados
-      const selectedPackages = this.allPackages().filter((pkg) =>
-        this.selectedPackageIds().has(pkg.id)
-      );
-      const coursesFromPackages = new Set(
-        selectedPackages.flatMap((pkg) => pkg.courses.map((course) => course))
-      );
-      student.courses = Array.from(
-        new Set([...(student.courses || []), ...coursesFromPackages])
-      );
-
-      await this.studentManagementService.update(student);
       this.notificationService.showNotification(
         'Pacotes atualizados com sucesso',
         NotificationType.SUCCESS

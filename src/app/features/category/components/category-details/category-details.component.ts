@@ -43,7 +43,6 @@ export class CategoryDetailsComponent implements OnInit {
 
     try {
       const category = await this.categoryService.getById(this.packageId);
-      this.courseList = category.courses
 
       this.packageForm = this.fb.group({
         id: [{ value: category.id, disabled: true }, Validators.required], // ID é desabilitado pois não pode ser editado

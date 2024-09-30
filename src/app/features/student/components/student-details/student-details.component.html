@@ -306,29 +306,11 @@
 
 <button (click)="classModal.toggle()">Turmas</button>
 <app-modal #classModal>
-  <h4>Todas Turmas</h4>
+  <h4>Turmas do Estudante</h4>
   <app-class-selector
     [studentId]="studentId"
     #classSelector
   ></app-class-selector>
-
-  <div class="form-group">
-    <h4>Turmas Cadastradas</h4>
-    <div *ngFor="let class of classSelector.selectedClasses()">
-      <p>
-        <strong>{{ class.name }}</strong> - {{ class.teacher }}
-      </p>
-      <p>
-        <button (click)="classSelector.removeClass(class.id)">Remover</button>
-      </p>
-    </div>
-  </div>
-  <button
-    (click)="classSelector.updateStudentClasses()"
-    [disabled]="classSelector.isSaving()"
-  >
-    {{ classSelector.isSaving() ? "Salvando..." : "Salvar Turmas" }}
-  </button>
 </app-modal>
 
 <button (click)="courseModal.toggle()">Cursos</button>

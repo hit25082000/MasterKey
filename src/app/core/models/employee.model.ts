@@ -14,7 +14,6 @@ export default interface Employee {
   birthday: string;
   yearsOld: number;
   password: string;
-  status: string;
   sex: string;
   polo: string;
   role: string;

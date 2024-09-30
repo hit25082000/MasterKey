@@ -9,7 +9,7 @@ import { AuthService } from './auth.service';
   providedIn: 'root',
 })
 export class AdminService {
-  private apiUrl = 'http://127.0.0.1:5001/master-key-a3c69/us-central1'; //'https://us-central1-master-key-a3c69.cloudfunctions.net';
+  private apiUrl = 'http://127.0.0.1:5001/master-key-a3c69/us-central1';//  'https://us-central1-master-key-a3c69.cloudfunctions.net';
 
   constructor(private http: HttpClient, private authService: AuthService) {}
 

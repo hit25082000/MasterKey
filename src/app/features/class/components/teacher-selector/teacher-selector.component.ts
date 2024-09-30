@@ -1,5 +1,6 @@
+import { EmployeeService } from './../../../employees/services/employee.service';
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal, computed, input, forwardRef } from '@angular/core';
+import { Component, OnInit, signal, computed, input, inject, forwardRef } from '@angular/core';
 import BaseUser from '../../../../core/models/default-user.model';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 
@@ -18,6 +19,7 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 export class TeacherSelectorComponent implements OnInit {
   allTeachers = signal<BaseUser[]>([]);
   selectedTeacherId = signal<string>('');
+  employeeService = inject(EmployeeService)
 
   selectedClasses = computed(() => {
     return this.allTeachers().filter(studentClass => this.selectedTeacherId().includes(studentClass.id));
@@ -26,55 +28,12 @@ export class TeacherSelectorComponent implements OnInit {
   private onChange: (value: string) => void = () => {};
   private onTouched: () => void = () => {};
 
-  ngOnInit(): void {
-    this.loadallTeachers();
+  async ngOnInit() {
+    await this.loadallTeachers();
   }
 
-  loadallTeachers(): void {
-    const teachers: BaseUser[] = [
-      {
-        id: '1', name: 'Introdução 1',
-        phone1: '',
-        email: '',
-        cpf: '',
-        rg: '',
-        cep: '',
-        street: '',
-        neighborhood: '',
-        city: '',
-        state: '',
-        number: '',
-        birthday: '',
-        yearsOld: 0,
-        password: '',
-        status: '',
-        sex: '',
-        polo: '',
-        role: ''
-      },
-      {
-        id: '2', name: 'Introdução 2',
-        phone1: '',
-        email: '',
-        cpf: '',
-        rg: '',
-        cep: '',
-        street: '',
-        neighborhood: '',
-        city: '',
-        state: '',
-        number: '',
-        birthday: '',
-        yearsOld: 0,
-        password: '',
-        status: '',
-        sex: '',
-        polo: '',
-        role: ''
-      },
-    ];
-
-    this.allTeachers.set(teachers);
+  async loadallTeachers() {
+    this.allTeachers.set(await this.employeeService.getAllTeachers());
   }
 
   autoSelect(defaultSelect : string){

@@ -17,7 +17,6 @@ export class AuthGuard {
         if (user) {
           return true; // Permite acesso se o usuário estiver autenticado
         } else {
-          this.router.navigate(['/login']); // Redireciona para a página de login se não estiver autenticado
           return false;
         }
       })

@@ -58,8 +58,10 @@ export class CourseSelectorComponent implements OnInit {
   }
 
   private async loadSelectedCourses() {
-    const courses = await this.studentService.getCourses(this.studentId());
-    this.selectedCourseIds.set(new Set(courses || []));
+    const { courses } = await this.studentService.getCourses(this.studentId());
+    if(courses != undefined){
+      this.selectedCourseIds.set(new Set(Array.from(courses) || []));
+    }
   }
 
   onCheckboxChange(courseId: string, event: Event): void {
@@ -78,24 +80,23 @@ export class CourseSelectorComponent implements OnInit {
     this.isSaving.set(true);
 
     try {
-      const student = await this.studentService.getById(studentId);
-      student.courses = Array.from(this.selectedCourseIds());
-      await this.studentManagementService.update(student);
-      this.notificationService.showNotification(
-        'Cursos atualizados com sucesso',
-        NotificationType.SUCCESS
-      );
-      await this.loadAllCourses();
-      await this.loadSelectedCourses();
+        await this.studentManagementService.updateStudentCourses(studentId, Array.from(this.selectedCourseIds()));
+
+        this.notificationService.showNotification(
+            'Pacotes atualizados com sucesso',
+            NotificationType.SUCCESS
+        );
+        await this.loadAllCourses();
+        await this.loadSelectedCourses();
     } catch (error) {
-      this.notificationService.showNotification(
-        'Erro ao atualizar cursos',
-        NotificationType.ERROR
-      );
+        this.notificationService.showNotification(
+            'Erro ao atualizar pacotes',
+            NotificationType.ERROR
+        );
     } finally {
-      this.isSaving.set(false);
+        this.isSaving.set(false);
     }
-  }
+}
 
   async removeCourseFromStudent(courseId: string) {
     const updatedSelection = new Set(this.selectedCourseIds());

@@ -22,6 +22,14 @@ export class EmployeeService {
     );
   }
 
+  getAllTeachers(): Promise<Employee[]> {
+    return this.firestore.getDocumentsByAttribute<Employee>(
+      'users',
+      'role',
+      'teacher'
+    );
+  }
+
   async getById(id: string): Promise<Employee> {
     return await this.firestore.getDocument<Employee>('users', id);
   }

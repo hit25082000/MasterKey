@@ -23,14 +23,19 @@ export class StudentManagementService {
     private firestoreService: FirestoreService
   ) {}
 
-  async create(student: Student, icon: File | null): Promise<any> {
+  async create(student: Student, icon: File | null): Promise<string> {
     try {
       const iconBase64 = icon ? await this.fileToBase64(icon) : null;
-
-      this.adminService.createUser(student, iconBase64).subscribe(() => {
-        this.logSuccessfulRegistration(student);
-
-        return 'Estudante criado com sucesso!';
+      return new Promise((resolve, reject) => {
+        this.adminService.createUser(student, iconBase64).subscribe(
+          () => {
+            this.logSuccessfulRegistration(student);
+            resolve('Estudante criado com sucesso!');
+          },
+          (error) => {
+            reject(this.handleError(error));
+          }
+        );
       });
     } catch (error) {
       throw this.handleError(error);
@@ -132,11 +137,19 @@ export class StudentManagementService {
     this.systemLog.logUserDelete(student.id, logDetails);
   }
 
-  async updateCourses(newStudent: Student): Promise<string> {
+  async updateStudentCourses(studentId: string, courses: string[]): Promise<string> {
     try {
-      this.firestoreService.updateDocument('users', newStudent.id, newStudent);
+      await this.firestoreService.addToCollectionWithId('student_courses', studentId, { courses });
+      return 'Cursos atualizados com sucesso!';
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
 
-      return '';
+  async updateStudentPackages(studentId: string, packages: string[]): Promise<string> {
+    try {
+      await this.firestoreService.addToCollectionWithId('student_packages', studentId, { packages });
+      return 'Pacotes atualizados com sucesso!';
     } catch (error) {
       throw this.handleError(error);
     }

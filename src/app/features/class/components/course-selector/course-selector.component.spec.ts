@@ -11,7 +11,7 @@ describe('CourseSelectorComponent', () => {
       imports: [CourseSelectorComponent]
     })
     .compileComponents();
-    
+
     fixture = TestBed.createComponent(CourseSelectorComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
@@ -20,4 +20,6 @@ describe('CourseSelectorComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+
 });

@@ -4,6 +4,10 @@ import { CommonModule } from '@angular/common';
 import { Course } from '../../../../core/models/course.model';
 import { CourseService } from '../../../course/services/course.service';
 import { CategoryManagementService } from '../../services/category-management.service';
+import { Category } from '../../../../core/models/category.model';
+import { Router } from '@angular/router';
+import { NotificationService } from '../../../../shared/components/notification/notification.service';
+import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
 
 @Component({
   selector: 'app-category-create',
@@ -16,18 +20,14 @@ export class CategoryRegisterComponent implements OnInit {
   categoryForm!: FormGroup;
   courseList : Course[] = [];
   selectedFile: File | null = null;
+  loading = false;
 
-  constructor(private fb: FormBuilder, private categoryManagementService : CategoryManagementService, private courseService : CourseService) {}
+  constructor(private fb: FormBuilder, private categoryManagementService : CategoryManagementService, private notificationService : NotificationService, private router : Router) {}
 
   ngOnInit(): void {
-     this.courseService.getAll().then((courses)=>{
-      this.courseList = courses
-    })
-
     this.categoryForm = this.fb.group({
-      name: ['', Validators.required], // Campo nome, obrigatório
-      profilePic: [null],
-      courses: new FormControl([], Validators.required) // Permissões, também obrigatório
+      name: ['', Validators.required],
+      image: [null],
     });
   }
 
@@ -36,8 +36,36 @@ export class CategoryRegisterComponent implements OnInit {
   }
 
   onSubmit() {
+    this.loading = true;
     if (this.categoryForm.valid) {
-      this.categoryManagementService.create(this.categoryForm.value, this.selectedFile)
+      const newCategory: Category = this.categoryForm.value;
+
+      this.categoryManagementService
+        .create(newCategory, this.selectedFile)
+        .then((success) => {
+          this.notificationService.showNotification(
+            success,
+            NotificationType.SUCCESS
+          );
+          setTimeout(() => {
+            this.loading = false;
+            this.router.navigate(['/admin/category-list']);
+          }, 1000);
+        })
+        .catch((error) => {
+          this.notificationService.showNotification(
+            'Erro ao criar categoria. Por favor, tente novamente: ' +
+              error.message,
+            NotificationType.ERROR
+          );
+          this.loading = false;
+        });
+    } else {
+      this.notificationService.showNotification(
+        'Por favor, preencha todos os campos obrigatórios corretamente.',
+        NotificationType.ERROR
+      );
+      this.loading = false;
     }
   }
 }

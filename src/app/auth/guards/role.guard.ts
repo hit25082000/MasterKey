@@ -1,16 +1,15 @@
 import { Injectable } from '@angular/core';
-import { CanActivate, Router } from '@angular/router';
-import { Observable } from 'rxjs';
-import { map, take } from 'rxjs/operators';
-import { Firestore } from '@angular/fire/firestore';
+import { CanActivate, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { FirestoreService } from '../../core/services/firestore.service';
 import DefaultUser from '../../core/models/default-user.model';
 import { AuthService } from '../../core/services/auth.service';
+import { Role } from '../../core/models/role.model';
+import { RoutePermission } from '../../features/role/components/permission-select/permission.enum';
 
 @Injectable({
   providedIn: 'root'
 })
-export class RoleGuard implements CanActivate {
+export class RoleGuard {
 
   constructor(
     private firestore: FirestoreService,
@@ -18,26 +17,34 @@ export class RoleGuard implements CanActivate {
     private router: Router
   ) {}
 
-  async canActivate(): Promise<boolean> {
-    var user = this.auth.getCurrentUser()
-        if (user) {
-          var userDoc = await this.firestore.getDocument<DefaultUser>('users',user.uid!)
-            if(userDoc.role == "admin")
-              return true
+  async canActivate(route: ActivatedRouteSnapshot): Promise<boolean> {
+    const requiredPermission = route.data['permission'] as RoutePermission;
+    const user = await this.auth.getCurrentUser();
 
-            if(userDoc.role == "student"){
-              this.router.navigate(['/student/dashboard']);
-              return true
-            }
+    if (user) {
+      const userRole = await this.firestore.getDocumentsByAttribute<Role>('roles', 'name', user.role);
 
-            if(userDoc.role == "teacher")
-              return true
+      if (userRole.length > 0 && userRole[0].permissions.includes(requiredPermission)) {
+        return true;
+      }
 
-            this.router.navigate(['/unauthorized']);
-            return false
-        } else {
-          this.router.navigate(['/unauthorized']); // Redireciona para uma página de não autorizado
-          return false;
-        }
+      switch (user.role) {
+        case 'student':
+          this.router.navigate(['/classroom']);
+          break;
+        case 'teacher':
+          this.router.navigate(['/admin']);
+          break;
+        case 'admin':
+          this.router.navigate(['/admin']);
+          break;
+        default:
+          this.router.navigate(['/unauthorized']);
+      }
+    } else {
+      this.router.navigate(['/login']);
+    }
+
+    return false;
   }
 }

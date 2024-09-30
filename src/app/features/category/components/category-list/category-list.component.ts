@@ -1,10 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthService } from '../../../../auth/services/auth.service';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { CategoryService } from '../../services/category.service';
 import { Category } from '../../../../core/models/category.model';
+import { NotificationService } from '../../../../shared/components/notification/notification.service';
+import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
 
 @Component({
   selector: 'app-category-list',
@@ -15,23 +16,26 @@ import { Category } from '../../../../core/models/category.model';
 })
 export class CategoryListComponent implements OnInit {
   categorys : Category[] = []
+  loading = true;
 
-  constructor(private categoryService : CategoryService,private auth : AuthService,
-    private router: Router){}
+  constructor(private categoryService : CategoryService,
+    private router: Router,
+    private notificationService: NotificationService){}
 
-  async ngOnInit(): Promise<void> {
-    try {
-      this.categorys = await this.categoryService.getAll();
-    } catch (err) {
-      //this.error = 'Erro ao carregar os alunos';
-      console.error(err);
-    } finally {
-      //this.loading = false;
+    async ngOnInit(): Promise<void> {
+      try {
+        this.categorys = await this.categoryService.getAll();
+      } catch (error: any) {
+        this.notificationService.showNotification(
+          'Erro ao consultar categorias: ' + error,
+          NotificationType.ERROR
+        );
+      } finally {
+        this.loading = false;
+      }
     }
-  }
 
   delete(id : string){
-    this.categoryService.delete(id)
   }
 
   edit(id : string){

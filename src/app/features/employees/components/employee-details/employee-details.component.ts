@@ -55,71 +55,40 @@ export class EmployeeDetailsComponent implements OnInit {
     this.employeeId = this.route.snapshot.paramMap.get('id')!;
 
     if (!this.employeeId) {
-      this.error = 'ID do estudante não encontrado';
+      this.notificationService.showNotification('Funcionário não encontrado', NotificationType.ERROR);
       this.loading = false;
       return;
     }
 
     try {
       const employee = await this.employeeService.getById(this.employeeId);
-
-      // Inicializar o formulário após os dados serem carregados
       this.employeeForm = this.fb.group({
         id: [employee.id],
-        name: [employee?.name || '', Validators.required],
-        phone1: [employee?.phone1 || ''],
-        phone2: [employee?.phone2 || ''],
-        email: [employee?.email || '', [Validators.required, Validators.email]],
-        cpf: [employee?.cpf || '', Validators.required],
-        rg: [employee?.rg || ''],
-        cep: [employee?.cep || ''],
-        street: [employee?.street || ''],
-        neighborhood: [employee?.neighborhood || ''],
-        city: [employee?.city || ''],
-        state: [employee?.state || ''],
-        number: [employee?.number || ''],
-        birthday: [employee?.birthday || ''],
-        yearsOld: [employee?.yearsOld || ''],
-        password: [employee?.password || '', Validators.required],
-        status: [employee?.status || 'ativo', Validators.required],
-        profilePic: [employee.profilePic],
-        sex: [employee?.sex || 'masculino', Validators.required],
-        role: ['employee'],
-        polo: [employee?.polo || ''],
-        description: [employee?.description || ''],
+        name: [employee.name || '', Validators.required],
+        phone1: [employee.phone1 || ''],
+        email: [employee.email || '', [Validators.required, Validators.email]],
+        cpf: [employee.cpf || '', Validators.required],
+        // Adicione outros campos conforme necessário
       });
-
-      this.loading = false; // Dados carregados, ocultar indicador de carregamento
-    } catch (err) {
-      this.error = 'Erro ao carregar os dados do aluno' + err;
+      this.loading = false;
+    } catch (error) {
+      this.notificationService.showNotification('Erro ao carregar dados do funcionário: ' + error, NotificationType.ERROR);
       this.loading = false;
     }
   }
 
   async onSubmit(): Promise<void> {
     if (this.employeeForm.valid && this.employeeForm.dirty) {
-      var employee: Employee = this.employeeForm.value as Employee;
-
-      this.employeeManagementService
-        .update(this.employeeId, employee, this.selectedFile)
-        .then(() => {
-          this.notificationService.showNotification(
-            'Funcionario editado com sucesso!',
-            NotificationType.SUCCESS
-          );
-          this.router.navigate(['/admin/employee-list']);
-        })
-        .catch((error) => {
-          this.notificationService.showNotification(
-            'Erro ao editar funcionario. Por favor, tente novamente: ' + error,
-            NotificationType.ERROR
-          );
-        });
+      const employee: Employee = this.employeeForm.value as Employee;
+      try {
+        await this.employeeManagementService.update(employee, this.selectedFile);
+        this.notificationService.showNotification('Funcionário editado com sucesso!', NotificationType.SUCCESS);
+        this.router.navigate(['/admin/employee-list']);
+      } catch (error) {
+        this.notificationService.showNotification('Erro ao editar funcionário: ' + error, NotificationType.ERROR);
+      }
     } else {
-      this.notificationService.showNotification(
-        'Por favor, preencha todos os campos obrigatórios corretamente.',
-        NotificationType.ERROR
-      );
+      this.notificationService.showNotification('Por favor, preencha todos os campos obrigatórios corretamente.', NotificationType.ERROR);
     }
   }
 

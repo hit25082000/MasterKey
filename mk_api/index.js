@@ -144,7 +144,7 @@ exports.createUserWithProfile = functions.https.onRequest((req, res) => {
         res.status(201).json({ ...userRecord, iconUrl });
       });
     } catch (error) {
-      res.status(500).json({ error: `Erro ao criar usuário: ${error.message}` });
+      res.status(500).json(error);
     }
   });
 });

@@ -86,7 +86,6 @@ export class StudentDetailsComponent implements OnInit {
         birthday: [student?.birthday || ''],
         yearsOld: [student?.yearsOld || ''],
         password: [student?.password || '', Validators.required],
-        status: [student?.status || 'ativo', Validators.required],
         responsible: [student?.responsible || ''],
         responsibleRg: [student?.rgResponsible || ''],
         responsibleCpf: [student?.cpfResponsible || ''],
@@ -138,38 +137,22 @@ export class StudentDetailsComponent implements OnInit {
   }
 
   async onPackageSelectionChange(newSelectedPackages: string[]) {
-    const student = await this.studentService.getById(this.studentId);
-    const addedPackages = newSelectedPackages.filter(
-      (id) => !this.packages().includes(id)
-    );
-
+    const studentId = this.studentId; // Obter o ID do estudante
     this.packages.set(newSelectedPackages);
 
+    // Salvar pacotes na nova coleção
+    await this.studentManagementService.updateStudentPackages(studentId, newSelectedPackages);
+
+    // Atualizar cursos com base nos pacotes selecionados
     const allPackages = await this.packageService.getAll();
     const coursesToAdd = allPackages
-      .filter((pkg) => addedPackages.includes(pkg.id))
-      .flatMap((pkg) => pkg.courses.map((course) => course));
+        .filter((pkg) => newSelectedPackages.includes(pkg.id))
+        .flatMap((pkg) => pkg.courses.map((course) => course));
 
     const updatedCourses = [...new Set([...this.courses(), ...coursesToAdd])];
     this.courses.set(updatedCourses);
 
-    student.packages = newSelectedPackages;
-    student.courses = updatedCourses;
 
-    await this.studentManagementService
-      .update(student)
-      .then((success) => {
-        this.notificationService.showNotification(
-          success,
-          NotificationType.SUCCESS
-        );
-      })
-      .catch((error) => {
-        console.log(error);
-        this.notificationService.showNotification(
-          error,
-          NotificationType.ERROR
-        );
-      });
+    await this.studentManagementService.updateStudentCourses(studentId, updatedCourses);
   }
 }

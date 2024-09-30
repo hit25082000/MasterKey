@@ -10,9 +10,9 @@ import {
   FormsModule,
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Permission } from '../permission-select/permission.enum';
 import { Role } from '../../../../core/models/role.model';
 import { CommonModule } from '@angular/common';
+import { RoutePermission } from '../permission-select/permission.enum';
 
 @Component({
   selector: 'app-role-editor',
@@ -23,7 +23,7 @@ import { CommonModule } from '@angular/common';
 })
 export class RoleDetailsComponent implements OnInit {
   roleForm!: FormGroup;
-  permissions = Object.values(Permission); // Converte os valores do enum em um array
+  permissions = Object.values(RoutePermission); // Converte os valores do enum em um array
   roleId!: string;
   loading: boolean = true;
   error: string = '';

@@ -26,13 +26,17 @@ import { EmployeeRegisterComponent } from './features/employees/components/emplo
 import { PackageListComponent } from './features/package/components/package-list/package-list.component';
 import { PackageDetailsComponent } from './features/package/components/package-details/package-details.component';
 import { PackageRegisterComponent } from './features/package/components/package-register/package-register.component';
-
+import { CategoryDetailsComponent } from './features/category/components/category-details/category-details.component';
+import { CategoryListComponent } from './features/category/components/category-list/category-list.component';
+import { CategoryRegisterComponent } from './features/category/components/category-register/category-register.component';
+import { RoutePermission } from './features/role/components/permission-select/permission.enum';
 export const routes: Routes = [
   { path: '', component: EcommerceComponent },
   {
     path: 'admin',
     component: AdminComponent,
-    canActivate: [AuthGuard],
+    canActivate: [AuthGuard, RoleGuard],
+    data: { permission: RoutePermission.ADMIN_PANEL },
     children: [
       {
         path: '',
@@ -115,13 +119,25 @@ export const routes: Routes = [
         path: 'employee-register',
         component: EmployeeRegisterComponent,
       },
+      {
+        path: 'category-detail/:id',
+        component: CategoryDetailsComponent,
+      },
+      {
+        path: 'category-list',
+        component: CategoryListComponent,
+      },
+      {
+        path: 'category-register',
+        component: CategoryRegisterComponent,
+      },
     ],
   },
   { path: 'login', component: LoginComponent },
   {
     path: 'classroom',
     component: ClassroomComponent,
-    canActivate: [AuthGuard, RoleGuard],
+    canActivate: [AuthGuard],
   },
   { path: 'ecommerce', component: EcommerceComponent },
   { path: 'unauthorized', component: UnauthorizedComponent },

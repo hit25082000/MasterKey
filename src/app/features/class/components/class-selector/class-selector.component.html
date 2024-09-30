@@ -1,20 +1,77 @@
 <div class="class-selector">
-  <app-search-bar
-    [dataList]="nonSelectedClasses()"
-    #searchBarComponent
-  ></app-search-bar>
+  <!-- Seleção de classes para um estudante -->
+  <ng-container *ngIf="studentId()">
+    <h4>Selecionar Classes</h4>
+    <app-search-bar
+      [dataList]="nonSelectedClasses()"
+      #searchBarComponent
+    ></app-search-bar>
 
-  <div
-    *ngFor="let class of searchBarComponent.filteredList()"
-    class="form-group"
-  >
-    <label>
-      <input
-        type="checkbox"
-        [checked]="selectedClassIds().has(class.id)"
-        (change)="onCheckboxChange(class.id, $event)"
-      />
-      {{ class.name }}
-    </label>
-  </div>
+    <div
+      *ngFor="let class of searchBarComponent.filteredList()"
+      class="form-group"
+    >
+      <label>
+        <input
+          type="checkbox"
+          [checked]="selectedClassIds().has(class.id)"
+          (change)="onCheckboxChange(class.id, $event)"
+        />
+        {{ class.name }}
+      </label>
+    </div>
+
+    <h4>Classes Selecionadas</h4>
+    <div *ngFor="let class of selectedClasses()">
+      <p>
+        <strong>{{ class.name }}</strong>
+      </p>
+      <button (click)="removeClass(class.id)">Remover</button>
+    </div>
+
+    <button
+      (click)="updateStudentClasses()"
+      [disabled]="isSaving()"
+    >
+      {{ isSaving() ? "Salvando..." : "Salvar Classes" }}
+    </button>
+  </ng-container>
+
+  <!-- Seleção de estudantes para uma classe -->
+  <ng-container *ngIf="classId()">
+    <h4>Selecionar Estudantes</h4>
+    <app-search-bar
+      [dataList]="allStudents()"
+      #searchBarStudents
+    ></app-search-bar>
+
+    <div
+      *ngFor="let student of searchBarStudents.filteredList()"
+      class="form-group"
+    >
+      <label>
+        <input
+          type="checkbox"
+          [checked]="selectedStudentIds().has(student.id)"
+          (change)="onCheckboxChange(student.id, $event)"
+        />
+        {{ student.name }}
+      </label>
+    </div>
+
+    <h4>Estudantes Selecionados</h4>
+    <div *ngFor="let studentId of selectedStudentIds()">
+      <p>
+        <strong>{{ (allStudents() | find: studentId)?.name }}</strong>
+      </p>
+      <button (click)="removeStudent(studentId)">Remover</button>
+    </div>
+
+    <button
+      (click)="updateClassStudents()"
+      [disabled]="isSaving()"
+    >
+      {{ isSaving() ? "Salvando..." : "Salvar Estudantes" }}
+    </button>
+  </ng-container>
 </div>

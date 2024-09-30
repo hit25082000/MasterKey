@@ -1,18 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import {
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { EmployeeManagementService } from '../../services/employee-management.service';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { NotificationService } from '../../../../shared/components/notification/notification.service';
-import { SystemLogService } from '../../../../core/services/system-log.service';
 import { ValidatorCpf } from '../../../../shared/Validators/cpf.validator';
 import { passwordMatchValidator } from '../../../../shared/Validators/password-math.validator';
-import { AuthService } from '../../../../core/services/auth.service';
 import Employee from '../../../../core/models/employee.model';
 import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
 
@@ -26,6 +19,7 @@ import { NotificationType } from '../../../../shared/components/notification/not
 export class EmployeeRegisterComponent implements OnInit {
   employeeForm!: FormGroup;
   selectedFile: File | null = null;
+  loading: boolean = false;
 
   constructor(
     private notificationService: NotificationService,
@@ -53,7 +47,6 @@ export class EmployeeRegisterComponent implements OnInit {
         yearsOld: ['', [Validators.required, Validators.min(0)]],
         password: ['', [Validators.required, Validators.minLength(6)]],
         confirmPassword: ['', Validators.required],
-        status: ['ativo', Validators.required],
         profilePic: [null],
         sex: ['masculino', Validators.required],
         polo: ['', Validators.required],
@@ -69,31 +62,35 @@ export class EmployeeRegisterComponent implements OnInit {
   }
 
   onSubmit() {
+    this.loading = true;
     if (this.employeeForm.valid) {
-      delete this.employeeForm.value.confirmPassword;
       const newEmployee: Employee = this.employeeForm.value;
 
       this.employeeManagement
         .create(newEmployee, this.selectedFile)
-        .then(() => {
+        .then((success) => {
           this.notificationService.showNotification(
-            'Funcionario cadastrado com sucesso!',
+            success,
             NotificationType.SUCCESS
           );
-          this.router.navigate(['/admin/employee-list']);
+          setTimeout(() => {
+            this.loading = false;
+          }, 1000);
         })
         .catch((error) => {
           this.notificationService.showNotification(
             'Erro ao cadastrar funcionario. Por favor, tente novamente: ' +
-              { error },
+              error.message,
             NotificationType.ERROR
           );
+          this.loading = false;
         });
     } else {
       this.notificationService.showNotification(
         'Por favor, preencha todos os campos obrigatórios corretamente.',
         NotificationType.ERROR
       );
+      this.loading = false;
     }
   }
 }

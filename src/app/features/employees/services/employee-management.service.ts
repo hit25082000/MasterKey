@@ -1,4 +1,4 @@
-import { QuerySnapshot } from '@angular/fire/firestore';
+import { QuerySnapshot, Firestore } from '@angular/fire/firestore';
 import Employee from './../../../core/models/employee.model';
 import { Injectable } from '@angular/core';
 import { FirestoreService } from '../../../core/services/firestore.service';
@@ -8,7 +8,7 @@ import { EmployeeService } from './employee.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { SystemLogService } from '../../../core/services/system-log.service';
 import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 
 @Injectable({
@@ -16,55 +16,63 @@ import { HttpErrorResponse } from '@angular/common/http';
 })
 export class EmployeeManagementService {
   constructor(
-    private http: HttpClient,
     private authService: AuthService,
     private employeeService: EmployeeService,
     private adminService: AdminService,
-    private systemLog: SystemLogService
+    private systemLog: SystemLogService,
+    private firestoreService: FirestoreService
   ) {}
 
   async create(employee: Employee, icon: File | null): Promise<string> {
     try {
       const iconBase64 = icon ? await this.fileToBase64(icon) : null;
-
-      await this.adminService.createUser(employee, iconBase64);
-
-      this.logSuccessfulRegistration(employee);
-      return 'Estudante criado com sucesso!';
+      return new Promise((resolve, reject) => {
+        this.adminService.createUser(employee, iconBase64).subscribe(
+          () => {
+            this.logSuccessfulRegistration(employee);
+            resolve('Funcionario criado com sucesso!');
+          },
+          (error) => {
+            reject(this.handleError(error));
+          }
+        );
+      });
     } catch (error) {
       throw this.handleError(error);
     }
   }
 
-  async update(
-    id: string,
-    newEmployee: Employee,
-    icon?: File | null
-  ): Promise<string> {
+  async update(newEmployee: Employee, icon?: File | null): Promise<string> {
     try {
       const iconBase64 = icon ? await this.fileToBase64(icon) : null;
-
-      const oldEmployee = await this.employeeService.getById(id);
-
-      await this.adminService.updateUser(newEmployee, iconBase64);
-
+      const oldEmployee = await this.employeeService.getById(newEmployee.id);
       var logDetails = this.getDifferences(newEmployee, oldEmployee);
 
-      this.logSuccessfulUpdate(newEmployee, logDetails);
-      return 'Estudante atualizado com sucesso!';
+      return new Promise((resolve, reject) => {
+        this.adminService.updateUser(newEmployee, iconBase64).subscribe(
+          () => {
+            this.logSuccessfulUpdate(newEmployee, logDetails);
+            resolve('Funcionario atualizado com sucesso!');
+          },
+          (error) => {
+            reject(this.handleError(error));
+          }
+        );
+      });
     } catch (error) {
       throw this.handleError(error);
     }
   }
 
-  async delete(userId: string): Promise<string> {
+  async delete(userId: string): Promise<any> {
     try {
-      await this.adminService.deleteUser(userId).subscribe(() => {
-        this.employeeService.getById(userId).then((employee) => {
-          this.logSuccessfulDelete(employee);
-        });
+      const employee = await this.employeeService.getById(userId);
+
+      this.adminService.deleteUser(userId).subscribe(() => {
+        this.logSuccessfulDelete(employee);
+
+        return 'Funcionario deletado com sucesso!';
       });
-      return 'Estudante deletado com sucesso!';
     } catch (error) {
       throw this.handleError(error);
     }
@@ -100,17 +108,14 @@ export class EmployeeManagementService {
     const currentUser = this.authService.getCurrentUser();
     const logDetails = `Usuário ${currentUser?.name} (ID: ${
       currentUser?.id
-    }) cadastrou o estudante ${employee.name} (ID: ${
+    }) cadastrou o funcionario ${employee.name} (ID: ${
       employee.id
     }) em ${new Date().toLocaleString()}`;
 
     this.systemLog.logUserRegistration(employee.id, logDetails);
   }
 
-  private logSuccessfulUpdate(
-    employee: Employee,
-    chagedData: Partial<Employee>
-  ) {
+  private logSuccessfulUpdate(employee: Employee, chagedData: Partial<Employee>) {
     const currentUser = this.authService.getCurrentUser();
     const logDetails = `Usuário ${currentUser?.name} (ID: ${
       currentUser?.id
@@ -125,7 +130,7 @@ export class EmployeeManagementService {
     const currentUser = this.authService.getCurrentUser();
     const logDetails = `Usuário ${currentUser?.name} (ID: ${
       currentUser?.id
-    }) removeu o estudante ${employee.name} (ID: ${
+    }) removeu o funcionario ${employee.name} (ID: ${
       employee.id
     }) em ${new Date().toLocaleString()}`;
 
