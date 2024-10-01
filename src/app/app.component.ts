@@ -5,6 +5,7 @@ import { RouterOutlet } from '@angular/router';
 import { AsyncPipe } from '@angular/common';
 import { NotificationType } from './shared/components/notification/notifications-enum';
 import { LoadingOverlayComponent } from '../app/shared/components/loading-overlay/loading-overlay.component';
+import { ChatComponent } from './features/chat/chat.component';
 
 @Component({
   selector: 'app-root',
@@ -14,6 +15,7 @@ import { LoadingOverlayComponent } from '../app/shared/components/loading-overla
     RouterOutlet,
     AsyncPipe,
     LoadingOverlayComponent,
+    ChatComponent,
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],

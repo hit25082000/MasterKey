@@ -15,41 +15,5 @@ export class EcommerceComponent implements OnInit {
   courses: Course[] = [];
   packages: Package[] = [];
 
-  ngOnInit() {
-    // Aqui você deve carregar os cursos e pacotes de um serviço
-    // Por enquanto, vamos usar dados de exemplo
-    this.courses = [
-      {
-        id: '1',
-        name: 'Curso de Angular',
-        description: 'Aprenda Angular do zero',
-        price: '199,99',
-        image: '',
-        videoCount: 10,
-        promoPrice: 150,
-        portionCount: 10,
-        hidePrice: false,
-        status: 'ativo',
-        category: 'Desenvolvimento',
-        categoryEcommerce: 'Front-end',
-        highlight: true,
-        checkoutUrl: 'https://checkout.masterkey.com.br/curso-angular',
-        workHours: 40,
-        videos: [], // Adicione uma lista de vídeos
-      },
-      // ... mais cursos
-    ];
-
-    this.packages = [
-      {
-        id: '1',
-        name: 'Pacote Desenvolvimento Web',
-        description: 'Inclui cursos de HTML, CSS e JavaScript',
-        price: 299.99,
-        courses: [], // Adicione uma lista de cursos
-        workHours: 40, // Defina as horas de trabalho
-      },
-      // ... mais pacotes
-    ];
-  }
+  ngOnInit() {}
 }

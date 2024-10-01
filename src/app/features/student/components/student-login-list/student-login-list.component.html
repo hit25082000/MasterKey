@@ -1,0 +1,36 @@
+<h2>Calendário de Presença dos Estudantes</h2>
+
+<div class="calendar-controls">
+  <button (click)="previousMonth()">&lt; Mês anterior</button>
+  <h3>{{ currentMonth | date : "MMMM yyyy" }}</h3>
+  <button (click)="nextMonth()">Próximo mês &gt;</button>
+</div>
+
+<table *ngIf="studentAttendance$ | async as studentAttendance; else loading">
+  <thead>
+    <tr>
+      <th>Estudante</th>
+      <th *ngFor="let day of daysInMonth">{{ day | date : "dd" }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let studentAttendance of studentAttendance">
+      <td>{{ studentAttendance.student.name }}</td>
+      <td
+        *ngFor="let day of daysInMonth"
+        [ngClass]="{
+          present: studentAttendance.dates[day.toISOString().split('T')[0]],
+          absent: !studentAttendance.dates[day.toISOString().split('T')[0]]
+        }"
+      >
+        {{
+          studentAttendance.dates[day.toISOString().split("T")[0]] ? "✓" : "✗"
+        }}
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<ng-template #loading>
+  <p>Carregando dados de presença...</p>
+</ng-template>

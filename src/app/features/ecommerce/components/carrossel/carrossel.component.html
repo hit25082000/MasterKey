@@ -1,0 +1,13 @@
+<div class="carrossel-container">
+  <h2>Cursos em Destaque</h2>
+  <div class="carrossel-list">
+    <div *ngFor="let course of carrosselCourses" class="carrossel-item">
+      <h3>{{ course.name }}</h3>
+      <p>{{ course.description }}</p>
+      <p *ngIf="!course.hidePrice">Preço: {{ course.courses }}</p>
+      <p *ngIf="course.promotion">Promoção Ativa!</p>
+    </div>
+  </div>
+</div>
+
+<app-loading-overlay [isLoading]="isLoading"></app-loading-overlay>

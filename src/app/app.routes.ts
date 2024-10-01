@@ -30,14 +30,13 @@ import { CategoryDetailsComponent } from './features/category/components/categor
 import { CategoryListComponent } from './features/category/components/category-list/category-list.component';
 import { CategoryRegisterComponent } from './features/category/components/category-register/category-register.component';
 import { RoutePermission } from './features/role/components/permission-select/permission.enum';
+import { StudentLoginListComponent } from './features/student/components/student-login-list/student-login-list.component';
 export const routes: Routes = [
   { path: '', component: EcommerceComponent },
   {
     path: 'admin',
     component: AdminComponent,
-    canActivate: [
-      AuthGuard, //RoleGuard
-    ],
+    canActivate: [AuthGuard, RoleGuard],
     data: { permission: RoutePermission.ADMIN_PANEL },
     children: [
       {
@@ -56,6 +55,10 @@ export const routes: Routes = [
       {
         path: 'student-list',
         component: StudentListComponent,
+      },
+      {
+        path: 'student-login-list',
+        component: StudentLoginListComponent,
       },
       {
         path: 'student-register',

@@ -1,0 +1,33 @@
+<form [formGroup]="carrosselForm" (ngSubmit)="onSubmit()">
+  <div>
+    <label for="name">Nome:</label>
+    <input type="text" id="name" formControlName="name" />
+  </div>
+
+  <div>
+    <label for="description">Descrição:</label>
+    <textarea id="description" formControlName="description"></textarea>
+  </div>
+
+  <div>
+    <label for="hidePrice">Ocultar Preço:</label>
+    <input type="checkbox" id="hidePrice" formControlName="hidePrice" />
+  </div>
+
+  <div>
+    <label for="promotion">Promoção:</label>
+    <input type="checkbox" id="promotion" formControlName="promotion" />
+  </div>
+
+  <div>
+    <label for="courses">Curso:</label>
+    <select id="courses" formControlName="courses">
+      <option value="">Selecione um curso</option>
+      <option *ngFor="let course of availableCourses" [value]="course.id">
+        {{ course.name }}
+      </option>
+    </select>
+  </div>
+
+  <button type="submit" [disabled]="!carrosselForm.valid">Enviar</button>
+</form>

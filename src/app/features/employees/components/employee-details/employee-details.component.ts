@@ -89,7 +89,7 @@ export class EmployeeDetailsComponent implements OnInit {
         description: [student?.description || ''],
       });
 
-      this.loading = false; // Dados carregados, ocultar indicador de carregamento
+      this.loading = false;
     } catch (error) {
       this.notificationService.showNotification(
         'Erro ao consultar dados do estudante: ' + error,

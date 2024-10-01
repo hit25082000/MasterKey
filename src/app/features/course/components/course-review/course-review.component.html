@@ -1,0 +1,42 @@
+<div class="course-review">
+  <h3>Avalie este curso</h3>
+
+  <div class="star-rating">
+    <span
+      *ngFor="let star of [1, 2, 3, 4, 5]"
+      (click)="setRating(star)"
+      [class.filled]="star <= rating"
+    >
+      ★
+    </span>
+  </div>
+
+  <textarea
+    [(ngModel)]="comment"
+    placeholder="Deixe seu comentário sobre o curso"
+    rows="4"
+  >
+  </textarea>
+
+  <input type="file" (change)="onVideoSelected($event)" accept="video/*" />
+
+  <button (click)="submitReview()" [disabled]="!isValidReview()">
+    Enviar Avaliação
+  </button>
+</div>
+
+<div *ngIf="reviews.length > 0">
+  <h3>Avaliações dos Alunos</h3>
+  <div *ngFor="let review of reviews" class="review-item">
+    <div class="star-rating">
+      <span
+        *ngFor="let star of [1, 2, 3, 4, 5]"
+        [class.filled]="star <= review.rating"
+      >
+        ★
+      </span>
+    </div>
+    <p>{{ review.comment }}</p>
+    <video *ngIf="review.videoUrl" [src]="review.videoUrl" controls></video>
+  </div>
+</div>

@@ -1,8 +1,18 @@
 export interface Video {
-  id : string;
+  id: string;
   title: string;
   duration: number;
   url: string;
+}
+
+export interface CourseReview {
+  id: string;
+  userId: string;
+  courseId: string;
+  rating: number; // 1 a 5 estrelas
+  comment: string;
+  videoUrl?: string; // URL do vídeo de avaliação (opcional)
+  createdAt: Date;
 }
 
 export interface Course {
@@ -22,4 +32,5 @@ export interface Course {
   description: string;
   workHours: number;
   videos: Video[];
+  reviews: CourseReview[];
 }

@@ -1,24 +1,35 @@
 <p>login works!</p>
-  Já é um usuário?
-  <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+Já é um usuário?
+<form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
   <div class="form-group">
     <label for="email">E-mail</label>
-    <input id="email" formControlName="email" class="form-control" type="email" />
+    <input
+      id="email"
+      formControlName="email"
+      class="form-control"
+      type="email"
+    />
   </div>
 
   <div class="form-group">
     <label for="password">Senha</label>
-    <input id="password" formControlName="password" class="form-control" type="password"/>
+    <input
+      id="password"
+      formControlName="password"
+      class="form-control"
+      type="password"
+    />
   </div>
 
-  <button type="submit" class="btn btn-primary" [disabled]="loginForm.invalid">Login</button>
+  <button type="submit" [disabled]="isLoading">
+    {{ isLoading ? "Carregando..." : "Entrar" }}
+  </button>
 </form>
 
-
 @defer(on viewport) {
-  <p>commentarios ...............</p>
+<p>commentarios ...............</p>
 } @placeholder {
-  <p>Future comments</p>
+<p>Future comments</p>
 } @loading (minimum 2s) {
-  <p>Loading comments...</p>
+<p>Loading comments...</p>
 }

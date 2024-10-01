@@ -14,6 +14,9 @@ import {
   QuerySnapshot,
   query,
   where,
+  QueryConstraint,
+  writeBatch,
+  updateDoc,
 } from '@angular/fire/firestore';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
@@ -121,5 +124,48 @@ export class FirestoreService {
     });
 
     return list as T[];
+  }
+
+  async getDocumentsByQuery<T>(
+    path: string,
+    ...queryConstraints: any[]
+  ): Promise<T[]> {
+    const q = query(collection(this.firestore, path), ...queryConstraints);
+    const querySnapshot = await getDocs(q);
+
+    const list: T[] = [];
+    querySnapshot.forEach((doc) => {
+      if (doc.data()) {
+        list.push({ ...doc.data(), id: doc.id } as T);
+      }
+    });
+
+    return list;
+  }
+
+  // Adicione um método para obter dados em tempo real
+  getCollectionObservable<T>(path: string): Observable<T[]> {
+    return collectionData(collection(this.firestore, path), {
+      idField: 'id',
+    }) as Observable<T[]>;
+  }
+
+  // Adicione um método para atualizar campos específicos de um documento
+  async updateFields(
+    path: string,
+    id: string,
+    fields: Partial<any>
+  ): Promise<void> {
+    const docRef = doc(this.firestore, path, id);
+    return updateDoc(docRef, fields);
+  }
+
+  // Adicione um método para realizar operações em lote
+  async batchOperation(operations: (() => Promise<void>)[]): Promise<void> {
+    const batch = writeBatch(this.firestore);
+    for (const operation of operations) {
+      await operation();
+    }
+    await batch.commit();
   }
 }

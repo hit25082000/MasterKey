@@ -16,6 +16,7 @@ import {
   updateProfile,
   User,
   user,
+  UserCredential,
 } from '@angular/fire/auth';
 import { Firestore, doc, getDoc } from '@angular/fire/firestore';
 import { Subscription, BehaviorSubject } from 'rxjs';
@@ -34,7 +35,8 @@ export class AuthService {
     this.userSubscription = this.user$.subscribe(async (aUser: User | null) => {
       if (aUser) {
         const userDoc = await this.getUserFromFirestore(aUser.uid);
-        this.userInfo.next(userDoc);
+        const id = aUser.uid;
+        this.userInfo.next({ ...userDoc, id });
         this.getCurrentUser();
       } else {
         this.userInfo.next(null);
@@ -68,8 +70,8 @@ export class AuthService {
     return userCredential;
   }
 
-  login(email: string, password: string) {
-    return signInWithEmailAndPassword(this.auth, email, password);
+  async login(email: string, password: string): Promise<UserCredential> {
+    return await signInWithEmailAndPassword(this.auth, email, password);
   }
 
   logout() {

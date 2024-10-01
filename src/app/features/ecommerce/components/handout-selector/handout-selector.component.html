@@ -1,0 +1,36 @@
+<div class="handout-selector">
+  <app-search-bar
+    [dataList]="nonSelectedHandouts()"
+    #searchBarComponent
+  ></app-search-bar>
+
+  <div
+    *ngFor="let handout of searchBarComponent.filteredList()"
+    class="form-group"
+  >
+    <label>
+      <input
+        type="checkbox"
+        [checked]="selectedHandoutIds().has(handout.id)"
+        (change)="onCheckboxChange(handout.id, $event)"
+      />
+      {{ handout.name }}
+    </label>
+  </div>
+
+  <div class="selected-handouts">
+    <h4>Apostilas Selecionadas</h4>
+    <ul>
+      <li *ngFor="let handout of selectedHandouts()">
+        {{ handout.name }}
+        <button type="button" (click)="removeHandout(handout.id)">
+          Remover
+        </button>
+      </li>
+    </ul>
+  </div>
+
+  <button (click)="updateCourseHandouts()" [disabled]="isSaving()">
+    {{ isSaving() ? "Salvando..." : "Salvar Alterações" }}
+  </button>
+</div>

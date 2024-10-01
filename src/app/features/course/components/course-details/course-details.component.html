@@ -6,7 +6,12 @@
 
   <div class="form-group">
     <label for="videoCount">Quantidade de Vídeos</label>
-    <input id="videoCount" formControlName="videoCount" type="number" class="form-control" />
+    <input
+      id="videoCount"
+      formControlName="videoCount"
+      type="number"
+      class="form-control"
+    />
   </div>
 
   <div class="form-group">
@@ -16,28 +21,60 @@
 
   <div class="form-group">
     <label for="promoPrice">Preço Promocional</label>
-    <input id="promoPrice" formControlName="promoPrice" type="number" class="form-control" />
+    <input
+      id="promoPrice"
+      formControlName="promoPrice"
+      type="number"
+      class="form-control"
+    />
   </div>
 
   <!-- Outros campos... -->
 
   <div formArrayName="videos">
-    <div *ngFor="let video of videoList; let i = index" [formGroupName]="i" class="form-group">
+    <div
+      *ngFor="let video of videos(); let i = index"
+      [formGroupName]="i"
+      class="form-group"
+    >
       <h4>Vídeo {{ i + 1 }}</h4>
       <label for="title">Título</label>
       <input id="title" formControlName="title" class="form-control" />
 
       <label for="duration">Duração (minutos)</label>
-      <input id="duration" formControlName="duration" type="number" class="form-control" />
+      <input
+        id="duration"
+        formControlName="duration"
+        type="number"
+        class="form-control"
+      />
 
       <label for="url">URL</label>
       <input id="url" formControlName="url" class="form-control" />
 
-      <button type="button" class="btn btn-danger mt-2" (click)="removeVideo(i)">Remover Vídeo</button>
+      <button
+        type="button"
+        class="btn btn-danger mt-2"
+        (click)="removeVideo(i)"
+      >
+        Remover Vídeo
+      </button>
     </div>
   </div>
 
-  <button type="button" class="btn btn-secondary mt-3" (click)="addVideo()">Adicionar Vídeo</button>
+  <app-handout-selector [courseId]="courseId"></app-handout-selector>
 
-  <button type="submit" class="btn btn-primary mt-3" [disabled]="courseForm.invalid">Registrar Curso</button>
+  <button type="button" class="btn btn-secondary mt-3" (click)="addVideo()">
+    Adicionar Vídeo
+  </button>
+
+  <button
+    type="submit"
+    class="btn btn-primary mt-3"
+    [disabled]="courseForm.invalid"
+  >
+    Registrar Curso
+  </button>
 </form>
+
+<app-course-review [courseId]="courseId"></app-course-review>

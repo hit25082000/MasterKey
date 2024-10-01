@@ -1,0 +1,28 @@
+.carrossel-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.carrossel-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.carrossel-item {
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  padding: 15px;
+  width: calc(33.33% - 20px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  h3 {
+    margin-top: 0;
+    color: #333;
+  }
+
+  p {
+    color: #666;
+  }
+}

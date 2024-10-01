@@ -1,0 +1,44 @@
+.course-review {
+  margin-bottom: 20px;
+}
+
+.star-rating {
+  font-size: 24px;
+  color: #ddd;
+
+  span {
+    cursor: pointer;
+
+    &.filled {
+      color: gold;
+    }
+  }
+}
+
+textarea, input[type="file"] {
+  width: 100%;
+  margin: 10px 0;
+}
+
+button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+
+  &:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+}
+
+.review-item {
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin-bottom: 10px;
+
+  video {
+    max-width: 100%;
+  }
+}
