@@ -1,21 +1,39 @@
 <div class="chat-container">
-  <div class="messages">
-    <div
-      *ngFor="let message of messages"
-      [ngClass]="{
-        'my-message': message.userId === currentUserId,
-        'other-message': message.userId !== currentUserId
-      }"
-    >
-      <strong>{{ message.userName }}</strong> {{ message.content }}
+  <div class="conversation-list">
+    <h3>Conversas</h3>
+    <ul>
+      <li
+        *ngFor="let conversation of conversations"
+        (click)="selectConversation(conversation)"
+        [class.selected]="conversation.userId === selectedUserId"
+      >
+        <div class="conversation-item">
+          <strong>{{ conversation.userName }}</strong>
+          <p>{{ conversation.lastMessage }}</p>
+        </div>
+      </li>
+    </ul>
+  </div>
+  <div class="chat-area" *ngIf="selectedUserId">
+    <div class="messages">
+      <div
+        *ngFor="let message of messages"
+        [ngClass]="{
+          'my-message': message.senderId === currentUserId,
+          'other-message': message.senderId !== currentUserId
+        }"
+      >
+        <strong>{{ message.userName }}</strong> {{ message.content }}
+      </div>
+    </div>
+    <div class="input-area">
+      <input
+        [(ngModel)]="newMessage"
+        (keyup.enter)="sendMessage()"
+        placeholder="Digite sua mensagem..."
+      />
+      <button (click)="sendMessage()">Enviar</button>
     </div>
   </div>
-  <div class="input-area">
-    <input
-      [(ngModel)]="newMessage"
-      (keyup.enter)="sendMessage()"
-      placeholder="Digite sua mensagem..."
-    />
-    <button (click)="sendMessage()">Enviar</button>
-  </div>
+  <button (click)="openNewConversationDialog()">Nova Conversa</button>
 </div>
