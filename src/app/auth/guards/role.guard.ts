@@ -4,8 +4,9 @@ import { FirestoreService } from '../../core/services/firestore.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Role } from '../../core/models/role.model';
 import { RoutePermission } from '../../features/role/components/permission-select/permission.enum';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { map, switchMap, take } from 'rxjs/operators';
+import { ModalService } from '../../shared/services/modal.service';
 
 @Injectable({
   providedIn: 'root',
@@ -14,7 +15,8 @@ export class RoleGuard implements CanActivate {
   constructor(
     private firestore: FirestoreService,
     private auth: AuthService,
-    private router: Router
+    private router: Router,
+    private modalService: ModalService
   ) {}
 
   canActivate(route: ActivatedRouteSnapshot): Observable<boolean> {
@@ -44,17 +46,21 @@ export class RoleGuard implements CanActivate {
               return true;
             }
 
-            switch (userRole) {
-              case 'student':
-                this.router.navigate(['/classroom']);
-                break;
-              case 'teacher':
-              case 'admin':
-                this.router.navigate(['/admin']);
-                break;
-              default:
-                this.router.navigate(['/unauthorized']);
-            }
+            // Exibir modal de não autorizado
+            this.modalService.showUnauthorizedModal().subscribe(() => {
+              // Redirecionar após fechar o modal
+              switch (userRole) {
+                case 'student':
+                  this.router.navigate(['/classroom']);
+                  break;
+                case 'teacher':
+                case 'admin':
+                  this.router.navigate(['/admin']);
+                  break;
+                default:
+                  this.router.navigate(['/unauthorized']);
+              }
+            });
           }
         } else {
           this.router.navigate(['/login']);

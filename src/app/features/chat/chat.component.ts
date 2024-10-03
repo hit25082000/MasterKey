@@ -1,3 +1,4 @@
+import { MatDialog } from '@angular/material/dialog';
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -5,7 +6,6 @@ import { ChatService } from './chat.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Message } from '../../core/models/message.model';
 import { Conversation } from '../../core/models/conversation.model';
-import { MatDialog } from '@angular/material/dialog';
 import { UserSelectionDialogComponent } from './user-selection-dialog/user-selection-dialog.component';
 
 @Component({
@@ -46,7 +46,9 @@ export class ChatComponent implements OnInit {
   }
 
   selectConversation(conversation: Conversation) {
-    this.selectedUserId = conversation.userId;
+    this.selectedUserId = conversation.participants.find(
+      (participant) => participant !== this.currentUserId
+    ) as string;
     this.loadMessages();
   }
 

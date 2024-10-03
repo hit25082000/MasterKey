@@ -29,6 +29,19 @@
       </ul>
     </li>
     <li>
+      <button (click)="toggleDropdown('package')">
+        <i class="icon"></i> <span class="label">Pacotes</span>
+      </button>
+      <ul *ngIf="isDropdownOpen('package')" class="dropdown">
+        <li>
+          <a [routerLink]="['/admin/package-register']">Adicionar Pacote</a>
+        </li>
+        <li>
+          <a [routerLink]="['/admin/package-list']">Listar Pacotes</a>
+        </li>
+      </ul>
+    </li>
+    <li>
       <button (click)="toggleDropdown('categorys')">
         <i class="icon"></i> <span class="label">Categorias</span>
       </button>
@@ -42,15 +55,27 @@
       </ul>
     </li>
     <li>
-      <button (click)="toggleDropdown('package')">
-        <i class="icon"></i> <span class="label">Pacotes</span>
+      <button (click)="toggleDropdown('classes')">
+        <i class="icon"></i> <span class="label">Turmas</span>
       </button>
-      <ul *ngIf="isDropdownOpen('package')" class="dropdown">
+      <ul *ngIf="isDropdownOpen('classes')" class="dropdown">
+        <li><a [routerLink]="['/admin/class-register']">Adicionar Turma</a></li>
+        <li><a [routerLink]="['/admin/class-list']">Listar Turmas</a></li>
+      </ul>
+    </li>
+
+    <li>
+      <button (click)="toggleDropdown('employee')">
+        <i class="icon"></i> <span class="label">Funcionarios</span>
+      </button>
+      <ul *ngIf="isDropdownOpen('employee')" class="dropdown">
         <li>
-          <a [routerLink]="['/admin/package-register']">Adicionar Pacote</a>
+          <a [routerLink]="['/admin/employee-register']"
+            >Adicionar Funcionario</a
+            >
         </li>
         <li>
-          <a [routerLink]="['/admin/package-list']">Listar Pacotes</a>
+          <a [routerLink]="['/admin/employee-list']">Listar Funcionarios</a>
         </li>
       </ul>
     </li>
@@ -65,30 +90,12 @@
         <li><a [routerLink]="['/admin/role-list']">Listar Permissões</a></li>
       </ul>
     </li>
-
     <li>
-      <button (click)="toggleDropdown('employee')">
-        <i class="icon"></i> <span class="label">Funcionarios</span>
-      </button>
-      <ul *ngIf="isDropdownOpen('employee')" class="dropdown">
-        <li>
-          <a [routerLink]="['/admin/employee-register']"
-            >Adicionar Funcionario</a
-          >
-        </li>
-        <li>
-          <a [routerLink]="['/admin/employee-list']">Listar Funcionarios</a>
-        </li>
-      </ul>
-    </li>
-    <li>
-      <button (click)="toggleDropdown('classes')">
-        <i class="icon"></i> <span class="label">Turmas</span>
-      </button>
-      <ul *ngIf="isDropdownOpen('classes')" class="dropdown">
-        <li><a [routerLink]="['/admin/class-register']">Adicionar Turma</a></li>
-        <li><a [routerLink]="['/admin/class-list']">Listar Turmas</a></li>
-      </ul>
-    </li>
+      <button (click)="modalWhatsAppMessage.toggle()">
+        Enviar mensagem WhatsApp</button>
+        <app-modal #modalWhatsAppMessage>
+          <app-whats-app-message></app-whats-app-message>
+        </app-modal>
+      </li>
   </ul>
 </div>

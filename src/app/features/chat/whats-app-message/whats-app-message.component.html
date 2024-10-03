@@ -1,0 +1,29 @@
+<div class="whatsapp-message-container">
+  <h2>Enviar Mensagem WhatsApp</h2>
+
+  <div class="user-list">
+    <h3>Selecione os usuários:</h3>
+    <ul>
+      <li *ngFor="let user of users">
+        <label>
+          <input type="checkbox" (change)="toggleUserSelection(user.id)">
+          {{ user.name }} ({{ user.phone1 }})
+        </label>
+      </li>
+    </ul>
+  </div>
+
+  <div class="message-editor">
+    <h3>Escreva sua mensagem:</h3>
+    <textarea [(ngModel)]="message" rows="5" placeholder="Digite sua mensagem aqui..."></textarea>
+    <div class="markdown-buttons">
+      <button (click)="addMarkdown('**', '**')">Negrito</button>
+      <button (click)="addMarkdown('*', '*')">Itálico</button>
+      <button (click)="addMarkdown('~~', '~~')">Tachado</button>
+    </div>
+  </div>
+
+  <button (click)="sendMessage()" [disabled]="selectedUsers.length === 0 || !message || isSending">
+    {{ isSending ? 'Enviando...' : 'Enviar Mensagem' }}
+  </button>
+</div>

@@ -21,16 +21,12 @@ export class ChatService {
     currentUserId: string,
     selectedUserId: string
   ): Observable<Message[]> {
-    return from(
-      this.firestore.getDocumentsByQuery<Message>(
-        'messages',
-        where(
-          'participants',
-          'array-contains',
-          [currentUserId, selectedUserId].sort().join('_')
-        ),
+    return this.firestore.getCollectionWithQuery<Message>(
+      'messages',
+      [
+        where('participants', '==', [currentUserId, selectedUserId].sort().join('_')),
         orderBy('timestamp')
-      )
+      ]
     );
   }
 

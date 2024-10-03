@@ -1,11 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Output } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { ModalComponent } from '../modal/modal.component';
+import { WhatsAppMessageComponent } from '../../../features/chat/whats-app-message/whats-app-message.component';
 
 @Component({
   selector: 'app-sidenav',
   standalone: true,
-  imports: [RouterLink, CommonModule],
+  imports: [RouterLink, CommonModule, ModalComponent, WhatsAppMessageComponent],
   templateUrl: './sidenav.component.html',
   styleUrls: ['./sidenav.component.scss']
 })

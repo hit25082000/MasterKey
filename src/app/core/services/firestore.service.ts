@@ -17,6 +17,7 @@ import {
   QueryConstraint,
   writeBatch,
   updateDoc,
+  onSnapshot,
 } from '@angular/fire/firestore';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
@@ -167,5 +168,21 @@ export class FirestoreService {
       await operation();
     }
     await batch.commit();
+  }
+
+  getCollectionWithQuery<T>(collectionName: string, queryConstraints: any[]): Observable<T[]> {
+    return new Observable<T[]>(observer => {
+      const collectionRef = collection(this.firestore, collectionName);
+      const q = query(collectionRef, ...queryConstraints);
+
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const items = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as T);
+        observer.next(items);
+      }, error => {
+        observer.error(error);
+      });
+
+      return () => unsubscribe();
+    });
   }
 }
