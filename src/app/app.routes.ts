@@ -31,6 +31,7 @@ import { CategoryListComponent } from './features/category/components/category-l
 import { CategoryRegisterComponent } from './features/category/components/category-register/category-register.component';
 import { RoutePermission } from './features/role/components/permission-select/permission.enum';
 import { StudentLoginListComponent } from './features/student/components/student-login-list/student-login-list.component';
+import { MeetingComponent } from './features/meet/components/meet/meet.component';
 export const routes: Routes = [
   { path: '', component: EcommerceComponent },
   {
@@ -59,6 +60,10 @@ export const routes: Routes = [
       {
         path: 'student-login-list',
         component: StudentLoginListComponent,
+      },
+      {
+        path: 'meet',
+        component: MeetingComponent,
       },
       {
         path: 'student-register',

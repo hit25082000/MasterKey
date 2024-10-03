@@ -5,7 +5,7 @@ import { RouterOutlet } from '@angular/router';
 import { AsyncPipe } from '@angular/common';
 import { NotificationType } from './shared/components/notification/notifications-enum';
 import { LoadingOverlayComponent } from '../app/shared/components/loading-overlay/loading-overlay.component';
-import { ChatComponent } from './features/chat/chat.component';
+import { ChatComponent } from './features/chat/components/chat-modal/chat.component';
 import { ModalComponent } from './shared/components/modal/modal.component';
 
 @Component({
@@ -16,7 +16,7 @@ import { ModalComponent } from './shared/components/modal/modal.component';
     RouterOutlet,
     AsyncPipe,
     LoadingOverlayComponent,
-    ChatComponent
+    ChatComponent,
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],

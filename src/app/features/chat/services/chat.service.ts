@@ -1,9 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, from } from 'rxjs';
-import { Message } from '../../core/models/message.model';
-import { FirestoreService } from '../../core/services/firestore.service';
+import { Message } from '../../../core/models/message.model';
+import { FirestoreService } from '../../../core/services/firestore.service';
 import { orderBy, where } from '@angular/fire/firestore';
-import { Conversation } from '../../core/models/conversation.model';
+import { Conversation } from '../../../core/models/conversation.model';
 
 type ConversationWithParticipants = Conversation & { participants: string[] };
 
@@ -21,13 +21,14 @@ export class ChatService {
     currentUserId: string,
     selectedUserId: string
   ): Observable<Message[]> {
-    return this.firestore.getCollectionWithQuery<Message>(
-      'messages',
-      [
-        where('participants', '==', [currentUserId, selectedUserId].sort().join('_')),
-        orderBy('timestamp')
-      ]
-    );
+    return this.firestore.getCollectionWithQuery<Message>('messages', [
+      where(
+        'participants',
+        '==',
+        [currentUserId, selectedUserId].sort().join('_')
+      ),
+      orderBy('timestamp'),
+    ]);
   }
 
   async sendMessage(
@@ -70,5 +71,47 @@ export class ChatService {
       lastMessageTimestamp: new Date(),
     };
     await this.firestore.addToCollection('conversations', conversation);
+  }
+
+  async markConversationAsRead(
+    currentUserId: string,
+    otherUserId: string
+  ): Promise<void> {
+    const conversationId = [currentUserId, otherUserId].sort().join('_');
+    await this.firestore.updateDocument('conversations', conversationId, {
+      unreadCount: 0,
+    });
+  }
+
+  async updateLastMessage(
+    currentUserId: string,
+    otherUserId: string,
+    lastMessage: string
+  ): Promise<void> {
+    const conversationId = [currentUserId, otherUserId].sort().join('_');
+    await this.firestore.updateDocument('conversations', conversationId, {
+      lastMessage,
+      lastMessageTimestamp: new Date(),
+      unreadCount: 1, // Incrementa o contador de mensagens não lidas
+    });
+  }
+
+  async incrementUnreadCount(
+    currentUserId: string,
+    otherUserId: string
+  ): Promise<void> {
+    const conversationId = [currentUserId, otherUserId].sort().join('_');
+    const conversation =
+      await this.firestore.getDocument<ConversationWithParticipants>(
+        'conversations',
+        conversationId
+      );
+
+    if (conversation) {
+      const newUnreadCount = (conversation.unreadCount || 0) + 1;
+      await this.firestore.updateDocument('conversations', conversationId, {
+        unreadCount: newUnreadCount,
+      });
+    }
   }
 }

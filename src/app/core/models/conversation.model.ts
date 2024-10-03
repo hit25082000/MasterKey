@@ -4,4 +4,5 @@ export interface Conversation {
   lastMessage: string;
   lastMessageTimestamp: Date;
   participants: string[]; // Nova propriedade adicionada
+  unreadCount?: number;
 }

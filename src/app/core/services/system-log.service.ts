@@ -10,6 +10,7 @@ export enum LogCategory {
   USER_EDIT = 'user_edit',
   USER_DELETE = 'user_delete',
   USER_LOGIN = 'user_login', // Adicione esta linha
+  MEETING_CREATION = 'meeting_creation',
   // Adicione outras categorias conforme necessário
 }
 

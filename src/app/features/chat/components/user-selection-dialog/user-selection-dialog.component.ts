@@ -7,7 +7,7 @@ import {
   MatDialogRef,
 } from '@angular/material/dialog';
 import { MatListModule, MatSelectionList } from '@angular/material/list';
-import { ChatService } from '../chat.service';
+import { ChatService } from '../../services/chat.service';
 
 @Component({
   selector: 'app-user-selection-dialog',

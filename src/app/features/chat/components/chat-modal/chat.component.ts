@@ -2,11 +2,11 @@ import { MatDialog } from '@angular/material/dialog';
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ChatService } from './chat.service';
-import { AuthService } from '../../core/services/auth.service';
-import { Message } from '../../core/models/message.model';
-import { Conversation } from '../../core/models/conversation.model';
-import { UserSelectionDialogComponent } from './user-selection-dialog/user-selection-dialog.component';
+import { AuthService } from '../../../../core/services/auth.service';
+import { Message } from '../../../../core/models/message.model';
+import { Conversation } from '../../../../core/models/conversation.model';
+import { UserSelectionDialogComponent } from '../user-selection-dialog/user-selection-dialog.component';
+import { ChatService } from '../../services/chat.service';
 
 @Component({
   selector: 'app-chat',
@@ -22,6 +22,8 @@ export class ChatComponent implements OnInit {
   currentUserId: string | null = null;
   currentUserName: string | null = null;
   selectedUserId: string | null = null;
+  isMinimized: boolean = false;
+  unreadMessagesCount: number = 0;
 
   private chatService = inject(ChatService);
   private authService = inject(AuthService);
@@ -42,7 +44,15 @@ export class ChatComponent implements OnInit {
       .getConversations(this.currentUserId!)
       .subscribe((conversations) => {
         this.conversations = conversations;
+        this.updateUnreadMessagesCount();
       });
+  }
+
+  updateUnreadMessagesCount() {
+    this.unreadMessagesCount = this.conversations.reduce(
+      (count, conversation) => count + (conversation.unreadCount || 0),
+      0
+    );
   }
 
   selectConversation(conversation: Conversation) {
@@ -50,6 +60,17 @@ export class ChatComponent implements OnInit {
       (participant) => participant !== this.currentUserId
     ) as string;
     this.loadMessages();
+    this.markConversationAsRead(conversation);
+  }
+
+  markConversationAsRead(conversation: Conversation) {
+    if (conversation.unreadCount && conversation.unreadCount > 0) {
+      this.chatService.markConversationAsRead(
+        this.currentUserId!,
+        conversation.userId
+      );
+      this.updateUnreadMessagesCount();
+    }
   }
 
   loadMessages() {
@@ -104,5 +125,12 @@ export class ChatComponent implements OnInit {
           participants: [this.currentUserId!], // Adicione o operador de asserção não nula
         });
       });
+  }
+
+  toggleMinimize() {
+    this.isMinimized = !this.isMinimized;
+    if (!this.isMinimized) {
+      this.unreadMessagesCount = 0;
+    }
   }
 }

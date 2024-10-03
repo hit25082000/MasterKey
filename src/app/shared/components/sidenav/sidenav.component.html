@@ -17,6 +17,17 @@
         <li>
           <a [routerLink]="['/admin/student-login-list']">Lista de presença</a>
         </li>
+        <li>
+          <a [routerLink]="['/admin/meet']">Aula ao Vivo</a>
+        </li>
+        <li>
+          <button (click)="modalWhatsAppMessage.toggle()">
+            Enviar mensagem WhatsApp
+          </button>
+          <app-modal #modalWhatsAppMessage>
+            <app-whats-app-message></app-whats-app-message>
+          </app-modal>
+        </li>
       </ul>
     </li>
     <li>
@@ -72,7 +83,7 @@
         <li>
           <a [routerLink]="['/admin/employee-register']"
             >Adicionar Funcionario</a
-            >
+          >
         </li>
         <li>
           <a [routerLink]="['/admin/employee-list']">Listar Funcionarios</a>
@@ -90,12 +101,5 @@
         <li><a [routerLink]="['/admin/role-list']">Listar Permissões</a></li>
       </ul>
     </li>
-    <li>
-      <button (click)="modalWhatsAppMessage.toggle()">
-        Enviar mensagem WhatsApp</button>
-        <app-modal #modalWhatsAppMessage>
-          <app-whats-app-message></app-whats-app-message>
-        </app-modal>
-      </li>
   </ul>
 </div>
