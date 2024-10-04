@@ -2,7 +2,7 @@ import { NotificationService } from './../../../../shared/components/notificatio
 import { LoadingOverlayComponent } from '../../../../shared/components/loading-overlay/loading-overlay.component';
 import { NotificationType } from './../../../../shared/components/notification/notifications-enum';
 import { Component, OnInit, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   FormBuilder,
   FormGroup,
@@ -16,6 +16,7 @@ import { CourseManagementService } from '../../services/course-management.servic
 import { HandoutSelectorComponent } from '../../../ecommerce/components/handout-selector/handout-selector.component';
 import { CourseReviewComponent } from '../course-review/course-review.component';
 import { Video } from '../../../../core/models/course.model';
+import { BookSelectorComponent } from '../../../library/components/book-selector/book-selector.component';
 
 @Component({
   selector: 'app-course-details',
@@ -26,6 +27,8 @@ import { Video } from '../../../../core/models/course.model';
     HandoutSelectorComponent,
     CourseReviewComponent,
     LoadingOverlayComponent,
+    BookSelectorComponent,
+    RouterLink,
   ],
   templateUrl: './course-details.component.html',
   styleUrls: ['./course-details.component.scss'],

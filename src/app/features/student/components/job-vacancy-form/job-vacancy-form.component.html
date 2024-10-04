@@ -1,0 +1,33 @@
+<h2>{{ isEditMode ? "Editar" : "Criar" }} Vaga de Emprego</h2>
+<form [formGroup]="vacancyForm" (ngSubmit)="onSubmit()">
+  <div>
+    <label for="titulo">Título:</label>
+    <input id="titulo" formControlName="titulo" required />
+  </div>
+  <div>
+    <label for="empresa">Empresa:</label>
+    <input id="empresa" formControlName="empresa" required />
+  </div>
+  <div>
+    <label for="descricao">Descrição:</label>
+    <textarea id="descricao" formControlName="descricao" required></textarea>
+  </div>
+  <div>
+    <label for="salario">Salário:</label>
+    <input id="salario" type="number" formControlName="salario" required />
+  </div>
+  <div>
+    <label for="localizacao">Localização:</label>
+    <input id="localizacao" formControlName="localizacao" required />
+  </div>
+  <div>
+    <label for="dataPublicacao">Data de Publicação:</label>
+    <input
+      id="dataPublicacao"
+      type="date"
+      formControlName="dataPublicacao"
+      required
+    />
+  </div>
+  <button type="submit" [disabled]="!vacancyForm.valid">Salvar</button>
+</form>

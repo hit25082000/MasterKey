@@ -1,15 +1,21 @@
 import { routes } from './../../../../app.routes';
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { Course } from '../../../../core/models/course.model';
 import { Route, Router } from '@angular/router';
+import { FirestoreService } from '../../../../core/services/firestore.service';
+import { CommonModule } from '@angular/common';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-course-list',
+  standalone: true,
+  imports: [CommonModule],
   templateUrl: './course-list.component.html',
   styleUrls: ['./course-list.component.scss'],
 })
 export class CourseListComponent implements OnInit {
-  courses: Course[] = [];
+  courses$!: Observable<Course[]>;
+  firestore = inject(FirestoreService);
 
   constructor(private router: Router) {}
 
@@ -17,9 +23,11 @@ export class CourseListComponent implements OnInit {
     this.loadCourses();
   }
 
-  loadCourses(): void {}
+  loadCourses() {
+    this.courses$ = this.firestore.getCollectionObservable('courses');
+  }
 
   editCourse(courseId: string): void {
-    this.router.navigate(['/course-detail', courseId]);
+    this.router.navigate(['/admin/course-detail', courseId]);
   }
 }

@@ -1,9 +1,11 @@
 <div class="course-list">
-  <div *ngFor="let course of courses" class="course-item">
+  <div *ngFor="let course of courses$ | async" class="course-item">
     <h3>{{ course.name }}</h3>
     <p>{{ course.description }}</p>
     <p><strong>Preço:</strong> {{ course.price }}</p>
     <p><strong>Vídeos:</strong> {{ course.videoCount }}</p>
-    <button class="btn btn-primary" (click)="editCourse(course.name)">Editar</button>
+    <button class="btn btn-primary" (click)="editCourse(course.id)">
+      Editar
+    </button>
   </div>
 </div>

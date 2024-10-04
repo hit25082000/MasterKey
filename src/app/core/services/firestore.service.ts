@@ -170,19 +170,33 @@ export class FirestoreService {
     await batch.commit();
   }
 
-  getCollectionWithQuery<T>(collectionName: string, queryConstraints: any[]): Observable<T[]> {
-    return new Observable<T[]>(observer => {
+  getCollectionWithQuery<T>(
+    collectionName: string,
+    queryConstraints: any[]
+  ): Observable<T[]> {
+    return new Observable<T[]>((observer) => {
       const collectionRef = collection(this.firestore, collectionName);
       const q = query(collectionRef, ...queryConstraints);
 
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const items = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as T);
-        observer.next(items);
-      }, error => {
-        observer.error(error);
-      });
+      const unsubscribe = onSnapshot(
+        q,
+        (querySnapshot) => {
+          const items = querySnapshot.docs.map(
+            (doc) => ({ id: doc.id, ...doc.data() } as T)
+          );
+          observer.next(items);
+        },
+        (error) => {
+          observer.error(error);
+        }
+      );
 
       return () => unsubscribe();
     });
+  }
+
+  async generateId(): Promise<string> {
+    const docRef = doc(this.firestore, '_');
+    return docRef.id;
   }
 }

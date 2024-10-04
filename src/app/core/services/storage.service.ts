@@ -59,4 +59,18 @@ export class StorageService {
 
     return deleteObject(iconsRef);
   }
+
+  async uploadBookImage(file: File, bookId: string): Promise<string> {
+    const storage = getStorage();
+    const storageRef = ref(storage, `book-images/${bookId}`);
+    const snapshot = await uploadBytes(storageRef, file);
+    return await getDownloadURL(snapshot.ref);
+  }
+
+  async uploadBookPdf(file: File, bookId: string): Promise<string> {
+    const storage = getStorage();
+    const storageRef = ref(storage, `book-pdfs/${bookId}`);
+    const snapshot = await uploadBytes(storageRef, file);
+    return await getDownloadURL(snapshot.ref);
+  }
 }

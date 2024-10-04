@@ -32,6 +32,9 @@ import { CategoryRegisterComponent } from './features/category/components/catego
 import { RoutePermission } from './features/role/components/permission-select/permission.enum';
 import { StudentLoginListComponent } from './features/student/components/student-login-list/student-login-list.component';
 import { MeetingComponent } from './features/meet/components/meet/meet.component';
+import { JobVacancyListComponent } from './features/student/components/job-vacancy-list/job-vacancy-list.component';
+import { JobVacancyFormComponent } from './features/student/components/job-vacancy-form/job-vacancy-form.component';
+import { LibraryCourseComponent } from './features/library/components/library-course/library-course.component';
 export const routes: Routes = [
   { path: '', component: EcommerceComponent },
   {
@@ -64,6 +67,22 @@ export const routes: Routes = [
       {
         path: 'meet',
         component: MeetingComponent,
+      },
+      {
+        path: 'course-library/:id',
+        component: LibraryCourseComponent,
+      },
+      {
+        path: 'job-vacancy',
+        component: JobVacancyListComponent,
+      },
+      {
+        path: 'create-vacancy',
+        component: JobVacancyFormComponent,
+      },
+      {
+        path: 'edit-vacancy/:id',
+        component: JobVacancyFormComponent,
       },
       {
         path: 'student-register',

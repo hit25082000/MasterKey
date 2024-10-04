@@ -78,3 +78,7 @@
 </form>
 
 <app-course-review [courseId]="courseId"></app-course-review>
+
+<app-book-selector [courseId]="courseId"></app-book-selector>
+
+<a [routerLink]="['/admin/course-library', courseId]">Editar</a>

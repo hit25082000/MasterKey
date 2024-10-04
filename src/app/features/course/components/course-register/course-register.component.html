@@ -1,39 +1,63 @@
-<form [formGroup]="courseForm" (ngSubmit)="onSubmit(videoSelector)">
+<form [formGroup]="courseForm" (ngSubmit)="onSubmit()">
   <div class="form-group">
-    <label for="name">Nome do Curso</label>
-    <input id="name" formControlName="name" class="form-control" />
+    <label for="title">Título do Curso</label>
+    <input id="title" formControlName="title" class="form-control" />
   </div>
 
   <div class="form-group">
-    <label for="videoCount">Quantidade de Vídeos</label>
-    <input id="videoCount" formControlName="videoCount" type="number" class="form-control" />
+    <label for="description">Descrição</label>
+    <textarea
+      id="description"
+      formControlName="description"
+      class="form-control"
+    ></textarea>
   </div>
 
   <div class="form-group">
     <label for="price">Preço</label>
-    <input id="price" formControlName="price" class="form-control" />
+    <input
+      id="price"
+      formControlName="price"
+      type="number"
+      class="form-control"
+    />
   </div>
 
-  <div class="form-group">
-    <label for="promoPrice">Preço Promocional</label>
-    <input id="promoPrice" formControlName="promoPrice" type="number" class="form-control" />
-  </div>
+  <button
+    type="button"
+    class="btn btn-secondary mt-3"
+    (click)="authenticateWithGoogle()"
+    *ngIf="!isAuthenticated"
+  >
+    Autenticar com Google
+  </button>
 
-  <button type="button" class="btn btn-secondary mt-3" (click)="modal.toggle()">Selecionar Vídeos</button>
-
-  <app-modal #modal>
-    <div class="form-group">
-      <label>Selecione os Vídeos:</label>
-      <app-video-selector #videoSelector></app-video-selector>
+  <div *ngIf="isAuthenticated">
+    <h3>Vídeos do Google Drive</h3>
+    <div *ngFor="let video of driveVideos" class="video-item">
+      <input
+        type="checkbox"
+        [id]="video.id"
+        (change)="toggleVideoSelection(video)"
+      />
+      <label [for]="video.id">{{ video.name }}</label>
     </div>
-  </app-modal>
-
-  <div class="form-group">
-    <h4>Vídeos Selecionados</h4>
-    <div *ngFor="let video of videoSelector.selectedVideos()">
-      <p><strong>{{ video.title }}</strong> - {{ video.duration }} minutos</p>
-    </div>
   </div>
 
-  <button type="submit" class="btn btn-primary mt-3" [disabled]="courseForm.invalid">Registrar Curso</button>
+  <button
+    type="submit"
+    class="btn btn-primary mt-3"
+    [disabled]="
+      courseForm.invalid || !isAuthenticated || selectedVideos.length === 0
+    "
+  >
+    Criar Curso
+  </button>
 </form>
+
+<div *ngIf="selectedVideos.length > 0">
+  <h3>Vídeos Selecionados</h3>
+  <ul>
+    <li *ngFor="let video of selectedVideos">{{ video.name }}</li>
+  </ul>
+</div>
