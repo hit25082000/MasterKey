@@ -30,11 +30,11 @@ export class CourseService {
   }
 
   async getReviews(id: string) {
-    const courses = (await this.firestore.getDocument(
+    const courseReviews = (await this.firestore.getDocument(
       'course_reviews',
       id
     )) as any;
 
-    return courses.courses;
+    return courseReviews.reviews;
   }
 }

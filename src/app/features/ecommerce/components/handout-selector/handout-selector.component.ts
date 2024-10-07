@@ -14,11 +14,12 @@ import { NotificationService } from '../../../../shared/components/notification/
 import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
 import { CourseService } from '../../../course/services/course.service';
 import { Handout } from '../../../../core/models/handout.model';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-handout-selector',
   standalone: true,
-  imports: [CommonModule, SearchBarComponent],
+  imports: [CommonModule, SearchBarComponent, ReactiveFormsModule],
   templateUrl: './handout-selector.component.html',
   styleUrls: ['./handout-selector.component.scss'],
 })
@@ -45,6 +46,18 @@ export class HandoutSelectorComponent implements OnInit {
   });
 
   isSaving = signal(false);
+
+  newHandoutForm: FormGroup;
+
+  constructor(
+    private fb: FormBuilder,
+  ) {
+    this.newHandoutForm = this.fb.group({
+      name: ['', Validators.required],
+      image: ['', Validators.required],
+      url: ['', Validators.required],
+    });
+  }
 
   async ngOnInit() {
     await this.loadAllHandouts();
@@ -105,5 +118,29 @@ export class HandoutSelectorComponent implements OnInit {
     const updatedSelection = new Set(this.selectedHandoutIds());
     updatedSelection.delete(handoutId);
     this.selectedHandoutIds.set(updatedSelection);
+  }
+
+  async addNewHandout() {
+    if (this.newHandoutForm.valid) {
+      const newHandout: Handout = {
+        id: '', // Será preenchido pelo serviço
+        ...this.newHandoutForm.value
+      };
+
+      try {
+        const addedHandout = await this.handoutService.add(newHandout);
+        this.allHandouts.update(handouts => [...handouts, addedHandout]);
+        this.newHandoutForm.reset();
+        this.notificationService.showNotification(
+          'Nova apostila adicionada com sucesso',
+          NotificationType.SUCCESS
+        );
+      } catch (error) {
+        this.notificationService.showNotification(
+          'Erro ao adicionar nova apostila',
+          NotificationType.ERROR
+        );
+      }
+    }
   }
 }

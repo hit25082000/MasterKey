@@ -23,31 +23,6 @@ async function authenticateRequest(req, res, next) {
   }
 }
 
-exports.createUser = functions.https.onRequest((req, res) => {
-  cors(req, res, async () => {
-    try {
-      await authenticateRequest(req, res, async () => {
-        const { email, password, displayName, phoneNumber, photoURL } = req.body;
-
-        if (!email || !password) {
-          return res.status(400).json({ error: 'Email e senha são obrigatórios.' });
-        }
-
-        const userRecord = await admin.auth().createUser({
-          email,
-          password,
-          displayName,
-          phoneNumber,
-          photoURL
-        });
-        res.status(201).json(userRecord);
-      });
-    } catch (error) {
-      res.status(500).json({ error: `Erro ao criar novo usuário: ${error.message}` });
-    }
-  });
-});
-
 exports.getUsers = functions.https.onRequest((req, res) => {
   cors(req, res, async () => {
     try {
@@ -66,50 +41,6 @@ exports.getUsers = functions.https.onRequest((req, res) => {
   });
 });
 
-exports.deleteUser = functions.https.onRequest((req, res) => {
-  cors(req, res, async () => {
-    try {
-      await authenticateRequest(req, res, async () => {
-        const { uid } = req.body;
-
-        if (!uid) {
-          return res.status(400).json({ error: 'UID do usuário é obrigatório.' });
-        }
-
-        await admin.auth().deleteUser(uid);
-        res.status(200).json({ message: 'Usuário deletado com sucesso.' });
-      });
-    } catch (error) {
-      res.status(500).json({ error: `Erro ao deletar usuário: ${error.message}` });
-    }
-  });
-});
-
-exports.updateUser = functions.https.onRequest((req, res) => {
-  cors(req, res, async () => {
-    try {
-      await authenticateRequest(req, res, async () => {
-        const { uid, email, password, displayName } = req.body;
-
-        if (!uid) {
-          return res.status(400).json({ error: 'UID do usuário é obrigatório.' });
-        }
-
-        const updateData = {};
-        if (email) updateData.email = email;
-        if (password) updateData.password = password;
-        if (displayName) updateData.displayName = displayName;
-
-        const userRecord = await admin.auth().updateUser(uid, updateData);
-
-        res.status(200).json(userRecord);
-      });
-    } catch (error) {
-      res.status(500).json({ error: `Erro ao atualizar usuário: ${error.message}` });
-    }
-  });
-});
-
 exports.createUserWithProfile = functions.https.onRequest((req, res) => {
   cors(req, res, async () => {
     try {
@@ -120,31 +51,59 @@ exports.createUserWithProfile = functions.https.onRequest((req, res) => {
           return res.status(400).json({ error: 'Dados incompletos.' });
         }
 
-        // Criar usuário de autenticação
-        const userRecord = await admin.auth().createUser({
-          email,
-          password,
-        });
+        try {
+          // Criar usuário de autenticação
+          const userRecord = await admin.auth().createUser({
+            email,
+            password,
+          });
 
-        // Salvar dados do usuário no Firestore
-        await admin.firestore().collection('users').doc(userRecord.uid).set(userData);
+          // Fazer upload do ícone, se fornecido
+          let iconUrl = null;
+          if (iconFile) {
+            const fileName = `${userRecord.uid}_profile.jpg`;
+            const file = bucket.file(fileName);
 
-        // Fazer upload do ícone, se fornecido
-        let iconUrl = null;
-        if (iconFile) {
-          const fileName = `${userRecord.uid}_profile.jpg`;
-          const file = bucket.file(fileName);
-          await file.save(Buffer.from(iconFile, 'base64'));
-          iconUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+            // Decodificar a string base64 e salvar como buffer
+            const imageBuffer = Buffer.from(iconFile.split(',')[1], 'base64');
 
-          // Atualizar o photoURL do usuário
-          await admin.auth().updateUser(userRecord.uid, { photoURL: iconUrl });
+            await file.save(imageBuffer, {
+              metadata: {
+                contentType: 'image/jpeg', // ou 'image/png' se for PNG
+              },
+            });
+
+            // Tornar o arquivo público
+            await file.makePublic();
+
+            iconUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+          }
+
+          // Adicionar iconUrl aos dados do usuário
+          const userDataWithIcon = {
+            ...userData,
+            iconUrl: iconUrl || null
+          };
+
+          // Salvar dados do usuário no Firestore
+          await admin.firestore().collection('users').doc(userRecord.uid).set(userDataWithIcon);
+
+          // Atualizar o photoURL do usuário de autenticação
+          if (iconUrl) {
+            await admin.auth().updateUser(userRecord.uid, { photoURL: iconUrl });
+          }
+
+          res.status(201).json({ ...userDataWithIcon, uid: userRecord.uid });
+        } catch (authError) {
+          if (authError.code === 'auth/email-already-exists') {
+            return res.status(400).json({ message: 'O e-mail fornecido já está em uso.' });
+          }
+          throw authError; // Lança o erro para ser capturado pelo catch externo
         }
-
-        res.status(201).json({ ...userRecord, iconUrl });
       });
     } catch (error) {
-      res.status(500).json(error);
+      console.error('Erro ao criar usuário:', error);
+      res.status(500).json({ error: `Erro ao criar usuário: ${error.message}` });
     }
   });
 });
@@ -159,33 +118,56 @@ exports.updateUserWithProfile = functions.https.onRequest((req, res) => {
           return res.status(400).json({ error: 'UID do usuário é obrigatório.' });
         }
 
-        // Atualizar usuário de autenticação
-        const updateData = {};
-        if (email) updateData.email = email;
-        if (password) updateData.password = password;
+        try {
+          // Atualizar usuário de autenticação
+          const updateData = {};
+          if (email) updateData.email = email;
+          if (password) updateData.password = password;
 
-        const userRecord = await admin.auth().updateUser(uid, updateData);
+          const userRecord = await admin.auth().updateUser(uid, updateData);
 
-        // Atualizar dados do usuário no Firestore
-        if (userData) {
-          await admin.firestore().collection('users').doc(uid).update(userData);
+          // Fazer upload do ícone, se fornecido
+          let iconUrl = null;
+          if (iconFile) {
+            const fileName = `${uid}_profile.jpg`;
+            const file = bucket.file(fileName);
+
+            // Decodificar a string base64 e salvar como buffer
+            const imageBuffer = Buffer.from(iconFile.split(',')[1], 'base64');
+
+            await file.save(imageBuffer, {
+              metadata: {
+                contentType: 'image/jpeg', // ou 'image/png' se for PNG
+              },
+            });
+
+            // Tornar o arquivo público
+            await file.makePublic();
+
+            iconUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+
+            // Atualizar o photoURL do usuário de autenticação
+            await admin.auth().updateUser(uid, { photoURL: iconUrl });
+          }
+
+          // Atualizar dados do usuário no Firestore
+          const userDataWithIcon = {
+            ...userData,
+            iconUrl: iconUrl || userRecord.photoURL
+          };
+
+          await admin.firestore().collection('users').doc(uid).update(userDataWithIcon);
+
+          res.status(200).json({ ...userRecord, ...userDataWithIcon });
+        } catch (authError) {
+          if (authError.code === 'auth/email-already-in-use') {
+            return res.status(400).json({ message: 'O e-mail fornecido já está em uso.' });
+          }
+          throw authError;
         }
-
-        // Atualizar ícone, se fornecido
-        let iconUrl = null;
-        if (iconFile) {
-          const fileName = `${uid}_profile.jpg`;
-          const file = bucket.file(fileName);
-          await file.save(Buffer.from(iconFile, 'base64'));
-          iconUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
-
-          // Atualizar o photoURL do usuário
-          await admin.auth().updateUser(uid, { photoURL: iconUrl });
-        }
-
-        res.status(200).json({ ...userRecord, iconUrl });
       });
     } catch (error) {
+      console.error('Erro ao atualizar usuário:', error);
       res.status(500).json({ error: `Erro ao atualizar usuário: ${error.message}` });
     }
   });
@@ -201,20 +183,20 @@ exports.deleteUserWithProfile = functions.https.onRequest((req, res) => {
           return res.status(400).json({ error: 'UID do usuário é obrigatório.' });
         }
 
-        // Deletar usuário de autenticação
-        await admin.auth().deleteUser(uid);
+        // Inativar usuário no Firestore
+        await admin.firestore().collection('users').doc(uid).update({
+          isActive: false,
+          inactivatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
 
-        // Deletar dados do usuário no Firestore
-        await admin.firestore().collection('users').doc(uid).delete();
+        // Desabilitar usuário de autenticação
+        await admin.auth().updateUser(uid, { disabled: true });
 
-        // Deletar ícone do usuário
-        const fileName = `${uid}_profile.jpg`;
-        await bucket.file(fileName).delete().catch(() => { });
-
-        res.status(200).json({ message: 'Usuário deletado com sucesso.' });
+        res.status(200).json({ message: 'Usuário inativado com sucesso.' });
       });
     } catch (error) {
-      res.status(500).json({ error: `Erro ao deletar usuário: ${error.message}` });
+      console.error('Erro ao inativar usuário:', error);
+      res.status(500).json({ error: `Erro ao inativar usuário: ${error.message}` });
     }
   });
 });

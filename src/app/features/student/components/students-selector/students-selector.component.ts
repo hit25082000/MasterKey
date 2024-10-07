@@ -57,8 +57,9 @@ export class StudentsSelectorComponent implements OnInit {
   }
 
   private async loadSelectedStudents() {
-    const students = await this.classService.getClassStudents(this.classId());
-    this.selectedStudentsIds.set(new Set(students.map((s: Student) => s.id)));
+    const classStudents = await this.classService.getClassStudents(this.classId());
+    const studentIds = (classStudents as any).students || [];
+    this.selectedStudentsIds.set(new Set(studentIds));
     this.onChange(Array.from(this.selectedStudentsIds()));
   }
 

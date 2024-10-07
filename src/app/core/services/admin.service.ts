@@ -2,14 +2,14 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, from, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
-import BaseUser from '../models/default-user.model';
+import BaseUser from '../models/base-user.model';
 import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AdminService {
-  private apiUrl = 'http://127.0.0.1:5001/master-key-a3c69/us-central1';//  'https://us-central1-master-key-a3c69.cloudfunctions.net';
+  private apiUrl = 'http://127.0.0.1:5001/master-key-a3c69/us-central1';//    'https://us-central1-master-key-a3c69.cloudfunctions.net';
 
   constructor(private http: HttpClient, private authService: AuthService) {}
 

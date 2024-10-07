@@ -73,4 +73,11 @@ export class StorageService {
     const snapshot = await uploadBytes(storageRef, file);
     return await getDownloadURL(snapshot.ref);
   }
+
+  async uploadCourseImage(file: File, courseId: string): Promise<string> {
+    const storage = getStorage();
+    const storageRef = ref(storage, `course-images/${courseId}`);
+    const snapshot = await uploadBytes(storageRef, file);
+    return await getDownloadURL(snapshot.ref);
+  }
 }

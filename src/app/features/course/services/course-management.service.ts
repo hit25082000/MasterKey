@@ -21,17 +21,15 @@ export class CourseManagementService {
       });
   }
 
-  async update(newcourseForm: FormGroup): Promise<void> {
-    const newcourse = newcourseForm.value as Course;
-
+  async update(newCourse: Course): Promise<void> {
+    console.log(newCourse);
     try {
       const oldcourse = await this.firestore.getDocument(
         'courses',
-        newcourse.id
+        newCourse.id
       );
-
       if (oldcourse) {
-        await this.firestore.updateDocument('course', newcourse.id, newcourse);
+        await this.firestore.updateDocument('courses', newCourse.id, newCourse);
       }
     } catch (error) {}
   }

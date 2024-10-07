@@ -1,5 +1,6 @@
-export default interface Employee {
-  id: string;
+import { Entity } from "./entity";
+
+export interface Employee extends Entity {
   name: string;
   phone1: string;
   email: string;

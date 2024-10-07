@@ -17,7 +17,7 @@ import { CourseSelectorComponent } from '../../../course/components/course-selec
 import { PackageSelectorComponent } from '../../../package/components/package-selector/package-selector.component';
 import { PackageService } from '../../../package/services/package.service';
 import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
-import Employee from '../../../../core/models/employee.model';
+import {Employee} from '../../../../core/models/employee.model';
 import { Role } from '../../../../core/models/role.model';
 
 @Component({
@@ -56,7 +56,7 @@ export class EmployeeDetailsComponent implements OnInit {
 
     if (!this.employeeId) {
       this.notificationService.showNotification(
-        'Estudante não encontrado',
+        'Funcionario não encontrado',
         NotificationType.ERROR
       );
       this.loading = false;
@@ -64,29 +64,29 @@ export class EmployeeDetailsComponent implements OnInit {
     }
 
     try {
-      const student = await this.employeeService.getById(this.employeeId);
+      const employee = await this.employeeService.getById(this.employeeId);
 
       this.employeeForm = this.fb.group({
-        id: [student.id],
-        nome: [student?.name || '', Validators.required],
-        phone1: [student?.phone1 || ''],
-        phone2: [student?.phone2 || ''],
-        email: [student?.email || '', [Validators.required, Validators.email]],
-        cpf: [student?.cpf || '', Validators.required],
-        rg: [student?.rg || ''],
-        cep: [student?.cep || ''],
-        street: [student?.street || ''],
-        neighborhood: [student?.neighborhood || ''],
-        city: [student?.city || ''],
-        state: [student?.state || ''],
-        number: [student?.number || ''],
-        birthday: [student?.birthday || ''],
-        yearsOld: [student?.yearsOld || ''],
-        password: [student?.password || '', Validators.required],
+        id: [employee.id],
+        name: [employee?.name || '', Validators.required],
+        phone1: [employee?.phone1 || ''],
+        phone2: [employee?.phone2 || ''],
+        email: [employee?.email || '', [Validators.required, Validators.email]],
+        cpf: [employee?.cpf || '', Validators.required],
+        rg: [employee?.rg || ''],
+        cep: [employee?.cep || ''],
+        street: [employee?.street || ''],
+        neighborhood: [employee?.neighborhood || ''],
+        city: [employee?.city || ''],
+        state: [employee?.state || ''],
+        number: [employee?.number || ''],
+        birthday: [employee?.birthday || ''],
+        yearsOld: [employee?.yearsOld || ''],
+        password: [employee?.password || '', Validators.required],
         profilePic: [null],
-        sex: [student?.sex || 'masculino', Validators.required],
-        polo: [student?.polo || ''],
-        description: [student?.description || ''],
+        sex: [employee?.sex || 'masculino', Validators.required],
+        polo: [employee?.polo || ''],
+        description: [employee?.description || ''],
       });
 
       this.loading = false;

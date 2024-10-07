@@ -1,4 +1,4 @@
-import BaseUser from "./default-user.model";
+import BaseUser from "./base-user.model";
 
 export interface Class {
   id: string,
@@ -9,6 +9,5 @@ export interface Class {
   finishDate: Date,
   status: boolean,
   room: string,
-  students: string[],
   teacher: string,
 }

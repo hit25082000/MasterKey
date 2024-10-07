@@ -1,7 +1,7 @@
 import { EmployeeService } from './../../../employees/services/employee.service';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal, computed, input, inject, forwardRef } from '@angular/core';
-import BaseUser from '../../../../core/models/default-user.model';
+import BaseUser from '../../../../core/models/base-user.model';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({

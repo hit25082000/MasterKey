@@ -57,6 +57,7 @@ export class CourseReviewComponent implements OnInit {
 
     const review: CourseReview = {
       id: '', // Será gerado pelo Firestore
+      active: true,
       userId: 'USER_ID', // Substitua pelo ID do usuário atual
       courseId: this.courseId,
       rating: this.rating,

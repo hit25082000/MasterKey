@@ -1,0 +1,15 @@
+.category-selector ul {
+  list-style: none;
+  padding: 0;
+}
+
+.category-selector li {
+  padding: 10px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+.category-selector li.selected {
+  background-color: #cce5ff;
+  border-color: #007bff;
+}

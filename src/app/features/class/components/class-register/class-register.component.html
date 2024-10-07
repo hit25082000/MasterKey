@@ -63,5 +63,5 @@
     <input id="room" formControlName="room" class="form-control" />
   </div>
 
-  <button type="submit" class="btn btn-primary">Criar</button>
+  <button type="submit" class="btn btn-primary" [disabled]="classForm.invalid">Criar</button>
 </form>

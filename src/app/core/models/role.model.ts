@@ -1,7 +1,8 @@
-export class Role {
-  constructor(
-    public id: string,
-    public name : string,
-    public permissions: string[]
-  ) {  }
+import { Entity } from "./entity";
+
+export interface Role extends Entity {
+    id: string;
+    name: string;
+    permissions: string[];
 }
+

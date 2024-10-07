@@ -14,7 +14,7 @@
   <tbody>
     @for (student of displayedStudents; track student.cpf) {
     <tr>
-      <td><img width="25" [src]="student.profilePic" alt="" /></td>
+      <td><img width="25" [src]="student.iconUrl" alt="" /></td>
       <td>{{ student.name }}</td>
       <td>{{ student.phone1 }}</td>
       <td>{{ student.yearsOld }}</td>

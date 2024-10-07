@@ -23,17 +23,18 @@ export class StudentManagementService {
     private firestoreService: FirestoreService
   ) {}
 
-  async create(student: Student, icon: File | null): Promise<string> {
+  async create(newStudent: Student, icon: File | null): Promise<string> {
     try {
       const iconBase64 = icon ? await this.fileToBase64(icon) : null;
       return new Promise((resolve, reject) => {
-        this.adminService.createUser(student, iconBase64).subscribe(
-          () => {
+        this.adminService.createUser(newStudent, iconBase64).subscribe(
+          (student) => {
+            console.log(student);
             this.logSuccessfulRegistration(student);
             resolve('Estudante criado com sucesso!');
           },
-          (error) => {
-            reject(this.handleError(error));
+          (response) => {
+            reject(this.handleError(response.error));
           }
         );
       });
@@ -54,8 +55,8 @@ export class StudentManagementService {
             this.logSuccessfulUpdate(newStudent, logDetails);
             resolve('Estudante atualizado com sucesso!');
           },
-          (error) => {
-            reject(this.handleError(error));
+          (response) => {
+            reject(this.handleError(response.error));
           }
         );
       });
@@ -97,22 +98,25 @@ export class StudentManagementService {
     });
   }
 
-  private handleError(error: unknown): Error {
+  private handleError(error: any): Error {
     if (error instanceof Error || error instanceof HttpErrorResponse) {
+      return new Error(error.message);
+    }
+    if(error.message != null){
       return new Error(error.message);
     }
     return new Error('Erro desconhecido');
   }
 
-  private logSuccessfulRegistration(student: Student) {
+  private logSuccessfulRegistration(student: any) {
     const currentUser = this.authService.getCurrentUser();
     const logDetails = `Usuário ${currentUser?.name} (ID: ${
       currentUser?.id
     }) cadastrou o estudante ${student.name} (ID: ${
-      student.id
+      student.uid
     }) em ${new Date().toLocaleString()}`;
 
-    this.systemLog.logUserRegistration(student.id, logDetails);
+    this.systemLog.logUserRegistration(student.uid, logDetails);
   }
 
   private logSuccessfulUpdate(student: Student, chagedData: Partial<Student>) {

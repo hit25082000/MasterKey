@@ -18,6 +18,10 @@ export class HandoutService {
     return await this.firestore.getDocument<Handout>('handouts', id);
   }
 
+  async add(handout: Handout): Promise<Handout> {
+    return await this.firestore.addToCollection<Handout>('handouts', handout);
+  }
+
   async delete(id: string) {
     this.firestore.deleteDocument('handouts', id);
   }

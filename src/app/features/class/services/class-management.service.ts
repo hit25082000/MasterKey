@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { FirestoreService } from '../../../core/services/firestore.service';
-import { Role } from '../../../core/models/role.model';
-import { Package } from '../../../core/models/package.model';
 import { Class } from '../../../core/models/class.model';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Observable, from, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root',
@@ -11,25 +11,50 @@ import { HttpErrorResponse } from '@angular/common/http';
 export class ClassManagementService {
   constructor(private firestore: FirestoreService) {}
 
-  create(newClass: Class) {
-    this.firestore
-      .getDocumentsByAttribute('classes', 'name', newClass.name)
-      .then((packageList) => {
-        if (packageList.length == 0) {
-          this.firestore.addToCollection('classes', newClass);
-        }
-      });
+  create(newClass: Class): Observable<void> {
+    return from(this.createClass(newClass)).pipe(
+      catchError(this.handleError)
+    );
   }
 
-  async update(id: string, newClass: Class): Promise<void> {
-    const oldStudent = (await this.firestore.getDocument(
-      'classes',
-      id
-    )) as Class;
-
-    if (oldStudent) {
-      this.firestore.updateDocument('classes', id, newClass);
+  private async createClass(newClass: any): Promise<void> {
+    const existingClasses = await this.firestore.getDocumentsByAttribute('classes', 'name', newClass.name);
+    if (existingClasses.length > 0) {
+      throw new Error('Já existe uma turma com este nome.');
     }
+
+    const classItem = this.prepareClassItem(newClass);
+    const classe = await this.firestore.addToCollection('classes', classItem);
+    await this.firestore.addToCollectionWithId('class_students', classe.id, { students: newClass.students});
+  }
+
+  async update(newClass: any): Promise<void> {
+    try {
+      const oldClass = await this.firestore.getDocument('classes', newClass.id) as Class;
+      if (!oldClass) {
+        throw new Error('Turma não encontrada.');
+      }
+
+      const classItem = this.prepareClassItem(newClass);
+      await this.firestore.updateDocument('classes', newClass.id, classItem);
+      await this.firestore.updateDocument('class_students', newClass.id, { students: newClass.students });
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  private prepareClassItem(classData: any): Class {
+    return {
+      id: classData.id,
+      name: classData.name,
+      dayWeek: classData.dayWeek,
+      startDate: classData.startDate,
+      finishDate: classData.finishDate,
+      time: classData.time,
+      status: classData.status,
+      room: classData.room,
+      teacher: classData.teacher,
+    };
   }
 
   async updateStudentClasses(
@@ -69,10 +94,10 @@ export class ClassManagementService {
     const classItem = (await this.firestore.getDocument(
       'class_students',
       classId
-    )) as Class;
+    )) as any;
 
     if (classItem) {
-      classItem.students = classItem.students.filter((id) => id !== studentId);
+      classItem.students = classItem.students.filter((id : any) => id !== studentId);
 
       await this.firestore.updateDocument('class_students', classId, classItem);
     }
@@ -85,10 +110,14 @@ export class ClassManagementService {
     await this.firestore.updateDocument('class_students', classId, studentIds);
   }
 
-  private handleError(error: unknown): Error {
+  private handleError(error: unknown): Observable<never> {
+    let errorMessage: string;
     if (error instanceof Error || error instanceof HttpErrorResponse) {
-      return new Error(error.message);
+      errorMessage = error.message;
+    } else {
+      errorMessage = 'Erro desconhecido';
     }
-    return new Error('Erro desconhecido');
+    console.error('Erro no ClassManagementService:', errorMessage);
+    return throwError(() => new Error(errorMessage));
   }
 }

@@ -1,4 +1,4 @@
-import BaseUser from "./default-user.model";
+import BaseUser from "./base-user.model";
 
 export interface Student extends BaseUser {
   responsible?: string;

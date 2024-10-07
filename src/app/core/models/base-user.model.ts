@@ -1,5 +1,6 @@
-export default interface BaseUser {
-  id: string;
+import { Entity } from "./entity";
+
+export default interface BaseUser extends Entity {
   name: string;
   phone1: string;
   email: string;
@@ -17,7 +18,7 @@ export default interface BaseUser {
   sex: string;
   polo: string;
   role: string;
-  profilePic?: string;
+  iconUrl?: string;
   phone2?: string;
   description?: string;
 }

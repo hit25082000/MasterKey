@@ -3,9 +3,18 @@
     <h3>{{ course.name }}</h3>
     <p>{{ course.description }}</p>
     <p><strong>Preço:</strong> {{ course.price }}</p>
-    <p><strong>Vídeos:</strong> {{ course.videoCount }}</p>
-    <button class="btn btn-primary" (click)="editCourse(course.id)">
-      Editar
-    </button>
+    <p><strong>Preço Promocional:</strong> {{ course.promoPrice }}</p>
+    <p><strong>Categoria:</strong> {{ course.category }}</p>
+    <p><strong>Status:</strong> {{ course.active ? 'Ativo' : 'Inativo' }}</p>
+    <p><strong>Carga Horária:</strong> {{ course.workHours }} horas</p>
+    <p><strong>Quantidade de Vídeos:</strong> {{ course.videos.length }}</p>
+    <p><strong>Destaque:</strong> {{ course.highlight ? 'Sim' : 'Não' }}</p>
+    <strong>Vídeos:</strong>
+    <ul>
+      @for (video of course.videos; track video.id; let i = $index) {
+        <li>{{ video.name }}</li>
+      }
+    </ul>
+    <button (click)="editCourse(course.id)">Editar</button>
   </div>
 </div>

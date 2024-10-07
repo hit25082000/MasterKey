@@ -1,4 +1,5 @@
-import { Component, Input } from '@angular/core';
+import { LoadingService } from './../../services/loading.service';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -6,7 +7,7 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div *ngIf="isLoading" class="loading-overlay">
+    <div *ngIf="loadingService.isLoading$ | async" class="loading-overlay">
       <div class="spinner"></div>
     </div>
   `,
@@ -33,16 +34,13 @@ import { CommonModule } from '@angular/common';
         animation: spin 1s linear infinite;
       }
       @keyframes spin {
-        0% {
-          transform: rotate(0deg);
-        }
-        100% {
-          transform: rotate(360deg);
-        }
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
       }
-    `,
-  ],
+    `
+  ]
 })
+
 export class LoadingOverlayComponent {
-  @Input() isLoading: boolean = false;
+  constructor(public loadingService: LoadingService) {}
 }

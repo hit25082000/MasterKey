@@ -98,7 +98,6 @@ export class FirestoreService {
 
   updateDocument<T>(path: string, id: string, data: any): Promise<void> {
     var ref = doc(collection(this.firestore, path), id);
-
     return setDoc(ref, { ...data }, { merge: true });
   }
 
@@ -199,4 +198,28 @@ export class FirestoreService {
     const docRef = doc(this.firestore, '_');
     return docRef.id;
   }
+
+  async getDocumentsWithCondition<T>(
+    path: string,
+    field: string,
+    operator: FirestoreFilterOperator,
+    value: any
+  ): Promise<T[]> {
+    const q = query(
+      collection(this.firestore, path),
+      where(field, operator, value)
+    );
+    const querySnapshot = await getDocs(q);
+
+    const list: T[] = [];
+    querySnapshot.forEach((doc) => {
+      if (doc.data()) {
+        list.push({ ...doc.data(), id: doc.id } as T);
+      }
+    });
+
+    return list;
+  }
 }
+
+type FirestoreFilterOperator = '<' | '<=' | '==' | '!=' | '>=' | '>'

@@ -28,6 +28,6 @@ export class ClassService {
   }
 
   async getClassStudents(classId: string): Promise<any[]> {
-    return this.firestore.getDocumentsByArrayItemId('class_students', 'classId', classId);
+    return this.firestore.getDocument('class_students', classId);
   }
 }

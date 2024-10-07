@@ -1,7 +1,8 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Video } from './../../../../core/models/course.model';
+import { Component, OnInit, signal } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import {
+  FormArray,
   FormBuilder,
   FormGroup,
   ReactiveFormsModule,
@@ -12,72 +13,116 @@ import { FirestoreService } from '../../../../core/services/firestore.service';
 import { environment } from '../../../../../environments/environment';
 import { NotificationService } from '../../../../shared/components/notification/notification.service';
 import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
+import { GoogleAuthService } from '../../../../core/services/google-auth.service';
+import { SearchBarComponent } from '../../../../shared/components/search-bar/search-bar.component';
+import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { VideoSelectorComponent } from "../../../video/components/video-selector/video-selector.component";
+import { LoadingService } from '../../../../shared/services/loading.service';
+import { StorageService } from '../../../../core/services/storage.service';
+import { HandoutSelectorComponent } from '../../../ecommerce/components/handout-selector/handout-selector.component';
+import { BookSelectorComponent } from '../../../library/components/book-selector/book-selector.component';
+import { CategoryService } from '../../../category/services/category.service';
+import { CategorySelectorComponent } from '../../../category/components/category-register/category-selector/category-selector.component';
 
 @Component({
-  selector: 'app-course',
+  selector: 'app-course-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, CategorySelectorComponent, ReactiveFormsModule, SearchBarComponent, ModalComponent, VideoSelectorComponent, HandoutSelectorComponent, BookSelectorComponent],
   templateUrl: './course-register.component.html',
   styleUrls: ['./course-register.component.scss'],
 })
 export class CourseRegisterComponent implements OnInit {
   courseForm!: FormGroup;
-  private accessToken: string | null = null;
+  accessToken = signal<string | null>(null);
   isAuthenticated: boolean = false;
-  driveVideos: any[] = [];
-  selectedVideos: any[] = [];
+  selectedVideos = signal<Video[]>([]);
+  isLoading = signal<boolean>(true);
+  selectedFile: File | null = null;
+  videos = signal<Video[]>([]);
 
   constructor(
     private fb: FormBuilder,
     private firestoreService: FirestoreService,
     private router: Router,
-    private httpClient: HttpClient,
     private route: ActivatedRoute,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private googleAuthService: GoogleAuthService,
+    private loadingService: LoadingService,
+    private storageService: StorageService,
+    private categoryService: CategoryService
   ) {}
 
   ngOnInit(): void {
     this.courseForm = this.fb.group({
-      title: ['', Validators.required],
+      name: ['', Validators.required],
       description: ['', Validators.required],
-      price: ['', [Validators.required, Validators.min(0)]],
+      price: ['', Validators.required],
+      promoPrice: [0, [Validators.required, Validators.min(0)]],
+      portionCount: [1, [Validators.required, Validators.min(1)]],
+      hidePrice: [false],
+      imageUrl: [''],
+      category: ['', Validators.required],
+      highlight: [false],
+      checkoutUrl: ['', Validators.required],
+      workHours: [0, [Validators.required, Validators.min(0)]],
+      videos: this.fb.array([]),
     });
 
     this.route.queryParams.subscribe((params) => {
       const code = params['code'] as string;
       if (code) {
-        this.exchangeCodeForToken(code);
+        this.exchangeCodeForToken(code).then(() => {
+          this.isAuthenticated = true;
+          this.router.navigate(['/admin/course-register']);
+          this.isLoading.set(false);
+        });
       }
     });
 
-    const savedToken = localStorage.getItem('googleAccessToken');
-    if (savedToken) {
-      this.accessToken = savedToken;
-      this.isAuthenticated = true;
-      this.fetchDriveVideos();
-    }
+    this.googleAuthService.accessToken$.subscribe(token => {
+      if (token) {
+        this.accessToken.set(token);
+        this.isAuthenticated = true;
+        this.isLoading.set(false);
+      } else {
+        this.isAuthenticated = false;
+        this.isLoading.set(false);
+      }
+    });
+  }
+
+  onFileChange(event: any) {
+    this.selectedFile = event.target.files[0];
   }
 
   async onSubmit() {
     if (
       this.courseForm.valid &&
       this.isAuthenticated &&
-      this.selectedVideos.length > 0
+      this.videosFormArray.length > 0
     ) {
       try {
+        let imageUrl = this.courseForm.get('image')?.value;
+
+        if (this.selectedFile) {
+          imageUrl = await this.storageService.uploadCourseImage(this.selectedFile, Date.now().toString());
+        }
+
         const courseData = {
           ...this.courseForm.value,
-          videos: this.selectedVideos,
+          image: imageUrl,
+          videos: this.videosFormArray.value,
         };
 
-        await this.firestoreService.addToCollection('courses', courseData);
+        const course = await this.firestoreService.addToCollection('courses', courseData);
+        await this.categoryService.addCourseToCategory(this.courseForm.get('category')?.value, course.id);
 
         this.notificationService.showNotification(
           'Curso criado com sucesso!',
           NotificationType.SUCCESS
         );
 
-        this.router.navigate(['/admin/courses']);
+        this.router.navigate(['/admin/course-list']);
       } catch (error) {
         console.error('Erro ao criar curso:', error);
         this.notificationService.showNotification(
@@ -98,12 +143,12 @@ export class CourseRegisterComponent implements OnInit {
     }
   }
 
-  private initiateOAuthFlow() {
+  initiateOAuthFlow() {
     const clientId = environment.googleClientId;
     const redirectUri = 'http://localhost:4200/admin/course-register';
     const scope = 'https://www.googleapis.com/auth/drive.readonly';
 
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?scope=${scope}&access_type=offline&include_granted_scopes=true&response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}`;
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?scope=${encodeURIComponent(scope)}&access_type=offline&include_granted_scopes=true&response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}`;
 
     localStorage.setItem(
       'courseFormData',
@@ -112,83 +157,44 @@ export class CourseRegisterComponent implements OnInit {
     window.location.href = authUrl;
   }
 
-  private exchangeCodeForToken(code: string) {
-    const tokenEndpoint = 'https://oauth2.googleapis.com/token';
-    const body = {
-      code: code,
-      client_id: environment.googleClientId,
-      client_secret: environment.googleClientSecret,
-      redirect_uri: 'http://localhost:4200/admin/course',
-      grant_type: 'authorization_code',
-    };
-    this.httpClient.post(tokenEndpoint, body).subscribe(
+  async exchangeCodeForToken(code: string) {
+    const redirectUri = 'http://localhost:4200/admin/course-register';
+    this.loadingService.show();
+    this.googleAuthService.exchangeCodeForToken(code, redirectUri).subscribe(
       (response: any) => {
-        this.accessToken = response.access_token;
-        this.isAuthenticated = true;
-        localStorage.setItem('googleAccessToken', this.accessToken!);
-
-        const savedFormData = localStorage.getItem('courseFormData');
-        if (savedFormData) {
-          this.courseForm.patchValue(JSON.parse(savedFormData));
-          localStorage.removeItem('courseFormData');
-        }
-
-        this.fetchDriveVideos();
+        this.googleAuthService.setAccessToken(response.access_token);
+        this.loadingService.hide();
       },
       (error) => {
-        this.isAuthenticated = false;
-        console.error('Erro na autenticação:', error);
-        this.notificationService.showNotification(
-          'Erro na autenticação. Por favor, tente novamente.',
-          NotificationType.ERROR
-        );
+        this.loadingService.hide();
       }
     );
   }
 
   authenticateWithGoogle() {
-    this.initiateOAuthFlow();
+    this.loadingService.show();
+    const redirectUri = 'http://localhost:4200/admin/course-register';
+    this.googleAuthService.initiateOAuthFlow(redirectUri);
   }
 
-  fetchDriveVideos() {
-    if (!this.accessToken) {
-      this.notificationService.showNotification(
-        'Autenticação necessária para buscar vídeos.',
-        NotificationType.ERROR
-      );
-      return;
-    }
+  removeVideo(index: number): void {
+    this.videosFormArray.removeAt(index);
+    this.videos.set(this.videos().filter((_, i) => i !== index));
+  }
 
-    const endpoint = 'https://www.googleapis.com/drive/v3/files';
-    const headers = new HttpHeaders({
-      Authorization: `Bearer ${this.accessToken}`,
+  get videosFormArray(): FormArray {
+    return this.courseForm.get('videos') as FormArray || [];
+  }
+
+  updateSelectedVideos(videos: any[]) {
+    this.videos.set([...this.videos(), ...videos]);
+    this.videos().forEach((video: Video) => {
+      this.videosFormArray.push(this.fb.group({
+        id: [video.id],
+        name: [video.name, Validators.required],
+        duration: [video.duration, Validators.required],
+        webViewLink: [video.webViewLink, Validators.required],
+      }));
     });
-
-    const params = {
-      q: 'mimeType contains "video/"',
-      fields: 'files(id,name,mimeType,webViewLink,webContentLink)',
-    };
-
-    this.httpClient.get(endpoint, { headers, params }).subscribe(
-      (response: any) => {
-        this.driveVideos = response.files;
-      },
-      (error) => {
-        console.error('Erro ao buscar vídeos:', error);
-        this.notificationService.showNotification(
-          'Erro ao buscar vídeos do Google Drive.',
-          NotificationType.ERROR
-        );
-      }
-    );
-  }
-
-  toggleVideoSelection(video: any) {
-    const index = this.selectedVideos.findIndex((v) => v.id === video.id);
-    if (index > -1) {
-      this.selectedVideos.splice(index, 1);
-    } else {
-      this.selectedVideos.push(video);
-    }
   }
 }

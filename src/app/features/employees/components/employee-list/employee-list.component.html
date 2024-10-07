@@ -2,11 +2,11 @@
 <table>
   <thead>
     <tr>
-      <th>ID</th>
+
       <th>Foto</th>
       <th>Nome</th>
       <th>Fone</th>
-      <th>CyearsOld</th>
+      <th>Idade</th>
       <th>Polo</th>
       <th>Status</th>
       <th>Ação</th>
@@ -15,12 +15,12 @@
   <tbody>
     @for (employee of employees; track employee.cpf) {
     <tr>
-      <td>{{ employee.id }}</td>
       <td><img width="25" [src]="employee.profilePic" alt="" /></td>
       <td>{{ employee.name }}</td>
       <td>{{ employee.phone1 }}</td>
       <td>{{ employee.city }}</td>
       <td>{{ employee.polo }}</td>
+      <td>{{ employee.role }}</td>
 
       <td>
         <button (click)="editEmployees(employee.id)">Editar</button

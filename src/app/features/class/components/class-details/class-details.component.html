@@ -83,24 +83,6 @@
     </div>
   </div>
 
-  <div class="form-group">
-    <label for="status">Situação</label>
-    <input
-      id="status"
-      type="checkbox"
-      formControlName="status"
-      class="form-control"
-    />
-    <div
-      *ngIf="
-        classForm.get('status')?.invalid && classForm.get('status')?.touched
-      "
-      class="text-danger"
-    >
-      Situação é obrigatório.
-    </div>
-  </div>
-
   <button type="button" (click)="modalTeacher.toggle()">
     Selecionar Professor
   </button>
@@ -127,5 +109,5 @@
     <input id="room" formControlName="room" class="form-control" />
   </div>
 
-  <button type="submit" class="btn btn-primary">Cadastrar Aluno</button>
+  <button type="submit" [disabled]="classForm.invalid && classForm.pristine" class="btn btn-primary">Alterar</button>
 </form>

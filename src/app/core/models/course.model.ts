@@ -1,12 +1,12 @@
-export interface Video {
-  id: string;
-  title: string;
+import { Entity } from "./entity";
+
+export interface Video extends Entity {
+  name: string;
   duration: number;
-  url: string;
+  webViewLink: string;
 }
 
-export interface CourseReview {
-  id: string;
+export interface CourseReview extends Entity {
   userId: string;
   courseId: string;
   rating: number; // 1 a 5 estrelas
@@ -15,18 +15,14 @@ export interface CourseReview {
   createdAt: Date;
 }
 
-export interface Course {
-  id: string;
+export interface Course extends Entity {
   name: string;
-  videoCount: number;
-  price: string;
+  price: number;
   promoPrice: number;
   portionCount: number;
   hidePrice: boolean;
   image: string;
-  status: string;
   category: string;
-  categoryEcommerce: string;
   highlight: boolean;
   checkoutUrl: string;
   description: string;

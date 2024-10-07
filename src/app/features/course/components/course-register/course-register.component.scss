@@ -1,0 +1,18 @@
+.modal {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.video-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.video-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+
+  input[type="checkbox"] {
+    margin-right: 10px;
+  }
+}

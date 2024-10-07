@@ -35,6 +35,7 @@ import { MeetingComponent } from './features/meet/components/meet/meet.component
 import { JobVacancyListComponent } from './features/student/components/job-vacancy-list/job-vacancy-list.component';
 import { JobVacancyFormComponent } from './features/student/components/job-vacancy-form/job-vacancy-form.component';
 import { LibraryCourseComponent } from './features/library/components/library-course/library-course.component';
+import { CourseCatalogComponent } from './features/course/components/course-catalog/course-catalog.component';
 export const routes: Routes = [
   { path: '', component: EcommerceComponent },
   {
@@ -167,6 +168,17 @@ export const routes: Routes = [
     path: 'classroom',
     component: ClassroomComponent,
     canActivate: [AuthGuard],
+    children: [
+      {
+        path: '',
+        redirectTo: 'dashboard',
+        pathMatch: 'full',
+      },
+      {
+        path: 'course-catalog',
+        component: CourseCatalogComponent,
+      },
+    ]
   },
   { path: 'ecommerce', component: EcommerceComponent },
   { path: 'unauthorized', component: UnauthorizedComponent },

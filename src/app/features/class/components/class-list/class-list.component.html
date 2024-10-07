@@ -2,14 +2,17 @@
 <table>
   <thead>
     <tr>
-      <th>ID</th>
       <th>Nome</th>
+      <th>Dias da semana</th>
+      <th>Ações</th>
     </tr>
   </thead>
   <tbody>
     @for (class of classes; track class.name) {
       <tr>
-        <td>{{ class.id }}</td><td> {{ class.name }}  </td>
+       <td> {{ class.name }}  </td><td>
+        {{ class.dayWeek }}
+       </td>
 
         <td><button (click)="edit(class.id)">Editar</button><button (click)="delete(class.id)">Excluir</button></td>
       </tr>

@@ -27,47 +27,6 @@
     />
   </div>
 
-  <button type="button" (click)="modalCourse.toggle()">
-    Selecionar Cursos
-  </button>
-  <button type="button" (click)="modalPackage.toggle()">
-    Selecionar Pacotes
-  </button>
-
-  <app-modal #modalCourse>
-    <app-course-selector
-      [categoryId]="categoryId"
-      #courseSelector
-    ></app-course-selector>
-  </app-modal>
-
-  <!-- Exibir cursos selecionados -->
-  <div *ngIf="courseSelector.selectedCourses().length > 0">
-    <h4>Cursos Selecionados:</h4>
-    <ul>
-      <li *ngFor="let course of courseSelector.selectedCourses()">
-        {{ course.name }}
-      </li>
-    </ul>
-  </div>
-
-  <app-modal #modalPackage>
-    <app-package-selector
-      [categoryId]="categoryId"
-      #packageSelector
-    ></app-package-selector>
-  </app-modal>
-
-  <!-- Exibir pacotes selecionados -->
-  <div *ngIf="packageSelector.selectedPackages().length > 0">
-    <h4>Pacotes Selecionados:</h4>
-    <ul>
-      <li *ngFor="let package of packageSelector.selectedPackages()">
-        {{ package.name }}
-      </li>
-    </ul>
-  </div>
-
   <button
     type="submit"
     class="btn btn-primary"

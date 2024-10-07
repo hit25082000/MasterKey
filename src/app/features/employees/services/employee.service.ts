@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { FirestoreService } from '../../../core/services/firestore.service';
-import Employee from '../../../core/models/employee.model';
+import {Employee} from '../../../core/models/employee.model';
 import { AdminService } from '../../../core/services/admin.service';
 import { StorageService } from '../../../core/services/storage.service';
 
@@ -15,10 +15,11 @@ export class EmployeeService {
   ) {}
 
   getAll(): Promise<Employee[]> {
-    return this.firestore.getDocumentsByAttribute<Employee>(
+    return this.firestore.getDocumentsWithCondition<Employee>(
       'users',
       'role',
-      'employee'
+      '!=',
+      'student'
     );
   }
 

@@ -1,5 +1,4 @@
 import { QuerySnapshot, Firestore } from '@angular/fire/firestore';
-import Employee from './../../../core/models/employee.model';
 import { Injectable } from '@angular/core';
 import { FirestoreService } from '../../../core/services/firestore.service';
 import { StorageService } from '../../../core/services/storage.service';
@@ -10,6 +9,7 @@ import { SystemLogService } from '../../../core/services/system-log.service';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Employee } from '../../../core/models/employee.model';
 
 @Injectable({
   providedIn: 'root',

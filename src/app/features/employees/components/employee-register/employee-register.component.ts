@@ -6,7 +6,7 @@ import { Router } from '@angular/router';
 import { NotificationService } from '../../../../shared/components/notification/notification.service';
 import { ValidatorCpf } from '../../../../shared/Validators/cpf.validator';
 import { passwordMatchValidator } from '../../../../shared/Validators/password-math.validator';
-import Employee from '../../../../core/models/employee.model';
+import {Employee} from '../../../../core/models/employee.model';
 import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
 
 @Component({

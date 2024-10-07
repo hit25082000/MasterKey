@@ -61,11 +61,11 @@ export class JobVacancyFormComponent implements OnInit {
       if (this.isEditMode) {
         this.jobVacancyService
           .updateVacancy(this.vacancyId, vacancy)
-          .then(() => this.router.navigate(['/job-vacancy']));
+          .then(() => this.router.navigate(['/admin/job-vacancy']));
       } else {
         this.jobVacancyService
           .createVacancy(vacancy)
-          .then(() => this.router.navigate(['/job-vacancy']));
+          .then(() => this.router.navigate(['/admin/job-vacancy']));
       }
     }
   }

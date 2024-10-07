@@ -1,9 +1,9 @@
-<div *ngIf="loading" class="loading-spinner">
+<div *ngIf="loading()" class="loading-spinner">
   <!-- Indicador de carregamento, pode ser um spinner ou mensagem -->
   Carregando dados do pacote...
 </div>
 
-<form *ngIf="!loading" [formGroup]="packageForm" (ngSubmit)="onSubmit()">
+<form *ngIf="!loading()" [formGroup]="packageForm" (ngSubmit)="onSubmit()">
   <div class="form-group">
     <label for="name">Nome</label>
     <input id="name" formControlName="name" class="form-control" />
@@ -66,6 +66,7 @@
     <app-course-selector
       [packageId]="packageId"
       #courseSelector
+      (coursesChanged)="onCoursesChanged()"
     ></app-course-selector>
   </app-modal>
 
@@ -76,9 +77,7 @@
         <strong>{{ course.name }}</strong> - {{ course.description }}
       </p>
       <p>
-        <Button type="button" (click)="courseSelector.removeCourse(course.id)"
-          >Remover</Button
-        >
+        <Button type="button" (click)="courseSelector.removeCourse(course.id); onCoursesChanged()">Remover</Button>
       </p>
     </div>
   </div>
@@ -86,7 +85,7 @@
   <button
     type="submit"
     class="btn btn-primary"
-    [disabled]="packageForm.invalid"
+    [disabled]="packageForm.invalid || !isFormDirty()"
   >
     Alterar
   </button>

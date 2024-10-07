@@ -1,0 +1,28 @@
+.student-nav {
+  width: 200px;
+  background-color: #f0f0f0;
+  padding: 20px;
+
+  ul {
+    list-style-type: none;
+    padding: 0;
+
+    li {
+      margin-bottom: 10px;
+
+      a {
+        text-decoration: none;
+        color: #333;
+        font-weight: bold;
+
+        &.active {
+          color: #007bff;
+        }
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+    }
+  }
+}

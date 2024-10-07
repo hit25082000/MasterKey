@@ -1,9 +1,6 @@
-import { Course } from './course.model';
+import { Entity } from "./entity";
 
-export interface Category {
-  id: string;
+export interface Category extends Entity {
   name: string;
   image: string;
-  courses: string[];
-  packages: string[];
 }

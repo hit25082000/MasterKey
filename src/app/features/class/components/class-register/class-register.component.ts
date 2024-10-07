@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -11,9 +11,13 @@ import { ModalComponent } from '../../../../shared/components/modal/modal.compon
 import { DayWeekSelectorComponent } from '../day-week-selector/day-week-selector.component';
 import { StudentsSelectorComponent } from './../../../student/components/students-selector/students-selector.component';
 import { TeacherSelectorComponent } from '../../../employees/components/teacher-selector/teacher-selector.component';
+import { NotificationService } from '../../../../shared/components/notification/notification.service';
+import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
+import { LoadingService } from '../../../../shared/services/loading.service';
+import { Router } from '@angular/router';
 
 @Component({
-  selector: 'app-class-create',
+  selector: 'app-class-register',
   standalone: true,
   imports: [
     ReactiveFormsModule,
@@ -22,7 +26,6 @@ import { TeacherSelectorComponent } from '../../../employees/components/teacher-
     StudentsSelectorComponent,
     CommonModule,
     TeacherSelectorComponent,
-    TeacherSelectorComponent,
     ModalComponent,
   ],
   templateUrl: './class-register.component.html',
@@ -30,10 +33,13 @@ import { TeacherSelectorComponent } from '../../../employees/components/teacher-
 })
 export class ClassRegisterComponent implements OnInit {
   classForm!: FormGroup;
+  router = inject(Router);
 
   constructor(
     private fb: FormBuilder,
-    private classManagementService: ClassManagementService
+    private classManagementService: ClassManagementService,
+    private notificationService: NotificationService,
+    private loadingService: LoadingService
   ) {}
 
   ngOnInit(): void {
@@ -52,7 +58,30 @@ export class ClassRegisterComponent implements OnInit {
 
   onSubmit() {
     if (this.classForm.valid) {
-      this.classManagementService.create(this.classForm.value);
+      this.loadingService.show();
+      this.classManagementService.create(this.classForm.value).subscribe(
+        (response) => {
+          this.loadingService.hide();
+          this.notificationService.showNotification(
+            'Turma criada com sucesso!',
+            NotificationType.SUCCESS
+          );
+          this.router.navigate(['/admin/class-list']);
+        },
+        (error) => {
+          this.loadingService.hide();
+          this.notificationService.showNotification(
+            'Erro ao criar turma. Por favor, tente novamente.',
+            NotificationType.ERROR
+          );
+          console.error('Erro ao criar turma:', error);
+        }
+      );
+    } else {
+      this.notificationService.showNotification(
+        'Por favor, preencha todos os campos obrigatórios.',
+        NotificationType.ERROR
+      );
     }
   }
 }

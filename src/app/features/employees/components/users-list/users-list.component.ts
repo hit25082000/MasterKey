@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import BaseUser from '../../../../core/models/default-user.model';
+import BaseUser from '../../../../core/models/base-user.model';
 import { Observable } from 'rxjs';
 import { FirestoreService } from '../../../../core/services/firestore.service';
 

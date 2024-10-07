@@ -1,0 +1,19 @@
+<div class="course-catalog">
+  <h2>Seus Cursos</h2>
+  <div class="course-grid">
+    <div *ngFor="let course of studentCourses" class="course-card">
+      <h3>{{ course.title }}</h3>
+      <p>{{ course.description }}</p>
+      <button>Ver Curso</button>
+    </div>
+  </div>
+
+  <h2>Seus Pacotes</h2>
+  <div class="package-grid">
+    <div *ngFor="let package of studentPackages" class="package-card">
+      <h3>{{ package.title }}</h3>
+      <p>{{ package.description }}</p>
+      <button>Ver Pacote</button>
+    </div>
+  </div>
+</div>

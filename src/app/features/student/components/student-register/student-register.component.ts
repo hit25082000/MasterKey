@@ -15,12 +15,11 @@ import { passwordMatchValidator } from '../../../../shared/Validators/password-m
 import { AuthService } from '../../../../core/services/auth.service';
 import { Student } from '../../../../core/models/student.model';
 import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
-import { LoadingOverlayComponent } from '../../../../shared/components/loading-overlay/loading-overlay.component';
 
 @Component({
   selector: 'app-student-register',
   standalone: true,
-  imports: [ReactiveFormsModule, CommonModule, LoadingOverlayComponent],
+  imports: [ReactiveFormsModule, CommonModule],
   templateUrl: './student-register.component.html',
   styleUrls: ['./student-register.component.scss'],
 })

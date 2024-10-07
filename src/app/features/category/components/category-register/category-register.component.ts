@@ -56,9 +56,7 @@ export class CategoryRegisterComponent implements OnInit {
   ngOnInit(): void {
     this.categoryForm = this.fb.group({
       name: ['', Validators.required],
-      image: [null],
-      courses: [[]],
-      packages: [[]],
+      image: [null]
     });
   }
 
@@ -71,10 +69,6 @@ export class CategoryRegisterComponent implements OnInit {
     if (this.categoryForm.valid) {
       const newCategory: Category = {
         ...this.categoryForm.value,
-        courses: this.courseSelector
-          .selectedCourses()
-          .map((course) => course.id),
-        packages: this.packageSelector.selectedPackages().map((pkg) => pkg.id),
       };
 
       this.categoryManagementService

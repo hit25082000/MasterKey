@@ -1,6 +1,6 @@
 import { PackageService } from '../../../package/services/package.service';
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   FormBuilder,
   FormGroup,
@@ -17,6 +17,8 @@ import { TeacherSelectorComponent } from '../../../employees/components/teacher-
 import { Student } from '../../../../core/models/student.model';
 import { ClassService } from '../../services/class.service';
 import { DayWeekSelectorComponent } from '../day-week-selector/day-week-selector.component';
+import { NotificationService } from '../../../../shared/components/notification/notification.service';
+import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
 
 @Component({
   selector: 'app-class-detail',
@@ -44,53 +46,64 @@ export class ClassDetailsComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
+    private router: Router,
     private classManagementService: ClassManagementService,
-    private classService: ClassService
+    private classService: ClassService,
+    private notificationService: NotificationService
   ) {}
 
   async ngOnInit() {
     this.classId = this.route.snapshot.paramMap.get('id')!;
 
     if (!this.classId) {
-      this.error = 'ID da função não encontrada.';
-      this.loading = false;
+      this.handleError('ID da turma não encontrada.');
       return;
     }
 
     try {
       const classItem = await this.classService.getById(this.classId);
-      this.teacherId = classItem.teacher;
-
-      this.classForm = this.fb.group({
-        id: [{ value: classItem.id, disabled: true }, Validators.required],
-        name: [classItem.name, Validators.required],
-        time: [classItem.time, Validators.required],
-        dayWeek: [classItem.dayWeek, Validators.required],
-        startDate: [classItem.startDate, Validators.required],
-        finishDate: [classItem.finishDate, Validators.required],
-        room: [classItem.room, Validators.required],
-        students: [classItem.students, Validators.required],
-        teacher: [classItem.teacher, Validators.required],
-      });
-
+      this.initializeForm(classItem);
       this.loading = false;
     } catch (err) {
-      this.error = 'Erro ao carregar os dados do aluno';
-      console.error(err);
-      this.loading = false;
+      this.handleError('Erro ao carregar os dados da turma');
     }
   }
 
+  private initializeForm(classItem: any): void {
+    this.teacherId = classItem.teacher;
+    this.classForm = this.fb.group({
+      id: [classItem.id],
+      name: [classItem.name, Validators.required],
+      time: [classItem.time, Validators.required],
+      dayWeek: [classItem.dayWeek, Validators.required],
+      startDate: [classItem.startDate, Validators.required],
+      finishDate: [classItem.finishDate, Validators.required],
+      status: [true],
+      room: [classItem.room, Validators.required],
+      teacher: [classItem.teacher, Validators.required],
+      students: [[], Validators.required],
+    });
+  }
+
   async onSubmit(): Promise<void> {
-    if (this.classForm.valid && this.classForm.dirty) {
-      try {
-        await this.classManagementService.update(
-          this.classId,
-          this.classForm.value
-        );
-      } catch (error) {
-        this.error = 'Erro ao atualizar aluno';
-      }
+    if (this.classForm.invalid) {
+      this.notificationService.showNotification('Formulário inválido. Por favor, preencha todos os campos obrigatórios.', NotificationType.ERROR);
+      return;
     }
+
+    try {
+      await this.classManagementService.update(this.classForm.value);
+      this.notificationService.showNotification('Turma atualizada com sucesso!', NotificationType.SUCCESS);
+      this.router.navigate(['/admin/class-list']);
+    } catch (error) {
+      this.handleError('Erro ao atualizar turma', error);
+    }
+  }
+
+  private handleError(message: string, error?: any): void {
+    this.error = message;
+    this.loading = false;
+    this.notificationService.showNotification(this.error, NotificationType.ERROR);
+    if (error) console.error(error);
   }
 }

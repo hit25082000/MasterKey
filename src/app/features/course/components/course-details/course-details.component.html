@@ -1,17 +1,12 @@
-<form [formGroup]="courseForm" (ngSubmit)="onSubmit()">
+<form *ngIf="!loading" [formGroup]="courseForm" (ngSubmit)="onSubmit()">
   <div class="form-group">
     <label for="name">Nome do Curso</label>
     <input id="name" formControlName="name" class="form-control" />
   </div>
 
   <div class="form-group">
-    <label for="videoCount">Quantidade de Vídeos</label>
-    <input
-      id="videoCount"
-      formControlName="videoCount"
-      type="number"
-      class="form-control"
-    />
+    <label for="description">Descrição</label>
+    <textarea id="description" formControlName="description" class="form-control"></textarea>
   </div>
 
   <div class="form-group">
@@ -21,64 +16,110 @@
 
   <div class="form-group">
     <label for="promoPrice">Preço Promocional</label>
-    <input
-      id="promoPrice"
-      formControlName="promoPrice"
-      type="number"
-      class="form-control"
-    />
+    <input id="promoPrice" formControlName="promoPrice" type="number" class="form-control" />
   </div>
 
-  <!-- Outros campos... -->
+  <div class="form-group">
+    <label for="portionCount">Número de Parcelas</label>
+    <input id="portionCount" formControlName="portionCount" type="number" class="form-control" />
+  </div>
+
+  <div class="form-group">
+    <label for="hidePrice">Ocultar Preço</label>
+    <input id="hidePrice" formControlName="hidePrice" type="checkbox" />
+  </div>
+
+  <button type="button" class="btn btn-primary mt-3" (click)="categorySelectorModal.toggle()">Categoria</button>
+  <app-modal #categorySelectorModal>
+    <app-category-selector formControlName="category" [defaultCategoryId]="categoryId()"></app-category-selector>
+  </app-modal>
+
+  <div class="form-group">
+    <label for="image">Imagem do Curso</label>
+    <input type="file" id="image" (change)="onFileChange($event)" class="form-control-file" />
+    <img *ngIf="courseForm.get('image')?.value" [src]="courseForm.get('image')?.value" alt="Imagem do curso" class="mt-2" style="max-width: 200px;">
+  </div>
+
+  <div class="form-group">
+    <label for="active">Status</label>
+    <input type="checkbox" id="active" formControlName="active" class="form-control" />
+  </div>
+
+  <div class="form-group">
+    <label for="highlight">Destaque</label>
+    <input id="highlight" formControlName="highlight" type="checkbox" />
+  </div>
+
+  <div class="form-group">
+    <label for="checkoutUrl">URL de Checkout</label>
+    <input id="checkoutUrl" formControlName="checkoutUrl" class="form-control" />
+  </div>
+
+  <button type="button" class="btn btn-primary mt-3" (click)="videoSelectorModal.toggle()" *ngIf="isAuthenticated">
+    Selecionar Vídeos
+  </button>
+
+  <app-modal #videoSelectorModal>
+    <button *ngIf="!isAuthenticated" (click)="authenticateWithGoogle()">Autenticar com Google</button>
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Selecionar Vídeos do Drive</h5>
+          <button type="button" class="close" (click)="videoSelectorModal.toggle()">
+            <span>&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <app-video-selector
+            [accessToken]="accessToken()"
+            #videoSelector
+          ></app-video-selector>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="videoSelectorModal.toggle()">Fechar</button>
+          <button type="button" class="btn btn-primary" (click)="updateSelectedVideos(videoSelector.selectedVideos());videoSelectorModal.toggle()">Confirmar Seleção</button>
+        </div>
+      </div>
+    </div>
+  </app-modal>
 
   <div formArrayName="videos">
     <div
-      *ngFor="let video of videos(); let i = index"
+      *ngFor="let video of videosFormArray.controls; let i = index"
       [formGroupName]="i"
       class="form-group"
     >
-      <h4>Vídeo {{ i + 1 }}</h4>
-      <label for="title">Título</label>
-      <input id="title" formControlName="title" class="form-control" />
-
-      <label for="duration">Duração (minutos)</label>
-      <input
-        id="duration"
-        formControlName="duration"
-        type="number"
-        class="form-control"
-      />
-
-      <label for="url">URL</label>
-      <input id="url" formControlName="url" class="form-control" />
-
-      <button
-        type="button"
-        class="btn btn-danger mt-2"
-        (click)="removeVideo(i)"
-      >
-        Remover Vídeo
-      </button>
+      <input formControlName="name" placeholder="Nome do vídeo">
+      <input formControlName="duration" type="number" placeholder="Duração (em segundos)">
+      <input formControlName="webViewLink" placeholder="Link do vídeo">
+      <button type="button" (click)="removeVideo(i)">Remover</button>
     </div>
   </div>
-
-  <app-handout-selector [courseId]="courseId"></app-handout-selector>
-
-  <button type="button" class="btn btn-secondary mt-3" (click)="addVideo()">
-    Adicionar Vídeo
-  </button>
 
   <button
     type="submit"
     class="btn btn-primary mt-3"
-    [disabled]="courseForm.invalid"
+    [disabled]="courseForm.invalid || courseForm.pristine"
   >
-    Registrar Curso
+    Atualizar Curso
   </button>
 </form>
 
-<app-course-review [courseId]="courseId"></app-course-review>
 
+
+<button type="button" class="btn btn-primary mt-3" (click)="courseReviewModal.toggle()">Review</button>
+<app-modal #courseReviewModal>
+  <app-course-review [courseId]="courseId"></app-course-review>
+</app-modal>
+
+<button type="button" class="btn btn-primary mt-3" (click)="handoutSelectorModal.toggle()">Apostila</button>
+<app-modal #handoutSelectorModal>
+<app-handout-selector [courseId]="courseId"></app-handout-selector>
+</app-modal>
+
+<button type="button" class="btn btn-primary mt-3" (click)="bookSelectorModal.toggle()">Biblioteca</button>
+<app-modal #bookSelectorModal>
 <app-book-selector [courseId]="courseId"></app-book-selector>
+</app-modal>
 
 <a [routerLink]="['/admin/course-library', courseId]">Editar</a>

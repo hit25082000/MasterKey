@@ -1,0 +1,8 @@
+<div class="category-selector">
+  <h4>Selecione uma Categoria</h4>
+  <ul>
+    <li *ngFor="let category of allCategory()" (click)="onSelectCategory(category.id)" [class.selected]="category.id === selectedCategoryId()">
+      {{ category.name }}
+    </li>
+  </ul>
+</div>

@@ -37,9 +37,6 @@ export class CategoryDetailsComponent implements OnInit {
   error: string = '';
   selectedFile: File | null = null;
 
-  @ViewChild('courseSelector') courseSelector!: CourseSelectorComponent;
-  @ViewChild('packageSelector') packageSelector!: PackageSelectorComponent;
-
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
@@ -65,8 +62,6 @@ export class CategoryDetailsComponent implements OnInit {
         id: [{ value: category.id, disabled: true }, Validators.required],
         name: [category.name, Validators.required],
         image: [category.image],
-        courses: [category.courses],
-        packages: [category.packages],
       });
 
       this.loading = false;
@@ -85,8 +80,6 @@ export class CategoryDetailsComponent implements OnInit {
     this.loading = true;
     const updatedCategory = {
       ...this.categoryForm.value,
-      courses: this.courseSelector.selectedCourses().map((course) => course.id),
-      packages: this.packageSelector.selectedPackages().map((pkg) => pkg.id),
     };
     if (
       this.categoryForm.valid //validar mudança

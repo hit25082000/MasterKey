@@ -1,18 +1,13 @@
 import { Component, OnInit, viewChild, signal, computed } from '@angular/core';
-import {
-  FormBuilder,
-  FormGroup,
-  FormControl,
-  Validators,
-  ReactiveFormsModule,
-} from '@angular/forms';
-import { Role } from '../../../../core/models/role.model';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { PackageManagementService } from '../../services/package-management.service';
 import { Package } from '../../../../core/models/package.model';
-import { CourseService } from '../../../course/services/course.service';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { CourseSelectorComponent } from '../../../course/components/course-selector/course-selector.component';
+import { NotificationService } from '../../../../shared/components/notification/notification.service';
+import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
 
 @Component({
   selector: 'app-package-create',
@@ -32,7 +27,9 @@ export class PackageRegisterComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private packageManagementService: PackageManagementService
+    private packageManagementService: PackageManagementService,
+    private notificationService: NotificationService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -53,7 +50,26 @@ export class PackageRegisterComponent implements OnInit {
         this.courseSelector()!.selectedCourseIds()
       );
 
-      this.packageManagementService.create(newPackage);
+      this.packageManagementService.create(newPackage).subscribe({
+        next: (response) => {
+          this.notificationService.showNotification(
+            'Pacote criado com sucesso!',
+            NotificationType.SUCCESS
+          );
+          this.router.navigate(['/admin/package-list']);
+        },
+        error: (error) => {
+          this.notificationService.showNotification(
+            'Erro ao criar o pacote. Por favor, tente novamente.',
+            NotificationType.ERROR
+          );
+        }
+      });
+    } else {
+      this.notificationService.showNotification(
+        'Por favor, preencha todos os campos obrigatórios.',
+        NotificationType.ERROR
+      );
     }
   }
 }

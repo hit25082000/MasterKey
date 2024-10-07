@@ -30,4 +30,14 @@ export class CategoryService {
 
     return packages.packages;
   }
+
+  async addCourseToCategory(categoryId: string, courseId: string) {
+    const courses = await this.getCourses(categoryId);
+    if (courses.includes(courseId)) {
+      return;
+    }
+    return this.firestore.updateDocument('categorys', categoryId, {
+      courses: [...courses, courseId],
+    });
+  }
 }

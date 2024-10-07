@@ -1,63 +1,105 @@
 <form [formGroup]="courseForm" (ngSubmit)="onSubmit()">
   <div class="form-group">
-    <label for="title">Título do Curso</label>
-    <input id="title" formControlName="title" class="form-control" />
+    <label for="name">Nome do Curso</label>
+    <input id="name" formControlName="name" class="form-control" />
   </div>
 
   <div class="form-group">
     <label for="description">Descrição</label>
-    <textarea
-      id="description"
-      formControlName="description"
-      class="form-control"
-    ></textarea>
+    <textarea id="description" formControlName="description" class="form-control"></textarea>
   </div>
 
   <div class="form-group">
     <label for="price">Preço</label>
-    <input
-      id="price"
-      formControlName="price"
-      type="number"
-      class="form-control"
-    />
+    <input id="price" formControlName="price" class="form-control" />
   </div>
 
-  <button
-    type="button"
-    class="btn btn-secondary mt-3"
-    (click)="authenticateWithGoogle()"
-    *ngIf="!isAuthenticated"
-  >
-    Autenticar com Google
-  </button>
+  <div class="form-group">
+    <label for="promoPrice">Preço Promocional</label>
+    <input id="promoPrice" formControlName="promoPrice" type="number" class="form-control" />
+  </div>
 
-  <div *ngIf="isAuthenticated">
-    <h3>Vídeos do Google Drive</h3>
-    <div *ngFor="let video of driveVideos" class="video-item">
-      <input
-        type="checkbox"
-        [id]="video.id"
-        (change)="toggleVideoSelection(video)"
-      />
-      <label [for]="video.id">{{ video.name }}</label>
+  <div class="form-group">
+    <label for="portionCount">Número de Parcelas</label>
+    <input id="portionCount" formControlName="portionCount" type="number" class="form-control" />
+  </div>
+
+  <div class="form-group">
+    <label for="hidePrice">Ocultar Preço</label>
+    <input id="hidePrice" formControlName="hidePrice" type="checkbox" />
+  </div>
+
+  <div class="form-group">
+    <label for="image">Imagem do Curso</label>
+    <input type="file" id="image" (change)="onFileChange($event)" class="form-control-file" />
+  </div>
+
+  <button type="button" class="btn btn-primary mt-3" (click)="categorySelectorModal.toggle()">Categoria</button>
+  <app-modal #categorySelectorModal>
+    <app-category-selector formControlName="category" #categorySelector></app-category-selector>
+  </app-modal>
+
+  <div class="form-group">
+    <label for="highlight">Destaque</label>
+    <input id="highlight" formControlName="highlight" type="checkbox" />
+  </div>
+
+  <div class="form-group">
+    <label for="checkoutUrl">URL de Checkout</label>
+    <input id="checkoutUrl" formControlName="checkoutUrl" class="form-control" />
+  </div>
+
+  <div class="form-group">
+    <label for="workHours">Carga Horária</label>
+    <input id="workHours" formControlName="workHours" type="number" class="form-control" />
+  </div>
+  <div formArrayName="videos">
+    <div
+      *ngFor="let video of videosFormArray.controls; let i = index"
+      [formGroupName]="i"
+      class="form-group"
+    >
+      <input formControlName="name" placeholder="Nome do vídeo">
+      <input formControlName="duration" type="number" placeholder="Duração (em segundos)">
+      <input formControlName="webViewLink" placeholder="Link do vídeo">
+      <button type="button" (click)="removeVideo(i)">Remover</button>
     </div>
   </div>
-
   <button
-    type="submit"
-    class="btn btn-primary mt-3"
-    [disabled]="
-      courseForm.invalid || !isAuthenticated || selectedVideos.length === 0
-    "
-  >
-    Criar Curso
-  </button>
+  type="submit"
+  class="btn btn-primary mt-3"
+  [disabled]="
+    courseForm.invalid || !isAuthenticated || videos().length === 0
+  "
+>
+  Criar Curso
+</button>
 </form>
 
-<div *ngIf="selectedVideos.length > 0">
-  <h3>Vídeos Selecionados</h3>
-  <ul>
-    <li *ngFor="let video of selectedVideos">{{ video.name }}</li>
-  </ul>
-</div>
+<button type="button" class="btn btn-primary mt-3" (click)="videoSelectorModal.toggle()">
+  Selecionar Vídeos
+</button>
+
+<app-modal #videoSelectorModal>
+  <button *ngIf="!isAuthenticated" (click)="authenticateWithGoogle()">Autenticar com Google</button>
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Selecionar Vídeos do Drive</h5>
+        <button type="button" class="close" (click)="videoSelectorModal.toggle()">
+          <span>&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <app-video-selector
+          [accessToken]="accessToken()"
+          #videoSelector
+        ></app-video-selector>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="videoSelectorModal.toggle()">Fechar</button>
+        <button type="button" class="btn btn-primary" (click)="updateSelectedVideos(videoSelector.selectedVideos());videoSelectorModal.toggle()">Confirmar Seleção</button>
+      </div>
+    </div>
+  </div>
+</app-modal>

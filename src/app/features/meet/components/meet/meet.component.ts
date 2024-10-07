@@ -17,6 +17,7 @@ import {
   SystemLogService,
   LogCategory,
 } from '../../../../core/services/system-log.service';
+import { GoogleAuthService } from '../../../../core/services/google-auth.service';
 
 @Component({
   selector: 'app-meeting',
@@ -42,7 +43,8 @@ export class MeetingComponent implements OnInit {
     private httpClient: HttpClient,
     private route: ActivatedRoute,
     private notificationService: NotificationService,
-    private systemLogService: SystemLogService
+    private systemLogService: SystemLogService,
+    private googleAuthService: GoogleAuthService
   ) {}
 
   ngOnInit(): void {
@@ -60,6 +62,16 @@ export class MeetingComponent implements OnInit {
       const code = params['code'] as string;
       if (code) {
         this.exchangeCodeForToken(code);
+      }
+    });
+
+    this.googleAuthService.accessToken$.subscribe(token => {
+      if (token) {
+        this.accessToken = token;
+        this.isAuthenticated = true;
+        // Aqui você pode chamar métodos que dependem da autenticação
+      } else {
+        this.isAuthenticated = false;
       }
     });
 
@@ -251,7 +263,6 @@ export class MeetingComponent implements OnInit {
     const clientId = environment.googleClientId; // Adicione isso ao seu environment.ts
     const redirectUri = 'http://localhost:4200/admin/meet'; // Ajuste conforme necessário
     const scope = 'https://www.googleapis.com/auth/calendar.events';
-
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?scope=${scope}&access_type=offline&include_granted_scopes=true&response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}`;
     // Salvar os dados do formulário antes de redirecionar
     localStorage.setItem(
@@ -262,31 +273,13 @@ export class MeetingComponent implements OnInit {
   }
 
   private exchangeCodeForToken(code: string) {
-    const tokenEndpoint = 'https://oauth2.googleapis.com/token';
-    const body = {
-      code: code,
-      client_id: environment.googleClientId,
-      client_secret: environment.googleClientSecret, // Adicione isso ao seu environment.ts
-      redirect_uri: 'http://localhost:4200/admin/meet', // Deve ser o mesmo que usado no initiateOAuthFlow
-      grant_type: 'authorization_code',
-    };
-    this.httpClient.post(tokenEndpoint, body).subscribe(
+    const redirectUri = 'http://localhost:4200/admin/meet';
+    this.googleAuthService.exchangeCodeForToken(code, redirectUri).subscribe(
       (response: any) => {
-        this.accessToken = response.access_token;
-        this.isAuthenticated = true;
-        localStorage.setItem('googleAccessToken', this.accessToken!);
-
-        // Restaurar os dados do formulário
-        const savedFormData = localStorage.getItem('meetingFormData');
-        if (savedFormData) {
-          this.meetingForm.patchValue(JSON.parse(savedFormData));
-          localStorage.removeItem('meetingFormData');
-        }
-
-        this.onSubmit();
+        this.googleAuthService.setAccessToken(response.access_token);
+        // Restaurar os dados do formulário e chamar onSubmit() se necessário
       },
       (error) => {
-        this.isAuthenticated = false;
         console.error('Erro na autenticação:', error);
         this.notificationService.showNotification(
           'Erro na autenticação. Por favor, tente novamente.',
@@ -297,6 +290,7 @@ export class MeetingComponent implements OnInit {
   }
 
   authenticateWithGoogle() {
-    this.initiateOAuthFlow();
+    const redirectUri = 'http://localhost:4200/admin/meet';
+    this.googleAuthService.initiateOAuthFlow(redirectUri);
   }
 }
