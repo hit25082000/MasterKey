@@ -52,41 +52,6 @@ export class VideoSelectorComponent {
     }
   }
 
-
-  initiateOAuthFlow() {
-    const clientId = environment.googleClientId;
-    const redirectUri = 'http://localhost:4200/admin/course-register';
-    const scope = 'https://www.googleapis.com/auth/drive.readonly';
-
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?scope=${encodeURIComponent(scope)}&access_type=offline&include_granted_scopes=true&response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}`;
-
-    localStorage.setItem(
-      'courseFormData',
-      JSON.stringify(this.courseForm.value)
-    );
-    window.location.href = authUrl;
-  }
-
-  async exchangeCodeForToken(code: string) {
-    const redirectUri = 'http://localhost:4200/admin/course-register';
-    this.loadingService.show();
-    this.googleAuthService.exchangeCodeForToken(code, redirectUri).subscribe(
-      (response: any) => {
-        this.googleAuthService.setAccessToken(response.access_token);
-        this.loadingService.hide();
-      },
-      (error) => {
-        this.loadingService.hide();
-      }
-    );
-  }
-
-  authenticateWithGoogle() {
-    this.loadingService.show();
-    const redirectUri = 'http://localhost:4200/admin/course-register';
-    this.googleAuthService.initiateOAuthFlow(redirectUri);
-  }
-
   fetchDriveVideos() {
     if (!this.accessToken()) {
       this.notificationService.showNotification(
