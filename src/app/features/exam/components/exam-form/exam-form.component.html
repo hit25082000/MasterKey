@@ -1,0 +1,56 @@
+<form [formGroup]="examForm" (ngSubmit)="onSubmit()">
+  <div>
+    <label for="title">Título</label>
+    <input id="title" formControlName="title" required />
+  </div>
+
+  <div>
+    <label for="description">Descrição</label>
+    <textarea
+      id="description"
+      formControlName="description"
+      required
+    ></textarea>
+  </div>
+
+  <div>
+    <label for="courseId">ID do Curso</label>
+    <input id="courseId" formControlName="courseId" required />
+  </div>
+
+  <div formArrayName="questions">
+    <h3>Questões</h3>
+    <button type="button" (click)="addQuestion()">Adicionar Questão</button>
+
+    @for (questionForm of questionsFormArray.controls; track $index) {
+    <div [formGroupName]="$index">
+      <input formControlName="text" placeholder="Texto da questão" />
+
+      <div formArrayName="options">
+        @for (option of questionForm.get('options')?.value; track $index) {
+        <input
+          [formControlName]="$index"
+          placeholder="Opção {{ $index + 1 }}"
+        />
+        }
+      </div>
+
+      <p>
+        Alternativa correta:
+        <select formControlName="correctAnswer">
+          @for (option of Options; track $index) {
+          <option [value]="option">{{ option }}</option>
+          }
+        </select>
+      </p>
+
+      <button type="button" (click)="removeQuestion($index)">
+        Remover Questão
+      </button>
+    </div>
+    }
+  </div>
+
+  <button type="submit" [disabled]="examForm.invalid">Salvar</button>
+  <button type="button" (click)="onCancel()">Cancelar</button>
+</form>

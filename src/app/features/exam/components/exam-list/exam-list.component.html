@@ -1,0 +1,20 @@
+<h2>Lista de Exames</h2>
+
+<button (click)="openExamForm()">Criar Novo Exame</button>
+
+<ul>
+  @for (exam of exams$ | async; track exam.id) {
+  <li>
+    {{ exam.title }}
+    <button (click)="editExam(exam)">Editar</button>
+  </li>
+  }
+</ul>
+
+<app-exam-form
+  *ngIf="showForm"
+  [exam]="selectedExam!"
+  (formSubmit)="onFormSubmit($event)"
+  (formCancel)="onFormCancel()"
+>
+</app-exam-form>

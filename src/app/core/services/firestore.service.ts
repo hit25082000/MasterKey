@@ -194,9 +194,9 @@ export class FirestoreService {
     });
   }
 
-  async generateId(): Promise<string> {
-    const docRef = doc(this.firestore, '_');
-    return docRef.id;
+  async generateId(path: string, id?: string) {
+    const taskCollection = collection(this.firestore, path);
+    return id ? doc(taskCollection, id) : doc(taskCollection);
   }
 
   async getDocumentsWithCondition<T>(
@@ -222,4 +222,4 @@ export class FirestoreService {
   }
 }
 
-type FirestoreFilterOperator = '<' | '<=' | '==' | '!=' | '>=' | '>'
+type FirestoreFilterOperator = '<' | '<=' | '==' | '!=' | '>=' | '>';

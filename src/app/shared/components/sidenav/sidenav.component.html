@@ -40,6 +40,9 @@
       <ul *ngIf="isDropdownOpen('courses')" class="dropdown">
         <li><a [routerLink]="['/admin/course-register']">Criar Curso</a></li>
         <li><a [routerLink]="['/admin/course-list']">Listar Cursos</a></li>
+        <li>
+          <a [routerLink]="['/admin/exams']">Provas</a>
+        </li>
       </ul>
     </li>
     <li>

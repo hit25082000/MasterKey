@@ -17,7 +17,7 @@ export class BookService {
     imageFile: File,
     pdfFile: File
   ): Promise<string> {
-    const bookId = await this.firestoreService.generateId();
+    const bookId = (await this.firestoreService.generateId('student_exam')).id;
 
     const imageUrl = await this.storageService.uploadBookImage(
       imageFile,

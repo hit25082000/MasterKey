@@ -65,22 +65,43 @@ export class MeetingComponent implements OnInit {
       }
     });
 
-    this.googleAuthService.accessToken$.subscribe(token => {
+    this.googleAuthService.accessToken$.subscribe((token) => {
       if (token) {
         this.accessToken = token;
         this.isAuthenticated = true;
-        // Aqui você pode chamar métodos que dependem da autenticação
       } else {
         this.isAuthenticated = false;
       }
     });
+  }
 
-    // Verificar se já existe um token salvo
-    const savedToken = localStorage.getItem('googleAccessToken');
-    if (savedToken) {
-      this.accessToken = savedToken;
-      this.isAuthenticated = true;
-    }
+  private exchangeCodeForToken(code: string) {
+    const redirectUri = 'http://localhost:4200/admin/meet';
+    this.googleAuthService.exchangeCodeForToken(code, redirectUri).subscribe(
+      () => {
+        const savedFormData = localStorage.getItem('meetingFormData');
+        if (savedFormData) {
+          this.meetingForm.patchValue(JSON.parse(savedFormData));
+          localStorage.removeItem('meetingFormData');
+        }
+      },
+      (error) => {
+        console.error('Erro na autenticação:', error);
+        this.notificationService.showNotification(
+          'Erro na autenticação. Por favor, tente novamente.',
+          NotificationType.ERROR
+        );
+      }
+    );
+  }
+
+  authenticateWithGoogle() {
+    const redirectUri = 'http://localhost:4200/admin/meet';
+    localStorage.setItem(
+      'meetingFormData',
+      JSON.stringify(this.meetingForm.value)
+    );
+    this.googleAuthService.initiateOAuthFlow(redirectUri);
   }
 
   async loadClasses() {
@@ -270,27 +291,5 @@ export class MeetingComponent implements OnInit {
       JSON.stringify(this.meetingForm.value)
     );
     window.location.href = authUrl;
-  }
-
-  private exchangeCodeForToken(code: string) {
-    const redirectUri = 'http://localhost:4200/admin/meet';
-    this.googleAuthService.exchangeCodeForToken(code, redirectUri).subscribe(
-      (response: any) => {
-        this.googleAuthService.setAccessToken(response.access_token);
-        // Restaurar os dados do formulário e chamar onSubmit() se necessário
-      },
-      (error) => {
-        console.error('Erro na autenticação:', error);
-        this.notificationService.showNotification(
-          'Erro na autenticação. Por favor, tente novamente.',
-          NotificationType.ERROR
-        );
-      }
-    );
-  }
-
-  authenticateWithGoogle() {
-    const redirectUri = 'http://localhost:4200/admin/meet';
-    this.googleAuthService.initiateOAuthFlow(redirectUri);
   }
 }

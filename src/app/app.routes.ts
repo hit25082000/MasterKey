@@ -36,6 +36,7 @@ import { JobVacancyListComponent } from './features/student/components/job-vacan
 import { JobVacancyFormComponent } from './features/student/components/job-vacancy-form/job-vacancy-form.component';
 import { LibraryCourseComponent } from './features/library/components/library-course/library-course.component';
 import { CourseCatalogComponent } from './features/course/components/course-catalog/course-catalog.component';
+import { ExamListComponent } from './features/exam/components/exam-list/exam-list.component';
 export const routes: Routes = [
   { path: '', component: EcommerceComponent },
   {
@@ -92,6 +93,10 @@ export const routes: Routes = [
       {
         path: 'course-detail/:id',
         component: CourseDetailsComponent,
+      },
+      {
+        path: 'exams',
+        component: ExamListComponent,
       },
       {
         path: 'course-list',
@@ -178,7 +183,7 @@ export const routes: Routes = [
         path: 'course-catalog',
         component: CourseCatalogComponent,
       },
-    ]
+    ],
   },
   { path: 'ecommerce', component: EcommerceComponent },
   { path: 'unauthorized', component: UnauthorizedComponent },
