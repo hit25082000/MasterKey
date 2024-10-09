@@ -21,13 +21,10 @@ export class ExamService {
   }
 
   createExam(exam: Exam): Observable<Exam> {
-    console.log('xd crate');
-
     return from(this.firestore.addToCollection('exams', exam).then(() => exam));
   }
 
   updateExam(exam: Exam): Observable<Exam> {
-    console.log('xd');
     return from(
       this.firestore.updateDocument('exams', exam.id, exam).then(() => exam)
     );
