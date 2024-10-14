@@ -123,3 +123,11 @@
 </app-modal>
 
 <a [routerLink]="['/admin/course-library', courseId]">Editar</a>
+
+<button
+  *ngIf="courseId"
+  class="btn btn-secondary mt-3"
+  [routerLink]="['/admin/exams', courseId]"
+>
+  Gerenciar Exames
+</button>

@@ -1,4 +1,9 @@
-<form [formGroup]="studentForm" (ngSubmit)="onSubmit()">
+<ng-container *ngIf="loadingService.isLoading$ | async">
+  <!-- Adicione aqui seu componente de loading ou spinner -->
+  <div class="loading-spinner">Carregando...</div>
+</ng-container>
+
+<form *ngIf="!(loadingService.isLoading$ | async)" [formGroup]="studentForm" (ngSubmit)="onSubmit()">
   <div class="form-group">
     <label for="name">Nome</label>
     <input id="name" formControlName="name" class="form-control" />
@@ -321,8 +326,69 @@
   <button
     type="submit"
     class="btn btn-primary"
-    [disabled]="studentForm.invalid"
+    [disabled]="studentForm.invalid || studentForm.pristine"
   >
-    Cadastrar Aluno
+    {{ isEditMode() ? 'Atualizar' : 'Cadastrar' }}
   </button>
 </form>
+
+<ng-container *ngIf="isEditMode()">
+  <button (click)="classModal.toggle()">Turmas</button>
+  <app-modal #classModal>
+    <h4>Turmas do Estudante</h4>
+    <app-class-selector
+      [studentId]="studentId()!"
+      #classSelector
+    ></app-class-selector>
+  </app-modal>
+
+  <button (click)="courseModal.toggle()">Cursos e Pacotes</button>
+  <app-modal #courseModal>
+    <h4>Selecionar Cursos e Pacotes</h4>
+    <app-course-selector
+      [studentId]="studentId()!"
+      #courseSelector
+    ></app-course-selector>
+    <app-package-selector
+      [studentId]="studentId()!"
+      #packageSelector
+    ></app-package-selector>
+
+    <div class="form-group">
+      <h4>Cursos Cadastrados</h4>
+      <div *ngFor="let course of courseSelector.selectedCourses()">
+        <p>
+          <strong>{{ course.name }}</strong> - {{ course.description }}
+        </p>
+        <p>
+          <Button (click)="courseSelector.removeCourseFromStudent(course.id)"
+            >Remover</Button
+          >
+        </p>
+      </div>
+    </div>
+    <div class="form-group">
+      <h4>Pacotes Cadastrados</h4>
+      <div *ngFor="let package of packageSelector.selectedPackages()">
+        <p>
+          <strong>{{ package.name }}</strong> - {{ package.description }}
+        </p>
+        <p>
+          <Button (click)="packageSelector.removePackage(package.id)"
+            >Remover</Button
+          >
+        </p>
+      </div>
+    </div>
+
+    <button
+      (click)="
+        courseSelector.updateStudentCourses();
+        packageSelector.updateStudentPackages();
+        courseModal.toggle()
+      "
+    >
+      Salvar Cursos e Pacotes
+    </button>
+  </app-modal>
+</ng-container>

@@ -3,17 +3,15 @@ import { AdminComponent } from './pages/admin/admin.component';
 import { ClassroomComponent } from './pages/classroom/classroom.component';
 import { EcommerceComponent } from './pages/ecommerce/ecommerce.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
-import { StudentDetailsComponent } from './features/student/components/student-details/student-details.component';
 import { StudentListComponent } from './features/student/components/student-list/student-list.component';
 import { LoginComponent } from './auth/login/login.component';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
-import { StudentRegisterComponent } from './features/student/components/student-register/student-register.component';
+import { StudentFormComponent } from './features/student/components/student-form/student-form.component';
 import { CourseRegisterComponent } from './features/course/components/course-register/course-register.component';
 import { CourseListComponent } from './features/course/components/course-list/course-list.component';
 import { CourseDetailsComponent } from './features/course/components/course-details/course-details.component';
 import { RoleListComponent } from './features/role/components/role-list/role-list.component';
-import { RoleDetailsComponent } from './features/role/components/role-details/role-details.component';
-import { RoleRegisterComponent } from './features/role/components/role-register/role-register.component';
+import { RoleFormComponent } from './features/role/components/role-form/role-form.component';
 import { ClassRegisterComponent } from './features/class/components/class-register/class-register.component';
 import { ClassListComponent } from './features/class/components/class-list/class-list.component';
 import { ClassDetailsComponent } from './features/class/components/class-details/class-details.component';
@@ -22,10 +20,7 @@ import { AuthGuard } from './auth/guards/auth.guard';
 import { RoleGuard } from './auth/guards/role.guard';
 import { EmployeeListComponent } from './features/employees/components/employee-list/employee-list.component';
 import { EmployeeDetailsComponent } from './features/employees/components/employee-details/employee-details.component';
-import { EmployeeRegisterComponent } from './features/employees/components/employee-register/employee-register.component';
 import { PackageListComponent } from './features/package/components/package-list/package-list.component';
-import { PackageDetailsComponent } from './features/package/components/package-details/package-details.component';
-import { PackageRegisterComponent } from './features/package/components/package-register/package-register.component';
 import { CategoryDetailsComponent } from './features/category/components/category-details/category-details.component';
 import { CategoryListComponent } from './features/category/components/category-list/category-list.component';
 import { CategoryRegisterComponent } from './features/category/components/category-register/category-register.component';
@@ -37,6 +32,8 @@ import { JobVacancyFormComponent } from './features/student/components/job-vacan
 import { LibraryCourseComponent } from './features/library/components/library-course/library-course.component';
 import { CourseCatalogComponent } from './features/course/components/course-catalog/course-catalog.component';
 import { ExamListComponent } from './features/exam/components/exam-list/exam-list.component';
+import { PackageFormComponent } from './features/package/components/package-form/package-form.component';
+import { EmployeeFormComponent } from './features/employees/components/employee-form/employee-form.component';
 export const routes: Routes = [
   { path: '', component: EcommerceComponent },
   {
@@ -53,10 +50,6 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         component: DashboardComponent,
-      },
-      {
-        path: 'student-detail/:id',
-        component: StudentDetailsComponent,
       },
       {
         path: 'student-list',
@@ -88,14 +81,18 @@ export const routes: Routes = [
       },
       {
         path: 'student-register',
-        component: StudentRegisterComponent,
+        component: StudentFormComponent,
+      },
+      {
+        path: 'student-register/:id',
+        component: StudentFormComponent,
       },
       {
         path: 'course-detail/:id',
         component: CourseDetailsComponent,
       },
       {
-        path: 'exams',
+        path: 'exams/:id',
         component: ExamListComponent,
       },
       {
@@ -107,8 +104,8 @@ export const routes: Routes = [
         component: CourseRegisterComponent,
       },
       {
-        path: 'package-detail/:id',
-        component: PackageDetailsComponent,
+        path: 'package-form/:id',
+        component: PackageFormComponent,
       },
       {
         path: 'package-list',
@@ -116,7 +113,7 @@ export const routes: Routes = [
       },
       {
         path: 'package-register',
-        component: PackageRegisterComponent,
+        component: PackageFormComponent,
       },
       {
         path: 'class-detail/:id',
@@ -131,8 +128,8 @@ export const routes: Routes = [
         component: ClassRegisterComponent,
       },
       {
-        path: 'role-detail/:id',
-        component: RoleDetailsComponent,
+        path: 'role-form/:id',
+        component: RoleFormComponent,
       },
       {
         path: 'role-list',
@@ -140,7 +137,7 @@ export const routes: Routes = [
       },
       {
         path: 'role-register',
-        component: RoleRegisterComponent,
+        component: RoleFormComponent,
       },
       {
         path: 'employee-detail/:id',
@@ -151,8 +148,8 @@ export const routes: Routes = [
         component: EmployeeListComponent,
       },
       {
-        path: 'employee-register',
-        component: EmployeeRegisterComponent,
+        path: 'employee-form',
+        component: EmployeeFormComponent,
       },
       {
         path: 'category-detail/:id',

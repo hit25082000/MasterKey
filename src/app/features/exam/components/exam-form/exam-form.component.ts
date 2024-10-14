@@ -1,4 +1,4 @@
-import { Component, EventEmitter, input, Input, Output } from '@angular/core';
+import { Component, EventEmitter, input, Input, Output, OnInit } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -8,15 +8,18 @@ import {
 } from '@angular/forms';
 import { Exam, Question, Options } from '../../../../core/models/exam.model';
 import { CommonModule } from '@angular/common';
+import { Course } from '../../../../core/models/course.model';
+import { CourseSelectorComponent } from '../../../course/components/course-selector/course-selector.component';
+import { ModalComponent } from "../../../../shared/components/modal/modal.component";
 
 @Component({
   selector: 'app-exam-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, CourseSelectorComponent, ModalComponent],
   templateUrl: './exam-form.component.html',
   styleUrls: ['./exam-form.component.scss'],
 })
-export class ExamFormComponent {
+export class ExamFormComponent implements OnInit {
   exam = input.required<Exam | null>();
   @Output() formSubmit = new EventEmitter<Exam>();
   @Output() formCancel = new EventEmitter<void>();
@@ -35,7 +38,8 @@ export class ExamFormComponent {
 
   ngOnInit() {
     if (this.exam() != null) {
-      this.examForm.patchValue(this.exam);
+      console.log(this.exam())
+      this.examForm.patchValue(this.exam()!);
       this.exam()!.questions.forEach((question) => this.addQuestion(question));
     }
   }
@@ -64,12 +68,10 @@ export class ExamFormComponent {
   onSubmit() {
     if (this.examForm.valid) {
       const examData: Exam = {
-        ...this.exam(),
         ...this.examForm.value,
       };
 
       if (!examData.createdAt) {
-        examData.id = this.generateId();
         examData.createdAt = new Date();
       }
       examData.updatedAt = new Date();

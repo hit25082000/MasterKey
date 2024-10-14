@@ -10,6 +10,9 @@ import {
   computed,
   input,
   inject,
+  Output,
+  EventEmitter,
+  output,
 } from '@angular/core';
 import { SearchBarComponent } from '../../../../shared/components/search-bar/search-bar.component';
 import { Course } from '../../../../core/models/course.model';
@@ -26,6 +29,7 @@ import { NotificationType } from '../../../../shared/components/notification/not
   styleUrls: ['./course-selector.component.scss'],
 })
 export class CourseSelectorComponent implements OnInit {
+  singleSelection = input(false);
   studentId = input<string>('');
   packageId = input<string>('');
   categoryId = input<string>('');
@@ -52,6 +56,8 @@ export class CourseSelectorComponent implements OnInit {
   });
 
   isSaving = signal(false);
+
+  courseSelected = output<Course>();
 
   async ngOnInit() {
     await this.loadAllCourses();
@@ -91,13 +97,24 @@ export class CourseSelectorComponent implements OnInit {
     }
   }
 
-  onCheckboxChange(courseId: string, event: Event): void {
-    const checkbox = event.target as HTMLInputElement;
-    const updatedSelection = new Set(this.selectedCourseIds());
-    checkbox.checked
-      ? updatedSelection.add(courseId)
-      : updatedSelection.delete(courseId);
-    this.selectedCourseIds.set(updatedSelection);
+  onCourseSelect(course: Course): void {
+    if (this.singleSelection()) {
+      this.selectedCourseIds.set(new Set([course.id]));
+      this.courseSelected.emit(course);
+    } else {
+      const updatedSelection = new Set(this.selectedCourseIds());
+      if (updatedSelection.has(course.id)) {
+        updatedSelection.delete(course.id);
+      } else {
+        updatedSelection.add(course.id);
+      }
+      this.selectedCourseIds.set(updatedSelection);
+      this.courseSelected.emit(course);
+    }
+  }
+
+  isCourseSelected(courseId: string): boolean {
+    return this.selectedCourseIds().has(courseId);
   }
 
   async updateStudentCourses() {

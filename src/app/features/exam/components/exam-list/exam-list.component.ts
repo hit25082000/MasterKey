@@ -28,7 +28,8 @@ export class ExamListComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.courseId = this.route.snapshot.paramMap.get('courseId');
+    this.courseId = this.route.snapshot.paramMap.get('id');
+
     if (this.courseId) {
       this.loadExams();
     }
@@ -48,7 +49,7 @@ export class ExamListComponent implements OnInit {
   }
 
   openExamForm() {
-    this.selectedExam = null;
+    this.selectedExam = {courseId: this.courseId} as Exam;
     this.showForm = true;
   }
 
@@ -71,13 +72,11 @@ export class ExamListComponent implements OnInit {
         },
         (error) => {
           console.error('Erro ao atualizar exame:', error);
-          // Adicione tratamento de erro adequado aqui
         }
       );
     } else {
       this.examService.createExam(exam).subscribe(
         (newExam) => {
-          this.examsSubject.next([...this.examsSubject.value, newExam]);
           this.showForm = false;
         },
         (error) => {
@@ -91,5 +90,21 @@ export class ExamListComponent implements OnInit {
   onFormCancel() {
     this.showForm = false;
     this.selectedExam = null;
+  }
+
+  deleteExam(exam: Exam) {
+    console.log(exam)
+    if (confirm(`Tem certeza que deseja apagar o exame "${exam.title}"?`)) {
+      this.examService.deleteExam(exam.id).subscribe(
+        () => {
+          // Atualiza a lista de exames após a exclusão
+          this.loadExams();
+        },
+        (error) => {
+          console.error('Erro ao apagar exame:', error);
+          // Adicione tratamento de erro adequado aqui
+        }
+      );
+    }
   }
 }

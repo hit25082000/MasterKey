@@ -16,7 +16,7 @@ import { NotificationType } from '../../../../shared/components/notification/not
 import { GoogleAuthService } from '../../../../core/services/google-auth.service';
 import { SearchBarComponent } from '../../../../shared/components/search-bar/search-bar.component';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
-import { VideoSelectorComponent } from '../../../video/components/video-selector/video-selector.component';
+import { VideoSelectorComponent } from "../../../video/components/video-selector/video-selector.component";
 import { LoadingService } from '../../../../shared/services/loading.service';
 import { StorageService } from '../../../../core/services/storage.service';
 import { HandoutSelectorComponent } from '../../../ecommerce/components/handout-selector/handout-selector.component';
@@ -27,16 +27,7 @@ import { CategorySelectorComponent } from '../../../category/components/category
 @Component({
   selector: 'app-course-register',
   standalone: true,
-  imports: [
-    CommonModule,
-    CategorySelectorComponent,
-    ReactiveFormsModule,
-    SearchBarComponent,
-    ModalComponent,
-    VideoSelectorComponent,
-    HandoutSelectorComponent,
-    BookSelectorComponent,
-  ],
+  imports: [CommonModule, CategorySelectorComponent, ReactiveFormsModule, SearchBarComponent, ModalComponent, VideoSelectorComponent, HandoutSelectorComponent, BookSelectorComponent],
   templateUrl: './course-register.component.html',
   styleUrls: ['./course-register.component.scss'],
 })
@@ -73,23 +64,28 @@ export class CourseRegisterComponent implements OnInit {
       category: ['', Validators.required],
       highlight: [false],
       checkoutUrl: ['', Validators.required],
-      workHours: [0, [Validators.required, Validators.min(0)]],
       videos: this.fb.array([]),
     });
 
     this.route.queryParams.subscribe((params) => {
       const code = params['code'] as string;
       if (code) {
-        this.exchangeCodeForToken(code);
+        this.exchangeCodeForToken(code).then(() => {
+          this.isAuthenticated = true;
+          this.router.navigate(['/admin/course-register']);
+          this.isLoading.set(false);
+        });
       }
     });
 
-    this.googleAuthService.accessToken$.subscribe((token) => {
+    this.googleAuthService.accessToken$.subscribe(token => {
       if (token) {
         this.accessToken.set(token);
         this.isAuthenticated = true;
+        this.isLoading.set(false);
       } else {
         this.isAuthenticated = false;
+        this.isLoading.set(false);
       }
     });
   }
@@ -108,10 +104,7 @@ export class CourseRegisterComponent implements OnInit {
         let imageUrl = this.courseForm.get('image')?.value;
 
         if (this.selectedFile) {
-          imageUrl = await this.storageService.uploadCourseImage(
-            this.selectedFile,
-            Date.now().toString()
-          );
+          imageUrl = await this.storageService.uploadCourseImage(this.selectedFile, Date.now().toString());
         }
 
         const courseData = {
@@ -120,14 +113,8 @@ export class CourseRegisterComponent implements OnInit {
           videos: this.videosFormArray.value,
         };
 
-        const course = await this.firestoreService.addToCollection(
-          'courses',
-          courseData
-        );
-        await this.categoryService.addCourseToCategory(
-          this.courseForm.get('category')?.value,
-          course.id
-        );
+        const course = await this.firestoreService.addToCollection('courses', courseData);
+        await this.categoryService.addCourseToCategory(this.courseForm.get('category')?.value, course.id);
 
         this.notificationService.showNotification(
           'Curso criado com sucesso!',
@@ -160,11 +147,7 @@ export class CourseRegisterComponent implements OnInit {
     const redirectUri = 'http://localhost:4200/admin/course-register';
     const scope = 'https://www.googleapis.com/auth/drive.readonly';
 
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?scope=${encodeURIComponent(
-      scope
-    )}&access_type=offline&include_granted_scopes=true&response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(
-      redirectUri
-    )}`;
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?scope=${encodeURIComponent(scope)}&access_type=offline&include_granted_scopes=true&response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}`;
 
     localStorage.setItem(
       'courseFormData',
@@ -173,24 +156,18 @@ export class CourseRegisterComponent implements OnInit {
     window.location.href = authUrl;
   }
 
-  private exchangeCodeForToken(code: string) {
+  async exchangeCodeForToken(code: string) {
     const redirectUri = 'http://localhost:4200/admin/course-register';
     this.loadingService.show();
+    const expiresIn = 3600 * 1000;
+    const expirationTime = Date.now() + expiresIn;
+
     this.googleAuthService.exchangeCodeForToken(code, redirectUri).subscribe(
-      () => {
-        const savedFormData = localStorage.getItem('courseFormData');
-        if (savedFormData) {
-          this.courseForm.patchValue(JSON.parse(savedFormData));
-          localStorage.removeItem('courseFormData');
-        }
+      (response: any) => {
+        this.googleAuthService.setAccessToken(response.access_token, expirationTime);
         this.loadingService.hide();
       },
       (error) => {
-        console.error('Erro na autenticação:', error);
-        this.notificationService.showNotification(
-          'Erro na autenticação. Por favor, tente novamente.',
-          NotificationType.ERROR
-        );
         this.loadingService.hide();
       }
     );
@@ -199,10 +176,6 @@ export class CourseRegisterComponent implements OnInit {
   authenticateWithGoogle() {
     this.loadingService.show();
     const redirectUri = 'http://localhost:4200/admin/course-register';
-    localStorage.setItem(
-      'courseFormData',
-      JSON.stringify(this.courseForm.value)
-    );
     this.googleAuthService.initiateOAuthFlow(redirectUri);
   }
 
@@ -212,20 +185,18 @@ export class CourseRegisterComponent implements OnInit {
   }
 
   get videosFormArray(): FormArray {
-    return (this.courseForm.get('videos') as FormArray) || [];
+    return this.courseForm.get('videos') as FormArray || [];
   }
 
   updateSelectedVideos(videos: any[]) {
     this.videos.set([...this.videos(), ...videos]);
     this.videos().forEach((video: Video) => {
-      this.videosFormArray.push(
-        this.fb.group({
-          id: [video.id],
-          name: [video.name, Validators.required],
-          duration: [video.duration, Validators.required],
-          webViewLink: [video.webViewLink, Validators.required],
-        })
-      );
+      this.videosFormArray.push(this.fb.group({
+        id: [video.id],
+        name: [video.name, Validators.required],
+        duration: [video.duration, Validators.required],
+        webViewLink: [video.webViewLink, Validators.required],
+      }));
     });
   }
 }

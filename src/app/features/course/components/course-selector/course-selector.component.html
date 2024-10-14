@@ -1,20 +1,49 @@
 <div class="course-selector">
+  <h3>{{ singleSelection() ? 'Selecione um curso' : 'Selecione os cursos' }}</h3>
   <app-search-bar
     [dataList]="nonSelectedCourses()"
     #searchBarComponent
   ></app-search-bar>
 
-  <div
-    *ngFor="let course of searchBarComponent.filteredList()"
-    class="form-group"
-  >
-    <label>
-      <input
-        type="checkbox"
-        [checked]="selectedCourseIds().has(course.id)"
-        (change)="onCheckboxChange(course.id, $event)"
-      />
-      {{ course.name }}
-    </label>
-  </div>
+  <ul>
+    @for (course of searchBarComponent.filteredList(); track course.id) {
+      <li>
+        <label>
+          <input
+            type="checkbox"
+            [checked]="isCourseSelected(course.id)"
+            (change)="onCourseSelect(course)"
+            [disabled]="singleSelection() && selectedCourseIds().size > 0 && !isCourseSelected(course.id)"
+          />
+          {{ course.name }}
+        </label>
+      </li>
+    }
+  </ul>
+
+  @if (!singleSelection()) {
+    <div>
+      <h4>Cursos selecionados:</h4>
+      <ul>
+        @for (course of selectedCourses(); track course.id) {
+          <li>
+            {{ course.name }}
+            <button (click)="removeCourse(course.id)">Remover</button>
+          </li>
+        }
+      </ul>
+    </div>
+  }@else {
+    <div>
+      <h4>Curso selecionado:</h4>
+      <ul>
+        @for (course of selectedCourses(); track course.id) {
+          <li>
+            {{ course.name }}
+            <button (click)="removeCourse(course.id)">Remover</button>
+          </li>
+        }
+      </ul>
+    </div>
+  }
 </div>

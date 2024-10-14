@@ -1,0 +1,65 @@
+<form [formGroup]="employeeForm" (ngSubmit)="onSubmit()">
+  <app-input label="Nome" type="text" formControlName="name"></app-input>
+  <app-input label="Fone 1" type="tel" formControlName="phone1"></app-input>
+  <app-input label="Fone 2" type="tel" formControlName="phone2"></app-input>
+  <app-input label="E-mail" type="email" formControlName="email"></app-input>
+  <app-input label="CPF" type="text" formControlName="cpf"></app-input>
+  <app-input label="RG" type="text" formControlName="rg"></app-input>
+  <app-input label="CEP" type="text" formControlName="cep"></app-input>
+  <app-input label="Rua" type="text" formControlName="street"></app-input>
+  <app-input label="Bairro" type="text" formControlName="neighborhood"></app-input>
+  <app-input label="Cidade" type="text" formControlName="city"></app-input>
+  <app-input label="Estado" type="text" formControlName="state"></app-input>
+  <app-input label="Número" type="text" formControlName="number"></app-input>
+  <app-input label="Data de Nascimento" type="date" formControlName="birthday"></app-input>
+  <app-input label="Idade" type="number" formControlName="yearsOld"></app-input>
+
+  <!-- Campos que não podem ser diretamente substituídos pelo app-input -->
+  <div class="form-group">
+    <label for="profilePic">Foto de Perfil</label>
+    <input
+      id="profilePic"
+      formControlName="profilePic"
+      class="form-control"
+      type="file"
+      (change)="onFileChange($event)"
+    />
+  </div>
+
+  <div class="form-group">
+    <label for="sex">Sexo</label>
+    <select id="sex" formControlName="sex" class="form-control">
+      <option value="masculino">Masculino</option>
+      <option value="feminino">Feminino</option>
+    </select>
+  </div>
+
+  <app-input label="Polo" type="text" formControlName="polo"></app-input>
+
+  <div class="form-group">
+    <label for="description">Observações</label>
+    <textarea
+      id="description"
+      formControlName="description"
+      class="form-control"
+    ></textarea>
+  </div>
+
+  <app-input label="Senha" type="password" formControlName="password"></app-input>
+  <app-input label="Confirmar Senha" type="password" formControlName="confirmPassword"></app-input>
+
+  <div
+    *ngIf="employeeForm.errors?.['passwordMismatch'] && (employeeForm.get('password')?.touched || employeeForm.get('confirmPassword')?.touched)"
+    class="text-danger"
+  >
+    As senhas não coincidem.
+  </div>
+
+  <button
+    type="submit"
+    class="btn btn-primary"
+    [disabled]="employeeForm.invalid"
+  >
+    Cadastrar Aluno
+  </button>
+</form>

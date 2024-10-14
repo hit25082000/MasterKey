@@ -40,6 +40,6 @@ export class RoleListComponent implements OnInit {
   }
 
   editRole(id: string) {
-    this.router.navigate(['/admin/role-detail', id]);
+    this.router.navigate(['/admin/role-form', id]);
   }
 }

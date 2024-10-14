@@ -75,6 +75,6 @@ export class StudentListComponent implements OnInit {
   }
 
   editStudent(id: string) {
-    this.router.navigate(['/admin/student-detail', id]);
+    this.router.navigate(['/admin/student-register', id]);
   }
 }
