@@ -189,8 +189,13 @@ export class CourseRegisterComponent implements OnInit {
   }
 
   updateSelectedVideos(videos: any[]) {
-    this.videos.set([...this.videos(), ...videos]);
-    this.videos().forEach((video: Video) => {
+    const formattedVideos = videos.map(video => ({
+      ...video,
+      webViewLink: this.formatVideoLink(video.webViewLink)
+    }));
+
+    this.videos.set([...this.videos(), ...formattedVideos]);
+    formattedVideos.forEach((video: Video) => {
       this.videosFormArray.push(this.fb.group({
         id: [video.id],
         name: [video.name, Validators.required],
@@ -198,5 +203,16 @@ export class CourseRegisterComponent implements OnInit {
         webViewLink: [video.webViewLink, Validators.required],
       }));
     });
+  }
+
+  private formatVideoLink(webViewLink: string): string {
+    if (webViewLink) {
+      const match = webViewLink.match(/\/d\/(.+?)\/view/);
+      if (match && match[1]) {
+        const videoId = match[1];
+        return `https://drive.google.com/file/d/${videoId}/preview`;
+      }
+    }
+    return webViewLink;
   }
 }

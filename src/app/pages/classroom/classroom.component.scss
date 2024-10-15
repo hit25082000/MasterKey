@@ -1,0 +1,10 @@
+.classroom-container {
+  display: flex;
+
+  .classroom-content {
+    flex: 1;
+    margin-left: 250px; // A mesma largura da sidenav
+    padding: 20px;
+  }
+}
+

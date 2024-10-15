@@ -34,6 +34,7 @@ import { CourseCatalogComponent } from './features/course/components/course-cata
 import { ExamListComponent } from './features/exam/components/exam-list/exam-list.component';
 import { PackageFormComponent } from './features/package/components/package-form/package-form.component';
 import { EmployeeFormComponent } from './features/employees/components/employee-form/employee-form.component';
+import { CoursePlayerComponent } from './features/course/components/course-player/course-player.component';
 export const routes: Routes = [
   { path: '', component: EcommerceComponent },
   {
@@ -99,6 +100,7 @@ export const routes: Routes = [
         path: 'course-list',
         component: CourseListComponent,
       },
+
       {
         path: 'course-register',
         component: CourseRegisterComponent,
@@ -175,6 +177,10 @@ export const routes: Routes = [
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full',
+      },
+      {
+        path: 'course-player/:id',
+        component: CoursePlayerComponent,
       },
       {
         path: 'course-catalog',

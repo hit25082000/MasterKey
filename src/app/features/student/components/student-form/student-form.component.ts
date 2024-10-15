@@ -40,7 +40,7 @@ export class StudentFormComponent implements OnInit {
   studentForm!: FormGroup;
   selectedFile: File | null = null;
   studentId = signal<string | null>(null);
-  isEditMode = computed(() => !this.studentId);
+  isEditMode = computed(() => !!this.studentId);
 
   constructor(
     private notificationService: NotificationService,
@@ -87,7 +87,7 @@ export class StudentFormComponent implements OnInit {
   async ngOnInit() {
     this.loadingService.show();
     this.studentId.set(this.route.snapshot.paramMap.get('id'));
-
+    console.log(this.isEditMode())
     if (this.isEditMode()) {
       try {
         const student = await this.studentService.getById(this.studentId()!);

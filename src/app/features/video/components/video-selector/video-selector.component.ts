@@ -76,6 +76,7 @@ export class VideoSelectorComponent {
     this.listFiles(endpoint, headers, params).subscribe(
       (files) => {
         this.allVideos.set(files);
+        console.log(files)
       },
       (error) => {
         console.error('Erro ao buscar vídeos:', error);
