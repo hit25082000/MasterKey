@@ -5,6 +5,8 @@ import {
   FormArray,
   Validators,
   ReactiveFormsModule,
+  ValidatorFn,
+  AbstractControl,
 } from '@angular/forms';
 import { Exam, Question, Options } from '../../../../core/models/exam.model';
 import { CommonModule } from '@angular/common';
@@ -54,7 +56,7 @@ export class ExamFormComponent implements OnInit {
       text: [question?.text || '', Validators.required],
       options: this.fb.array(
         question?.options || [Options.A, Options.B, Options.C, Options.D],
-        [Validators.required, Validators.minLength(4), Validators.maxLength(4)]
+        [Validators.required, Validators.minLength(4), Validators.maxLength(4), this.uniqueOptionsValidator()]
       ),
       correctAnswer: [question?.correctAnswer || null, Validators.required],
     });
@@ -86,5 +88,13 @@ export class ExamFormComponent implements OnInit {
 
   private generateId(): string {
     return Date.now().toString();
+  }
+
+  uniqueOptionsValidator(): ValidatorFn {
+    return (control: AbstractControl): {[key: string]: any} | null => {
+      const options = control.value;
+      const uniqueOptions = new Set(options);
+      return uniqueOptions.size === options.length ? null : { 'duplicateOptions': true };
+    };
   }
 }

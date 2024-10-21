@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { FirestoreService } from '../../../core/services/firestore.service';
 import { Course } from '../../../core/models/course.model';
+import { from, Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -36,5 +37,9 @@ export class CourseService {
     )) as any;
 
     return courseReviews.reviews;
+  }
+
+  saveProgress(courseId: string, videoId: string): Observable<void> {
+    return from(this.firestore.updateArrayField('course_progress', courseId, 'watchedVideos', videoId));
   }
 }

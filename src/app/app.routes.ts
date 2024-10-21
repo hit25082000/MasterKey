@@ -31,10 +31,12 @@ import { JobVacancyListComponent } from './features/student/components/job-vacan
 import { JobVacancyFormComponent } from './features/student/components/job-vacancy-form/job-vacancy-form.component';
 import { LibraryCourseComponent } from './features/library/components/library-course/library-course.component';
 import { CourseCatalogComponent } from './features/course/components/course-catalog/course-catalog.component';
+import { PackageCatalogComponent } from './features/package/components/package-catalog/package-catalog.component';
 import { ExamListComponent } from './features/exam/components/exam-list/exam-list.component';
 import { PackageFormComponent } from './features/package/components/package-form/package-form.component';
 import { EmployeeFormComponent } from './features/employees/components/employee-form/employee-form.component';
 import { CoursePlayerComponent } from './features/course/components/course-player/course-player.component';
+import { StudentExamsComponent } from './features/student/components/student-exams/student-exams.component';
 export const routes: Routes = [
   { path: '', component: EcommerceComponent },
   {
@@ -185,6 +187,14 @@ export const routes: Routes = [
       {
         path: 'course-catalog',
         component: CourseCatalogComponent,
+      },
+      {
+        path: 'package-catalog',
+        component: PackageCatalogComponent,
+      },
+      {
+        path: 'student-exams',
+        component: StudentExamsComponent,
       },
     ],
   },

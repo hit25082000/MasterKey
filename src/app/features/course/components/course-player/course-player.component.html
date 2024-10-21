@@ -1,35 +1,43 @@
 <div class="course-player">
-  <h2>{{ course.name }}</h2>
-
-  <div class="video-player">
-    <!-- Player de vídeo implementado com iframe -->
-    <iframe
-      [src]="currentVideo.webViewLink | safe: 'resourceUrl'"
-      width="640"
-      height="360"
-      frameborder="0"
-      allowfullscreen
-    ></iframe>
+  <div *ngIf="isLoading" class="loading-overlay">
+    <div class="loading-spinner"></div>
   </div>
 
-  <div class="video-list">
-    <h3>Vídeos do Curso</h3>
-    <ul>
-      <li *ngFor="let video of course?.videos"
-          [class.watched]="watchedVideos.has(video.id)"
-          (click)="playVideo(video)">
-        {{ video.name }} - {{ video.duration }}
-      </li>
-    </ul>
-  </div>
+  <ng-container *ngIf="!isLoading">
+    <h2>{{ course.name }}</h2>
 
-  <div class="exams">
-    <h3>Provas Disponíveis</h3>
-    <ul>
-      <li *ngFor="let exam of exams">
-        {{ exam.title }}
-        <button (click)="takeExam(exam)">Iniciar Prova</button>
-      </li>
-    </ul>
-  </div>
+    <div class="video-player">
+      <iframe
+        [src]="currentVideo.webViewLink | safe: 'resourceUrl'"
+        width="640"
+        height="360"
+        frameborder="0"
+        allowfullscreen
+      ></iframe>
+    </div>
+
+    <div class="video-list">
+      <h3>Vídeos do Curso</h3>
+      <ul>
+        <li *ngFor="let video of course?.videos"
+            [class.watched]="watchedVideos.has(video.id)"
+            (click)="playVideo(video)">
+          {{ video.name }} - {{ video.duration }}
+        </li>
+      </ul>
+    </div>
+
+    <div class="exams">
+      <h3>Provas Disponíveis</h3>
+      <ul>
+        <li *ngFor="let exam of exams$ | async">
+          {{ exam.title }}
+          <button (click)="examModal.toggle()">Iniciar Prova</button>
+          <app-modal #examModal>
+            <app-exam-take [examId]="exam.id"></app-exam-take>
+          </app-modal>
+        </li>
+      </ul>
+    </div>
+  </ng-container>
 </div>

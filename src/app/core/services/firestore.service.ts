@@ -29,6 +29,7 @@ import {
   uploadBytesResumable,
 } from '@angular/fire/storage';
 import { FirebaseApp } from '@angular/fire/app';
+import { arrayUnion } from '@angular/fire/firestore';
 
 @Injectable({
   providedIn: 'root',
@@ -143,7 +144,6 @@ export class FirestoreService {
     return list;
   }
 
-  // Adicione um método para obter dados em tempo real
   getCollectionObservable<T>(path: string): Observable<T[]> {
     return collectionData(collection(this.firestore, path), {
       idField: 'id',
@@ -220,6 +220,14 @@ export class FirestoreService {
 
     return list;
   }
+
+  async updateArrayField(path: string, id: string, field: string, value: any): Promise<void> {
+    const docRef = doc(this.firestore, path, id);
+    return updateDoc(docRef, {
+      [field]: arrayUnion(value)
+    });
+  }
+
 }
 
 type FirestoreFilterOperator = '<' | '<=' | '==' | '!=' | '>=' | '>';

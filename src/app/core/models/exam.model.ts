@@ -8,6 +8,16 @@ export interface Exam {
   updatedAt: Date;
 }
 
+export type ExamTake = {
+  id: string;
+  courseId: string;
+  title: string;
+  description: string;
+  questions: Omit<Question,"correctAnswer">[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export enum Options {
   A = '',
   B = '',
@@ -23,7 +33,7 @@ export interface Question {
 }
 
 export interface StudentExam {
-  id: string;
+  id?: string;
   examId: string;
   studentId: string;
   answers: Answer[];

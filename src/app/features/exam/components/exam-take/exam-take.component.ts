@@ -1,147 +1,123 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import {
-  FormBuilder,
-  FormGroup,
-  Validators,
-  ReactiveFormsModule,
-} from '@angular/forms';
-import { Exam, StudentExam, Answer } from '../../../../core/models/exam.model';
-import { AuthService } from '../../../../core/services/auth.service';
-import { NotificationService } from '../../../../shared/components/notification/notification.service';
-import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
+import { Component, OnInit, input, signal, computed, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Answer, Exam, Options, Question, StudentExam } from '../../../../core/models/exam.model';
 import { ExamService } from '../../../../core/services/exam.service';
-import { FirestoreService } from '../../../../core/services/firestore.service';
-import { switchMap, take } from 'rxjs/operators';
-import { User } from '@angular/fire/auth';
-import { from } from 'rxjs';
+import { AuthService } from '../../../../core/services/auth.service';
+import { Observable, switchMap, tap, catchError, of } from 'rxjs';
 
 @Component({
   selector: 'app-exam-take',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './exam-take.component.html',
-  styleUrls: ['./exam-take.component.scss'],
+  styleUrls: ['./exam-take.component.scss']
 })
 export class ExamTakeComponent implements OnInit {
-  exam!: Exam;
-  examForm!: FormGroup;
-  studentId!: string;
+  private examService = inject(ExamService);
+  private authService = inject(AuthService);
 
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private fb: FormBuilder,
-    private examService: ExamService,
-    private authService: AuthService,
-    private notificationService: NotificationService,
-    private firestoreService: FirestoreService
-  ) {}
+  examId = input.required<string>();
+  exam = signal<Exam | null>(null);
+  studentExam = signal<StudentExam | null>(null);
+  answers = signal<Answer[]>([]);
+  isExamSubmitted = computed(() => !!this.studentExam());
+  isLoading = signal(true);
+
+  constructor() {}
 
   ngOnInit() {
-    this.authService
-      .getCurrentUser()
-      .pipe(
-        take(1),
-        switchMap((user: User) => {
-          if (!user) {
-            throw new Error('Usuário não autenticado');
-          }
-          this.studentId = user.uid;
-          const examId = this.route.snapshot.paramMap.get('examId');
-          if (!examId) {
-            throw new Error('ID do exame não fornecido');
-          }
-          return this.examService.getExamById(examId);
-        })
-      )
-      .subscribe(
-        (exam: Exam) => {
-          if (exam) {
-            this.exam = exam;
-            this.initForm();
-          } else {
-            this.notificationService.showNotification(
-              'Exame não encontrado',
-              NotificationType.ERROR
-            );
-            this.router.navigate(['/']);
-          }
-        },
-        (error: Error) => {
-          console.error('Erro ao carregar o exame:', error);
-          this.notificationService.showNotification(
-            'Erro ao carregar o exame',
-            NotificationType.ERROR
-          );
-          this.router.navigate(['/']);
+    this.loadExam();
+    this.authService.user$.pipe(
+      switchMap(user => user ? this.loadStudentExam(user.uid) : of(null))
+    ).subscribe();
+  }
+
+  private loadExam() {
+    this.isLoading.set(true);
+    this.examService.getExamById(this.examId()).pipe(
+      tap(exam => this.exam.set(exam)),
+      catchError(error => {
+        console.error('Erro ao carregar o exame', error);
+        return of(null);
+      }),
+      tap(() => this.isLoading.set(false))
+    ).subscribe();
+  }
+
+  private loadStudentExam(studentId: string): Observable<StudentExam | null> {
+    return this.examService.getStudentExam(this.examId(), studentId).pipe(
+      tap(studentExam => {
+        if (studentExam) {
+          this.studentExam.set(studentExam);
+          this.answers.set(studentExam.answers);
         }
-      );
+      }),
+      catchError(error => {
+        console.error('Erro ao carregar o exame do estudante', error);
+        return of(null);
+      })
+    );
   }
 
-  initForm() {
-    const group: { [key: string]: any } = {};
-    this.exam.questions.forEach((question) => {
-      group[question.id] = ['', Validators.required];
-    });
-    this.examForm = this.fb.group(group);
+  indexToLetter(index: number): string {
+    return String.fromCharCode(65 + index);
   }
 
-  onSubmit() {
-    if (this.examForm.valid) {
-      const answers: Answer[] = Object.keys(this.examForm.value).map(
-        (questionId) => ({
-          questionId,
-          selectedOption: this.examForm.value[questionId],
-        })
+  selectAnswer(question: Question, optionIndex: number) {
+    if (this.isExamSubmitted()) return;
+
+    const option = this.indexToLetter(optionIndex) as Options;
+    this.answers.update(currentAnswers =>
+      this.updateAnswers(currentAnswers, question, option)
+    );
+  }
+
+  private updateAnswers(answers: Answer[], question: Question, option: Options): Answer[] {
+    const existingAnswerIndex = answers.findIndex(a => a.questionId === question.id);
+    if (existingAnswerIndex !== -1) {
+      return answers.map((answer, index) =>
+        index === existingAnswerIndex ? { ...answer, selectedOption: option } : answer
       );
-
-      const score = this.calculateScore(answers);
-
-      from(this.firestoreService.generateId('student_exam'))
-        .pipe(
-          switchMap((docRef) => {
-            const studentExam: StudentExam = {
-              id: docRef.id,
-              examId: this.exam.id,
-              studentId: this.studentId,
-              answers,
-              score,
-              submittedAt: new Date(),
-            };
-            return this.examService.submitStudentExam(studentExam);
-          })
-        )
-        .subscribe(
-          () => {
-            this.notificationService.showNotification(
-              'Prova enviada com sucesso!',
-              NotificationType.SUCCESS
-            );
-            this.router.navigate(['/course', this.exam.courseId]);
-          },
-          (error) => {
-            console.error('Erro ao enviar a prova:', error);
-            this.notificationService.showNotification(
-              'Erro ao enviar a prova. Tente novamente.',
-              NotificationType.ERROR
-            );
-          }
-        );
+    } else {
+      return [...answers, { questionId: question.id, selectedOption: option }];
     }
   }
 
-  calculateScore(answers: Answer[]): number {
-    let correctAnswers = 0;
-    answers.forEach((answer) => {
-      const question = this.exam.questions.find(
-        (q) => q.id === answer.questionId
-      );
-      if (question && question.correctAnswer === answer.selectedOption) {
-        correctAnswers++;
-      }
-    });
-    return (correctAnswers / this.exam.questions.length) * 100;
+  isCorrectAnswer(question: Question, optionIndex: number): boolean {
+    return this.isExamSubmitted() &&
+           this.studentExam() !== null &&
+           question.correctAnswer === this.indexToLetter(optionIndex);
+  }
+
+  isSelectedAnswer(question: Question, optionIndex: number): boolean {
+    const answer = this.answers().find(a => a.questionId === question.id);
+    return answer?.selectedOption === this.indexToLetter(optionIndex);
+  }
+
+  submitExam() {
+    if (this.isExamSubmitted()) {
+      console.error('Exame já submetido');
+      return;
+    }
+
+    const studentId = this.authService.getCurrentUserId();
+    if (!studentId) {
+      console.error('Usuário não autenticado');
+      return;
+    }
+
+    this.examService.calculateScoreAndSaveStudentExam(this.examId(), studentId, this.answers())
+      .pipe(
+        tap(studentExam => {
+          this.studentExam.set(studentExam);
+          console.log('Exame submetido com sucesso', studentExam);
+        }),
+        catchError(error => {
+          console.error('Erro ao submeter o exame', error);
+          return of(null);
+        })
+      )
+      .subscribe();
   }
 }

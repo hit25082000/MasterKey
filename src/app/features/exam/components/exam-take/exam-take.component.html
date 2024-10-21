@@ -1,1 +1,62 @@
-<p>exam-take works!</p>
+<div *ngIf="!isLoading(); else loading">
+  <div class="exam-container" *ngIf="exam() as exam">
+    <div class="sidebar">
+      <ul class="question-list">
+        <li *ngFor="let question of exam.questions; let i = index">
+          <a href="#question-{{i+1}}">Questão {{i+1}}</a>
+        </li>
+      </ul>
+    </div>
+
+    <div class="main-content">
+      <div class="exam-header">
+        <h2 class="exam-title">{{ exam.title }}</h2>
+        <p class="exam-description">{{ exam.description }}</p>
+      </div>
+
+      <div class="questions-container">
+        <div *ngFor="let question of exam.questions; let i = index" class="question-card" id="question-{{i+1}}">
+          <h3 class="question-number">Questão {{i+1}}</h3>
+          <p class="question-text">{{ question.text }}</p>
+          <div class="options-container">
+            <div *ngFor="let option of question.options; let j = index" class="option">
+              <input type="radio"
+                     [id]="'question-' + question.id + '-option-' + j"
+                     [name]="'question-' + question.id"
+                     [value]="indexToLetter(j)"
+                     [disabled]="isExamSubmitted()"
+                     (change)="selectAnswer(question, j)"
+                     [checked]="isSelectedAnswer(question, j)">
+              <label [for]="'question-' + question.id + '-option-' + j"
+                     [class.correct-answer]="isExamSubmitted() && isCorrectAnswer(question, j)"
+                     [class.incorrect-answer]="isExamSubmitted() && isSelectedAnswer(question, j) && !isCorrectAnswer(question, j)"
+                     [class.selected-answer]="isExamSubmitted() && isSelectedAnswer(question, j)">
+                {{ indexToLetter(j) }}) {{ option }}
+                <span *ngIf="isExamSubmitted() && isCorrectAnswer(question, j)" class="correct-answer-indicator"> (Resposta correta)</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="submit-button"
+              (click)="submitExam()"
+              [disabled]="isExamSubmitted()"
+              [class.submitted]="isExamSubmitted()">
+        {{ isExamSubmitted() ? 'Exame já enviado' : 'Enviar Exame' }}
+      </button>
+
+      <div *ngIf="studentExam() as studentExam" class="result-container">
+        <h3>Resultado do Exame</h3>
+        <p>Pontuação: {{ studentExam.score }} / {{ exam.questions.length }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #loading>
+  <div class="loading-container">
+    <p>Carregando exame...</p>
+    <div class="spinner"></div>
+  </div>
+</ng-template>

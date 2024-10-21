@@ -1,0 +1,32 @@
+<div *ngIf="!isLoading(); else loading">
+  <h2>Meus Exames</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Semestre</th>
+        <th>Exame</th>
+        <th>Pontuação</th>
+        <th>Data de Submissão</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      <ng-container *ngFor="let exam of studentExams()">
+        <tr>
+          <td>{{ getSemester(exam.submittedAt) }}</td>
+          <td>{{ exam.examName || 'Carregando...' }}</td>
+          <td>{{ exam.score.toFixed(2) }}%</td>
+          <td>{{ exam.submittedAt | timestamp:'dd/MM/yyyy HH:mm' }}</td>
+          <td>
+            <a [routerLink]="['/exam-details', exam.id]">Ver Detalhes</a>
+          </td>
+        </tr>
+      </ng-container>
+    </tbody>
+  </table>
+</div>
+
+<ng-template #loading>
+  <p>Carregando exames...</p>
+</ng-template>
