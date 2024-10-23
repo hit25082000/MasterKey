@@ -45,10 +45,6 @@ export class RoleGuard implements CanActivate {
             ) {
               return true;
             }
-
-            // Exibir modal de não autorizado
-            this.modalService.showUnauthorizedModal().subscribe(() => {
-              // Redirecionar após fechar o modal
               switch (userRole) {
                 case 'student':
                   this.router.navigate(['/classroom']);
@@ -60,7 +56,6 @@ export class RoleGuard implements CanActivate {
                 default:
                   this.router.navigate(['/unauthorized']);
               }
-            });
           }
         } else {
           this.router.navigate(['/login']);

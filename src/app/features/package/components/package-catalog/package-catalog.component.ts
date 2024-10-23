@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FirestoreService } from '../../../../core/services/firestore.service';
@@ -18,10 +18,10 @@ import { switchMap, take } from 'rxjs/operators';
   styleUrl: './package-catalog.component.scss'
 })
 export class PackageCatalogComponent implements OnInit {
-  studentPackages: Package[] = [];
-  selectedPackage: Package | null = null;
-  selectedPackageCourses: Course[] = [];
-  showModal: boolean = false;
+  studentPackages = signal<Package[]>([]);
+  selectedPackage = signal<Package | null>(null);
+  selectedPackageCourses = signal<Course[]>([]);
+  showModal = signal(false);
 
   constructor(
     private firestoreService: FirestoreService,
@@ -33,7 +33,7 @@ export class PackageCatalogComponent implements OnInit {
     this.loadStudentPackages();
   }
 
-  async loadStudentPackages() {
+  loadStudentPackages() {
     this.authService.user$.pipe(
       take(1),
       switchMap(user => {
@@ -54,22 +54,22 @@ export class PackageCatalogComponent implements OnInit {
         });
       })
     ).subscribe(({ packages }) => {
-      this.studentPackages = packages as Package[];
+      this.studentPackages.set(packages as Package[]);
     });
   }
 
   async openPackageDetails(packageItem: Package) {
-    this.selectedPackage = packageItem;
-    this.selectedPackageCourses = [];
+    this.selectedPackage.set(packageItem);
+    this.selectedPackageCourses.set([]);
 
-    // Buscar os cursos usando o CourseService
     const coursePromises = packageItem.courses.map(courseId =>
       this.courseService.getById(courseId)
     );
 
     try {
-      this.selectedPackageCourses = await Promise.all(coursePromises);
-      this.showModal = true;
+      const courses = await Promise.all(coursePromises);
+      this.selectedPackageCourses.set(courses);
+      this.showModal.set(true);
     } catch (error) {
       console.error('Erro ao carregar os cursos do pacote:', error);
       // Adicione aqui a lógica para lidar com o erro, como exibir uma mensagem para o usuário
@@ -77,8 +77,8 @@ export class PackageCatalogComponent implements OnInit {
   }
 
   closeModal() {
-    this.showModal = false;
-    this.selectedPackage = null;
-    this.selectedPackageCourses = [];
+    this.showModal.set(false);
+    this.selectedPackage.set(null);
+    this.selectedPackageCourses.set([]);
   }
 }

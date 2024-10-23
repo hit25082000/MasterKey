@@ -59,9 +59,9 @@ export class AuthService {
     return this.userInfo.value;
   }
 
-  getCurrentUserId(): string | null {
+  getCurrentUserId(): string {
     const currentUser = this.auth.currentUser;
-    return currentUser ? currentUser.uid : null;
+    return currentUser ? currentUser.uid : "";
   }
 
   async register(email: string, password: string) {

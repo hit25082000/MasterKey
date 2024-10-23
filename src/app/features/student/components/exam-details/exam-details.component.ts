@@ -5,11 +5,12 @@ import { ExamService } from '../../../../core/services/exam.service';
 import { StudentExam, Exam } from '../../../../core/models/exam.model';
 import { AuthService } from '../../../../core/services/auth.service';
 import { IndexToLetterPipe } from '../../../../shared/pipes/index-to-letter.pipe';
+import { TimestampPipe } from '../../../../shared/pipes/timestamp.pipe';
 
 @Component({
   selector: 'app-exam-details',
   standalone: true,
-  imports: [CommonModule, IndexToLetterPipe],
+  imports: [CommonModule, IndexToLetterPipe, TimestampPipe],
   templateUrl: './exam-details.component.html',
   styleUrls: ['./exam-details.component.scss']
 })
@@ -33,10 +34,11 @@ export class ExamDetailsComponent implements OnInit {
   }
 
   private loadExamDetails(examId: string) {
-    this.examService.getStudentExam(examId,this.authService.getCurrentUserId()!).subscribe({
+    var studentId = this.authService.getCurrentUserId()
+    this.examService.getStudentExam(examId,studentId).subscribe({
       next: (studentExam) => {
         this.studentExam.set(studentExam);
-        this.loadExam(studentExam!.examId);
+        this.loadExam(examId);
       },
       error: (error) => {
         console.error('Erro ao carregar detalhes do exame do estudante', error);

@@ -1,17 +1,17 @@
 <div class="course-catalog">
   <h2>Seus Pacotes</h2>
   <div class="course-grid">
-    <div *ngFor="let packageItem of studentPackages" class="course-card">
+    <div *ngFor="let packageItem of studentPackages()" class="course-card">
       <h3>{{ packageItem.name }}</h3>
       <p>{{ packageItem.description }}</p>
-      <button (click)="courseModal.toggle()">Ver Cursos</button>
+      <button (click)="openPackageDetails(packageItem);packageModal.toggle()">Ver Cursos</button>
     </div>
   </div>
 </div>
 
-<app-modal #courseModal>
-  <h2>Cursos em {{ selectedPackage?.name }}</h2>
-  <div *ngFor="let course of selectedPackageCourses" class="course-item">
+<app-modal #packageModal>
+  <h2>Cursos em {{ selectedPackage()?.name }}</h2>
+  <div *ngFor="let course of selectedPackageCourses()" class="course-item">
     <h3>{{ course.name }}</h3>
     <p>{{ course.description }}</p>
     <a [routerLink]="['/classroom/course-player', course.id]" (click)="closeModal()">Acessar Curso</a>

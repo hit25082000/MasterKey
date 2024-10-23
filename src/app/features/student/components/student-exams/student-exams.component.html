@@ -19,7 +19,7 @@
           <td>{{ exam.score.toFixed(2) }}%</td>
           <td>{{ exam.submittedAt | timestamp:'dd/MM/yyyy HH:mm' }}</td>
           <td>
-            <a [routerLink]="['/exam-details', exam.id]">Ver Detalhes</a>
+            <a [routerLink]="['/classroom/exam-details', exam.examId]">Ver Detalhes</a>
           </td>
         </tr>
       </ng-container>

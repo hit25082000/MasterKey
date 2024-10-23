@@ -37,6 +37,7 @@ import { PackageFormComponent } from './features/package/components/package-form
 import { EmployeeFormComponent } from './features/employees/components/employee-form/employee-form.component';
 import { CoursePlayerComponent } from './features/course/components/course-player/course-player.component';
 import { StudentExamsComponent } from './features/student/components/student-exams/student-exams.component';
+import { ExamDetailsComponent } from './features/student/components/exam-details/exam-details.component';
 export const routes: Routes = [
   { path: '', component: EcommerceComponent },
   {
@@ -195,6 +196,10 @@ export const routes: Routes = [
       {
         path: 'student-exams',
         component: StudentExamsComponent,
+      },
+      {
+        path: 'exam-details/:id',
+        component: ExamDetailsComponent,
       },
     ],
   },

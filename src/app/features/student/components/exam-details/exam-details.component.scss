@@ -1,0 +1,81 @@
+.exam-details {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+
+  h2 {
+    color: #333;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+  }
+
+  h3 {
+    color: #007bff;
+    margin-bottom: 15px;
+  }
+
+  h4 {
+    color: #28a745;
+    margin-top: 20px;
+  }
+
+  .exam-info {
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+
+    p {
+      margin: 5px 0;
+    }
+  }
+
+  .question {
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+
+    h5 {
+      color: #495057;
+      margin-bottom: 10px;
+    }
+
+    ul {
+      list-style-type: none;
+      padding-left: 0;
+    }
+
+    li {
+      padding: 5px 10px;
+      margin-bottom: 5px;
+      border-radius: 3px;
+
+      &.correct-answer {
+        background-color: #d4edda;
+        border: 1px solid #c3e6cb;
+      }
+
+      &.student-answer {
+        background-color: #fff3cd;
+        border: 1px solid #ffeeba;
+      }
+
+      &.correct-answer.student-answer {
+        background-color: #d4edda;
+        border: 1px solid #c3e6cb;
+        font-weight: bold;
+      }
+    }
+  }
+
+  .loading {
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+  }
+}
+

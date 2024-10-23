@@ -44,11 +44,7 @@ export class ExamService {
     return from(this.firestore.addToCollection('student_exams', studentExam));
   }
 
-  getStudentExams(studentId: string): Observable<StudentExam[]> {
-    return this.firestore.getCollectionWithQuery<StudentExam>('student_exams', [
-      where('studentId', '==', studentId),
-    ]);
-  }
+
 
   calculateScoreAndSaveStudentExam(examId: string, studentId: string, answers: Answer[]): Observable<StudentExam> {
     return this.getExamById(examId).pipe(
@@ -88,9 +84,15 @@ export class ExamService {
   }
 
   getStudentExam(examId: string, studentId: string): Observable<StudentExam | null> {
-    return from(this.firestore.getDocumentsByQuery<StudentExam>('student_exams',
+    return from(this.firestore.getDocumentsByQuery<StudentExam>('student_exams',[
       where('examId', '==', examId),
       where('studentId', '==', studentId)
-    ).then(exams => exams.length > 0 ? exams[0] : null));
+    ]).then(exams => exams.length > 0 ? exams[0] : null));
+  }
+
+  getStudentExams(studentId: string): Observable<StudentExam[]> {
+    return this.firestore.getCollectionWithQuery<StudentExam>('student_exams', [
+      where('studentId', '==', studentId),
+    ]);
   }
 }
