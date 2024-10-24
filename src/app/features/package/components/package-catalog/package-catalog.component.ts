@@ -1,14 +1,11 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { FirestoreService } from '../../../../core/services/firestore.service';
 import { AuthService } from '../../../../core/services/auth.service';
-import { CourseService } from '../../../course/services/course.service';
+import { PackageService } from '../../services/package.service';
 import { Package } from '../../../../core/models/package.model';
 import { Course } from '../../../../core/models/course.model';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
-import { forkJoin, of } from 'rxjs';
-import { switchMap, take } from 'rxjs/operators';
 
 @Component({
   selector: 'app-package-catalog',
@@ -18,67 +15,36 @@ import { switchMap, take } from 'rxjs/operators';
   styleUrl: './package-catalog.component.scss'
 })
 export class PackageCatalogComponent implements OnInit {
+  private authService = inject(AuthService);
+  private packageService = inject(PackageService);
+
   studentPackages = signal<Package[]>([]);
-  selectedPackage = signal<Package | null>(null);
-  selectedPackageCourses = signal<Course[]>([]);
   showModal = signal(false);
 
-  constructor(
-    private firestoreService: FirestoreService,
-    private authService: AuthService,
-    private courseService: CourseService
-  ) {}
+  selectedPackage = computed(() => this.packageService.selectedPackage());
+  selectedPackageCourses = computed(() => this.packageService.packageCourses());
 
   ngOnInit() {
     this.loadStudentPackages();
   }
 
   loadStudentPackages() {
-    this.authService.user$.pipe(
-      take(1),
-      switchMap(user => {
-        if (user && user.uid) {
-          return forkJoin({
-            packageIds: this.firestoreService.getDocument('student_packages', user.uid),
-          });
-        }
-        return of({ packageIds: [] });
-      }),
-      switchMap(({ packageIds }) => {
-        const packagesObservables = packageIds.packages.map((id: string) =>
-          this.firestoreService.getDocument('packages', id)
-        );
-
-        return forkJoin({
-          packages: forkJoin(packagesObservables),
-        });
-      })
-    ).subscribe(({ packages }) => {
-      this.studentPackages.set(packages as Package[]);
-    });
+    const currentUser = this.authService.currentUser();
+    if (currentUser && currentUser.uid) {
+      // Assumindo que o PackageService tem um método para buscar pacotes do estudante
+      this.packageService.getStudentPackages(currentUser.uid).subscribe(packages => {
+        this.studentPackages.set(packages);
+      });
+    }
   }
 
-  async openPackageDetails(packageItem: Package) {
-    this.selectedPackage.set(packageItem);
-    this.selectedPackageCourses.set([]);
-
-    const coursePromises = packageItem.courses.map(courseId =>
-      this.courseService.getById(courseId)
-    );
-
-    try {
-      const courses = await Promise.all(coursePromises);
-      this.selectedPackageCourses.set(courses);
-      this.showModal.set(true);
-    } catch (error) {
-      console.error('Erro ao carregar os cursos do pacote:', error);
-      // Adicione aqui a lógica para lidar com o erro, como exibir uma mensagem para o usuário
-    }
+  openPackageDetails(packageItem: Package) {
+    this.packageService.packageSelected(packageItem.id);
+    this.showModal.set(true);
   }
 
   closeModal() {
     this.showModal.set(false);
-    this.selectedPackage.set(null);
-    this.selectedPackageCourses.set([]);
+    this.packageService.selectedPackage.set(undefined);
   }
 }
