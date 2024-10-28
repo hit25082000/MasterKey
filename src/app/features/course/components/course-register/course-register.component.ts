@@ -11,8 +11,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { FirestoreService } from '../../../../core/services/firestore.service';
 import { environment } from '../../../../../environments/environment';
-import { NotificationService } from '../../../../shared/components/notification/notification.service';
-import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
+import { NotificationType } from '../../../../shared/models/notifications-enum';
 import { GoogleAuthService } from '../../../../core/services/google-auth.service';
 import { SearchBarComponent } from '../../../../shared/components/search-bar/search-bar.component';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
@@ -23,6 +22,7 @@ import { HandoutSelectorComponent } from '../../../ecommerce/components/handout-
 import { BookSelectorComponent } from '../../../library/components/book-selector/book-selector.component';
 import { CategoryService } from '../../../category/services/category.service';
 import { CategorySelectorComponent } from '../../../category/components/category-register/category-selector/category-selector.component';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-course-register',
@@ -116,28 +116,28 @@ export class CourseRegisterComponent implements OnInit {
         const course = await this.firestoreService.addToCollection('courses', courseData);
         await this.categoryService.addCourseToCategory(this.courseForm.get('category')?.value, course.id);
 
-        this.notificationService.showNotification(
+        this.notificationService.success(
           'Curso criado com sucesso!',
-          NotificationType.SUCCESS
+         1
         );
 
         this.router.navigate(['/admin/course-list']);
       } catch (error) {
         console.error('Erro ao criar curso:', error);
-        this.notificationService.showNotification(
+        this.notificationService.success(
           'Erro ao criar curso. Por favor, tente novamente.',
-          NotificationType.ERROR
+          1
         );
       }
     } else if (!this.isAuthenticated) {
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Por favor, autentique-se antes de criar um curso.',
-        NotificationType.ERROR
+        1
       );
     } else {
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Por favor, preencha todos os campos obrigatórios e selecione pelo menos um vídeo.',
-        NotificationType.ERROR
+        1
       );
     }
   }

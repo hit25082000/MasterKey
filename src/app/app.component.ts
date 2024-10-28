@@ -1,44 +1,35 @@
-import { Component } from '@angular/core';
-import { NotificationService } from './shared/components/notification/notification.service';
-import { NotificationComponent } from './shared/components/notification/notification.component';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { AsyncPipe } from '@angular/common';
-import { NotificationType } from './shared/components/notification/notifications-enum';
 import { LoadingOverlayComponent } from '../app/shared/components/loading-overlay/loading-overlay.component';
 import { ChatComponent } from './features/chat/components/chat-modal/chat.component';
-import { ModalComponent } from './shared/components/modal/modal.component';
+import { NotificationService, NotificationType } from './shared/services/notification.service';
+import { NotificationsComponent } from './shared/components/notification/notification.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [
-    NotificationComponent,
     RouterOutlet,
-    AsyncPipe,
     LoadingOverlayComponent,
     ChatComponent,
+    NotificationsComponent
   ],
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss'],
-  providers: [NotificationService],
+  styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  notificationVisible = false;
-  loading = true;
+  notificationService = inject(NotificationService)
 
-  constructor(public notificationService: NotificationService) {
-    this.notificationService.notification$.subscribe(
-      (notification: unknown) => {
-        this.notificationVisible = !!notification;
-      }
-    );
-    setTimeout(() => {
-      this.loading = false;
-    }, 1000);
+  constructor() {
+    this.notificationService.success('Operação realizada com sucesso!');
+    this.notificationService.error('Ocorreu um erro!');
+    this.notificationService.info('Informação importante');
 
-    this.notificationService.showNotification(
-      'Sistema iniciado com sucesso!',
-      NotificationType.SUCCESS
+    // Método personalizado
+    this.notificationService.show(
+      'Mensagem personalizada',
+      NotificationType.SUCCESS,
+      8000 // duração em ms
     );
   }
 }

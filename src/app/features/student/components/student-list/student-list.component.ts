@@ -4,9 +4,9 @@ import { Student } from '../../../../core/models/student.model';
 import { StudentManagementService } from '../../services/student-management.service';
 import { Router } from '@angular/router';
 import { StudentService } from '../../services/student.service';
-import { NotificationService } from '../../../../shared/components/notification/notification.service';
-import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
+import { NotificationType } from '../../../../shared/models/notifications-enum';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-student-list',
@@ -35,9 +35,9 @@ export class StudentListComponent implements OnInit {
       this.students = await this.studentService.getAll();
       this.updateDisplayedStudents();
     } catch (error: any) {
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Erro ao consultar estudantes: ' + error,
-        NotificationType.ERROR
+        1
       );
     } finally {
       this.loading = false;
@@ -60,16 +60,16 @@ export class StudentListComponent implements OnInit {
       .delete(id)
       .then((success) => {
         this.students = this.students.filter((student) => student.id !== id);
-        this.notificationService.showNotification(
+        this.notificationService.success(
           success,
-          NotificationType.SUCCESS
+          1
         );
       })
       .catch((error) => {
         console.log(error);
-        this.notificationService.showNotification(
+        this.notificationService.success(
           error,
-          NotificationType.ERROR
+          1
         );
       });
   }

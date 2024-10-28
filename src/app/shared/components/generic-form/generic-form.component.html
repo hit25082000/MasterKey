@@ -1,0 +1,49 @@
+<form [formGroup]="form()" (ngSubmit)="onSubmit()">
+  <ng-container>
+  @for (field of formConfig(); track trackByFn) {
+    <div class="form-group" [ngSwitch]="field.type">
+      <label [for]="field.name">{{ field.label }}</label>
+
+      <input *ngSwitchCase="'text'" [id]="field.name" [formControlName]="field.name"
+             class="form-control" [type]="field.type">
+
+      <input *ngSwitchCase="'email'" [id]="field.name" [formControlName]="field.name"
+             class="form-control" type="email">
+
+      <input *ngSwitchCase="'number'" [id]="field.name" [formControlName]="field.name"
+             class="form-control" type="number">
+
+      <input *ngSwitchCase="'date'" [id]="field.name" [formControlName]="field.name"
+             class="form-control" type="date">
+
+      <input *ngSwitchCase="'file'" [id]="field.name" [formControlName]="field.name"
+             class="form-control" type="file" (change)="field.onFileChange && field.onFileChange($event)">
+
+      <input *ngSwitchCase="'password'" [id]="field.name" [formControlName]="field.name"
+             class="form-control" type="password">
+
+      <select *ngSwitchCase="'select'" [id]="field.name" [formControlName]="field.name" class="form-control">
+        <option *ngFor="let option of field.options" [value]="option.value">
+          {{ option.label }}
+        </option>
+      </select>
+
+      <textarea *ngSwitchCase="'textarea'" [id]="field.name" [formControlName]="field.name"
+                class="form-control"></textarea>
+
+      <div *ngIf="form().get(field.name)?.invalid && form().get(field.name)?.touched" class="text-danger">
+        {{ field.errorMessage }}
+      </div>
+    </div>
+  }
+  </ng-container>
+
+  <button type="submit" class="btn btn-primary" [disabled]="form().invalid">
+    {{ submitButtonText() }}
+  </button>
+</form>
+
+<!-- Mensagem de erro geral do formulário para senhas não coincidentes -->
+<div *ngIf="form().errors?.['passwordMismatch']" class="error-message">
+  As senhas não coincidem
+</div>

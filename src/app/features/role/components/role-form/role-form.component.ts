@@ -7,9 +7,9 @@ import { Role } from '../../../../core/models/role.model';
 import { RoleManagementService } from '../../service/role-management.service';
 import { RoleService } from '../../service/role.service';
 import { LoadingService } from '../../../../shared/services/loading.service';
-import { NotificationService } from '../../../../shared/components/notification/notification.service';
-import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
+import { NotificationType } from '../../../../shared/models/notifications-enum';
 import { InputComponent } from '../../../../shared/components/input/input.component';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-role-form',
@@ -52,9 +52,9 @@ export class RoleFormComponent implements OnInit {
           permissions: role.permissions
         });
       } catch (error) {
-        this.notificationService.showNotification(
+        this.notificationService.success(
           'Erro ao carregar os dados da função',
-          NotificationType.ERROR
+          1
         );
         console.error(error);
       }
@@ -73,25 +73,25 @@ export class RoleFormComponent implements OnInit {
 
       operation
         .then((success) => {
-          this.notificationService.showNotification(
+          this.notificationService.success(
             `Função ${this.isEditMode ? 'atualizada' : 'criada'} com sucesso`,
-            NotificationType.SUCCESS
+            1
           );
           this.router.navigate(['/admin/role-list']);
         })
         .catch((error) => {
-          this.notificationService.showNotification(
+          this.notificationService.success(
             `Erro ao ${this.isEditMode ? 'atualizar' : 'criar'} função: ${error.message}`,
-            NotificationType.ERROR
+            1
           );
         })
         .finally(() => {
           this.loadingService.hide();
         });
     } else {
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Por favor, preencha todos os campos obrigatórios corretamente.',
-        NotificationType.ERROR
+        1
       );
       this.loadingService.hide();
     }

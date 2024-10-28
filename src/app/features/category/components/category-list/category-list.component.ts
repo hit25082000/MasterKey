@@ -4,8 +4,8 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { CategoryService } from '../../services/category.service';
 import { Category } from '../../../../core/models/category.model';
-import { NotificationService } from '../../../../shared/components/notification/notification.service';
-import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
+import { NotificationType } from '../../../../shared/models/notifications-enum';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-category-list',
@@ -26,9 +26,9 @@ export class CategoryListComponent implements OnInit {
       try {
         this.categorys = await this.categoryService.getAll();
       } catch (error: any) {
-        this.notificationService.showNotification(
+        this.notificationService.success(
           'Erro ao consultar categorias: ' + error,
-          NotificationType.ERROR
+          1
         );
       } finally {
         this.loading = false;

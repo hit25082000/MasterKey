@@ -17,8 +17,8 @@ import { TeacherSelectorComponent } from '../../../employees/components/teacher-
 import { Student } from '../../../../core/models/student.model';
 import { ClassService } from '../../services/class.service';
 import { DayWeekSelectorComponent } from '../day-week-selector/day-week-selector.component';
-import { NotificationService } from '../../../../shared/components/notification/notification.service';
-import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
+import { NotificationType } from '../../../../shared/models/notifications-enum';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-class-detail',
@@ -87,13 +87,13 @@ export class ClassDetailsComponent implements OnInit {
 
   async onSubmit(): Promise<void> {
     if (this.classForm.invalid) {
-      this.notificationService.showNotification('Formulário inválido. Por favor, preencha todos os campos obrigatórios.', NotificationType.ERROR);
+      this.notificationService.success('Formulário inválido. Por favor, preencha todos os campos obrigatórios.', 1);
       return;
     }
 
     try {
       await this.classManagementService.update(this.classForm.value);
-      this.notificationService.showNotification('Turma atualizada com sucesso!', NotificationType.SUCCESS);
+      this.notificationService.success('Turma atualizada com sucesso!', 1);
       this.router.navigate(['/admin/class-list']);
     } catch (error) {
       this.handleError('Erro ao atualizar turma', error);
@@ -103,7 +103,7 @@ export class ClassDetailsComponent implements OnInit {
   private handleError(message: string, error?: any): void {
     this.error = message;
     this.loading = false;
-    this.notificationService.showNotification(this.error, NotificationType.ERROR);
+    this.notificationService.success(this.error, 1);
     if (error) console.error(error);
   }
 }

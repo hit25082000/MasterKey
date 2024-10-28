@@ -3,9 +3,9 @@ import { Component, OnInit, signal, computed, WritableSignal, inject, effect, in
 import { SearchBarComponent } from '../../../../shared/components/search-bar/search-bar.component';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
-import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
+import { NotificationType } from '../../../../shared/models/notifications-enum';
 import { Video } from '../../../../core/models/course.model';
-import { NotificationService } from '../../../../shared/components/notification/notification.service';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-video-selector',
@@ -54,9 +54,9 @@ export class VideoSelectorComponent {
 
   fetchDriveVideos() {
     if (!this.accessToken()) {
-      this.notificationService.showNotification(
+      this.notificationService.error(
         'Autenticação necessária para buscar vídeos.',
-        NotificationType.ERROR
+        1
       );
       return;
     }
@@ -80,9 +80,9 @@ export class VideoSelectorComponent {
       },
       (error) => {
         console.error('Erro ao buscar vídeos:', error);
-        this.notificationService.showNotification(
+        this.notificationService.error(
           'Erro ao buscar vídeos do Google Drive.',
-          NotificationType.ERROR
+          1
         );
       }
     );

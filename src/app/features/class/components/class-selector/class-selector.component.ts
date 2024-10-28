@@ -12,10 +12,10 @@ import {
 import { SearchBarComponent } from '../../../../shared/components/search-bar/search-bar.component';
 import { Class } from '../../../../core/models/class.model';
 import { ClassService } from '../../services/class.service';
-import { NotificationService } from '../../../../shared/components/notification/notification.service';
-import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
+import { NotificationType } from '../../../../shared/models/notifications-enum';
 import { StudentService } from '../../../student/services/student.service';
 import { FindPipe } from '../../../../shared/pipes/find.pipe';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-class-selector',
@@ -89,16 +89,16 @@ export class ClassSelectorComponent implements OnInit {
         Array.from(this.selectedClassIds())
       );
 
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Turmas atualizadas com sucesso',
-        NotificationType.SUCCESS
+        1
       );
       await this.loadAllClasses();
       await this.loadSelectedClasses();
     } catch (error) {
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Erro ao atualizar classes',
-        NotificationType.ERROR
+        1
       );
     } finally {
       this.isSaving.set(false);
@@ -112,15 +112,15 @@ export class ClassSelectorComponent implements OnInit {
     await this.classManagementService
       .removeStudentFromClass(classId, this.studentId())
       .then(() => {
-        this.notificationService.showNotification(
+        this.notificationService.success(
           'Turmas atualizadas com sucesso',
-          NotificationType.SUCCESS
+          1
         );
       })
       .catch((erro) => {
-        this.notificationService.showNotification(
+        this.notificationService.success(
           'Erro ao atualizar classes: ' + erro,
-          NotificationType.ERROR
+          1
         );
       });
   }
@@ -145,16 +145,16 @@ export class ClassSelectorComponent implements OnInit {
         classId,
         Array.from(this.selectedStudentIds())
       );
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Estudantes da classe atualizados com sucesso',
-        NotificationType.SUCCESS
+       1
       );
       await this.loadAllStudents();
       await this.loadSelectedStudents();
     } catch (error) {
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Erro ao atualizar estudantes da classe',
-        NotificationType.ERROR
+        1
       );
     } finally {
       this.isSaving.set(false);
@@ -172,9 +172,9 @@ export class ClassSelectorComponent implements OnInit {
       );
     }
 
-    this.notificationService.showNotification(
+    this.notificationService.success(
       'Turmas atualizadas com sucesso',
-      NotificationType.SUCCESS
+      1
     );
   }
 }

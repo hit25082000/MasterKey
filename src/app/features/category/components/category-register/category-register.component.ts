@@ -14,12 +14,12 @@ import { CourseService } from '../../../course/services/course.service';
 import { CategoryManagementService } from '../../services/category-management.service';
 import { Category } from '../../../../core/models/category.model';
 import { Router } from '@angular/router';
-import { NotificationService } from '../../../../shared/components/notification/notification.service';
-import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
+import { NotificationType } from '../../../../shared/models/notifications-enum';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { CourseSelectorComponent } from '../../../course/components/course-selector/course-selector.component';
 import { PackageSelectorComponent } from '../../../package/components/package-selector/package-selector.component';
 import { ViewChild } from '@angular/core';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-category-create',
@@ -74,9 +74,9 @@ export class CategoryRegisterComponent implements OnInit {
       this.categoryManagementService
         .create(newCategory, this.selectedFile)
         .then((response) => {
-          this.notificationService.showNotification(
+          this.notificationService.success(
             response,
-            NotificationType.SUCCESS
+            1
           );
           setTimeout(() => {
             this.loading = false;
@@ -84,16 +84,16 @@ export class CategoryRegisterComponent implements OnInit {
           }, 1000);
         })
         .catch((error) => {
-          this.notificationService.showNotification(
+          this.notificationService.success(
             'Erro ao criar categoria. Por favor, tente novamente: ' + error,
-            NotificationType.ERROR
+            1
           );
           this.loading = false;
         });
     } else {
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Por favor, preencha todos os campos obrigatórios corretamente.',
-        NotificationType.ERROR
+        1
       );
       this.loading = false;
     }

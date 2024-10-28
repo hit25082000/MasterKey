@@ -11,10 +11,10 @@ import { ModalComponent } from '../../../../shared/components/modal/modal.compon
 import { DayWeekSelectorComponent } from '../day-week-selector/day-week-selector.component';
 import { StudentsSelectorComponent } from './../../../student/components/students-selector/students-selector.component';
 import { TeacherSelectorComponent } from '../../../employees/components/teacher-selector/teacher-selector.component';
-import { NotificationService } from '../../../../shared/components/notification/notification.service';
-import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
+import { NotificationType } from '../../../../shared/models/notifications-enum';
 import { LoadingService } from '../../../../shared/services/loading.service';
 import { Router } from '@angular/router';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-class-register',
@@ -62,25 +62,25 @@ export class ClassRegisterComponent implements OnInit {
       this.classManagementService.create(this.classForm.value).subscribe(
         (response) => {
           this.loadingService.hide();
-          this.notificationService.showNotification(
+          this.notificationService.success(
             'Turma criada com sucesso!',
-            NotificationType.SUCCESS
+          1
           );
           this.router.navigate(['/admin/class-list']);
         },
         (error) => {
           this.loadingService.hide();
-          this.notificationService.showNotification(
+          this.notificationService.success(
             'Erro ao criar turma. Por favor, tente novamente.',
-            NotificationType.ERROR
+            1
           );
           console.error('Erro ao criar turma:', error);
         }
       );
     } else {
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Por favor, preencha todos os campos obrigatórios.',
-        NotificationType.ERROR
+        1
       );
     }
   }

@@ -11,13 +11,13 @@ import { CommonModule } from '@angular/common';
 import { FirestoreService } from '../../../../core/services/firestore.service';
 import { ChatService } from '../../../chat/services/chat.service';
 import { environment } from '../../../../../environments/environment';
-import { NotificationService } from '../../../../shared/components/notification/notification.service';
-import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
+import { NotificationType } from '../../../../shared/models/notifications-enum';
 import {
   SystemLogService,
   LogCategory,
 } from '../../../../core/services/system-log.service';
 import { GoogleAuthService } from '../../../../core/services/google-auth.service';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-meeting',
@@ -87,9 +87,9 @@ export class MeetingComponent implements OnInit {
       },
       (error) => {
         console.error('Erro na autenticação:', error);
-        this.notificationService.showNotification(
+        this.notificationService.success(
           'Erro na autenticação. Por favor, tente novamente.',
-          NotificationType.ERROR
+          1
         );
       }
     );
@@ -135,9 +135,9 @@ export class MeetingComponent implements OnInit {
 
         await this.saveMeetingInfo(meetingData, meetLink, selectedClass);
 
-        this.notificationService.showNotification(
+        this.notificationService.success(
           'Reunião criada com sucesso!',
-          NotificationType.SUCCESS
+          1
         );
 
         // Gerar log de criação de reunião
@@ -149,20 +149,20 @@ export class MeetingComponent implements OnInit {
           .toPromise();
       } catch (error) {
         console.error('Erro ao criar reunião:', error);
-        this.notificationService.showNotification(
+        this.notificationService.success(
           'Erro ao criar reunião. Por favor, tente novamente.',
-          NotificationType.ERROR
+          1
         );
       }
     } else if (!this.isAuthenticated) {
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Por favor, autentique-se antes de criar uma reunião.',
-        NotificationType.ERROR
+        1
       );
     } else {
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Por favor, preencha todos os campos obrigatórios.',
-        NotificationType.ERROR
+        1
       );
     }
   }

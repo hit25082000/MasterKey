@@ -11,11 +11,11 @@ import { Course } from '../../../../core/models/course.model';
 import { Package } from '../../../../core/models/package.model';
 import { CategoryManagementService } from '../../services/category-management.service';
 import { CategoryService } from '../../services/category.service';
-import { NotificationService } from '../../../../shared/components/notification/notification.service';
-import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
+import { NotificationType } from '../../../../shared/models/notifications-enum';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { CourseSelectorComponent } from '../../../course/components/course-selector/course-selector.component';
 import { PackageSelectorComponent } from '../../../package/components/package-selector/package-selector.component';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-category-detail',
@@ -90,23 +90,23 @@ export class CategoryDetailsComponent implements OnInit {
           updatedCategory,
           this.selectedFile
         );
-        this.notificationService.showNotification(
+        this.notificationService.success(
           'Categoria atualizada com sucesso',
-          NotificationType.SUCCESS
+          1
         );
         this.router.navigate(['/admin/category-list']);
       } catch (error) {
-        this.notificationService.showNotification(
+        this.notificationService.success(
           'Erro ao atualizar categoria. Por favor, tente novamente.',
-          NotificationType.ERROR
+          1
         );
       } finally {
         this.loading = false;
       }
     } else {
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Por favor, preencha todos os campos obrigatórios corretamente.',
-        NotificationType.ERROR
+        1
       );
       this.loading = false;
     }

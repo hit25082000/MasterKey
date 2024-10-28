@@ -1,5 +1,3 @@
-import { NotificationService } from './../../../../shared/components/notification/notification.service';
-import { NotificationComponent } from './../../../../shared/components/notification/notification.component';
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -16,9 +14,10 @@ import { ClassSelectorComponent } from '../../../class/components/class-selector
 import { CourseSelectorComponent } from '../../../course/components/course-selector/course-selector.component';
 import { PackageSelectorComponent } from '../../../package/components/package-selector/package-selector.component';
 import { PackageService } from '../../../package/services/package.service';
-import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
+import { NotificationType } from '../../../../shared/models/notifications-enum';
 import {Employee} from '../../../../core/models/employee.model';
 import { Role } from '../../../../core/models/role.model';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-employee-detail',
@@ -55,9 +54,9 @@ export class EmployeeDetailsComponent implements OnInit {
     this.employeeId = this.route.snapshot.paramMap.get('id')!;
 
     if (!this.employeeId) {
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Funcionario não encontrado',
-        NotificationType.ERROR
+        1
       );
       this.loading = false;
       return;
@@ -91,9 +90,9 @@ export class EmployeeDetailsComponent implements OnInit {
 
       this.loading = false;
     } catch (error) {
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Erro ao consultar dados do estudante: ' + error,
-        NotificationType.ERROR
+        1
       );
       this.loading = false;
     }
@@ -107,21 +106,21 @@ export class EmployeeDetailsComponent implements OnInit {
           employee,
           this.selectedFile
         );
-        this.notificationService.showNotification(
+        this.notificationService.success(
           'Funcionário editado com sucesso!',
-          NotificationType.SUCCESS
+          1
         );
         this.router.navigate(['/admin/employee-list']);
       } catch (error) {
-        this.notificationService.showNotification(
+        this.notificationService.success(
           'Erro ao editar funcionário: ' + error,
-          NotificationType.ERROR
+          1
         );
       }
     } else {
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Por favor, preencha todos os campos obrigatórios corretamente.',
-        NotificationType.ERROR
+        1
       );
     }
   }

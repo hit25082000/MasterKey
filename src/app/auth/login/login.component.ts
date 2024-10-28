@@ -1,6 +1,5 @@
-import { NotificationComponent } from './../../shared/components/notification/notification.component';
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -10,9 +9,9 @@ import {
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
-import { NotificationService } from '../../shared/components/notification/notification.service';
-import { NotificationType } from '../../shared/components/notification/notifications-enum';
+import { NotificationType } from '../../shared/models/notifications-enum';
 import { SystemLogService } from '../../core/services/system-log.service';
+import { NotificationService } from '../../shared/services/notification.service';
 
 @Component({
   selector: 'app-login',
@@ -24,11 +23,11 @@ import { SystemLogService } from '../../core/services/system-log.service';
 export class LoginComponent {
   loginForm!: FormGroup;
   isLoading: boolean = false;
+  notificationService = inject(NotificationService)
 
   constructor(
     private fb: FormBuilder,
     private router: Router,
-    private notificationService: NotificationService,
     private authService: AuthService,
     private systemLogService: SystemLogService
   ) {
@@ -67,9 +66,8 @@ export class LoginComponent {
         .catch(() => {
           // Finaliza o carregamento em caso de erro
           this.isLoading = false;
-          this.notificationService.showNotification(
-            'Login falhou!',
-            NotificationType.ERROR
+          this.notificationService.error(
+            'Login falhou!',1
           );
         });
     }

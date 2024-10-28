@@ -18,8 +18,8 @@ import { SearchBarComponent } from '../../../../shared/components/search-bar/sea
 import { Course } from '../../../../core/models/course.model';
 import { CourseService } from '../../services/course.service';
 import { StudentService } from '../../../student/services/student.service';
-import { NotificationService } from '../../../../shared/components/notification/notification.service';
-import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
+import { NotificationType } from '../../../../shared/models/notifications-enum';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-course-selector',
@@ -129,16 +129,16 @@ export class CourseSelectorComponent implements OnInit {
         Array.from(this.selectedCourseIds())
       );
 
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Pacotes atualizados com sucesso',
-        NotificationType.SUCCESS
+    1
       );
       await this.loadAllCourses();
       await this.loadStudentCourses();
     } catch (error) {
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Erro ao atualizar pacotes',
-        NotificationType.ERROR
+        1
       );
     } finally {
       this.isSaving.set(false);
@@ -169,16 +169,16 @@ export class CourseSelectorComponent implements OnInit {
         Array.from(this.selectedCourseIds())
       );
 
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Pacotes atualizados com sucesso',
-        NotificationType.SUCCESS
+        1
       );
       await this.loadAllCourses();
       await this.loadStudentCourses();
     } catch (error) {
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Erro ao atualizar pacotes',
-        NotificationType.ERROR
+        1
       );
     } finally {
       this.isSaving.set(false);

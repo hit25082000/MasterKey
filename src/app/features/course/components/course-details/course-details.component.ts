@@ -1,6 +1,5 @@
-import { NotificationService } from './../../../../shared/components/notification/notification.service';
 import { LoadingOverlayComponent } from '../../../../shared/components/loading-overlay/loading-overlay.component';
-import { NotificationType } from './../../../../shared/components/notification/notifications-enum';
+import { NotificationType } from '../../../../shared/models/notifications-enum';
 import { Component, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
@@ -24,6 +23,7 @@ import { CategorySelectorComponent } from '../../../category/components/category
 
 import { GoogleAuthService } from '../../../../core/services/google-auth.service';
 import { VideoSelectorComponent } from "../../../video/components/video-selector/video-selector.component";
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-course-details',
@@ -67,9 +67,9 @@ export class CourseDetailsComponent implements OnInit {
     this.loadingService.show();
     this.courseId = this.route.snapshot.paramMap.get('id')!;
     if (!this.courseId) {
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Curso não encontrado',
-        NotificationType.ERROR
+        1
       );
       this.loading = false;
       this.loadingService.hide();
@@ -108,9 +108,9 @@ export class CourseDetailsComponent implements OnInit {
         }
       });
     } catch (error) {
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Erro ao consultar dados do curso: ' + error,
-        NotificationType.ERROR
+        1
       );
       this.loading = false;
       this.loadingService.hide();
@@ -170,26 +170,26 @@ export class CourseDetailsComponent implements OnInit {
         };
 
         await this.courseManagementService.update(courseData);
-        this.notificationService.showNotification(
+        this.notificationService.success(
           'Curso atualizado com sucesso!',
-          NotificationType.SUCCESS
+         1
         );
       } catch (error) {
 
-        this.notificationService.showNotification(
+        this.notificationService.success(
           error instanceof Error
             ? error.message
             : 'Erro desconhecido ao atualizar curso',
-          NotificationType.ERROR
+          1
         );
       } finally {
         this.loading = false;
         this.loadingService.hide();
       }
     } else {
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Por favor, faça alguma alteração antes de salvar.',
-        NotificationType.ERROR
+        1
       );
       this.loading = false;
       this.loadingService.hide();

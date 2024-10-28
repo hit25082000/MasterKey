@@ -7,9 +7,9 @@ import { PackageService } from '../../services/package.service';
 import { Package } from '../../../../core/models/package.model';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { CourseSelectorComponent } from '../../../course/components/course-selector/course-selector.component';
-import { NotificationService } from '../../../../shared/components/notification/notification.service';
-import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
+import { NotificationType } from '../../../../shared/models/notifications-enum';
 import { LoadingService } from '../../../../shared/services/loading.service';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-package-form',
@@ -74,9 +74,9 @@ export class PackageFormComponent implements OnInit {
       this.courseSelector()?.selectedCourseIds.set(new Set(packageItem.courses));
       this.isFormDirty.set(false);
     } catch (err) {
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Erro ao carregar os dados do pacote',
-        NotificationType.ERROR
+        1
       );
     } finally {
       this.loadingService.hide();
@@ -99,16 +99,16 @@ export class PackageFormComponent implements OnInit {
 
       operation.subscribe({
         next: () => {
-          this.notificationService.showNotification(
+          this.notificationService.success(
             `Pacote ${this.isEditMode() ? 'atualizado' : 'criado'} com sucesso!`,
-            NotificationType.SUCCESS
+            1
           );
           this.router.navigate(['/admin/package-list']);
         },
         error: (error) => {
-          this.notificationService.showNotification(
+          this.notificationService.success(
             `Erro ao ${this.isEditMode() ? 'atualizar' : 'criar'} o pacote. Por favor, tente novamente.`,
-            NotificationType.ERROR
+            1
           );
         },
         complete: () => {
@@ -116,9 +116,9 @@ export class PackageFormComponent implements OnInit {
         }
       });
     } else {
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Por favor, preencha todos os campos obrigatórios.',
-        NotificationType.ERROR
+        1
       );
       this.loadingService.hide();
     }

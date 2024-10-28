@@ -12,9 +12,9 @@ import { SearchBarComponent } from '../../../../shared/components/search-bar/sea
 import { Package } from '../../../../core/models/package.model';
 import { PackageService } from '../../services/package.service';
 import { StudentService } from '../../../student/services/student.service';
-import { NotificationService } from '../../../../shared/components/notification/notification.service';
-import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
+import { NotificationType } from '../../../../shared/models/notifications-enum';
 import { CategoryService } from '../../../category/services/category.service';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-package-selector',
@@ -100,16 +100,16 @@ export class PackageSelectorComponent implements OnInit {
         Array.from(this.selectedPackageIds())
       );
 
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Pacotes atualizados com sucesso',
-        NotificationType.SUCCESS
+        1
       );
       await this.loadAllPackages();
       await this.loadStudentPackages();
     } catch (error) {
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Erro ao atualizar pacotes',
-        NotificationType.ERROR
+        1
       );
     } finally {
       this.isSaving.set(false);

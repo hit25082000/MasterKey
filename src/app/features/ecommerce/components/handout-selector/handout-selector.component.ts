@@ -10,11 +10,11 @@ import { CommonModule } from '@angular/common';
 import { SearchBarComponent } from '../../../../shared/components/search-bar/search-bar.component';
 import { HandoutService } from '../../services/handout.service';
 import { CourseManagementService } from '../../../course/services/course-management.service';
-import { NotificationService } from '../../../../shared/components/notification/notification.service';
-import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
+import { NotificationType } from '../../../../shared/models/notifications-enum';
 import { CourseService } from '../../../course/services/course.service';
 import { Handout } from '../../../../core/models/handout.model';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-handout-selector',
@@ -98,16 +98,16 @@ export class HandoutSelectorComponent implements OnInit {
         Array.from(this.selectedHandoutIds())
       );
 
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Apostilas atualizadas com sucesso',
-        NotificationType.SUCCESS
+        1
       );
       await this.loadAllHandouts();
       await this.loadCourseHandouts();
     } catch (error) {
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Erro ao atualizar apostilas',
-        NotificationType.ERROR
+        1
       );
     } finally {
       this.isSaving.set(false);
@@ -131,14 +131,14 @@ export class HandoutSelectorComponent implements OnInit {
         const addedHandout = await this.handoutService.add(newHandout);
         this.allHandouts.update(handouts => [...handouts, addedHandout]);
         this.newHandoutForm.reset();
-        this.notificationService.showNotification(
+        this.notificationService.success(
           'Nova apostila adicionada com sucesso',
-          NotificationType.SUCCESS
+         1
         );
       } catch (error) {
-        this.notificationService.showNotification(
+        this.notificationService.success(
           'Erro ao adicionar nova apostila',
-          NotificationType.ERROR
+          1
         );
       }
     }

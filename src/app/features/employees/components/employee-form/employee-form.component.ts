@@ -4,12 +4,12 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { EmployeeManagementService } from '../../services/employee-management.service';
 import { EmployeeService } from '../../services/employee.service';
-import { NotificationService } from '../../../../shared/components/notification/notification.service';
 import { ValidatorCpf } from '../../../../shared/Validators/cpf.validator';
 import { passwordMatchValidator } from '../../../../shared/Validators/password-math.validator';
 import { Employee } from '../../../../core/models/employee.model';
-import { NotificationType } from '../../../../shared/components/notification/notifications-enum';
+import { NotificationType } from '../../../../shared/models/notifications-enum';
 import { LoadingService } from '../../../../shared/services/loading.service';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 @Component({
   selector: 'app-employee-form',
@@ -85,9 +85,9 @@ export class EmployeeFormComponent implements OnInit {
       this.employeeForm.get('confirmPassword')?.clearValidators();
       this.employeeForm.updateValueAndValidity();
     } catch (error) {
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Erro ao carregar os dados do funcionário',
-        NotificationType.ERROR
+        1
       );
       console.error(error);
     } finally {
@@ -109,25 +109,25 @@ export class EmployeeFormComponent implements OnInit {
 
       operation
         .then((success) => {
-          this.notificationService.showNotification(
+          this.notificationService.success(
             `Funcionário ${this.isEditMode ? 'atualizado' : 'cadastrado'} com sucesso`,
-            NotificationType.SUCCESS
+            1
           );
           this.router.navigate(['/admin/employee-list']);
         })
         .catch((error) => {
-          this.notificationService.showNotification(
+          this.notificationService.success(
             `Erro ao ${this.isEditMode ? 'atualizar' : 'cadastrar'} funcionário: ${error.message}`,
-            NotificationType.ERROR
+            1
           );
         })
         .finally(() => {
           this.loadingService.hide();
         });
     } else {
-      this.notificationService.showNotification(
+      this.notificationService.success(
         'Por favor, preencha todos os campos obrigatórios corretamente.',
-        NotificationType.ERROR
+        1
       );
       this.loadingService.hide();
     }

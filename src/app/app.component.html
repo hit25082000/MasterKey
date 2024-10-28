@@ -1,10 +1,5 @@
-<main class="main"></main>
-<router-outlet />
-<app-notification
-  [message]="(notificationService.notification$ | async)?.message ?? ''"
-  [type]="(notificationService.notification$ | async)?.type || 'info'"
-  [(visible)]="notificationVisible"
->
-</app-notification>
-
-<app-loading-overlay></app-loading-overlay>
+<main class="main">
+  <router-outlet />
+  <app-notifications />
+  <app-loading-overlay />
+</main>
