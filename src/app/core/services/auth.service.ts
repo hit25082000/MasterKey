@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, signal, computed, effect } from '@angular/core';
 import {
   Auth,
   authState,
@@ -19,7 +19,6 @@ import {
   UserCredential,
 } from '@angular/fire/auth';
 import { Firestore, doc, getDoc } from '@angular/fire/firestore';
-import { Subscription, BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -27,20 +26,23 @@ import { Subscription, BehaviorSubject } from 'rxjs';
 export class AuthService {
   private auth: Auth = inject(Auth);
   private firestore: Firestore = inject(Firestore);
-  user$ = user(this.auth);
-  userSubscription: Subscription;
-  userInfo = new BehaviorSubject<any>(null);
+  private userSignal = signal<User | null>(null);
+  currentUser = signal<User | undefined>(undefined);
 
   constructor() {
-    this.userSubscription = this.user$.subscribe(async (aUser: User | null) => {
-      if (aUser) {
-        const userDoc = await this.getUserFromFirestore(aUser.uid);
-        const id = aUser.uid;
-        this.userInfo.next({ ...userDoc, id });
-        this.getCurrentUser();
+    effect(() => {
+      const user = this.userSignal();
+      if (user) {
+        this.getUserFromFirestore(user.uid).then((userDoc) => {
+          this.currentUser.set(userDoc as User);
+        });
       } else {
-        this.userInfo.next(null);
+        this.currentUser.set(undefined);
       }
+    });
+
+    this.auth.onAuthStateChanged((user) => {
+      this.userSignal.set(user);
     });
   }
 
@@ -48,20 +50,6 @@ export class AuthService {
     const userDocRef = doc(this.firestore, 'users', uid);
     const userDocSnap = await getDoc(userDocRef);
     return userDocSnap.exists() ? userDocSnap.data() : null;
-  }
-
-  async getIdToken(): Promise<string | null> {
-    const currentUser = await this.auth.currentUser;
-    return currentUser ? currentUser.getIdToken() : null;
-  }
-
-  getCurrentUser() {
-    return this.userInfo.value;
-  }
-
-  getCurrentUserId(): string {
-    const currentUser = this.auth.currentUser;
-    return currentUser ? currentUser.uid : "";
   }
 
   async register(email: string, password: string) {
@@ -94,9 +82,5 @@ export class AuthService {
         const errorMessage = error.message;
         // ..
       });
-  }
-
-  ngOnDestroy() {
-    this.auth.signOut();
   }
 }

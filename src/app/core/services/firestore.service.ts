@@ -20,7 +20,7 @@ import {
   onSnapshot,
 } from '@angular/fire/firestore';
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, from, map } from 'rxjs';
 import {
   deleteObject,
   getStorage,
@@ -41,71 +41,44 @@ export class FirestoreService {
 
   constructor() {}
 
-  async getCollection<T>(path: string): Promise<T[]> {
-    const docs = await getDocs(collection(this.firestore, path));
-    const list: any[] = [];
-
-    docs.forEach((doc) => {
-      list.push({ ...doc.data(), id: doc.id }); // Converte diretamente os dados para o tipo T
-    });
-
-    return list;
+  getCollection<T>(path: string): Observable<T[]> {
+    return collectionData(collection(this.firestore, path), { idField: 'id' }) as Observable<T[]>;
   }
 
-  async getDocument<T>(path: string, id: string): Promise<any> {
-    const docItem = await getDoc(doc(this.firestore, path, id));
+  getDocument<T>(path: string, id: string): Observable<T> {
+    return from(getDoc(doc(this.firestore, path, id))).pipe(
+      map(docSnap => docSnap.exists() ? { ...docSnap.data(), id: docSnap.id } as T : [] as T)
+    );
+  }
 
-    if (docItem.data()) {
-      return { ...docItem.data(), id: docItem.id };
-    }
+  getDocumentsByAttribute<T>(path: string, attributeName: string, attributeValue: string): Observable<T[]> {
+    const q = query(collection(this.firestore, path), where(attributeName, '==', attributeValue));
+    return new Observable<T[]>(observer => {
+      const unsubscribe = onSnapshot(q, snapshot => {
+        const items = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as T));
+        observer.next(items);
+      }, error => observer.error(error));
+      return () => unsubscribe();
+    });
+  }
+
+  addToCollection<T>(path: string, data: any): Observable<string> {
+    const docRef = doc(collection(this.firestore, path));
+    return from(setDoc(docRef, data)).pipe(map(() => docRef.id));
+  }
+
+  updateDocument<T>(path: string, id: string, data: any): Observable<void> {
+    return from(setDoc(doc(this.firestore, path, id), data, { merge: true }));
+  }
+
+  deleteDocument(path: string, id: string): Observable<void> {
+    return from(deleteDoc(doc(this.firestore, path, id)));
   }
 
   async getUser<T>(id: string): Promise<any> {
     const docItem = await getDoc(doc(this.firestore, 'users', id));
 
     return { ...docItem.data(), id: docItem.id };
-  }
-
-  async getDocumentsByAttribute<T>(
-    path: string,
-    attributeName: string,
-    attributeValue: string
-  ): Promise<any[]> {
-    const q = query(
-      collection(this.firestore, path),
-      where(attributeName, '==', attributeValue)
-    );
-    var list: any = [];
-
-    const querySnapshot = await getDocs(q);
-    querySnapshot.forEach((doc) => {
-      if (doc.data()) list.push({ ...doc.data(), id: doc.id });
-    });
-
-    return list as T[];
-  }
-
-  async addToCollection<T>(path: string, data: any): Promise<any> {
-    return await addDoc(collection(this.firestore, path), { ...data });
-  }
-
-  async addToCollectionWithId<T>(
-    path: string,
-    id: string,
-    data: any
-  ): Promise<any> {
-    return await setDoc(doc(this.firestore, path, id), { ...data });
-  }
-
-  updateDocument<T>(path: string, id: string, data: any): Promise<void> {
-    var ref = doc(collection(this.firestore, path), id);
-    return setDoc(ref, { ...data }, { merge: true });
-  }
-
-  deleteDocument(path: string, id: string): Promise<void> {
-    var ref = doc(collection(this.firestore, path), id);
-
-    return deleteDoc(ref);
   }
 
   async getDocumentsByArrayItemId<T>(
