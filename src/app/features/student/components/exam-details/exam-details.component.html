@@ -17,7 +17,7 @@
             <li *ngFor="let option of question.options; let j = index"
                 [class.correct-answer]="question.correctAnswer === (j | indexToLetter)"
                 [class.student-answer]="studentExam.answers[i].selectedOption === (j | indexToLetter)">
-              {{ j | indexToLetter }}) {{ option }}
+              {{ j | indexToLetter }} {{ option }}
             </li>
           </ul>
         </div>

@@ -1,4 +1,4 @@
-import { Component, Input, input, output, signal, effect } from '@angular/core';
+import { Component, input, output, signal, effect } from '@angular/core';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -21,17 +21,18 @@ export class GenericFormComponent {
 
   constructor(private fb: FormBuilder) {
     effect(() => {
-      this.formConfig.set(this.config());
-      this.initForm();
+      const newConfig = this.config();
+      if (newConfig.length > 0) {
+        queueMicrotask(() => {
+          this.formConfig.set(newConfig);
+          this.initForm();
+        });
+      }
     });
   }
 
   trackByFn(index: number, item: FormFieldConfig): string {
     return item.name;
-  }
-
-  ngOnInit() {
-    this.initForm();
   }
 
   private initForm() {
@@ -40,14 +41,18 @@ export class GenericFormComponent {
       formGroupConfig[field.name] = [field.value || '', field.validators || []];
     }
 
-    this.form.set(this.fb.group(formGroupConfig, {
+    const newForm = this.fb.group(formGroupConfig, {
       validators: this.hasPasswordFields() ? [passwordMatchValidator] : []
-    }));
+    });
+
+    queueMicrotask(() => {
+      this.form.set(newForm);
+    });
   }
 
   private hasPasswordFields(): boolean {
-    return this.formConfig().some((field:any) => field.name === 'password') &&
-           this.formConfig().some((field:any)  => field.name === 'confirmPassword');
+    return this.formConfig().some(field => field.name === 'password') &&
+           this.formConfig().some(field => field.name === 'confirmPassword');
   }
 
   getErrorMessage(fieldName: string): string {
@@ -56,7 +61,7 @@ export class GenericFormComponent {
       if (control.errors['passwordMismatch']) {
         return 'As senhas não coincidem';
       }
-      return this.formConfig().find((f: any) => f.name === fieldName)?.errorMessage || 'Campo inválido';
+      return this.formConfig().find(f => f.name === fieldName)?.errorMessage || 'Campo inválido';
     }
     return '';
   }

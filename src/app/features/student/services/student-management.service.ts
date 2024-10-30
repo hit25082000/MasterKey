@@ -46,8 +46,12 @@ export class StudentManagementService {
   async update(newStudent: Student, icon?: File | null): Promise<string> {
     try {
       const iconBase64 = icon ? await this.fileToBase64(icon) : null;
-      const oldStudent = await this.studentService.getById(newStudent.id);
-      var logDetails = this.getDifferences(newStudent, oldStudent);
+      const oldStudent = await this.studentService.selectStudent(newStudent.id);
+
+      if(oldStudent() === undefined)
+        throw new Error('Estudante não encontrado')
+
+      var logDetails = this.getDifferences(newStudent, oldStudent()!);
 
       return new Promise((resolve, reject) => {
         this.adminService.updateUser(newStudent, iconBase64).subscribe(
@@ -67,13 +71,17 @@ export class StudentManagementService {
 
   async delete(userId: string): Promise<any> {
     try {
-      const student = await this.studentService.getById(userId);
+      const student = await this.studentService.selectStudent(userId);
 
-      this.adminService.deleteUser(userId).subscribe(() => {
-        this.logSuccessfulDelete(student);
+      if(student() === undefined)
+        throw new Error('Estudante não encontrado')
 
-        return 'Estudante deletado com sucesso!';
-      });
+        this.adminService.deleteUser(userId).subscribe(() => {
+          this.logSuccessfulDelete(student()!);
+
+          return 'Estudante deletado com sucesso!';
+        });
+
     } catch (error) {
       throw this.handleError(error);
     }

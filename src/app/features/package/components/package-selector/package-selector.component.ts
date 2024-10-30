@@ -52,6 +52,7 @@ export class PackageSelectorComponent implements OnInit {
   async ngOnInit() {
     await this.loadAllPackages();
     if (this.studentId()) {
+      await this.studentService.selectStudent(this.studentId())
       await this.loadStudentPackages();
     }
     if (this.categoryId()) {
@@ -60,15 +61,14 @@ export class PackageSelectorComponent implements OnInit {
   }
 
   private async loadAllPackages() {
-    this.allPackages.set(await this.packageService.getAll());
+    this.allPackages = this.packageService.packages;
   }
 
   private async loadStudentPackages() {
-    const { packages } = await this.studentService.getPackages(
-      this.studentId()
-    );
-    if (packages != undefined) {
-      this.selectedPackageIds.set(new Set(Array.from(packages) || []));
+     const packages = this.studentService.selectedStudentPackages
+
+    if (packages() != undefined) {
+      this.selectedPackageIds.set(new Set(Array.from(packages()) || []));
     }
   }
 

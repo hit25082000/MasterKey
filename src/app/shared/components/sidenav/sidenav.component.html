@@ -24,10 +24,7 @@
           <a [routerLink]="['/admin/job-vacancy']">Vagas de emprego</a>
         </li>
         <li>
-          <button (click)="modalWhatsAppMessage.toggle()">
-            Enviar mensagem WhatsApp
-          </button>
-          <app-modal #modalWhatsAppMessage>
+          <app-modal #modalWhatsAppMessage buttonName="Enviar mensagem WhatsApp">
             <app-whats-app-message></app-whats-app-message>
           </app-modal>
         </li>
@@ -48,7 +45,7 @@
       </button>
       <ul *ngIf="isDropdownOpen('package')" class="dropdown">
         <li>
-          <a [routerLink]="['/admin/package-register']">Adicionar Pacote</a>
+          <a [routerLink]="['/admin/package-form']">Adicionar Pacote</a>
         </li>
         <li>
           <a [routerLink]="['/admin/package-list']">Listar Pacotes</a>

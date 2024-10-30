@@ -117,7 +117,7 @@ export const routes: Routes = [
         component: PackageListComponent,
       },
       {
-        path: 'package-register',
+        path: 'package-form',
         component: PackageFormComponent,
       },
       {

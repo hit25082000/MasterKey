@@ -21,15 +21,5 @@ export class AppComponent {
   notificationService = inject(NotificationService)
 
   constructor() {
-    this.notificationService.success('Operação realizada com sucesso!');
-    this.notificationService.error('Ocorreu um erro!');
-    this.notificationService.info('Informação importante');
-
-    // Método personalizado
-    this.notificationService.show(
-      'Mensagem personalizada',
-      NotificationType.SUCCESS,
-      8000 // duração em ms
-    );
   }
 }

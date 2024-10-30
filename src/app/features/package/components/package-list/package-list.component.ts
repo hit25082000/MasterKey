@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { Package } from '../../../../core/models/package.model';
 import { PackageService } from '../../services/package.service';
+import { PackageManagementService } from '../../services/package-management.service';
 
 @Component({
   selector: 'app-package-list',
@@ -13,14 +14,16 @@ import { PackageService } from '../../services/package.service';
   styleUrl: './package-list.component.scss'
 })
 export class PackageListComponent implements OnInit {
-  packages : Package[] = []
+  packageService =  inject(PackageService)
+  packageManagementService =  inject(PackageManagementService)
+  packages = signal<Package[]>([])
 
-  constructor(private packageService : PackageService,
+  constructor(
     private router: Router){}
 
   async ngOnInit(): Promise<void> {
     try {
-      this.packages = await this.packageService.getAll();
+      this.packages = this.packageService.packages;
     } catch (err) {
       //this.error = 'Erro ao carregar os alunos';
       console.error(err);
@@ -30,10 +33,10 @@ export class PackageListComponent implements OnInit {
   }
 
   deleteStudent(id : string){
-    this.packageService.delete(id)
+    //this.packageManagementService.delete(id)
   }
 
   editStudent(id : string){
-    this.router.navigate(['/admin/package-detail', id]);
+    this.router.navigate(['/admin/package-form', id]);
   }
 }

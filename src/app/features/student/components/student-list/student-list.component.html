@@ -12,7 +12,7 @@
     </tr>
   </thead>
   <tbody>
-    @for (student of displayedStudents; track student.cpf) {
+    @for (student of displayedStudents(); track student.cpf) {
     <tr>
       <td><img width="25" [src]="student.iconUrl" alt="" /></td>
       <td>{{ student.name }}</td>
@@ -29,8 +29,8 @@
 </table>
 
 <app-pagination
-  [currentPage]="currentPage"
-  [totalItems]="students.length"
-  [pageSize]="pageSize"
+  [currentPage]="currentPage()"
+  [totalItems]="students().length"
+  [pageSize]="pageSize()"
   (pageChange)="onPageChange($event)"
 ></app-pagination>

@@ -1,61 +1,46 @@
-<form [formGroup]="packageForm" (ngSubmit)="onSubmit()">
-  <div class="form-group">
-    <label for="name">Nome</label>
-    <input id="name" formControlName="name" class="form-control" />
-    <div *ngIf="packageForm.get('name')?.invalid && packageForm.get('name')?.touched" class="text-danger">
-      Nome é obrigatório.
-    </div>
-  </div>
-  <div class="form-group">
-    <label for="price">Preço</label>
-    <input id="price" formControlName="price" class="form-control" />
-    <div *ngIf="packageForm.get('price')?.invalid && packageForm.get('price')?.touched" class="text-danger">
-      Preço é obrigatório.
-    </div>
-  </div>
-  <div class="form-group">
-    <label for="description">Descrição</label>
-    <input id="description" formControlName="description" class="form-control" />
-    <div *ngIf="packageForm.get('description')?.invalid && packageForm.get('description')?.touched" class="text-danger">
-      Descrição é obrigatória.
-    </div>
-  </div>
-  <div class="form-group">
-    <label for="workHours">Carga Horária</label>
-    <input id="workHours" formControlName="workHours" class="form-control" />
-    <div *ngIf="packageForm.get('workHours')?.invalid && packageForm.get('workHours')?.touched" class="text-danger">
-      Carga Horária é obrigatória.
-    </div>
-  </div>
 
-  <button type="button" (click)="courseModal.toggle()">Cursos</button>
-
-  <app-modal #courseModal>
-    <h4>Selecionar Cursos</h4>
-    <app-course-selector
-      [packageId]="packageId!"
-      #courseSelector
-      (coursesChanged)="onCoursesChanged()"
-    ></app-course-selector>
-  </app-modal>
-
-  <div class="form-group">
-    <h4>Cursos Selecionados</h4>
-    <div *ngFor="let course of courseSelector.selectedCourses()">
-      <p>
-        <strong>{{ course.name }}</strong> - {{ course.description }}
-      </p>
-      <p>
-        <button type="button" (click)="courseSelector.removeCourse(course.id); onCoursesChanged()">Remover</button>
-      </p>
-    </div>
-  </div>
-
-  <button
-    type="submit"
-    class="btn btn-primary"
-    [disabled]="packageForm.invalid || !isFormDirty()"
+  <app-generic-form
+    [config]="formConfig()"
+    [submitButtonText]="submitButtonText()"
+    (formSubmit)="onSubmit($event)"
   >
-    {{ isEditMode() ? 'Atualizar' : 'Criar' }} Pacote
-  </button>
-</form>
+    <!-- Conteúdo adicional do formulário -->
+    <div class="course-section">
+      <button type="button" class="btn btn-secondary" (click)="courseModal.toggle()">
+        Gerenciar Cursos
+      </button>
+
+      <app-modal #courseModal>
+        <div class="modal-header">
+          <h4>Selecionar Cursos</h4>
+        </div>
+        <div class="modal-body">
+          <app-course-selector
+            [packageId]="packageId()!"
+            #courseSelector
+            (coursesChanged)="onCoursesChanged()"
+          ></app-course-selector>
+        </div>
+      </app-modal>
+
+      <!-- Lista de cursos selecionados -->
+      <div class="selected-courses mt-4" *ngIf="courseSelector?.selectedCourses()?.length">
+        <h5>Cursos Selecionados</h5>
+        <div class="course-list">
+          <div class="course-item" *ngFor="let course of courseSelector.selectedCourses()">
+            <div class="course-info">
+              <strong>{{ course.name }}</strong>
+              <p class="course-description">{{ course.description }}</p>
+            </div>
+            <button
+              type="button"
+              class="btn btn-danger btn-sm"
+              (click)="courseSelector.removeCourse(course.id); onCoursesChanged()"
+            >
+              Remover
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </app-generic-form>

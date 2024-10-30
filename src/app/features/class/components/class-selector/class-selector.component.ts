@@ -126,7 +126,7 @@ export class ClassSelectorComponent implements OnInit {
   }
 
   private async loadAllStudents() {
-    this.allStudents.set(await this.studentService.getAll());
+    this.allStudents = this.studentService.students;
   }
 
   private async loadSelectedStudents() {

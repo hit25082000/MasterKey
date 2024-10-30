@@ -53,7 +53,7 @@ export class StudentsSelectorComponent implements OnInit {
   }
 
   async loadAllStudents() {
-    this.allStudents.set(await this.studentService.getAll());
+    this.allStudents = this.studentService.students
   }
 
   private async loadSelectedStudents() {

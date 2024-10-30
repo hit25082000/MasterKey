@@ -1,9 +1,9 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { Observable, map, switchMap } from 'rxjs';
-import { SystemLogService } from '../../../../core/services/system-log.service';
+import { LoadingService } from './../../../../shared/services/loading.service';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { SystemLogService } from '../../../../core/services/system-log.service';
 import { StudentService } from '../../services/student.service';
-import { Student } from '../../../../core/models/student.model';
+import { NotificationService } from '../../../../shared/services/notification.service';
 
 interface StudentAttendance {
   student: any; // Alterado de studentName para student
@@ -18,75 +18,76 @@ interface StudentAttendance {
   styleUrls: ['./student-login-list.component.scss'],
 })
 export class StudentLoginListComponent implements OnInit {
-  studentAttendance$!: Observable<StudentAttendance[]>;
-  currentMonth: Date = new Date();
-  daysInMonth: Date[] = [];
-  studentService = inject(StudentService);
+  private loadingService = inject(LoadingService);
+  private notificationService = inject(NotificationService);
+  private studentService = inject(StudentService);
+  private systemLogService = inject(SystemLogService);
 
-  constructor(private systemLogService: SystemLogService) {}
-
-  ngOnInit(): void {
-    this.updateCalendar();
-
-    this.loadAttendanceData();
-  }
-
-  updateCalendar(): void {
-    const year = this.currentMonth.getFullYear();
-    const month = this.currentMonth.getMonth();
+  // Signals
+  currentMonth = signal<Date>(new Date());
+  daysInMonth = computed(() => {
+    const date = this.currentMonth();
+    const year = date.getFullYear();
+    const month = date.getMonth();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    this.daysInMonth = Array.from(
+    return Array.from(
       { length: daysInMonth },
       (_, i) => new Date(year, month, i + 1)
     );
+  });
+
+  studentAttendance = signal<StudentAttendance[]>([]);
+
+  ngOnInit(): void {
+    this.loadAttendanceData();
   }
 
-  loadAttendanceData(): void {
-    this.studentAttendance$ = this.systemLogService.getStudentLoginLogs().pipe(
-      // Usamos switchMap para lidar com as operações assíncronas
-      switchMap(async (logs) => {
-        const attendanceMap: {
-          [studentId: string]: {
-            student: any;
-            dates: { [date: string]: boolean };
+  async loadAttendanceData(): Promise<void> {
+    try {
+      this.loadingService.show();
+
+      const logs = await this.systemLogService.getStudentLoginLogs().toPromise();
+      const attendanceMap: {
+        [studentId: string]: {
+          student: any;
+          dates: { [date: string]: boolean };
+        };
+      } = {};
+
+      for (const log of logs!) {
+        const studentId = log.details.studentId;
+        const date = new Date(log.timestamp).toISOString().split('T')[0];
+
+        if (!attendanceMap[studentId]) {
+          attendanceMap[studentId] = {
+            student: await this.studentService.selectStudent(studentId),
+            dates: {},
           };
-        } = {};
-
-        // Usamos um loop for...of para poder usar await
-        for (const log of logs) {
-          const studentId = log.details.studentId;
-          const date = new Date(log.timestamp).toISOString().split('T')[0];
-          if (!attendanceMap[studentId]) {
-            attendanceMap[studentId] = {
-              student: await this.studentService.getById(studentId),
-              dates: {},
-            };
-          }
-          attendanceMap[studentId].dates[date] = true;
         }
+        attendanceMap[studentId].dates[date] = true;
+      }
 
-        return Object.values(attendanceMap);
-      }),
-      // Convertemos o resultado de volta para um Observable
-      map((attendanceArray) => attendanceArray)
-    );
+      this.studentAttendance.set(Object.values(attendanceMap));
+      this.notificationService.success('Dados de presença carregados com sucesso');
+    } catch (error) {
+      this.notificationService.error('Erro ao carregar dados de presença');
+      console.error(error);
+    } finally {
+      this.loadingService.hide();
+    }
   }
 
   previousMonth(): void {
-    this.currentMonth = new Date(
-      this.currentMonth.getFullYear(),
-      this.currentMonth.getMonth() - 1,
-      1
+    this.currentMonth.update(date =>
+      new Date(date.getFullYear(), date.getMonth() - 1, 1)
     );
-    this.updateCalendar();
+    this.loadAttendanceData();
   }
 
   nextMonth(): void {
-    this.currentMonth = new Date(
-      this.currentMonth.getFullYear(),
-      this.currentMonth.getMonth() + 1,
-      1
+    this.currentMonth.update(date =>
+      new Date(date.getFullYear(), date.getMonth() + 1, 1)
     );
-    this.updateCalendar();
+    this.loadAttendanceData();
   }
 }

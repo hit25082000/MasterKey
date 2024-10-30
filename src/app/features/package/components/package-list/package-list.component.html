@@ -8,7 +8,7 @@
     </tr>
   </thead>
   <tbody>
-    @for (package of packages; track package.name) {
+    @for (package of packages(); track package.name) {
       <tr>
         <td> {{ package.name }}  </td>
         <td>

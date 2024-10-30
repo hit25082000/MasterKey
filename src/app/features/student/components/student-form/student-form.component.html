@@ -1,7 +1,3 @@
-<ng-container *ngIf="loadingService.isLoading()">
-  <div class="loading-spinner">Carregando...</div>
-</ng-container>
-
 <app-generic-form
   *ngIf="!(loadingService.isLoading())"
   [config]="formConfig()"
@@ -9,14 +5,16 @@
   (formSubmit)="onSubmit($event)"
 ></app-generic-form>
 
-<ng-container *ngIf="isEditMode()">
+<ng-container *ngIf="isEditMode() && !loadingService.isLoading()">
   <button (click)="classModal.toggle()">Turmas</button>
+
   <app-modal #classModal>
     <h4>Turmas do Estudante</h4>
     <app-class-selector [studentId]="studentId()!" #classSelector></app-class-selector>
   </app-modal>
 
   <button (click)="courseModal.toggle()">Cursos e Pacotes</button>
+
   <app-modal #courseModal>
     <h4>Selecionar Cursos e Pacotes</h4>
     <app-course-selector [studentId]="studentId()!" #courseSelector></app-course-selector>
@@ -35,6 +33,7 @@
         </p>
       </div>
     </div>
+
     <div class="form-group">
       <h4>Pacotes Cadastrados</h4>
       <div *ngFor="let package of packageSelector.selectedPackages()">

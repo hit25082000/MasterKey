@@ -77,14 +77,14 @@ export class CourseSelectorComponent implements OnInit {
   }
 
   private async loadStudentCourses() {
-    const { courses } = await this.studentService.getCourses(this.studentId());
-    if (courses != undefined) {
-      this.selectedCourseIds.set(new Set(Array.from(courses) || []));
+    const courses = await this.studentService.selectedStudentCourses;
+    if (courses() != undefined) {
+      this.selectedCourseIds.set(new Set(Array.from(courses()) || []));
     }
   }
 
   private async loadPackageCourses() {
-    const courses = await this.packageService.getCourses(this.packageId());
+    const courses = await this.packageService.selectedPackage()?.courses;
     if (courses != undefined) {
       this.selectedCourseIds.set(new Set(Array.from(courses) || []));
     }

@@ -36,14 +36,17 @@
       </div>
     </div>
   }
+  <!-- Mensagem de erro geral do formulário para senhas não coincidentes -->
+  <div *ngIf="form().errors?.['passwordMismatch']" class="error-message">
+    As senhas não coincidem
+  </div>
   </ng-container>
+
+  <!-- Slot para conteúdo adicional -->
+  <ng-content></ng-content>
 
   <button type="submit" class="btn btn-primary" [disabled]="form().invalid">
     {{ submitButtonText() }}
   </button>
 </form>
 
-<!-- Mensagem de erro geral do formulário para senhas não coincidentes -->
-<div *ngIf="form().errors?.['passwordMismatch']" class="error-message">
-  As senhas não coincidem
-</div>

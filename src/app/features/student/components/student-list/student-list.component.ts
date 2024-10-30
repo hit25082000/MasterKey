@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Student } from '../../../../core/models/student.model';
 import { StudentManagementService } from '../../services/student-management.service';
@@ -7,6 +7,7 @@ import { StudentService } from '../../services/student.service';
 import { NotificationType } from '../../../../shared/models/notifications-enum';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { LoadingService } from '../../../../shared/services/loading.service';
 
 @Component({
   selector: 'app-student-list',
@@ -16,61 +17,54 @@ import { NotificationService } from '../../../../shared/services/notification.se
   styleUrl: './student-list.component.scss',
 })
 export class StudentListComponent implements OnInit {
-  students: Student[] = [];
-  displayedStudents: Student[] = [];
-  error: string = '';
-  loading: boolean = true;
-  currentPage: number = 1;
-  pageSize: number = 10;
+  loadingService = inject(LoadingService);
+  studentService = inject(StudentService);
+  studentManagementService = inject(StudentManagementService);
+  router = inject(Router);
+  notificationService = inject(NotificationService);
 
-  constructor(
-    private studentService: StudentService,
-    private studentManagementService: StudentManagementService,
-    private router: Router,
-    private notificationService: NotificationService
-  ) {}
+  students = signal<Student[]>([]);
+  currentPage = signal<number>(1);
+  pageSize = signal<number>(10);
+  error = signal<string>('');
+
+  displayedStudents = computed(() => {
+    const startIndex = (this.currentPage() - 1) * this.pageSize();
+    const endIndex = startIndex + this.pageSize();
+    return this.students().slice(startIndex, endIndex);
+  });
 
   async ngOnInit(): Promise<void> {
+    this.loadingService.show();
     try {
-      this.students = await this.studentService.getAll();
-      this.updateDisplayedStudents();
+      this.students = this.studentService.students
     } catch (error: any) {
+      this.error.set(error);
       this.notificationService.success(
         'Erro ao consultar estudantes: ' + error,
         1
       );
     } finally {
-      this.loading = false;
+      this.loadingService.hide();
     }
   }
 
-  updateDisplayedStudents(): void {
-    const startIndex = (this.currentPage - 1) * this.pageSize;
-    const endIndex = startIndex + this.pageSize;
-    this.displayedStudents = this.students.slice(startIndex, endIndex);
-  }
-
   onPageChange(page: number): void {
-    this.currentPage = Number(page);
-    this.updateDisplayedStudents();
+    this.currentPage.set(Number(page));
   }
 
   deleteStudent(id: string) {
     this.studentManagementService
       .delete(id)
       .then((success) => {
-        this.students = this.students.filter((student) => student.id !== id);
-        this.notificationService.success(
-          success,
-          1
+        this.students.update(students =>
+          students.filter(student => student.id !== id)
         );
+        this.notificationService.success(success, 1);
       })
       .catch((error) => {
         console.log(error);
-        this.notificationService.success(
-          error,
-          1
-        );
+        this.notificationService.success(error, 1);
       });
   }
 

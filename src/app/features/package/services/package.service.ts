@@ -1,32 +1,46 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable, signal, WritableSignal } from '@angular/core';
 import { FirestoreService } from '../../../core/services/firestore.service';
-import { Course } from '../../../core/models/course.model';
 import { Package } from '../../../core/models/package.model';
+import { Firestore, collection, collectionData, CollectionReference } from '@angular/fire/firestore';
+
+const PACKAGES_PATH = 'packages';
 
 @Injectable({
   providedIn: 'root',
 })
 export class PackageService {
-  constructor(private firestore: FirestoreService) {}
+  firestore = inject(Firestore);
+  firestoreS = inject(FirestoreService);
 
-  getAll(): Promise<Package[]> {
-    return this.firestore.getCollection<Package>('packages');
+  packagesCollection = collection(
+    this.firestore,
+    PACKAGES_PATH
+  ) as CollectionReference<Package>;
+
+  packages = signal<Package[]>([]);
+  selectedPackage = signal<Package | undefined>(undefined);
+  isLoading = signal<boolean>(true);
+
+  constructor() {
+    collectionData(this.packagesCollection, { idField: 'id' }).subscribe(
+      (data) => {
+        this.packages.set(data);
+        this.isLoading.set(false);
+      },
+      (error) => {
+        console.error("Erro ao buscar pacotes:", error);
+        this.isLoading.set(false);
+      }
+    );
   }
 
-  async getById(id: string): Promise<Package> {
-    return await this.firestore.getDocument<Package>('packages', id);
-  }
+  async selectPackage(id: string): Promise<WritableSignal<Package | undefined>> {
+    while (this.isLoading()) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
 
-  async delete(id: string) {
-    this.firestore.deleteDocument('packages', id);
-  }
-
-  async getCourses(id: string): Promise<any> {
-    const packageCourses = (await this.firestore.getDocument(
-      'packages',
-      id
-    )) as any;
-
-    return packageCourses.courses;
+    const pkg = this.packages().find(p => p.id === id);
+    this.selectedPackage.set(pkg);
+    return this.selectedPackage;
   }
 }

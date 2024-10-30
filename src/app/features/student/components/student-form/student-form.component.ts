@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Validators } from '@angular/forms';
 import { StudentManagementService } from '../../services/student-management.service';
 import { CommonModule } from '@angular/common';
@@ -16,6 +16,7 @@ import { LoadingService } from '../../../../shared/services/loading.service';
 import { GenericFormComponent } from '../../../../shared/components/generic-form/generic-form.component';
 import { FormFieldConfig } from '../../../../shared/models/form-field-config';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { LoadingOverlayComponent } from "../../../../shared/components/loading-overlay/loading-overlay.component";
 
 @Component({
   selector: 'app-student-register',
@@ -26,28 +27,28 @@ import { NotificationService } from '../../../../shared/services/notification.se
     ClassSelectorComponent,
     CourseSelectorComponent,
     PackageSelectorComponent,
-    GenericFormComponent
-  ],
+    GenericFormComponent,
+    LoadingOverlayComponent
+],
   templateUrl: './student-form.component.html',
   styleUrls: ['./student-form.component.scss'],
 })
 export class StudentFormComponent implements OnInit {
+  notificationService = inject(NotificationService)
+  studentManagement = inject(StudentManagementService)
+  studentService = inject(StudentService)
+  loadingService = inject(LoadingService)
+  router = inject(Router)
+  route = inject(ActivatedRoute)
+
+  isLoading = this.loadingService.isLoading;
   studentId = signal<string | null>(null);
   isEditMode = computed(() => !!this.studentId());
   formConfig = signal<FormFieldConfig[]>([]);
   selectedFile = signal<File | null>(null);
-
-  isLoading = this.loadingService.isLoading;
-
   submitButtonText = computed(() => this.isEditMode() ? 'Atualizar' : 'Cadastrar');
 
   constructor(
-    private notificationService: NotificationService,
-    private route: ActivatedRoute,
-    private studentManagement: StudentManagementService,
-    private router: Router,
-    private studentService: StudentService,
-    public loadingService: LoadingService
   ) {
     this.initFormConfig();
   }
@@ -243,17 +244,28 @@ export class StudentFormComponent implements OnInit {
     this.loadingService.show();
     this.studentId.set(this.route.snapshot.paramMap.get('id'));
 
-    if (this.isEditMode()) {
+    if (this.isEditMode() && this.studentId() != null) {
       try {
-        const student = await this.studentService.getById(this.studentId()!);
+        await this.studentService.selectStudent(this.studentId()!);
+        const student = this.studentService.selectedStudent
+
+        if(student() == undefined){
+          this.notificationService.error(
+            'Estudante não encontrado',
+            5000
+          );
+          this.loadingService.hide();
+
+          return;
+        }
         this.formConfig.set(this.formConfig().map(field => ({
           ...field,
-          value: student[field.name as keyof Student]
+          value: student()![field.name as keyof Student]
         })));
       } catch (error) {
         this.notificationService.success(
           'Erro ao consultar dados do estudante: ' + error,
-          1
+          5000
         );
       }
     }

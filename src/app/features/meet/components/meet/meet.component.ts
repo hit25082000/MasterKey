@@ -1,5 +1,5 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import {
   FormBuilder,
@@ -34,12 +34,12 @@ export class MeetingComponent implements OnInit {
   showMeetIcon: boolean = false;
   private accessToken: string | null = null;
   isAuthenticated: boolean = false;
-
+  router = inject(Router)
   constructor(
     private fb: FormBuilder,
     private firestoreService: FirestoreService,
     private chatService: ChatService,
-    private router: Router,
+
     private httpClient: HttpClient,
     private route: ActivatedRoute,
     private notificationService: NotificationService,
