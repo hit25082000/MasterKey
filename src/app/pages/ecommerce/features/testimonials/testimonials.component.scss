@@ -1,0 +1,97 @@
+$color-primary: #384A87;
+$color-secondary: #ee3c48;
+
+.testimonials {
+  min-height: calc(100vh - 80px);
+
+  padding: 4rem 0;
+  background: linear-gradient(90deg, rgba(238, 60, 72, 0.2) 0%, rgba(56, 74, 135, 0.2) 100%), #000000;
+
+  .testimonials-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    text-align: center;
+
+    h2 {
+      font-size: 2.5rem;
+      color: #fff;
+      margin-bottom: 1rem;
+    }
+
+    .subtitle {
+      font-size: 1.2rem;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 3rem;
+    }
+
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      padding: 1rem;
+
+      .testimonial-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 1rem;
+        padding: 2rem;
+        text-align: left;
+
+        .rating {
+          display: flex;
+          gap: 0.5rem;
+          margin-bottom: 1rem;
+
+          svg {
+            width: 20px;
+            height: 20px;
+          }
+        }
+
+        .testimonial-text {
+          color: #fff;
+          font-size: 1.1rem;
+          line-height: 1.6;
+          margin-bottom: 2rem;
+          min-height: 80px;
+        }
+
+        .testimonial-author {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+
+          .author-avatar {
+            width: 48px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            svg {
+              width: 24px;
+              height: 24px;
+            }
+          }
+
+          .author-info {
+            h4 {
+              color: #fff;
+              font-size: 1.1rem;
+              margin: 0;
+            }
+
+            p {
+              color: rgba(255, 255, 255, 0.8);
+              font-size: 0.9rem;
+              margin: 0;
+            }
+          }
+        }
+      }
+    }
+  }
+}

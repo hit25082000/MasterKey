@@ -50,7 +50,13 @@ export class StudentFormComponent implements OnInit {
 
   constructor(
   ) {
-    this.initFormConfig();
+    this.initFormConfig();this.notificationService.success(
+      'Erro ao consultar dados do estudante: ',
+      5000
+    );this.notificationService.error(
+      'Erro ao consultar dados do estudante: ' ,
+      5000
+    );
   }
 
   initFormConfig() {
@@ -263,7 +269,7 @@ export class StudentFormComponent implements OnInit {
           value: student()![field.name as keyof Student]
         })));
       } catch (error) {
-        this.notificationService.success(
+        this.notificationService.error(
           'Erro ao consultar dados do estudante: ' + error,
           5000
         );

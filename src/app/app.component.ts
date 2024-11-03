@@ -19,7 +19,7 @@ import { NotificationsComponent } from './shared/components/notification/notific
 })
 export class AppComponent {
   notificationService = inject(NotificationService)
-
+  title = 'master-key'
   constructor() {
   }
 }

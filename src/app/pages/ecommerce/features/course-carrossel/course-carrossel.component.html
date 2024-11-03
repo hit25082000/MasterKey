@@ -1,0 +1,52 @@
+<section class="courses">
+  <div class="courses-container">
+    <h2>Conheça alguns dos nossos <span class="highlight">cursos</span></h2>
+
+    <div class="carousel">
+      <button class="carousel-button prev" (click)="prev()">
+        <svg viewBox="0 0 24 24">
+          <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+        </svg>
+      </button>
+
+      <div class="carousel-content" #carouselContent>
+        <!-- Repita este bloco para cada curso -->
+        <div class="course-card">
+          <img src="assets/cursoExemplo1.jpg" alt="Nome do Curso">
+          <h3>Atualização em Radiologia</h3>
+          <div class="payment-info">
+            <div class="installments">Até 7x no cartão ou boleto</div>
+            <div class="price">R$142,86</div>
+            <div class="cash-price">Ou R$1.000,00 à vista</div>
+          </div>
+        </div>
+        <div class="course-card">
+          <img src="assets/cursoExemplo2.jpg" alt="Nome do Curso">
+          <h3>Atualização em Radiologia</h3>
+          <div class="payment-info">
+            <div class="installments">Até 7x no cartão ou boleto</div>
+            <div class="price">R$142,86</div>
+            <div class="cash-price">Ou R$1.000,00 à vista</div>
+          </div>
+        </div>
+        <div class="course-card">
+          <img src="assets/cursoExemplo3.jpg" alt="Nome do Curso">
+          <h3>Atualização em Radiologia</h3>
+          <div class="payment-info">
+            <div class="installments">Até 7x no cartão ou boleto</div>
+            <div class="price">R$142,86</div>
+            <div class="cash-price">Ou R$1.000,00 à vista</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="carousel-button next" (click)="next()">
+        <svg viewBox="0 0 24 24">
+          <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
+        </svg>
+      </button>
+    </div>
+
+    <button class="view-all-button">Ver Todos os Cursos</button>
+  </div>
+</section>

@@ -1,0 +1,139 @@
+$color-primary: #384A87;
+$color-secondary: #ee3c48;
+
+.courses {
+  min-height: calc(100vh - 80px);
+
+  padding: 2rem 0;
+  background:
+  linear-gradient(90deg, rgba(238, 60, 72, 0.2) 0%, rgba(56, 74, 135, 0.2) 100%), #000000;
+
+  .courses-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    text-align: center;
+
+    h2 {
+      font-size: 2.5rem;
+      margin-bottom: 4rem;
+      color: #fff;
+      transform: translateY(-2rem);
+
+      .highlight {
+        color: $color-primary;
+      }
+    }
+
+    .carousel {
+      position: relative;
+      height: 500px;
+      perspective: 1000px;
+      transform-style: preserve-3d;
+
+      .carousel-content {
+        position: relative;
+        height: 100%;
+        transform-style: preserve-3d;
+
+        .course-card {
+          position: absolute;
+          left: 35%;
+          transform: translate(-50%, -50%);
+          width: 300px;
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(10px);
+          border-radius: 1rem;
+          padding: 1.5rem;
+          transition: all 0.5s ease;
+          cursor: pointer;
+
+          &:hover {
+            transform: translate(-50%, -50%) scale(1.05);
+          }
+
+          img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+          }
+
+          h3 {
+            margin: 1rem 0;
+            color: white;
+            font-size: 1.2rem;
+          }
+
+          .payment-info {
+            color: white;
+            text-align: center;
+
+            .installments {
+              font-size: 0.9rem;
+              opacity: 0.8;
+            }
+
+            .price {
+              font-size: 1.5rem;
+              font-weight: bold;
+              margin: 0.5rem 0;
+            }
+
+            .cash-price {
+              font-size: 0.9rem;
+              opacity: 0.8;
+            }
+          }
+        }
+      }
+
+      .carousel-button {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 10;
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.3);
+          transform: translateY(-50%) scale(1.1);
+        }
+
+        svg {
+          width: 24px;
+          height: 24px;
+          fill: white;
+        }
+
+        &.prev { left: 20px; }
+        &.next { right: 20px; }
+      }
+    }
+
+    .view-all-button {
+      margin-top: 2rem;
+      padding: 0.75rem 2rem;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 2rem;
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+    }
+  }
+}

@@ -64,11 +64,10 @@
       <i class="fas fa-video"></i> Abrir Google Meet
     </button>
   </ng-container>
-
-  <!-- Ou, se preferir redirecionar para uma nova página -->
-  <!-- <button *ngIf="showMeetIcon" (click)="router.navigate(['/meet-details', meetLink])">
+  
+  <button *ngIf="showMeetIcon" (click)="router.navigate(['/meet-details', meetLink])">
     Ver Detalhes da Reunião
-  </button> -->
+  </button> 
 </form>
 
 <p *ngIf="isAuthenticated">Autenticado com sucesso!</p>

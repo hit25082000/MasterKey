@@ -1,0 +1,97 @@
+$color-primary: #384A87;
+$color-secondary: #ee3c48;
+
+.faq {
+  min-height: calc(100vh - 80px);
+
+  padding: 4rem 0;
+  background:
+  linear-gradient(90deg, rgba(238, 60, 72, 0.2) 0%, rgba(56, 74, 135, 0.2) 100%), #000000;
+
+  .faq-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    text-align: center;
+
+    h2 {
+      font-size: 2.5rem;
+      color: #fff;
+      margin-bottom: 1rem;
+    }
+
+    .subtitle {
+      font-size: 1.2rem;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 3rem;
+    }
+
+    .faq-list {
+      max-width: 800px;
+      margin: 0 auto;
+
+      .faq-item {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.3s ease;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.15);
+        }
+
+        .faq-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 1.5rem;
+
+          h3 {
+            color: #fff;
+            font-size: 1.1rem;
+            margin: 0;
+            text-align: left;
+          }
+
+          .toggle-icon {
+            width: 24px;
+            height: 24px;
+            fill: #fff;
+            transition: transform 0.3s ease;
+          }
+        }
+
+        .faq-content {
+          max-height: 0;
+          overflow: hidden;
+          transition: max-height 0.3s ease-out;
+          padding: 0 1.5rem;
+
+          p {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0 1.5rem 1.5rem;
+            margin: 0;
+            text-align: left;
+            line-height: 1.6;
+          }
+        }
+      }
+    }
+  }
+}
+
+.faq-item.active {
+  background: rgba(255, 255, 255, 0.2);
+
+  .toggle-icon {
+    transform: rotate(180deg);
+  }
+
+  .faq-content {
+    max-height: 500px !important;
+    transition: max-height 0.3s ease-in;
+  }
+}

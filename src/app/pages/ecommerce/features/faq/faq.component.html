@@ -1,0 +1,56 @@
+<section class="faq">
+  <div class="faq-container">
+    <h2>Dúvidas Frequentes</h2>
+    <p class="subtitle">Veja quais são as dúvidas mais recorrentes.</p>
+
+    <div class="faq-list">
+      <div class="faq-item"
+           role="button"
+           [attr.aria-expanded]="activeFaq() === 0"
+           (click)="toggleFaq(0)"
+           [class.active]="activeFaq() === 0">
+        <div class="faq-header">
+          <h3>Como funciona o suporte dos cursos?</h3>
+          <svg class="toggle-icon" viewBox="0 0 24 24">
+            <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+          </svg>
+        </div>
+        <div class="faq-content">
+          <p>Nosso suporte online está disponível das 08:00 às 18:00, pronto para esclarecer dúvidas sobre as aulas e os conteúdos abordados ao longo de todo o curso.</p>
+        </div>
+      </div>
+
+      <div class="faq-item"
+           role="button"
+           [attr.aria-expanded]="activeFaq() === 1"
+           (click)="toggleFaq(1)"
+           [class.active]="activeFaq() === 1">
+        <div class="faq-header">
+          <h3>Como funcionam as aulas?</h3>
+          <svg class="toggle-icon" viewBox="0 0 24 24">
+            <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+          </svg>
+        </div>
+        <div class="faq-content">
+          <p>Todos os nossos cursos incluem vídeos, apostilas, material de apoio, exercícios ao longo das aulas e uma breve prova ao final de cada aula.</p>
+        </div>
+      </div>
+
+      <div class="faq-item"
+           role="button"
+           [attr.aria-expanded]="activeFaq() === 2"
+           (click)="toggleFaq(2)"
+           [class.active]="activeFaq() === 2">
+        <div class="faq-header">
+          <h3>O certificado é válido mesmo?</h3>
+          <svg class="toggle-icon" viewBox="0 0 24 24">
+            <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+          </svg>
+        </div>
+        <div class="faq-content">
+          <p>Nossa certificação é válida em todo Brasil</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
