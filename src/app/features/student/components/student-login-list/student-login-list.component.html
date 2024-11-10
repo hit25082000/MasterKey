@@ -1,9 +1,15 @@
 <h2>Calendário de Presença dos Estudantes</h2>
 
+<app-search-bar #searchBar [dataList]="studentAttendance()"></app-search-bar>
+
 <div class="calendar-controls">
-  <button (click)="previousMonth()">&lt; Mês anterior</button>
+  <button class="control-btn" (click)="previousMonth()">
+    <i class="fas fa-chevron-left"></i> Mês anterior
+  </button>
   <h3>{{ currentMonth() | date : "MMMM yyyy" }}</h3>
-  <button (click)="nextMonth()">Próximo mês &gt;</button>
+  <button class="control-btn" (click)="nextMonth()">
+    Próximo mês <i class="fas fa-chevron-right"></i>
+  </button>
 </div>
 
 <table *ngIf="studentAttendance().length > 0">
@@ -14,7 +20,7 @@
     </tr>
   </thead>
   <tbody>
-    <tr *ngFor="let attendance of studentAttendance()">
+    <tr *ngFor="let attendance of searchBar.filteredList()">
       <td>{{ attendance.student.name }}</td>
       <td
         *ngFor="let day of daysInMonth()"

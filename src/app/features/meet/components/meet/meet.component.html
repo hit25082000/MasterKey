@@ -60,14 +60,10 @@
   </button>
 
   <ng-container *ngIf="showMeetIcon">
-    <button (click)="openMeetLink()">
+    <button class="meet-icon-button" (click)="openMeetLink()">
       <i class="fas fa-video"></i> Abrir Google Meet
     </button>
   </ng-container>
-  
-  <button *ngIf="showMeetIcon" (click)="router.navigate(['/meet-details', meetLink])">
-    Ver Detalhes da Reunião
-  </button> 
 </form>
 
 <p *ngIf="isAuthenticated">Autenticado com sucesso!</p>

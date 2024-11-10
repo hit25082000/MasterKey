@@ -8,11 +8,12 @@ import { NotificationType } from '../../../../shared/models/notifications-enum';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { LoadingService } from '../../../../shared/services/loading.service';
+import { SearchBarComponent } from '../../../../shared/components/search-bar/search-bar.component';
 
 @Component({
   selector: 'app-student-list',
   standalone: true,
-  imports: [CommonModule, PaginationComponent],
+  imports: [CommonModule, PaginationComponent, SearchBarComponent],
   templateUrl: './student-list.component.html',
   styleUrl: './student-list.component.scss',
 })

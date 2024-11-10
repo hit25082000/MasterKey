@@ -1,1 +1,12 @@
-<input type="text" [formControl]="searchControl" placeholder="Pesquisar..." class="form-control" (keyup)="filter()" />
+<div class="search-container">
+  <input
+    type="text"
+    [formControl]="searchControl"
+    placeholder="Pesquisar..."
+    class="form-control"
+    (keyup)="filter()"
+  />
+  <button class="search-button">
+    <i class="fas fa-search"></i>
+  </button>
+</div>

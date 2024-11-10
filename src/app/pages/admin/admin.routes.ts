@@ -30,12 +30,7 @@ import { RoleGuard } from '../../auth/guards/role.guard';
 import { RoutePermission } from '../../features/role/components/permission-select/permission.enum';
 
 export const ADMIN_ROUTES: Routes = [
-  {
-    path: 'admin',
-    component: AdminComponent,
-    canActivate: [AuthGuard, RoleGuard],
-    data: { permission: RoutePermission.ADMIN_PANEL },
-    children: [
+
       {
         path: '',
         redirectTo: 'dashboard',
@@ -70,6 +65,5 @@ export const ADMIN_ROUTES: Routes = [
       { path: 'category-detail/:id', component: CategoryDetailsComponent },
       { path: 'category-list', component: CategoryListComponent },
       { path: 'category-register', component: CategoryRegisterComponent },
-    ],
-  },
+
 ];

@@ -1,0 +1,82 @@
+.student-selector {
+  padding: 1.5rem;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+  app-search-bar {
+    margin-bottom: 1.5rem;
+    display: block;
+  }
+
+  .form-group {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background-color: #f8f9fa;
+      transform: translateX(4px);
+    }
+
+    label {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      font-size: 1rem;
+      color: #2c3e50;
+
+      input[type="checkbox"] {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #cbd5e1;
+        border-radius: 4px;
+        margin-right: 12px;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:checked {
+          background-color: #3b82f6;
+          border-color: #3b82f6;
+
+          &::after {
+            content: '';
+            position: absolute;
+            left: 6px;
+            top: 2px;
+            width: 5px;
+            height: 10px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+          }
+        }
+
+        &:hover {
+          border-color: #3b82f6;
+        }
+      }
+    }
+  }
+}
+
+// Animação para entrada dos itens
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.form-group {
+  animation: slideIn 0.3s ease-out forwards;
+  animation-delay: calc(var(--animation-order, 0) * 0.1s);
+}

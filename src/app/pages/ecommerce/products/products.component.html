@@ -1,1 +1,74 @@
-<p>products works!</p>
+<section class="products">
+  <div class="header">
+    <h1>Conheça nossos <strong>cursos</strong></h1>
+    <app-search-bar
+      [dataList]="filteredCourses()"
+      #searchBarComponent
+    ></app-search-bar>
+  </div>
+
+  <div class="content">
+    <div class="filters">
+      <h3>Categoria</h3>
+      <div class="categories">
+        <button
+          *ngFor="let category of categories()"
+          [class.active]="selectedCategory() === category"
+          (click)="updateCategory(category)">
+          {{category}}
+        </button>
+      </div>
+
+      <h3>Ordem</h3>
+      <div class="order">
+        <button
+          [class.active]="selectedOrder() === 'Alfabética'"
+          (click)="updateOrder('Alfabética')">
+          Alfabética
+        </button>
+        <button
+          [class.active]="selectedOrder() === 'Preço Crescente'"
+          (click)="updateOrder('Preço Crescente')">
+          Preço Crescente
+        </button>
+        <button
+          [class.active]="selectedOrder() === 'Preço Decrescente'"
+          (click)="updateOrder('Preço Decrescente')">
+          Preço Decrescente
+        </button>
+      </div>
+
+      <h3>Preço Máximo: R${{priceRange()}}</h3>
+      <input
+        type="range"
+        [ngModel]="priceRange()"
+        (ngModelChange)="updatePriceRange($event)"
+        min="0"
+        max="1000"
+        step="50">
+    </div>
+
+    <div class="courses-grid">
+      <div class="course-card" (click)="redirectToCourse(course.id)" *ngFor="let course of searchBarComponent.filteredList()">
+        <img [src]="course.image" [alt]="course.name">
+        <div class="course-info">
+          <h3>{{course.name}}</h3>
+          <p>{{course.description}}</p>
+          <div class="price-info">
+            <span *ngIf="!course.hidePrice">
+              Até {{course.portionCount}}x no cartão ou boleto
+            </span>
+            <strong *ngIf="!course.hidePrice">
+              R${{course.price.toFixed(2)}}
+            </strong>
+            <span *ngIf="course.hidePrice">Sob Consulta</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<app-testimonials></app-testimonials>
+<app-benefits></app-benefits>
+<app-our-space></app-our-space>

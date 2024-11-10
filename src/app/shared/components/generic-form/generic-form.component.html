@@ -1,51 +1,53 @@
-<form [formGroup]="form()" (ngSubmit)="onSubmit()">
+<form [formGroup]="form()" (ngSubmit)="onSubmit()" class="form-container">
   <ng-container>
-  @for (field of formConfig(); track trackByFn) {
-    <div class="form-group" [ngSwitch]="field.type">
-      <label [for]="field.name">{{ field.label }}</label>
+    <div class="form-grid">
+      @for (field of formConfig(); track trackByFn) {
+        <div class="form-group" [ngSwitch]="field.type" [class.full-width]="field.type === 'textarea'">
+          <label [for]="field.name">{{ field.label }}</label>
 
-      <input *ngSwitchCase="'text'" [id]="field.name" [formControlName]="field.name"
-             class="form-control" [type]="field.type">
+          <input *ngSwitchCase="'text'" [id]="field.name" [formControlName]="field.name"
+                class="form-control" [type]="field.type">
 
-      <input *ngSwitchCase="'email'" [id]="field.name" [formControlName]="field.name"
-             class="form-control" type="email">
+          <input *ngSwitchCase="'email'" [id]="field.name" [formControlName]="field.name"
+                class="form-control" type="email">
 
-      <input *ngSwitchCase="'number'" [id]="field.name" [formControlName]="field.name"
-             class="form-control" type="number">
+          <input *ngSwitchCase="'number'" [id]="field.name" [formControlName]="field.name"
+                class="form-control" type="number">
 
-      <input *ngSwitchCase="'date'" [id]="field.name" [formControlName]="field.name"
-             class="form-control" type="date">
+          <input *ngSwitchCase="'date'" [id]="field.name" [formControlName]="field.name"
+                class="form-control" type="date">
 
-      <input *ngSwitchCase="'file'" [id]="field.name" [formControlName]="field.name"
-             class="form-control" type="file" (change)="field.onFileChange && field.onFileChange($event)">
+          <input *ngSwitchCase="'file'" [id]="field.name" [formControlName]="field.name"
+                class="form-control" type="file" (change)="field.onFileChange && field.onFileChange($event)">
 
-      <input *ngSwitchCase="'password'" [id]="field.name" [formControlName]="field.name"
-             class="form-control" type="password">
+          <input *ngSwitchCase="'password'" [id]="field.name" [formControlName]="field.name"
+                class="form-control" type="password">
 
-      <select *ngSwitchCase="'select'" [id]="field.name" [formControlName]="field.name" class="form-control">
-        <option *ngFor="let option of field.options" [value]="option.value">
-          {{ option.label }}
-        </option>
-      </select>
+          <select *ngSwitchCase="'select'" [id]="field.name" [formControlName]="field.name" class="form-control">
+            <option *ngFor="let option of field.options" [value]="option.value">
+              {{ option.label }}
+            </option>
+          </select>
 
-      <textarea *ngSwitchCase="'textarea'" [id]="field.name" [formControlName]="field.name"
-                class="form-control"></textarea>
+          <textarea *ngSwitchCase="'textarea'" [id]="field.name" [formControlName]="field.name"
+                    class="form-control"></textarea>
 
-      <div *ngIf="form().get(field.name)?.invalid && form().get(field.name)?.touched" class="text-danger">
-        {{ field.errorMessage }}
-      </div>
+          <div *ngIf="(form().get(field.name)?.invalid && (form().get(field.name)?.touched || submitted()))"
+               class="text-danger">
+            {{ getErrorMessage(field.name) }}
+          </div>
+        </div>
+      }
     </div>
-  }
-  <!-- Mensagem de erro geral do formulário para senhas não coincidentes -->
-  <div *ngIf="form().errors?.['passwordMismatch']" class="error-message">
-    As senhas não coincidem
-  </div>
+
+    <div *ngIf="form().errors?.['passwordMismatch']" class="error-message">
+      As senhas não coincidem
+    </div>
   </ng-container>
 
-  <!-- Slot para conteúdo adicional -->
   <ng-content></ng-content>
 
-  <button type="submit" class="btn btn-primary" [disabled]="form().invalid">
+  <button type="submit" class="btn btn-primary">
     {{ submitButtonText() }}
   </button>
 </form>

@@ -1,0 +1,48 @@
+<div class="course-preview" *ngIf="course">
+  <div class="course-preview-detail">
+    <img [src]="course.image" class="course-img" [alt]="course.name">
+    <div class="course-header">
+      <h1><img src="assets/icons/interrogacao.png" alt="ícone de interrogação" class="icon">Sobre nosso curso de {{course.name}}: </h1>
+      <p class="description"><img src="assets/icons/livro.png" alt="ícone de livro" class="icon">{{course.description}}</p>
+      <p class="description"><img src="assets/icons/relogio.png" alt="ícone de livro" class="icon">{{course.workHours}} hora(s) <img src="assets/icons/tag.png" alt="ícone de livro" class="icon"> categoria {{course.category}}</p>
+    </div>
+    <div class="course-body">
+
+    </div>
+  </div>
+
+  <div class="preview-section">
+    <div class="video-container" *ngIf="safeVideoUrl">
+      <iframe [src]="safeVideoUrl"
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen>
+      </iframe>
+    </div>
+
+    <div class="course-info">
+      <div class="price-info" *ngIf="!course.hidePrice">
+        <span class="original-price" *ngIf="course.promoPrice">R$ {{course.price}}</span>
+        <span class="promo-price">R$ {{course.promoPrice || course.price}}</span>
+        <span class="portion-info" *ngIf="course.portionCount">
+          ou {{course.portionCount}}x de R$ {{(course.promoPrice || course.price) / course.portionCount | number:'1.2-2'}}
+        </span>
+      </div>
+
+      <a [href]="course.checkoutUrl" class="buy-button">Matricular-se</a>
+    </div>
+  </div>
+
+  <div class="course-content">
+    <h2>Cronograma do Curso</h2>
+    <div class="video-list">
+      <div class="video-item" *ngFor="let video of course.videos; let i = index">
+        <span class="video-number">{{i + 1}}</span>
+        <div class="video-info">
+          <h3>{{video.name}}</h3>
+          <span class="duration">{{video.duration | number:'1.0-0'}} minutos</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

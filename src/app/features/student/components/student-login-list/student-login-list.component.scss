@@ -1,29 +1,136 @@
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { transform: translateY(-20px); }
+  to { transform: translateY(0); }
+}
+
+h2 {
+  color: #333;
+  text-align: center;
+  margin-bottom: 2rem;
+  animation: slideIn 0.5s ease-out;
+}
+
+.search-container {
+  position: relative;
+  margin-bottom: 2rem;
+  animation: fadeIn 0.5s ease-out;
+
+  .search-input {
+    width: 100%;
+    padding: 12px 40px 12px 15px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s, box-shadow 0.3s;
+
+    &:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+    }
+  }
+
+  .search-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+  }
+}
+
 .calendar-controls {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 2rem;
+  animation: fadeIn 0.5s ease-out;
+
+  .control-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.3s, transform 0.2s;
+
+    &:hover {
+      background-color: #0056b3;
+      transform: translateY(-2px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  h3 {
+    font-size: 1.5rem;
+    color: #333;
+    text-transform: capitalize;
+  }
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
+  animation: fadeIn 0.5s ease-out;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  overflow: hidden;
+
+  th, td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: center;
+    transition: background-color 0.3s;
+  }
+
+  th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .present {
+    background-color: #d4edda;
+    color: #155724;
+    transition: background-color 0.3s;
+
+    &:hover {
+      background-color: #c3e6cb;
+    }
+  }
+
+  .absent {
+    background-color: #f8d7da;
+    color: #721c24;
+    transition: background-color 0.3s;
+
+    &:hover {
+      background-color: #f5c6cb;
+    }
+  }
+
+  tr:hover td:not(.present):not(.absent) {
+    background-color: #f5f5f5;
+  }
 }
 
-th, td {
-  border: 1px solid #ddd;
-  padding: 8px;
+.no-data {
   text-align: center;
-}
-
-th {
-  background-color: #f2f2f2;
-}
-
-.present {
-  background-color: #d4edda;
-}
-
-.absent {
-  background-color: #f8d7da;
+  padding: 2rem;
+  color: #666;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  animation: fadeIn 0.5s ease-out;
 }

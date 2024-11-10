@@ -18,6 +18,7 @@ export class GenericFormComponent {
   submitButtonText = input('Salvar');
   formSubmit = output<any>();
   config = input<FormFieldConfig[]>([]);
+  submitted = signal(false);
 
   constructor(private fb: FormBuilder) {
     effect(() => {
@@ -57,18 +58,39 @@ export class GenericFormComponent {
 
   getErrorMessage(fieldName: string): string {
     const control = this.form().get(fieldName);
-    if (control?.errors) {
+    const field = this.formConfig().find(f => f.name === fieldName);
+
+    if (control?.errors && field?.errorMessages) {
+      // Verifica primeiro o erro de senha
       if (control.errors['passwordMismatch']) {
         return 'As senhas não coincidem';
       }
-      return this.formConfig().find(f => f.name === fieldName)?.errorMessage || 'Campo inválido';
+
+      // Procura pela primeira chave de erro presente no control.errors
+      const errorKey = Object.keys(control.errors)[0];
+
+      // Retorna a mensagem específica para esse erro se existir
+      if (field.errorMessages[errorKey]) {
+        return field.errorMessages[errorKey];
+      }
     }
-    return '';
+
+    return 'Campo inválido';
   }
 
   onSubmit() {
+    this.submitted.set(true);
     if (this.form().valid) {
       this.formSubmit.emit(this.form().value);
+    } else {
+      this.markAllFieldsAsTouched();
     }
+  }
+
+  private markAllFieldsAsTouched() {
+    Object.keys(this.form().controls).forEach(key => {
+      const control = this.form().get(key);
+      control?.markAsTouched();
+    });
   }
 }

@@ -7,29 +7,33 @@
       #searchBarComponent
     ></app-search-bar>
 
-    <div
-      *ngFor="let class of searchBarComponent.filteredList()"
-      class="form-group"
-    >
-      <label>
-        <input
-          type="checkbox"
-          [checked]="selectedClassIds().has(class.id)"
-          (change)="onCheckboxChange(class.id, $event)"
-        />
-        {{ class.name }}
-      </label>
+    <div class="form-groups">
+      <div
+        *ngFor="let class of searchBarComponent.filteredList()"
+        class="form-group"
+      >
+        <label>
+          <input
+            type="checkbox"
+            [checked]="selectedClassIds().has(class.id)"
+            (change)="onCheckboxChange(class.id, $event)"
+          />
+          {{ class.name }}
+        </label>
+      </div>
     </div>
 
     <h4>Turmas Selecionadas</h4>
-    <div *ngFor="let class of selectedClasses()">
-      <p>
-        <strong>{{ class.name }}</strong>
-      </p>
-      <button (click)="removeClass(class.id)">Remover</button>
+    <div class="selected-items">
+      <div *ngFor="let class of selectedClasses()">
+        <p>
+          <strong>{{ class.name }}</strong>
+        </p>
+        <button (click)="removeClass(class.id)">Remover</button>
+      </div>
     </div>
 
-    <button (click)="updateStudentClasses()" [disabled]="isSaving()">
+    <button class="action-button" (click)="updateStudentClasses()" [disabled]="isSaving()">
       {{ isSaving() ? "Salvando..." : "Salvar Classes" }}
     </button>
   </ng-container>

@@ -5,9 +5,9 @@
     #searchBarComponent
   ></app-search-bar>
 
-  <ul>
+  <ul class="course-list">
     @for (course of searchBarComponent.filteredList(); track course.id) {
-      <li>
+      <li class="course-item-enter">
         <label>
           <input
             type="checkbox"
@@ -22,7 +22,7 @@
   </ul>
 
   @if (!singleSelection()) {
-    <div>
+    <div class="selected-courses">
       <h4>Cursos selecionados:</h4>
       <ul>
         @for (course of selectedCourses(); track course.id) {
@@ -34,7 +34,7 @@
       </ul>
     </div>
   }@else {
-    <div>
+    <div class="selected-courses">
       <h4>Curso selecionado:</h4>
       <ul>
         @for (course of selectedCourses(); track course.id) {

@@ -1,0 +1,103 @@
+:host {
+  display: block;
+  min-height: calc(100vh - 80px);
+  color: white;
+  padding: 4rem 0;
+  background:
+  linear-gradient(90deg, rgba(238, 60, 72, 0.2) 0%, rgba(56, 74, 135, 0.2) 100%), #000000;
+}
+
+.icon {
+  width: 30px; // ajuste conforme necessário
+  height: 30px; // ajuste conforme necessário
+  margin-right: 10px;
+  vertical-align: middle;
+}
+.course-preview {
+  .course-preview-detail{
+    display: flex;
+    flex-direction: row;
+    .course-img{
+      border-radius: 1rem;
+      object-fit: cover;
+      width: 30vw;
+      margin:  0 2rem 2rem 0;
+    }
+    .course-body{
+      border-top: 1px solid white;
+    }
+    div{
+      gap: 2rem;
+      h1{
+        font-size: x-large;
+      }
+      border-radius: 1rem;
+      background: rgba(255, 255, 255, 0.1);
+      box-shadow: 4px 4px 25px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(20px);
+      width: 50vw;
+      padding: 1rem;
+      text-align: center;
+    }
+  }
+
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+
+  .course-header {
+    margin-bottom: 2rem;
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .description {
+      font-size: 1.1rem;
+      color: #666;
+    }
+  }
+
+  .preview-section {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    margin-bottom: 3rem;
+
+    .video-container {
+      aspect-ratio: 16/9;
+
+      iframe {
+        width: 100%;
+        height: 100%;
+        border-radius: 8px;
+      }
+    }
+
+    .course-info {
+      .price-info {
+        margin-bottom: 1.5rem;
+
+        .original-price {
+          text-decoration: line-through;
+          color: #666;
+          font-size: 1.1rem;
+          display: block;
+        }
+
+        .promo-price {
+          font-size: 2rem;
+          font-weight: bold;
+          color: #2ecc71;
+          display: block;
+        }
+
+        .portion-info {
+          font-size: 0.9rem;
+          color: #666;
+        }
+      }
+    }
+  }
+}

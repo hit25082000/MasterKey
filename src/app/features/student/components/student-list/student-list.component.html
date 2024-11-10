@@ -1,36 +1,47 @@
-<h2>Lista de Alunos</h2>
-<table>
-  <thead>
-    <tr>
-      <th>Foto</th>
-      <th>Nome</th>
-      <th>Fone</th>
-      <th>Idade</th>
-      <th>Polo</th>
-      <th>Status</th>
-      <th>Ação</th>
-    </tr>
-  </thead>
-  <tbody>
-    @for (student of displayedStudents(); track student.cpf) {
-    <tr>
-      <td><img width="25" [src]="student.iconUrl" alt="" /></td>
-      <td>{{ student.name }}</td>
-      <td>{{ student.phone1 }}</td>
-      <td>{{ student.yearsOld }}</td>
-      <td>{{ student.polo }}</td>
-      <td>
-        <button (click)="editStudent(student.id)">Editar</button>
-        <button (click)="deleteStudent(student.id)">Excluir</button>
-      </td>
-    </tr>
-    }
-  </tbody>
-</table>
+<div class="student-list-container">
+  <div class="header">
+    <h2>Lista de Alunos</h2>
+    <app-search-bar [dataList]="students()" #searchBar></app-search-bar>
+  </div>
 
-<app-pagination
-  [currentPage]="currentPage()"
-  [totalItems]="students().length"
-  [pageSize]="pageSize()"
-  (pageChange)="onPageChange($event)"
-></app-pagination>
+  <table>
+    <thead>
+      <tr>
+        <th>Foto</th>
+        <th>Nome</th>
+        <th>Fone</th>
+        <th>Idade</th>
+        <th>Polo</th>
+        <th>Ação</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (student of searchBar.filteredList(); track student.cpf) {
+      <tr>
+        <td><img width="25" [src]="student.iconUrl" alt="" /></td>
+        <td>{{ student.name }}</td>
+        <td>{{ student.phone1 }}</td>
+        <td>{{ student.yearsOld }}</td>
+        <td>{{ student.polo }}</td>
+        <td class="action-buttons">
+          <button class="btn-edit" (click)="editStudent(student.id)">
+            <i class="fas fa-edit"></i>
+            Editar
+          </button>
+          <button class="btn-delete" (click)="deleteStudent(student.id)">
+            <i class="fas fa-trash"></i>
+            Excluir
+          </button>
+        </td>
+      </tr>
+      }
+    </tbody>
+  </table>
+
+  <app-pagination
+    [currentPage]="currentPage()"
+    [totalItems]="students().length"
+    [pageSize]="pageSize()"
+    (pageChange)="onPageChange($event)"
+  ></app-pagination>
+</div>

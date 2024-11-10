@@ -50,13 +50,7 @@ export class StudentFormComponent implements OnInit {
 
   constructor(
   ) {
-    this.initFormConfig();this.notificationService.success(
-      'Erro ao consultar dados do estudante: ',
-      5000
-    );this.notificationService.error(
-      'Erro ao consultar dados do estudante: ' ,
-      5000
-    );
+    this.initFormConfig();
   }
 
   initFormConfig() {
@@ -67,7 +61,10 @@ export class StudentFormComponent implements OnInit {
         type: 'text',
         value: '',
         validators: [Validators.required, Validators.minLength(3)],
-        errorMessage: 'Nome é obrigatório e deve ter no mínimo 3 caracteres'
+        errorMessages: {
+          required: 'Nome é obrigatório',
+          minlength: 'Nome deve ter pelo menos 3 caracteres'
+        }
       },
       {
         name: 'phone1',
@@ -75,7 +72,9 @@ export class StudentFormComponent implements OnInit {
         type: 'text',
         value: '',
         validators: [Validators.required],
-        errorMessage: 'Fone 1 é obrigatório'
+        errorMessages: {
+          required: 'Fone 1 é obrigatório'
+        }
       },
       {
         name: 'phone2',
@@ -84,20 +83,15 @@ export class StudentFormComponent implements OnInit {
         value: ''
       },
       {
-        name: 'email',
-        label: 'E-mail',
-        type: 'email',
-        value: '',
-        validators: [Validators.required, Validators.email],
-        errorMessage: 'E-mail inválido'
-      },
-      {
         name: 'cpf',
         label: 'CPF',
         type: 'text',
         value: '',
         validators: [Validators.required, ValidatorCpf],
-        errorMessage: 'CPF inválido'
+        errorMessages: {
+          required: 'CPF é obrigatório',
+          cpfInvalid: 'CPF inválido'
+        }
       },
       {
         name: 'rg',
@@ -105,7 +99,9 @@ export class StudentFormComponent implements OnInit {
         type: 'text',
         value: '',
         validators: [Validators.required],
-        errorMessage: 'RG é obrigatório'
+        errorMessages: {
+          required: 'RG é obrigatório'
+        }
       },
       {
         name: 'cep',
@@ -113,7 +109,9 @@ export class StudentFormComponent implements OnInit {
         type: 'text',
         value: '',
         validators: [Validators.required],
-        errorMessage: 'CEP é obrigatório'
+        errorMessages: {
+          required: 'CEP é obrigatório'
+        }
       },
       {
         name: 'street',
@@ -121,7 +119,9 @@ export class StudentFormComponent implements OnInit {
         type: 'text',
         value: '',
         validators: [Validators.required],
-        errorMessage: 'Rua é obrigatória'
+        errorMessages: {
+          required: 'Rua é obrigatória'
+        }
       },
       {
         name: 'neighborhood',
@@ -129,7 +129,9 @@ export class StudentFormComponent implements OnInit {
         type: 'text',
         value: '',
         validators: [Validators.required],
-        errorMessage: 'Bairro é obrigatório'
+        errorMessages: {
+          required: 'Bairro é obrigatório'
+        }
       },
       {
         name: 'city',
@@ -137,7 +139,9 @@ export class StudentFormComponent implements OnInit {
         type: 'text',
         value: '',
         validators: [Validators.required],
-        errorMessage: 'Cidade é obrigatória'
+        errorMessages: {
+          required: 'Cidade é obrigatória'
+        }
       },
       {
         name: 'state',
@@ -145,7 +149,9 @@ export class StudentFormComponent implements OnInit {
         type: 'text',
         value: '',
         validators: [Validators.required],
-        errorMessage: 'Estado é obrigatório'
+        errorMessages: {
+          required: 'Estado é obrigatório'
+        }
       },
       {
         name: 'number',
@@ -153,15 +159,19 @@ export class StudentFormComponent implements OnInit {
         type: 'text',
         value: '',
         validators: [Validators.required],
-        errorMessage: 'Número é obrigatório'
+        errorMessages: {
+          required: 'Número é obrigatório'
+        }
       },
       {
         name: 'birthday',
         label: 'Data de Nascimento',
         type: 'date',
-        value: '',
+        value: null,
         validators: [Validators.required],
-        errorMessage: 'Data de nascimento é obrigatória'
+        errorMessages: {
+          required: 'Data de nascimento é obrigatória'
+        }
       },
       {
         name: 'yearsOld',
@@ -169,7 +179,10 @@ export class StudentFormComponent implements OnInit {
         type: 'number',
         value: '',
         validators: [Validators.required, Validators.min(0)],
-        errorMessage: 'Idade é obrigatória e deve ser maior que zero'
+        errorMessages: {
+          required: 'Idade é obrigatória',
+          min: 'Idade deve ser maior que zero'
+        }
       },
       {
         name: 'responsible',
@@ -189,7 +202,9 @@ export class StudentFormComponent implements OnInit {
         type: 'text',
         value: '',
         validators: [ValidatorCpf],
-        errorMessage: 'CPF do responsável inválido'
+        errorMessages: {
+          cpfInvalid: 'CPF do responsável inválido'
+        }
       },
       {
         name: 'profilePic',
@@ -207,7 +222,10 @@ export class StudentFormComponent implements OnInit {
           { value: 'masculino', label: 'Masculino' },
           { value: 'feminino', label: 'Feminino' }
         ],
-        validators: [Validators.required]
+        validators: [Validators.required],
+        errorMessages: {
+          required: 'Sexo é obrigatório'
+        }
       },
       {
         name: 'polo',
@@ -215,7 +233,9 @@ export class StudentFormComponent implements OnInit {
         type: 'text',
         value: '',
         validators: [Validators.required],
-        errorMessage: 'Polo é obrigatório'
+        errorMessages: {
+          required: 'Polo é obrigatório'
+        }
       },
       {
         name: 'description',
@@ -228,8 +248,11 @@ export class StudentFormComponent implements OnInit {
         label: 'Senha',
         type: 'password',
         value: '',
-        validators: [Validators.required, Validators.minLength(6)],
-        errorMessage: 'Senha é obrigatória e deve ter pelo menos 6 caracteres'
+        validators: [Validators.required],
+        errorMessages: {
+          required: 'Senha é obrigatória',
+          passwordMismatch: 'As senhas não coincidem'
+        }
       },
       {
         name: 'confirmPassword',
@@ -237,7 +260,10 @@ export class StudentFormComponent implements OnInit {
         type: 'password',
         value: '',
         validators: [Validators.required],
-        errorMessage: 'Confirmação de senha é obrigatória'
+        errorMessages: {
+          required: 'Confirmação de senha é obrigatória',
+          passwordMismatch: 'As senhas não coincidem'
+        }
       }
     ]);
   }

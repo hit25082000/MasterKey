@@ -140,7 +140,6 @@ export class MeetingComponent implements OnInit {
           1
         );
 
-        // Gerar log de criação de reunião
         await this.systemLogService
           .logAction(LogCategory.MEETING_CREATION, 'Criação de reunião', {
             meetingTitle: title,
@@ -149,10 +148,11 @@ export class MeetingComponent implements OnInit {
           .toPromise();
       } catch (error) {
         console.error('Erro ao criar reunião:', error);
-        this.notificationService.success(
+        this.notificationService.error(
           'Erro ao criar reunião. Por favor, tente novamente.',
-          1
+          5000
         );
+        this.googleAuthService.logout()
       }
     } else if (!this.isAuthenticated) {
       this.notificationService.success(

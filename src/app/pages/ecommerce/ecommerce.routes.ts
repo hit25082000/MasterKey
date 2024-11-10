@@ -4,6 +4,7 @@ import { HomeComponent } from './home/home.component';
 import { ProductsComponent } from './products/products.component';
 import { AboutComponent } from './about/about.component';
 import { ContactComponent } from './contact/contact.component';
+import { CoursePreviewComponent } from './course-preview/course-preview.component';
 
 export const ECOMMERCE_ROUTES: Routes = [
     {
@@ -30,5 +31,10 @@ export const ECOMMERCE_ROUTES: Routes = [
         path: 'contact',
         component: ContactComponent,
         title: 'Contato'
+      },
+      {
+        path: 'course/:id',
+        component: CoursePreviewComponent,
+        title: 'Curso'
       }
 ];

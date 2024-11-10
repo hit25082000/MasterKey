@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { SystemLogService } from '../../../../core/services/system-log.service';
 import { StudentService } from '../../services/student.service';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { SearchBarComponent } from "../../../../shared/components/search-bar/search-bar.component";
 
 interface StudentAttendance {
   student: any; // Alterado de studentName para student
@@ -13,7 +14,7 @@ interface StudentAttendance {
 @Component({
   selector: 'app-student-login-list',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, SearchBarComponent],
   templateUrl: './student-login-list.component.html',
   styleUrls: ['./student-login-list.component.scss'],
 })

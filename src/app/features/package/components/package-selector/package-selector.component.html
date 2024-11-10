@@ -5,8 +5,9 @@
   ></app-search-bar>
 
   <div
-    *ngFor="let package of searchBarComponent.filteredList()"
+    *ngFor="let package of searchBarComponent.filteredList(); let i = index"
     class="form-group"
+    [style.--animation-order]="i"
   >
     <label>
       <input

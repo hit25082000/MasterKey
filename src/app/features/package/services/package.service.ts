@@ -1,5 +1,4 @@
 import { inject, Injectable, signal, WritableSignal } from '@angular/core';
-import { FirestoreService } from '../../../core/services/firestore.service';
 import { Package } from '../../../core/models/package.model';
 import { Firestore, collection, collectionData, CollectionReference } from '@angular/fire/firestore';
 
@@ -10,7 +9,6 @@ const PACKAGES_PATH = 'packages';
 })
 export class PackageService {
   firestore = inject(Firestore);
-  firestoreS = inject(FirestoreService);
 
   packagesCollection = collection(
     this.firestore,

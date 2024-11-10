@@ -1,19 +1,21 @@
-<app-generic-form
-  *ngIf="!(loadingService.isLoading())"
-  [config]="formConfig()"
-  [submitButtonText]="isEditMode() ? 'Atualizar' : 'Cadastrar'"
-  (formSubmit)="onSubmit($event)"
-></app-generic-form>
+<h1 class="form-title">{{isEditMode() ? 'Atualizar' : 'Cadastrar'}} Estudante</h1>
+<section class="student-features">
+  <app-generic-form
+    *ngIf="!(loadingService.isLoading())"
+    [config]="formConfig()"
+    [submitButtonText]="isEditMode() ? 'Atualizar' : 'Cadastrar'"
+    (formSubmit)="onSubmit($event)"
+  ></app-generic-form>
 
-<ng-container *ngIf="isEditMode() && !loadingService.isLoading()">
-  <button (click)="classModal.toggle()">Turmas</button>
+  <div class="modal-buttons" *ngIf="isEditMode() && !loadingService.isLoading()">
+    <button (click)="classModal.toggle()">Turmas</button>
+    <button (click)="courseModal.toggle()">Cursos e Pacotes</button>
+  </div>
 
   <app-modal #classModal>
     <h4>Turmas do Estudante</h4>
     <app-class-selector [studentId]="studentId()!" #classSelector></app-class-selector>
   </app-modal>
-
-  <button (click)="courseModal.toggle()">Cursos e Pacotes</button>
 
   <app-modal #courseModal>
     <h4>Selecionar Cursos e Pacotes</h4>
@@ -28,7 +30,7 @@
         </p>
         <p>
           <Button (click)="courseSelector.removeCourseFromStudent(course.id)"
-            >Remover</Button
+          >Remover</Button
           >
         </p>
       </div>
@@ -42,7 +44,7 @@
         </p>
         <p>
           <Button (click)="packageSelector.removePackage(package.id)"
-            >Remover</Button
+          >Remover</Button
           >
         </p>
       </div>
@@ -55,7 +57,7 @@
         courseModal.toggle()
       "
     >
-      Salvar Cursos e Pacotes
-    </button>
-  </app-modal>
-</ng-container>
+    Salvar Cursos e Pacotes
+  </button>
+</app-modal>
+</section>
