@@ -8,56 +8,49 @@
   ></app-generic-form>
 
   <div class="modal-buttons" *ngIf="isEditMode() && !loadingService.isLoading()">
-    <button (click)="classModal.toggle()">Turmas</button>
-    <button (click)="courseModal.toggle()">Cursos e Pacotes</button>
+    <button class="modal-button" (click)="classModal.toggle()">
+      <i class="fas fa-users"></i>
+      Turmas
+    </button>
+    <button class="modal-button" (click)="courseModal.toggle()">
+      <i class="fas fa-book"></i>
+      Cursos e Pacotes
+    </button>
   </div>
 
   <app-modal #classModal>
-    <h4>Turmas do Estudante</h4>
-    <app-class-selector [studentId]="studentId()!" #classSelector></app-class-selector>
+    <div class="modal-container">
+      <h4>Turmas do Estudante</h4>
+      <app-class-selector [studentId]="studentId()!" #classSelector></app-class-selector>
+    </div>
   </app-modal>
 
   <app-modal #courseModal>
-    <h4>Selecionar Cursos e Pacotes</h4>
-    <app-course-selector [studentId]="studentId()!" #courseSelector></app-course-selector>
-    <app-package-selector [studentId]="studentId()!" #packageSelector></app-package-selector>
+    <div class="modal-container">
+      <div class="selectors-container">
+        <div class="selector-group">
+          <app-course-selector [studentId]="studentId()!" #courseSelector></app-course-selector>
+        </div>
 
-    <div class="form-group">
-      <h4>Cursos Cadastrados</h4>
-      <div *ngFor="let course of courseSelector.selectedCourses()">
-        <p>
-          <strong>{{ course.name }}</strong> - {{ course.description }}
-        </p>
-        <p>
-          <Button (click)="courseSelector.removeCourseFromStudent(course.id)"
-          >Remover</Button
-          >
-        </p>
+        <div class="selector-group">
+          <app-package-selector [studentId]="studentId()!" #packageSelector></app-package-selector>
+        </div>
+      </div>
+
+
+
+
+
+      <div class="modal-actions">
+        <button class="save-button" (click)="
+          courseSelector.updateStudentCourses();
+          packageSelector.updateStudentPackages();
+          courseModal.toggle()
+        ">
+          <i class="fas fa-save"></i>
+          Salvar Alterações
+        </button>
       </div>
     </div>
-
-    <div class="form-group">
-      <h4>Pacotes Cadastrados</h4>
-      <div *ngFor="let package of packageSelector.selectedPackages()">
-        <p>
-          <strong>{{ package.name }}</strong> - {{ package.description }}
-        </p>
-        <p>
-          <Button (click)="packageSelector.removePackage(package.id)"
-          >Remover</Button
-          >
-        </p>
-      </div>
-    </div>
-
-    <button
-      (click)="
-        courseSelector.updateStudentCourses();
-        packageSelector.updateStudentPackages();
-        courseModal.toggle()
-      "
-    >
-    Salvar Cursos e Pacotes
-  </button>
-</app-modal>
+  </app-modal>
 </section>

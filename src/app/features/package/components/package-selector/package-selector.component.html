@@ -1,21 +1,49 @@
 <div class="package-selector">
+  <h3>{{ singleSelection() ? 'Selecione um pacote' : 'Selecione os pacotes' }}</h3>
   <app-search-bar
     [dataList]="nonSelectedPackages()"
     #searchBarComponent
   ></app-search-bar>
 
-  <div
-    *ngFor="let package of searchBarComponent.filteredList(); let i = index"
-    class="form-group"
-    [style.--animation-order]="i"
-  >
-    <label>
-      <input
-        type="checkbox"
-        [checked]="selectedPackageIds().has(package.id)"
-        (change)="onCheckboxChange(package.id, $event)"
-      />
-      {{ package.name }}
-    </label>
-  </div>
+  <ul class="package-list">
+    @for (package of searchBarComponent.filteredList(); track package.id) {
+      <li class="package-item-enter">
+        <label>
+          <input
+            type="checkbox"
+            [checked]="isPackageSelected(package.id)"
+            (change)="onPackageSelect(package)"
+            [disabled]="singleSelection() && selectedPackageIds().size > 0 && !isPackageSelected(package.id)"
+          />
+          {{ package.name }}
+        </label>
+      </li>
+    }
+  </ul>
+
+  @if (!singleSelection()) {
+    <div class="selected-packages">
+      <h4>Pacotes selecionados:</h4>
+      <ul>
+        @for (package of selectedPackages(); track package.id) {
+          <li>
+            {{ package.name }}
+            <button (click)="removePackage(package.id)">Remover</button>
+          </li>
+        }
+      </ul>
+    </div>
+  }@else {
+    <div class="selected-packages">
+      <h4>Pacote selecionado:</h4>
+      <ul>
+        @for (package of selectedPackages(); track package.id) {
+          <li>
+            {{ package.name }}
+            <button (click)="removePackage(package.id)">Remover</button>
+          </li>
+        }
+      </ul>
+    </div>
+  }
 </div>

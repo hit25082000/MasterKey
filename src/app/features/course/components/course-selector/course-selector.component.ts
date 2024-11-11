@@ -18,8 +18,8 @@ import { SearchBarComponent } from '../../../../shared/components/search-bar/sea
 import { Course } from '../../../../core/models/course.model';
 import { CourseService } from '../../services/course.service';
 import { StudentService } from '../../../student/services/student.service';
-import { NotificationType } from '../../../../shared/models/notifications-enum';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { LoadingService } from '../../../../shared/services/loading.service';
 
 @Component({
   selector: 'app-course-selector',
@@ -42,6 +42,7 @@ export class CourseSelectorComponent implements OnInit {
   private packageService = inject(PackageService);
   private categoryService = inject(CategoryService);
   private notificationService = inject(NotificationService);
+  private loadingService = inject(LoadingService);
 
   selectedCourses = computed(() => {
     return this.allCourses().filter((course) =>
@@ -73,13 +74,24 @@ export class CourseSelectorComponent implements OnInit {
   }
 
   private async loadAllCourses() {
-    this.allCourses.set(await this.courseService.getAll());
+    this.loadingService.show();
+    try {
+      this.allCourses.set(await this.courseService.getAll());
+    } finally {
+      this.loadingService.hide();
+    }
   }
 
   private async loadStudentCourses() {
-    const courses = await this.studentService.selectedStudentCourses;
-    if (courses() != undefined) {
-      this.selectedCourseIds.set(new Set(Array.from(courses()) || []));
+    this.loadingService.show();
+    try {
+      await this.studentService.selectStudent(this.studentId())
+      const courses = this.studentService.selectedStudentCourses;
+      if (courses() != undefined) {
+        this.selectedCourseIds.set(new Set(Array.from(courses()) || []));
+      }
+    } finally {
+      this.loadingService.hide();
     }
   }
 
@@ -122,6 +134,7 @@ export class CourseSelectorComponent implements OnInit {
     if (!studentId) return;
 
     this.isSaving.set(true);
+    this.loadingService.show();
 
     try {
       await this.studentManagementService.updateStudentCourses(
@@ -130,17 +143,18 @@ export class CourseSelectorComponent implements OnInit {
       );
 
       this.notificationService.success(
-        'Pacotes atualizados com sucesso',
-    1
+        'Cursos atualizados com sucesso',
+        3000
       );
       await this.loadAllCourses();
       await this.loadStudentCourses();
     } catch (error) {
-      this.notificationService.success(
-        'Erro ao atualizar pacotes',
-        1
+      this.notificationService.error(
+        'Erro ao atualizar cursos',
+        3000
       );
     } finally {
+      this.loadingService.hide();
       this.isSaving.set(false);
     }
   }
@@ -162,6 +176,7 @@ export class CourseSelectorComponent implements OnInit {
     if (!categoryId) return;
 
     this.isSaving.set(true);
+    this.loadingService.show();
 
     try {
       await this.studentManagementService.updateStudentCourses(
@@ -169,18 +184,13 @@ export class CourseSelectorComponent implements OnInit {
         Array.from(this.selectedCourseIds())
       );
 
-      this.notificationService.success(
-        'Pacotes atualizados com sucesso',
-        1
-      );
+      this.notificationService.success('Cursos atualizados com sucesso');
       await this.loadAllCourses();
       await this.loadStudentCourses();
     } catch (error) {
-      this.notificationService.success(
-        'Erro ao atualizar pacotes',
-        1
-      );
+      this.notificationService.error('Erro ao atualizar cursos');
     } finally {
+      this.loadingService.hide();
       this.isSaving.set(false);
     }
   }

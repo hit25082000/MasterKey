@@ -5,100 +5,22 @@
   (mouseleave)="collapseSidenav()"
 >
   <ul>
-    <li>
-      <button (click)="toggleDropdown('dashboard')">
-        <i class="icon"></i> <span class="label">Alunos</span>
+    <li *ngFor="let item of menuItems">
+      <button (click)="toggleDropdown(item.id)">
+        <i class="icon" [class]="item.icon"></i>
+        <span class="label">{{item.label}}</span>
       </button>
-      <ul *ngIf="isDropdownOpen('dashboard')" class="dropdown">
-        <li>
-          <a [routerLink]="['/admin/student-register']">Cadastrar aluno</a>
+      <ul [class.dropdown]="true" [class.active]="isDropdownOpen(item.id)">
+        <li *ngFor="let subItem of item.subItems">
+          <ng-container *ngIf="!subItem.isModal">
+            <a [routerLink]="[subItem.route]">{{subItem.label}}</a>
+          </ng-container>
+          <ng-container *ngIf="subItem.isModal">
+            <app-modal #modalWhatsAppMessage>
+              <app-whats-app-message></app-whats-app-message>
+            </app-modal>
+          </ng-container>
         </li>
-        <li><a [routerLink]="['/admin/student-list']">Lista de alunos</a></li>
-        <li>
-          <a [routerLink]="['/admin/student-login-list']">Lista de presença</a>
-        </li>
-        <li>
-          <a [routerLink]="['/admin/meet']">Aula ao Vivo</a>
-        </li>
-        <li>
-          <a [routerLink]="['/admin/job-vacancy']">Vagas de emprego</a>
-        </li>
-        <li>
-          <app-modal #modalWhatsAppMessage buttonName="Enviar mensagem WhatsApp">
-            <app-whats-app-message></app-whats-app-message>
-          </app-modal>
-        </li>
-      </ul>
-    </li>
-    <li>
-      <button (click)="toggleDropdown('courses')">
-        <i class="icon"></i> <span class="label">Cursos</span>
-      </button>
-      <ul *ngIf="isDropdownOpen('courses')" class="dropdown">
-        <li><a [routerLink]="['/admin/course-register']">Criar Curso</a></li>
-        <li><a [routerLink]="['/admin/course-list']">Listar Cursos</a></li>
-      </ul>
-    </li>
-    <li>
-      <button (click)="toggleDropdown('package')">
-        <i class="icon"></i> <span class="label">Pacotes</span>
-      </button>
-      <ul *ngIf="isDropdownOpen('package')" class="dropdown">
-        <li>
-          <a [routerLink]="['/admin/package-form']">Adicionar Pacote</a>
-        </li>
-        <li>
-          <a [routerLink]="['/admin/package-list']">Listar Pacotes</a>
-        </li>
-      </ul>
-    </li>
-    <li>
-      <button (click)="toggleDropdown('categorys')">
-        <i class="icon"></i> <span class="label">Categorias</span>
-      </button>
-      <ul *ngIf="isDropdownOpen('categorys')" class="dropdown">
-        <li>
-          <a [routerLink]="['/admin/category-register']">Criar Categorias</a>
-        </li>
-        <li>
-          <a [routerLink]="['/admin/category-list']">Listar Categorias</a>
-        </li>
-      </ul>
-    </li>
-    <li>
-      <button (click)="toggleDropdown('classes')">
-        <i class="icon"></i> <span class="label">Turmas</span>
-      </button>
-      <ul *ngIf="isDropdownOpen('classes')" class="dropdown">
-        <li><a [routerLink]="['/admin/class-register']">Adicionar Turma</a></li>
-        <li><a [routerLink]="['/admin/class-list']">Listar Turmas</a></li>
-      </ul>
-    </li>
-
-    <li>
-      <button (click)="toggleDropdown('employee')">
-        <i class="icon"></i> <span class="label">Funcionarios</span>
-      </button>
-      <ul *ngIf="isDropdownOpen('employee')" class="dropdown">
-        <li>
-          <a [routerLink]="['/admin/employee-register']"
-            >Adicionar Funcionario</a
-          >
-        </li>
-        <li>
-          <a [routerLink]="['/admin/employee-list']">Listar Funcionarios</a>
-        </li>
-      </ul>
-    </li>
-    <li>
-      <button (click)="toggleDropdown('roles')">
-        <i class="icon"></i> <span class="label">Permissões</span>
-      </button>
-      <ul *ngIf="isDropdownOpen('roles')" class="dropdown">
-        <li>
-          <a [routerLink]="['/admin/role-register']">Adicionar Permissões</a>
-        </li>
-        <li><a [routerLink]="['/admin/role-list']">Listar Permissões</a></li>
       </ul>
     </li>
   </ul>

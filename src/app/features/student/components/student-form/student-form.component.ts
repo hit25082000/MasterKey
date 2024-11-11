@@ -308,7 +308,7 @@ export class StudentFormComponent implements OnInit {
   onSubmit(formData: any) {
     this.loadingService.show();
     const studentData: Student = formData;
-
+    studentData.id = this.studentId()!;
     const operation = this.isEditMode()
       ? this.studentManagement.update(studentData, this.selectedFile())
       : this.studentManagement.create(studentData, this.selectedFile());
@@ -322,9 +322,9 @@ export class StudentFormComponent implements OnInit {
         }, 1000);
       })
       .catch((error) => {
-        this.notificationService.success(
+        this.notificationService.error(
           `Erro ao ${this.isEditMode() ? 'editar' : 'cadastrar'} estudante: ${error.message}`,
-          1
+          5000
         );
         this.loadingService.hide();
       });

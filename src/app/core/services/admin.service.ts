@@ -4,12 +4,13 @@ import { Observable, from, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import BaseUser from '../models/base-user.model';
 import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AdminService {
-  private apiUrl = 'http://127.0.0.1:5001/master-key-a3c69/us-central1';//    'https://us-central1-master-key-a3c69.cloudfunctions.net';
+  private apiUrl = environment.adminUrl;
 
   constructor(private http: HttpClient, private authService: AuthService) {}
 

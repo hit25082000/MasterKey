@@ -1,6 +1,20 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
-const cors = require('cors')({ origin: true });
+const cors = require('cors')({
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      'http://localhost:4200',
+      'https://seu-dominio.com',
+      'https://master-key-a3c69.web.app'
+    ];
+
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Não permitido pelo CORS'));
+    }
+  }
+});
 const { Storage } = require('@google-cloud/storage');
 
 admin.initializeApp();
@@ -61,7 +75,7 @@ exports.createUserWithProfile = functions.https.onRequest((req, res) => {
           // Fazer upload do ícone, se fornecido
           let iconUrl = null;
           if (iconFile) {
-            const fileName = `${userRecord.uid}_profile.jpg`;
+            const fileName = `${userRecord.uid}_profile.png`;
             const file = bucket.file(fileName);
 
             // Decodificar a string base64 e salvar como buffer
@@ -69,7 +83,7 @@ exports.createUserWithProfile = functions.https.onRequest((req, res) => {
 
             await file.save(imageBuffer, {
               metadata: {
-                contentType: 'image/jpeg', // ou 'image/png' se for PNG
+                contentType: 'image/png', // ou 'image/png' se for PNG
               },
             });
 
@@ -82,7 +96,7 @@ exports.createUserWithProfile = functions.https.onRequest((req, res) => {
           // Adicionar iconUrl aos dados do usuário
           const userDataWithIcon = {
             ...userData,
-            iconUrl: iconUrl || null
+            profilePic: iconUrl || null
           };
 
           // Salvar dados do usuário no Firestore
@@ -124,10 +138,11 @@ exports.updateUserWithProfile = functions.https.onRequest((req, res) => {
           if (email) updateData.email = email;
           if (password) updateData.password = password;
 
-          const userRecord = await admin.auth().updateUser(uid, updateData);
+          // Primeiro, obter os dados atuais do usuário
+          const currentUserData = await admin.firestore().collection('users').doc(uid).get();
 
           // Fazer upload do ícone, se fornecido
-          let iconUrl = null;
+          let iconUrl = currentUserData.data()?.profilePic || null; // Mantém o URL atual se não houver novo ícone
           if (iconFile) {
             const fileName = `${uid}_profile.jpg`;
             const file = bucket.file(fileName);
@@ -137,23 +152,23 @@ exports.updateUserWithProfile = functions.https.onRequest((req, res) => {
 
             await file.save(imageBuffer, {
               metadata: {
-                contentType: 'image/jpeg', // ou 'image/png' se for PNG
+                contentType: 'image/jpg',
               },
             });
 
-            // Tornar o arquivo público
             await file.makePublic();
 
             iconUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
-
-            // Atualizar o photoURL do usuário de autenticação
-            await admin.auth().updateUser(uid, { photoURL: iconUrl });
+            updateData.profilePic = iconUrl; // Adicionar photoURL ao updateData
           }
+
+          // Atualizar usuário de autenticação com todos os dados
+          const userRecord = await admin.auth().updateUser(uid, updateData);
 
           // Atualizar dados do usuário no Firestore
           const userDataWithIcon = {
             ...userData,
-            iconUrl: iconUrl || userRecord.photoURL
+            profilePic: iconUrl // Usar o iconUrl atualizado ou o existente
           };
 
           await admin.firestore().collection('users').doc(uid).update(userDataWithIcon);
