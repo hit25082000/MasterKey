@@ -92,13 +92,12 @@
       </div>
       <div class="modal-body">
         <app-video-selector
-          [accessToken]="accessToken()"
           #videoSelector
         ></app-video-selector>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="videoSelectorModal.toggle()">Fechar</button>
-        <button type="button" class="btn btn-primary" (click)="updateSelectedVideos(videoSelector.selectedVideos());videoSelectorModal.toggle()">Confirmar Seleção</button>
+        <!-- <button type="button" class="btn btn-primary" (click)="updateSelectedVideos(videoSelector.selectedVideos());videoSelectorModal.toggle()">Confirmar Seleção</button> -->
       </div>
     </div>
   </div>

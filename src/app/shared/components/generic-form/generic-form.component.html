@@ -1,12 +1,15 @@
 <form [formGroup]="form()" (ngSubmit)="onSubmit()" class="form-container">
+  <h1 class="form-title">{{ formTitle() }}</h1>
   <ng-container>
     <div class="form-grid">
       @for (field of formConfig(); track trackByFn) {
-        <div class="form-group" [ngSwitch]="field.type" [class.full-width]="field.type === 'textarea'">
+        <div class="form-group" [ngSwitch]="field.type" [class.full-width]="field.type === 'textarea'" [class.checkbox-group]="field.type === 'checkbox'">
           <label [for]="field.name">{{ field.label }}</label>
 
-          <input *ngSwitchCase="'text'" [id]="field.name" [formControlName]="field.name"
-                class="form-control" [type]="field.type">
+          <ng-container *ngSwitchCase="'text'">
+            <input [id]="field.name" [formControlName]="field.name"
+                  class="form-control" type="text">
+          </ng-container>
 
           <input *ngSwitchCase="'email'" [id]="field.name" [formControlName]="field.name"
                 class="form-control" type="email">
@@ -22,6 +25,9 @@
 
           <input *ngSwitchCase="'password'" [id]="field.name" [formControlName]="field.name"
                 class="form-control" type="password">
+
+          <input *ngSwitchCase="'checkbox'" [id]="field.name" [formControlName]="field.name"
+                class="form-control-checkbox" type="checkbox">
 
           <select *ngSwitchCase="'select'" [id]="field.name" [formControlName]="field.name" class="form-control">
             <option *ngFor="let option of field.options" [value]="option.value">

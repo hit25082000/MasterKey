@@ -1,0 +1,10 @@
+<div class="category-selector">
+  <div class="modal-header">
+    <h4>Selecionar Categoria</h4>
+  </div>
+  <ul>
+    <li *ngFor="let category of allCategory()" (click)="onSelectCategory(category.id)" [class.selected]="category.id === selectedCategoryId()">
+      {{ category.name }}
+    </li>
+  </ul>
+</div>

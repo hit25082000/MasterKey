@@ -1,44 +1,111 @@
 .course-review {
-  margin-bottom: 20px;
-}
+  padding: 2rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 
-.star-rating {
-  font-size: 24px;
-  color: #ddd;
+  h3 {
+    color: #2c3e50;
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+  }
 
-  span {
+  .star-rating {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    font-size: 2rem;
+
+    span {
+      cursor: pointer;
+      color: #e2e8f0;
+      transition: all 0.2s ease;
+
+      &.filled {
+        color: #f6e05e;
+      }
+
+      &:hover {
+        transform: scale(1.1);
+      }
+    }
+  }
+
+  textarea {
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+    resize: vertical;
+    min-height: 100px;
+
+    &:focus {
+      outline: none;
+      border-color: #4a90e2;
+      box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+    }
+  }
+
+  input[type="file"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px dashed #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 1rem;
     cursor: pointer;
 
-    &.filled {
-      color: gold;
+    &:hover {
+      border-color: #4a90e2;
+      background-color: #f8fafc;
+    }
+  }
+
+  button {
+    padding: 0.75rem 1.5rem;
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover:not(:disabled) {
+      background-color: #357abd;
+      transform: translateY(-2px);
+    }
+
+    &:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
     }
   }
 }
 
-textarea, input[type="file"] {
-  width: 100%;
-  margin: 10px 0;
-}
-
-button {
-  padding: 10px 20px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  cursor: pointer;
-
-  &:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-  }
-}
-
 .review-item {
-  border: 1px solid #ddd;
-  padding: 10px;
-  margin-bottom: 10px;
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+  .star-rating {
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+  }
+
+  p {
+    color: #4a5568;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+  }
 
   video {
-    max-width: 100%;
+    width: 100%;
+    border-radius: 8px;
+    margin-top: 1rem;
   }
 }

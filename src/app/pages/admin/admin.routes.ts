@@ -28,6 +28,7 @@ import { CategoryRegisterComponent } from '../../features/category/components/ca
 import { AuthGuard } from '../../auth/guards/auth.guard';
 import { RoleGuard } from '../../auth/guards/role.guard';
 import { RoutePermission } from '../../features/role/components/permission-select/permission.enum';
+import { CourseFormComponent } from '../../features/course/components/course-form/course-form.component';
 
 export const ADMIN_ROUTES: Routes = [
 
@@ -65,5 +66,7 @@ export const ADMIN_ROUTES: Routes = [
       { path: 'category-detail/:id', component: CategoryDetailsComponent },
       { path: 'category-list', component: CategoryListComponent },
       { path: 'category-register', component: CategoryRegisterComponent },
+      { path: 'course-form', component: CourseFormComponent },
+      { path: 'course-form/:id', component: CourseFormComponent },
 
 ];

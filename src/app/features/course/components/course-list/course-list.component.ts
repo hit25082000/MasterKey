@@ -28,6 +28,6 @@ export class CourseListComponent implements OnInit {
   }
 
   editCourse(courseId: string): void {
-    this.router.navigate(['/admin/course-detail', courseId]);
+    this.router.navigate(['/admin/course-form', courseId]);
   }
 }

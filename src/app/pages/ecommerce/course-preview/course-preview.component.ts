@@ -27,8 +27,8 @@ export class CoursePreviewComponent implements OnInit {
     this.route.params.subscribe(async params => {
       const courseId = params['id'];
       this.course = await this.courseService.getById(courseId);
-      if (this.course!?.videos?.length > 0) {
-        this.previewVideo = this.course!.videos[0];
+      if (this.course!?.videos!?.length > 0) {
+        this.previewVideo = this.course!.videos![0];
         this.safeVideoUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.previewVideo.webViewLink);
       }
     });

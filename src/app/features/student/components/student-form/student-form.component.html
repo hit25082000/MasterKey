@@ -5,6 +5,7 @@
     [config]="formConfig()"
     [submitButtonText]="isEditMode() ? 'Atualizar' : 'Cadastrar'"
     (formSubmit)="onSubmit($event)"
+    [formTitle]="isEditMode() ? 'Atualizar Estudante' : 'Cadastrar Estudante'"
   ></app-generic-form>
 
   <div class="modal-buttons" *ngIf="isEditMode() && !loadingService.isLoading()">

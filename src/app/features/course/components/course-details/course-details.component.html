@@ -1,59 +1,8 @@
 <form *ngIf="!loading" [formGroup]="courseForm" (ngSubmit)="onSubmit()">
-  <div class="form-group">
-    <label for="name">Nome do Curso</label>
-    <input id="name" formControlName="name" class="form-control" />
-  </div>
-
-  <div class="form-group">
-    <label for="description">Descrição</label>
-    <textarea id="description" formControlName="description" class="form-control"></textarea>
-  </div>
-
-  <div class="form-group">
-    <label for="price">Preço</label>
-    <input id="price" formControlName="price" class="form-control" />
-  </div>
-
-  <div class="form-group">
-    <label for="promoPrice">Preço Promocional</label>
-    <input id="promoPrice" formControlName="promoPrice" type="number" class="form-control" />
-  </div>
-
-  <div class="form-group">
-    <label for="portionCount">Número de Parcelas</label>
-    <input id="portionCount" formControlName="portionCount" type="number" class="form-control" />
-  </div>
-
-  <div class="form-group">
-    <label for="hidePrice">Ocultar Preço</label>
-    <input id="hidePrice" formControlName="hidePrice" type="checkbox" />
-  </div>
-
   <button type="button" class="btn btn-primary mt-3" (click)="categorySelectorModal.toggle()">Categoria</button>
   <app-modal #categorySelectorModal>
     <app-category-selector formControlName="category" [defaultCategoryId]="categoryId()"></app-category-selector>
   </app-modal>
-
-  <div class="form-group">
-    <label for="image">Imagem do Curso</label>
-    <input type="file" id="image" (change)="onFileChange($event)" class="form-control-file" />
-    <img *ngIf="courseForm.get('image')?.value" [src]="courseForm.get('image')?.value" alt="Imagem do curso" class="mt-2" style="max-width: 200px;">
-  </div>
-
-  <div class="form-group">
-    <label for="active">Status</label>
-    <input type="checkbox" id="active" formControlName="active" class="form-control" />
-  </div>
-
-  <div class="form-group">
-    <label for="highlight">Destaque</label>
-    <input id="highlight" formControlName="highlight" type="checkbox" />
-  </div>
-
-  <div class="form-group">
-    <label for="checkoutUrl">URL de Checkout</label>
-    <input id="checkoutUrl" formControlName="checkoutUrl" class="form-control" />
-  </div>
 
   <button type="button" class="btn btn-primary mt-3" (click)="videoSelectorModal.toggle()" *ngIf="isAuthenticated">
     Selecionar Vídeos
@@ -71,13 +20,12 @@
         </div>
         <div class="modal-body">
           <app-video-selector
-            [accessToken]="accessToken()"
             #videoSelector
           ></app-video-selector>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" (click)="videoSelectorModal.toggle()">Fechar</button>
-          <button type="button" class="btn btn-primary" (click)="updateSelectedVideos(videoSelector.selectedVideos());videoSelectorModal.toggle()">Confirmar Seleção</button>
+          <!-- <button type="button" class="btn btn-primary" (click)="updateSelectedVideos(videoSelector.selectedVideos());videoSelectorModal.toggle()">Confirmar Seleção</button> -->
         </div>
       </div>
     </div>

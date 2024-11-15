@@ -54,7 +54,7 @@ export class SidenavComponent {
       label: 'Cursos',
       icon: 'fas fa-book',
       subItems: [
-        { label: 'Criar Curso', route: '/admin/course-register' },
+        { label: 'Criar Curso', route: '/admin/course-form' },
         { label: 'Listar Cursos', route: '/admin/course-list' }
       ]
     },

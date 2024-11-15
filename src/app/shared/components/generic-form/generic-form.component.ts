@@ -19,6 +19,7 @@ export class GenericFormComponent {
   formSubmit = output<any>();
   config = input<FormFieldConfig[]>([]);
   submitted = signal(false);
+  formTitle = input.required<string>();
 
   constructor(private fb: FormBuilder) {
     effect(() => {

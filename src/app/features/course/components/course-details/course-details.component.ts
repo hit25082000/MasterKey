@@ -19,7 +19,7 @@ import { BookSelectorComponent } from '../../../library/components/book-selector
 import { StorageService } from '../../../../core/services/storage.service';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { LoadingService } from '../../../../shared/services/loading.service';
-import { CategorySelectorComponent } from '../../../category/components/category-register/category-selector/category-selector.component';
+import { CategorySelectorComponent } from '../../../category/components/category-selector/category-selector.component';
 
 import { GoogleAuthService } from '../../../../core/services/google-auth.service';
 import { VideoSelectorComponent } from "../../../video/components/video-selector/video-selector.component";

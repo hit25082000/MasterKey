@@ -46,7 +46,7 @@ export class CoursePlayerComponent implements OnInit {
   loadCourse(courseId: string) {
     from(this.courseService.getById(courseId)).subscribe(course => {
       this.course = course;
-      this.currentVideo = course.videos[0];
+      this.currentVideo = course.videos![0];
       this.isLoading = false;
     });
   }

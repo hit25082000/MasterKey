@@ -1,20 +1,48 @@
 <div class="course-list">
-  <div *ngFor="let course of courses$ | async" class="course-item">
-    <h3>{{ course.name }}</h3>
-    <p>{{ course.description }}</p>
-    <p><strong>Preço:</strong> {{ course.price }}</p>
-    <p><strong>Preço Promocional:</strong> {{ course.promoPrice }}</p>
-    <p><strong>Categoria:</strong> {{ course.category }}</p>
-    <p><strong>Status:</strong> {{ course.active ? 'Ativo' : 'Inativo' }}</p>
-    <p><strong>Carga Horária:</strong> {{ course.workHours }} horas</p>
-    <p><strong>Quantidade de Vídeos:</strong> {{ course.videos.length }}</p>
-    <p><strong>Destaque:</strong> {{ course.highlight ? 'Sim' : 'Não' }}</p>
-    <strong>Vídeos:</strong>
-    <ul>
-      @for (video of course.videos; track video.id; let i = $index) {
-        <li>{{ video.name }}</li>
+  @for (course of courses$ | async; track course.id) {
+    <div class="course-item">
+      <div class="status-badge" [class.active]="course.active" [class.inactive]="!course.active">
+        {{ course.active ? 'Ativo' : 'Inativo' }}
+      </div>
+
+      <h3>{{ course.name }}</h3>
+      <p>{{ course.description }}</p>
+
+      <p>
+        <strong>Preço:</strong>
+        {{ course.price | currency:'BRL' }}
+        @if (course.promoPrice > 0) {
+          <span class="promo-price">
+            {{ course.promoPrice | currency:'BRL' }}
+          </span>
+        }
+      </p>
+
+      <p><strong>Categoria:</strong> {{ course.category }}</p>
+      <p><strong>Carga Horária:</strong> {{ course.workHours }} horas</p>
+      <p><strong>Vídeos:</strong> {{ course.videos.length }}</p>
+
+      @if (course.highlight) {
+        <p><strong>⭐ Em Destaque</strong></p>
       }
-    </ul>
-    <button (click)="editCourse(course.id)">Editar</button>
-  </div>
+
+      <strong>Lista de Vídeos:</strong>
+      <ul>
+        @for (video of course.videos; track video.id) {
+          <li>
+            {{ video.name }}
+            <span class="video-status" [class.active]="video.active">
+              {{ video.active ? '●' : '○' }}
+            </span>
+          </li>
+        }
+      </ul>
+
+      <button (click)="editCourse(course.id!)">
+        Editar Curso
+      </button>
+    </div>
+  } @empty {
+    <div class="loading"></div>
+  }
 </div>

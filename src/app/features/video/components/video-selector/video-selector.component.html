@@ -1,13 +1,24 @@
 <div class="video-selector">
   <app-search-bar [dataList]="allVideos()" #searchBarComponent></app-search-bar>
 
-  <div class="video-list">
-    <div *ngFor="let video of searchBarComponent.filteredList()" class="video-item">
-      <input type="checkbox"
-             [id]="video.id"
-             [checked]="selectedVideoIds().includes(video.id)"
-             (change)="onCheckboxChange(video.id, $event)">
-      <label [for]="video.id">{{ video.name }}</label>
+  <div class="video-list-container">
+    <div *ngIf="isLoading()" class="loading-container">
+      <div class="spinner"></div>
+      <p>Carregando vídeos...</p>
+    </div>
+
+    <div *ngIf="!isLoading()" class="video-list">
+      <div *ngFor="let video of searchBarComponent.filteredList()" class="video-item">
+        <div class="checkbox-wrapper">
+          <input
+            type="checkbox"
+            [id]="video.id"
+            [checked]="selectedVideoIds().has(video.id)"
+            (change)="onCheckboxChange(video.id, $event)"
+          >
+          <label [for]="video.id">{{ video.name }}</label>
+        </div>
+      </div>
     </div>
   </div>
 </div>

@@ -21,7 +21,7 @@ import { StorageService } from '../../../../core/services/storage.service';
 import { HandoutSelectorComponent } from '../../../ecommerce/components/handout-selector/handout-selector.component';
 import { BookSelectorComponent } from '../../../library/components/book-selector/book-selector.component';
 import { CategoryService } from '../../../category/services/category.service';
-import { CategorySelectorComponent } from '../../../category/components/category-register/category-selector/category-selector.component';
+import { CategorySelectorComponent } from '../../../category/components/category-selector/category-selector.component';
 import { NotificationService } from '../../../../shared/services/notification.service';
 
 @Component({

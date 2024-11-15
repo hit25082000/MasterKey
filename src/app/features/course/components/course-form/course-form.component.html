@@ -1,0 +1,163 @@
+<form [formGroup]="courseForm()" class="course-form">
+  <!-- Formulário Genérico para campos comuns -->
+  <app-generic-form #genericForm
+    [config]="formConfig()"
+    [submitButtonText]="submitButtonText()"
+    (formSubmit)="onSubmit($event)"
+    [formTitle]="submitButtonText() + ' Curso'"
+  >
+    <!-- Imagem atual -->
+    @if (currentImage()) {
+      <div class="current-image">
+        <img [src]="currentImage()" alt="Imagem do curso" class="course-image">
+      </div>
+    }
+  </app-generic-form>
+
+  <!-- Seção de Seletores Principais -->
+  <div class="selectors-section">
+    <!-- Categoria -->
+    <div class="selector-item" [formGroup]="courseForm()">
+      <button type="button" class="selector-button" (click)="categoryModal.toggle()">
+        <span class="button-icon">
+          <i class="fas fa-folder"></i>
+        </span>
+        <span class="button-text">
+          {{ 'Categoria: ' + selectedCategoryName() || 'Selecionar Categoria' }}
+        </span>
+      </button>
+
+      <app-modal #categoryModal position="center">
+        <div class="modal-body">
+          <app-category-selector
+            formControlName="category"
+            [defaultCategoryId]="selectedCategoryId()"
+          ></app-category-selector>
+        </div>
+      </app-modal>
+    </div>
+
+    <!-- Vídeos -->
+    <div class="selector-item">
+      <button type="button" class="selector-button" (click)="videoModal.toggle()" [disabled]="!isAuthenticated()">
+        <span class="button-icon">
+          <i class="fas fa-video"></i>
+        </span>
+        <span class="button-text">
+          {{ isAuthenticated() ? 'Gerenciar Vídeos' : 'Autenticar com Google' }}
+        </span>
+      </button>
+
+      <app-modal #videoModal position="top">
+        <div class="modal-header">
+          <h4>Selecionar Vídeos</h4>
+        </div>
+        <div class="modal-body">
+          <app-video-selector #videoSelector (videosSelected)="onVideosSelected($event)"></app-video-selector>
+        </div>
+      </app-modal>
+    </div>
+  </div>
+
+  <!-- Lista de Vídeos -->
+  <div formArrayName="videos" class="videos-list">
+    @for (videoControl of videosArray.controls; track $index) {
+      <div [formGroupName]="$index" class="video-item">
+        <div class="video-info">
+          <div class="video-edit-form">
+            <label [for]="'name-' + $index">Nome</label>
+            <input
+              [id]="'name-' + $index"
+              type="text"
+              formControlName="name"
+              class="form-control"
+              placeholder="Nome do vídeo"
+            >
+
+            <label [for]="'duration-' + $index">Duração (segundos)</label>
+            <input
+              [id]="'duration-' + $index"
+              type="number"
+              formControlName="duration"
+              class="form-control"
+              placeholder="Duração em segundos"
+            >
+
+            <div class="video-status">
+              <label>
+                <input type="checkbox" formControlName="active">
+                Ativo
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="video-actions">
+          <button
+            type="button"
+            class="btn btn-danger btn-sm"
+            (click)="removeVideo($index)"
+          >
+            Remover
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Seção de Recursos Adicionais (apenas no modo de edição) -->
+  @if (isEditMode()) {
+    <div class="resources-section">
+      <h3>Recursos Adicionais</h3>
+      <div class="resources-grid">
+        <!-- Review -->
+        <div class="resource-item">
+          <button type="button" class="resource-button" (click)="courseReviewModal.toggle()">
+            <span class="button-icon">
+              <i class="fas fa-star"></i>
+            </span>
+            <span class="button-text">Avaliações</span>
+          </button>
+          <app-modal #courseReviewModal>
+            <app-course-review [courseId]="courseId()!"></app-course-review>
+          </app-modal>
+        </div>
+
+        <!-- Apostila -->
+        <div class="resource-item">
+          <button type="button" class="resource-button" (click)="handoutSelectorModal.toggle()">
+            <span class="button-icon">
+              <i class="fas fa-book"></i>
+            </span>
+            <span class="button-text">Apostilas</span>
+          </button>
+          <app-modal #handoutSelectorModal>
+            <app-handout-selector [courseId]="courseId()!"></app-handout-selector>
+          </app-modal>
+        </div>
+
+        <!-- Biblioteca -->
+        <div class="resource-item">
+          <button type="button" class="resource-button" (click)="bookSelectorModal.toggle()">
+            <span class="button-icon">
+              <i class="fas fa-library"></i>
+            </span>
+            <span class="button-text">Biblioteca</span>
+          </button>
+          <app-modal #bookSelectorModal>
+            <app-book-selector [courseId]="courseId()!"></app-book-selector>
+          </app-modal>
+        </div>
+
+        <!-- Exames -->
+        <div class="resource-item">
+          <button type="button" class="resource-button" [routerLink]="['/admin/exams', courseId()]">
+            <span class="button-icon">
+              <i class="fas fa-file-alt"></i>
+            </span>
+            <span class="button-text">Gerenciar Exames</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</form>

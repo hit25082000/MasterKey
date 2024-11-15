@@ -1,11 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal, computed, WritableSignal, inject, effect, input, output } from '@angular/core';
+import { Component, signal, computed, OnInit, Output, EventEmitter } from '@angular/core';
 import { SearchBarComponent } from '../../../../shared/components/search-bar/search-bar.component';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { map, Observable } from 'rxjs';
-import { NotificationType } from '../../../../shared/models/notifications-enum';
+import { map, Observable, switchMap } from 'rxjs';
 import { Video } from '../../../../core/models/course.model';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { GoogleAuthService } from '../../../../core/services/google-auth.service';
 
 @Component({
   selector: 'app-video-selector',
@@ -14,89 +14,102 @@ import { NotificationService } from '../../../../shared/services/notification.se
   templateUrl: './video-selector.component.html',
   styleUrls: ['./video-selector.component.scss']
 })
-export class VideoSelectorComponent {
+export class VideoSelectorComponent implements OnInit {
   allVideos = signal<Video[]>([]);
-  selectedVideoIds = signal<string[]>([]);
-  accessToken = input.required<string | null>();
-  notificationService = inject(NotificationService);
-  httpClient = inject(HttpClient);
+  selectedVideoIds = signal<Set<string>>(new Set());
+  selectedVideos = computed(() =>
+    this.allVideos().filter(video => this.selectedVideoIds().has(video.id))
+  );
+  isLoading = signal<boolean>(false);
 
-  // Novo signal para os vídeos selecionados
-  selectedVideos = computed(() => {
-    return this.allVideos().filter(video => this.selectedVideoIds().includes(video.id));
-  });
+  @Output() videosSelected = new EventEmitter<Video[]>();
 
-  // Novo output para os vídeos selecionados
-  selectedVideosOutput = output<Video[]>();
+  constructor(
+    private httpClient: HttpClient,
+    private notificationService: NotificationService,
+    private googleAuthService: GoogleAuthService
+  ) {}
 
-  constructor() {
-    effect(() => {
-      if (this.accessToken()) {
-        this.fetchDriveVideos();
-      }
-    });
-
-    // Efeito para emitir os vídeos selecionados sempre que mudarem
-    effect(() => {
-      this.selectedVideosOutput.emit(this.selectedVideos());
-    });
+  ngOnInit() {
+    this.fetchDriveVideos();
   }
 
   onCheckboxChange(videoId: string, event: Event): void {
     const checkbox = event.target as HTMLInputElement;
+    const currentSelected = new Set(this.selectedVideoIds());
 
     if (checkbox.checked) {
-      this.selectedVideoIds.set([...this.selectedVideoIds(), videoId]);
+      currentSelected.add(videoId);
     } else {
-      this.selectedVideoIds.set(this.selectedVideoIds().filter(id => id !== videoId));
+      currentSelected.delete(videoId);
     }
+    this.selectedVideoIds.set(currentSelected);
+    this.videosSelected.emit(this.selectedVideos());
+  }
+
+  removeVideo(videoId: string) {
+    const currentSelected = new Set(this.selectedVideoIds());
+    currentSelected.delete(videoId);
+    this.selectedVideoIds.set(currentSelected);
+    this.videosSelected.emit(this.selectedVideos());
   }
 
   fetchDriveVideos() {
-    if (!this.accessToken()) {
-      this.notificationService.error(
-        'Autenticação necessária para buscar vídeos.',
-        1
-      );
-      return;
-    }
+    this.googleAuthService.getAccessToken().pipe(
+      switchMap(token => {
+        if (!token) {
+          throw new Error('Token não disponível');
+        }
 
-    const endpoint = 'https://www.googleapis.com/drive/v3/files';
-    const headers = new HttpHeaders({
-      Authorization: `Bearer ${this.accessToken()}`,
-    });
+        const endpoint = 'https://www.googleapis.com/drive/v3/files';
+        const headers = new HttpHeaders({
+          Authorization: `Bearer ${token}`,
+        });
 
-    const params = {
-      q: "mimeType contains 'video/'",
-      fields: 'nextPageToken, files(id, name, mimeType, webViewLink, webContentLink)',
-      pageSize: '100',
-      orderBy: 'modifiedTime desc'
-    };
+        const params = {
+          q: "mimeType contains 'video/'",
+          fields: 'files(id, name, mimeType, webViewLink)',
+          pageSize: '100',
+          orderBy: 'modifiedTime desc'
+        };
 
-    this.listFiles(endpoint, headers, params).subscribe(
-      (files) => {
-        this.allVideos.set(files);
-        console.log(files)
+        return this.listFiles(endpoint, headers, params);
+      })
+    ).subscribe({
+      next: (files) => {
+        this.allVideos.set(files.map(file => ({
+          id: file.id,
+          name: file.name,
+          duration: 0,
+          webViewLink: this.formatVideoLink(file.webViewLink),
+          active: true
+        })));
       },
-      (error) => {
-        console.error('Erro ao buscar vídeos:', error);
-        this.notificationService.error(
-          'Erro ao buscar vídeos do Google Drive.',
-          1
-        );
+      error: (error) => {
+        this.notificationService.error('Erro ao buscar vídeos do Google Drive: ' + error.message, 5000);
       }
+    });
+  }
+
+  private formatVideoLink(webViewLink: string): string {
+    if (webViewLink) {
+      const match = webViewLink.match(/\/d\/(.+?)\/view/);
+      if (match && match[1]) {
+        const videoId = match[1];
+        return `https://drive.google.com/file/d/${videoId}/preview`;
+      }
+    }
+    return webViewLink;
+  }
+
+  private listFiles(endpoint: string, headers: HttpHeaders, params: any): Observable<any[]> {
+    return this.httpClient.get(endpoint, { headers, params }).pipe(
+      map((response: any) => response.files || [])
     );
   }
 
-  listFiles(endpoint: string, headers: HttpHeaders, params: any): Observable<any[]> {
-    return this.httpClient.get(endpoint, { headers, params }).pipe(
-      map((response: any) => {
-        if (response.files && response.files.length > 0) {
-          return response.files;
-        } else {
-          return [];
-        }
-      })
-    );
+  // Método público para desselecionar um vídeo
+  deselectVideo(videoId: string) {
+    this.selectedVideoIds.set(new Set([...this.selectedVideoIds()].filter(id => id !== videoId)));
   }
 }

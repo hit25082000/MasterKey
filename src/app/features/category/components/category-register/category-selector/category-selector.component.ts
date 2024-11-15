@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal, computed, input, inject, forwardRef } from '@angular/core';
-import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Component, OnInit, signal, input, inject, forwardRef } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { CategoryService } from '../../../services/category.service';
 import { Category } from '../../../../../core/models/category.model';
 
@@ -9,47 +9,45 @@ import { Category } from '../../../../../core/models/category.model';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './category-selector.component.html',
-  styleUrls: ['./category-selector.component.scss'],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => CategorySelectorComponent),
-    multi: true,
-  }]
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => CategorySelectorComponent),
+      multi: true
+    }
+  ]
 })
-export class CategorySelectorComponent implements OnInit {
+export class CategorySelectorComponent implements OnInit, ControlValueAccessor {
   allCategory = signal<Category[]>([]);
   selectedCategoryId = signal<string>('');
-  categoryService = inject(CategoryService)
+  categoryService = inject(CategoryService);
   defaultCategoryId = input<string>('');
-
-  selectedClasses = computed(() => {
-    return this.allCategory().filter(studentClass => this.selectedCategoryId().includes(studentClass.id));
-  });
 
   private onChange: (value: string) => void = () => {};
   private onTouched: () => void = () => {};
 
   async ngOnInit() {
-    if(this.defaultCategoryId()){
-      this.autoSelect(this.defaultCategoryId())
-    }
     await this.loadallCategory();
+
+    if (this.defaultCategoryId()) {
+      const category = this.allCategory().find(c => c.id === this.defaultCategoryId());
+      if (category) {
+        this.writeValue(category.id);
+      }
+    }
   }
 
   async loadallCategory() {
     this.allCategory.set(await this.categoryService.getAll());
   }
 
-  autoSelect(defaultSelect : string){
-    this.selectedCategoryId.set(defaultSelect)
-    this.onChange(defaultSelect);
+  onSelectCategory(category: Category): void {
+    this.selectedCategoryId.set(category.id);
+    this.onChange(category.id);
+    this.onTouched();
   }
 
-  onSelectCategory(categoryId: string): void {
-    this.selectedCategoryId.set(categoryId);
-    this.onChange(categoryId);
-  }
-
+  // ControlValueAccessor implementation
   writeValue(value: string): void {
     if (value) {
       this.selectedCategoryId.set(value);
@@ -65,6 +63,6 @@ export class CategorySelectorComponent implements OnInit {
   }
 
   setDisabledState?(isDisabled: boolean): void {
-    // Implementar lógica de desabilitação, se necessário
+    // Implementar se necessário
   }
 }
