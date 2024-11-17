@@ -5,4 +5,8 @@
     </div>
   </div>
   <div (click)="toggle()" class="overlay"></div>
+  @if (showCancelButton()) {
+    <button (click)="toggle()">
+      {{cancelButtonText}}</button>
+  }
 </ng-container>

@@ -1,7 +1,7 @@
 <form *ngIf="!loading" [formGroup]="courseForm" (ngSubmit)="onSubmit()">
   <button type="button" class="btn btn-primary mt-3" (click)="categorySelectorModal.toggle()">Categoria</button>
   <app-modal #categorySelectorModal>
-    <app-category-selector formControlName="category" [defaultCategoryId]="categoryId()"></app-category-selector>
+    <!-- <app-category-selector formControlName="category" [defaultCategoryId]="categoryId()"></app-category-selector> -->
   </app-modal>
 
   <button type="button" class="btn btn-primary mt-3" (click)="videoSelectorModal.toggle()" *ngIf="isAuthenticated">

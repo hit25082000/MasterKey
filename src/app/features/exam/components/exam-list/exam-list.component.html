@@ -1,21 +1,52 @@
-<h2>Lista de Exames</h2>
+<div class="exam-list-container">
+  <div class="list-header">
+    <h2>Lista de Exames</h2>
+    <button class="btn-add" (click)="examFormModal.toggle()">
+      <i class="fas fa-plus"></i>
+      Criar Novo Exame
+    </button>
+  </div>
 
-<button (click)="openExamForm()">Criar Novo Exame</button>
+  <div class="exam-grid">
+    @for (exam of exams$ | async; track exam.id) {
+      <div class="exam-card">
+        <div class="exam-content">
+          <h3>{{ exam.title }}</h3>
+          <p>{{ exam.description }}</p>
+          <div class="exam-info">
+            <span>{{ exam.questions?.length || 0 }} questões</span>
+            <span>Criado em: {{ exam.createdAt | date }}</span>
+          </div>
+        </div>
+        <div class="exam-actions">
+          <button class="btn-edit" (click)="editExam(exam)">
+            <i class="fas fa-edit"></i>
+            Editar
+          </button>
+          <button class="btn-delete" (click)="deleteExam(exam)">
+            <i class="fas fa-trash"></i>
+            Apagar
+          </button>
+        </div>
+      </div>
+    } @empty {
+      <div class="no-exams">
+        <i class="fas fa-file-alt"></i>
+        <p>Nenhum exame encontrado</p>
+      </div>
+    }
+  </div>
 
-<ul>
-  @for (exam of exams$ | async; track exam.id) {
-  <li>
-    {{ exam.title }}
-    <button (click)="editExam(exam)">Editar</button>
-    <button (click)="deleteExam(exam)">Apagar</button>
-  </li>
-  }
-</ul>
-
-<app-exam-form
-  *ngIf="showForm"
-  [exam]="selectedExam!"
-  (formSubmit)="onFormSubmit($event)"
-  (formCancel)="onFormCancel()"
->
-</app-exam-form>
+    <app-modal
+      position="center"
+      #examFormModal
+      [showCancelButton]="true"
+      cancelButtonText="Cancelar"
+    >
+      <app-exam-form
+        [exam]="selectedExam"
+        (formSubmit)="onFormSubmit($event)"
+        (formCancel)="examFormModal.toggle()"
+      ></app-exam-form>
+    </app-modal>
+</div>

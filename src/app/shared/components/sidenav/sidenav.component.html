@@ -6,22 +6,37 @@
 >
   <ul>
     <li *ngFor="let item of menuItems">
-      <button (click)="toggleDropdown(item.id)">
+      <button
+        (click)="toggleDropdown(item.id)"
+        [class.active-parent]="isDropdownOpen(item.id) && hasActiveRoute(item)"
+      >
         <i class="icon" [class]="item.icon"></i>
         <span class="label">{{item.label}}</span>
       </button>
       <ul [class.dropdown]="true" [class.active]="isDropdownOpen(item.id)">
         <li *ngFor="let subItem of item.subItems">
           <ng-container *ngIf="!subItem.isModal">
-            <a [routerLink]="[subItem.route]">{{subItem.label}}</a>
+            <a
+              [routerLink]="[subItem.route]"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{exact: true}"
+              [class.active]="isRouteActive(subItem.route)"
+            >
+              {{subItem.label}}
+            </a>
           </ng-container>
           <ng-container *ngIf="subItem.isModal">
-            <app-modal #modalWhatsAppMessage>
-              <app-whats-app-message></app-whats-app-message>
-            </app-modal>
+            <a class="modal-link" (click)="openModal(subItem)">
+              {{subItem.label}}
+            </a>
           </ng-container>
         </li>
       </ul>
     </li>
   </ul>
 </div>
+
+<!-- Modais -->
+<app-modal #whatsAppModal position="center">
+  <app-whats-app-message></app-whats-app-message>
+</app-modal>

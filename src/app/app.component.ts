@@ -4,6 +4,7 @@ import { LoadingOverlayComponent } from '../app/shared/components/loading-overla
 import { ChatComponent } from './features/chat/components/chat-modal/chat.component';
 import { NotificationService, NotificationType } from './shared/services/notification.service';
 import { NotificationsComponent } from './shared/components/notification/notification.component';
+import { WhatsAppStatusWidgetComponent } from './features/chat/components/whats-app-status-widget/whats-app-status-widget.component';
 
 @Component({
   selector: 'app-root',
@@ -11,8 +12,8 @@ import { NotificationsComponent } from './shared/components/notification/notific
   imports: [
     RouterOutlet,
     LoadingOverlayComponent,
-    ChatComponent,
-    NotificationsComponent
+    NotificationsComponent,
+    WhatsAppStatusWidgetComponent
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']

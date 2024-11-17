@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, input, Input } from '@angular/core';
 import { ModalPosition } from './modal.types';
 
 @Component({
@@ -16,6 +16,9 @@ export class ModalComponent {
   @Input() id?: string;
 
   show: boolean = false;
+
+  showCancelButton = input(false)
+  cancelButtonText = "Cancelar"
 
   get modalPositionClass(): string {
     return `modal-position-${this.position}`;

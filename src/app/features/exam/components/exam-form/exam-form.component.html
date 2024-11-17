@@ -1,51 +1,85 @@
-<form [formGroup]="examForm" (ngSubmit)="onSubmit()">
-  <div>
-    <label for="title">Título</label>
-    <input id="title" formControlName="title" required />
+<form [formGroup]="examForm" (ngSubmit)="onSubmit()" class="exam-form">
+  <div class="form-header">
+    <h2>{{ exam() ? 'Editar' : 'Novo' }} Exame</h2>
   </div>
 
-  <div>
-    <label for="description">Descrição</label>
-    <textarea
-      id="description"
-      formControlName="description"
-      required
-    ></textarea>
-  </div>
+  <div class="form-content">
+    <div class="form-group">
+      <label for="title">Título</label>
+      <input id="title" formControlName="title" required class="form-control" />
+    </div>
 
-  <div formArrayName="questions">
-    <h3>Questões</h3>
-    <button type="button" (click)="addQuestion()">Adicionar Questão</button>
+    <div class="form-group">
+      <label for="description">Descrição</label>
+      <textarea
+        id="description"
+        formControlName="description"
+        required
+        class="form-control"
+      ></textarea>
+    </div>
 
-    @for (questionForm of questionsFormArray.controls; track $index) {
-    <div [formGroupName]="$index">
-      <input formControlName="text" placeholder="Texto da questão" />
-
-      <div formArrayName="options">
-        @for (option of questionForm.get('options')?.value; track $index) {
-        <input
-          [formControlName]="$index"
-          placeholder="Opção {{ $index + 1 }}"
-        />
-        }
+    <div formArrayName="questions" class="questions-section">
+      <div class="section-header">
+        <h3>Questões</h3>
+        <button type="button" class="btn-add" (click)="addQuestion()">
+          <i class="fas fa-plus"></i>
+          Adicionar Questão
+        </button>
       </div>
 
-      <p>
-        Alternativa correta:
-        <select formControlName="correctAnswer">
-          @for (option of Options; track $index) {
-          <option [value]="option">{{ option }}</option>
-          }
-        </select>
-      </p>
+      @for (questionForm of questionsFormArray.controls; track $index) {
+        <div [formGroupName]="$index" class="question-card">
+          <div class="question-header">
+            <span class="question-number">Questão {{ $index + 1 }}</span>
+            <button type="button" class="btn-remove" (click)="removeQuestion($index)">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
 
-      <button type="button" (click)="removeQuestion($index)">
-        Remover Questão
-      </button>
+          <div class="question-content">
+            <input
+              formControlName="text"
+              placeholder="Digite a pergunta aqui..."
+              class="form-control question-text"
+            />
+
+            <div formArrayName="options" class="options-grid">
+              @for (option of questionForm.get('options')?.value; track $index) {
+                <div class="option-item">
+                  <span class="option-label">{{ Options[$index] }}</span>
+                  <input
+                    [formControlName]="$index"
+                    placeholder="Opção {{ $index + 1 }}"
+                    class="form-control"
+                  />
+                </div>
+              }
+            </div>
+
+            <div class="correct-answer">
+              <label>Alternativa correta:</label>
+              <select formControlName="correctAnswer" class="form-control">
+                <option value="">Selecione a resposta correta</option>
+                @for (option of Options; track $index) {
+                  <option [value]="option">{{ option }}</option>
+                }
+              </select>
+            </div>
+          </div>
+        </div>
+      }
     </div>
-    }
   </div>
 
-  <button type="submit" [disabled]="examForm.invalid">Salvar</button>
-  <button type="button" (click)="onCancel()">Cancelar</button>
+  <div class="form-actions">
+    <button type="button" class="btn-secondary" (click)="onCancel()">
+      <i class="fas fa-times"></i>
+      Cancelar
+    </button>
+    <button type="submit" class="btn-primary" [disabled]="examForm.invalid">
+      <i class="fas fa-save"></i>
+      {{ exam() ? 'Atualizar' : 'Criar' }} Exame
+    </button>
+  </div>
 </form>

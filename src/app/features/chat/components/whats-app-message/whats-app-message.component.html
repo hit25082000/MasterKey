@@ -1,29 +1,101 @@
 <div class="whatsapp-message-container">
-  <h2>Enviar Mensagem WhatsApp</h2>
+  <div class="header">
+    <h2>Enviar Mensagem WhatsApp</h2>
+  </div>
 
   <div class="user-list">
-    <h3>Selecione os usuários:</h3>
+    <h3>Selecione os Destinatários</h3>
+    <div class="search-box">
+      <input type="text" placeholder="Buscar alunos..." [(ngModel)]="searchTerm">
+    </div>
     <ul>
-      <li *ngFor="let user of users">
-        <label>
-          <input type="checkbox" (change)="toggleUserSelection(user.id)">
-          {{ user.name }} ({{ user.phone1 }})
-        </label>
-      </li>
+      @for (user of filteredUsers(); track user.id) {
+        <li>
+          <label class="user-item">
+            <input
+              type="checkbox"
+              [checked]="selectedUsers().includes(user.id)"
+              (change)="toggleUserSelection(user.id)"
+            >
+            <span class="user-info">
+              <span class="user-name">{{ user.name }}</span>
+              <span class="user-phone">{{ user.phone1 }}</span>
+            </span>
+          </label>
+        </li>
+      }
     </ul>
   </div>
 
   <div class="message-editor">
-    <h3>Escreva sua mensagem:</h3>
-    <textarea [(ngModel)]="message" rows="5" placeholder="Digite sua mensagem aqui..."></textarea>
+    <h3>Mensagem</h3>
     <div class="markdown-buttons">
-      <button (click)="addMarkdown('**', '**')">Negrito</button>
-      <button (click)="addMarkdown('*', '*')">Itálico</button>
-      <button (click)="addMarkdown('~~', '~~')">Tachado</button>
+      <button (click)="addMarkdown('*', '*')" title="Itálico">
+        <i class="fas fa-italic"></i>
+      </button>
+      <button (click)="addMarkdown('**', '**')" title="Negrito">
+        <i class="fas fa-bold"></i>
+      </button>
+      <button (click)="addMarkdown('~~', '~~')" title="Tachado">
+        <i class="fas fa-strikethrough"></i>
+      </button>
+    </div>
+    <textarea
+      [ngModel]="getMessage()"
+      (ngModelChange)="setMessage($event)"
+      placeholder="Digite sua mensagem..."
+      [class.error]="getMessage().length > MAX_MESSAGE_LENGTH"
+    ></textarea>
+    <div class="char-counter" [class.error]="getMessage().length > MAX_MESSAGE_LENGTH">
+      {{ getMessage().length }}/{{ MAX_MESSAGE_LENGTH }}
     </div>
   </div>
 
-  <button (click)="sendMessage()" [disabled]="selectedUsers.length === 0 || !message || isSending">
-    {{ isSending ? 'Enviando...' : 'Enviar Mensagem' }}
-  </button>
+  <div class="selected-count">
+    Selecionados: {{ selectedUsers().length }} alunos
+  </div>
+
+  <div class="message-status" *ngIf="messageStatuses().length > 0">
+    <h3>Status do Envio</h3>
+    <ul>
+      @for (status of messageStatuses(); track status.userId) {
+        <li [class]="status.status">
+          {{ getUserName(status.userId) }}:
+          @if (status.status === 'pending') {
+            <span><i class="fas fa-spinner fa-spin"></i> Enviando...</span>
+          } @else if (status.status === 'success') {
+            <span><i class="fas fa-check"></i> Enviado</span>
+          } @else {
+            <span><i class="fas fa-times"></i> Erro: {{ status.error }}</span>
+          }
+        </li>
+      }
+    </ul>
+  </div>
+
+  <div class="button-group">
+    <button
+      class="send-button"
+      (click)="sendMessage()"
+      [disabled]="isSending() || selectedUsers().length === 0 || !getMessage() || getMessage().length > MAX_MESSAGE_LENGTH"
+    >
+      @if (isSending()) {
+        <i class="fas fa-spinner fa-spin"></i>
+        Enviando...
+      } @else {
+        <i class="fab fa-whatsapp"></i>
+        Enviar Mensagem
+      }
+    </button>
+
+    <!-- Botão de teste -->
+    <button
+      class="test-button"
+      (click)="testContinuousMessage()"
+      [disabled]="isSending()"
+    >
+      <i class="fas fa-vial"></i>
+      Testar Widget
+    </button>
+  </div>
 </div>

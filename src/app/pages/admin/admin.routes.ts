@@ -63,9 +63,9 @@ export const ADMIN_ROUTES: Routes = [
       { path: 'employee-detail/:id', component: EmployeeDetailsComponent },
       { path: 'employee-list', component: EmployeeListComponent },
       { path: 'employee-form', component: EmployeeFormComponent },
-      { path: 'category-detail/:id', component: CategoryDetailsComponent },
       { path: 'category-list', component: CategoryListComponent },
-      { path: 'category-register', component: CategoryRegisterComponent },
+      { path: 'category-form', component: CategoryRegisterComponent },
+      { path: 'category-form/:id', component: CategoryRegisterComponent },
       { path: 'course-form', component: CourseFormComponent },
       { path: 'course-form/:id', component: CourseFormComponent },
 

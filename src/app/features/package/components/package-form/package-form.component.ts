@@ -64,14 +64,6 @@ export class PackageFormComponent implements OnInit {
         errorMessages: {required:'Preço é obrigatório'}
       },
       {
-        name: 'description',
-        label: 'Descrição',
-        type: 'textarea',
-        value: '',
-        validators: [Validators.required],
-        errorMessages: { required:'Descrição é obrigatória'}
-      },
-      {
         name: 'workHours',
         label: 'Carga Horária',
         type: 'number',
@@ -80,7 +72,15 @@ export class PackageFormComponent implements OnInit {
         errorMessages: {
           required:'Carga horária é obrigatória'
         }
-      }
+      },
+      {
+        name: 'description',
+        label: 'Descrição',
+        type: 'textarea',
+        value: '',
+        validators: [Validators.required],
+        errorMessages: { required:'Descrição é obrigatória'}
+      },
     ]);
   }
 

@@ -7,9 +7,10 @@ import { NotificationService } from '../../../../shared/services/notification.se
 import { Router, ActivatedRoute } from '@angular/router';
 import { GenericFormComponent } from '../../../../shared/components/generic-form/generic-form.component';
 import { Validators } from '@angular/forms';
+import { Category } from '../../../../core/models/category.model';
 
 @Component({
-  selector: 'app-category-details',
+  selector: 'app-category-form',
   standalone: true,
   imports: [CommonModule, GenericFormComponent],
   template: `
@@ -18,9 +19,9 @@ import { Validators } from '@angular/forms';
     } @else {
       <app-generic-form
         [config]="formConfig()"
-        [submitButtonText]="'Atualizar Categoria'"
+        [submitButtonText]="isEditMode() ? 'Atualizar Categoria' : 'Criar Categoria'"
         (formSubmit)="onSubmit($event)"
-        [formTitle]="'Editar Categoria'"
+        [formTitle]="isEditMode() ? 'Editar Categoria' : 'Nova Categoria'"
       >
         @if (currentImage()) {
           <div class="current-image">
@@ -42,6 +43,21 @@ import { Validators } from '@angular/forms';
       text-align: center;
       padding: 2rem;
       color: #666;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+
+      &::before {
+        content: '';
+        width: 20px;
+        height: 20px;
+        border: 2px solid #4a90e2;
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
     }
 
     .current-image {
@@ -52,16 +68,25 @@ import { Validators } from '@angular/forms';
         max-width: 300px;
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+
+        &:hover {
+          transform: scale(1.05);
+        }
       }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
   `]
 })
-export class CategoryDetailsComponent implements OnInit {
+export class CategoryFormComponent implements OnInit {
   formConfig = signal<FormFieldConfig[]>([]);
   currentImage = signal<string>('');
   loading = signal(true);
   selectedFile: File | null = null;
-  categoryId: string = '';
+  categoryId = signal<string | null>(null);
 
   constructor(
     private categoryManagementService: CategoryManagementService,
@@ -72,42 +97,60 @@ export class CategoryDetailsComponent implements OnInit {
   ) {}
 
   async ngOnInit() {
-    this.categoryId = this.route.snapshot.paramMap.get('id')!;
-    if (this.categoryId) {
+    const id = this.route.snapshot.paramMap.get('id');
+    this.categoryId.set(id);
+
+    if (this.isEditMode()) {
       await this.loadCategory();
+    } else {
+      this.initNewCategory();
     }
   }
 
-  async loadCategory() {
+  isEditMode(): boolean {
+    return !!this.categoryId();
+  }
+
+  private initNewCategory() {
+    this.initFormConfig();
+    this.loading.set(false);
+  }
+
+  private async loadCategory() {
     try {
-      const category = await this.categoryService.getById(this.categoryId);
+      const category = await this.categoryService.getById(this.categoryId()!);
+      console.log(this.categoryId()!)
       this.currentImage.set(category.image || '');
 
-      this.formConfig.set([
-        {
-          name: 'name',
-          label: 'Nome da Categoria',
-          type: 'text',
-          value: category.name,
-          validators: [Validators.required],
-          errorMessages: {
-            required: 'Nome é obrigatório'
-          }
-        },
-        {
-          name: 'image',
-          label: 'Imagem da Categoria',
-          type: 'file',
-          value: '',
-          onFileChange: (event: Event) => this.onFileChange(event)
-        }
-      ]);
+      this.initFormConfig(category);
     } catch (error) {
       this.notificationService.error('Erro ao carregar categoria');
       console.error(error);
     } finally {
       this.loading.set(false);
     }
+  }
+
+  private initFormConfig(category?: Category) {
+    this.formConfig.set([
+      {
+        name: 'name',
+        label: 'Nome da Categoria',
+        type: 'text',
+        value: category?.name || '',
+        validators: [Validators.required],
+        errorMessages: {
+          required: 'Nome é obrigatório'
+        }
+      },
+      {
+        name: 'image',
+        label: 'Imagem da Categoria',
+        type: 'file',
+        value: '',
+        onFileChange: (event: Event) => this.onFileChange(event)
+      }
+    ]);
   }
 
   onFileChange(event: Event) {
@@ -126,15 +169,28 @@ export class CategoryDetailsComponent implements OnInit {
 
   async onSubmit(formData: any) {
     try {
-      await this.categoryManagementService.update(
-        this.categoryId,
-        formData,
-        this.selectedFile
-      );
-      this.notificationService.success('Categoria atualizada com sucesso');
+      if (this.isEditMode()) {
+        await this.categoryManagementService.update(
+          this.categoryId()!,
+          formData,
+          this.selectedFile
+        );
+        this.notificationService.success('Categoria atualizada com sucesso');
+      } else {
+        const newCategory: Category = {
+          ...formData
+        };
+        await this.categoryManagementService.create(newCategory, this.selectedFile);
+        this.notificationService.success('Categoria criada com sucesso');
+      }
+
       this.router.navigate(['/admin/category-list']);
     } catch (error) {
-      this.notificationService.error('Erro ao atualizar categoria');
+      this.notificationService.error(
+        this.isEditMode()
+          ? 'Erro ao atualizar categoria'
+          : 'Erro ao criar categoria'
+      );
       console.error(error);
     }
   }

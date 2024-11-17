@@ -1,19 +1,58 @@
 :host {
   display: block;
-  padding: 2rem;
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
-form {
+.exam-form {
   background: white;
   border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  padding: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  animation: slideIn 0.3s ease-out;
+  min-height: 60vh;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
 
-  h3 {
-    color: #2c3e50;
-    font-size: 1.25rem;
-    margin-bottom: 1.5rem;
-    font-weight: 600;
+  .form-header {
+    padding: 1.5rem 2rem;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: white;
+
+    h2 {
+      margin: 0;
+      color: #2d3748;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+  }
+
+  .form-content {
+    padding: 2rem;
+    flex: 1;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: #f7fafc;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #cbd5e0;
+      border-radius: 4px;
+
+      &:hover {
+        background: #a0aec0;
+      }
+    }
   }
 
   .form-group {
@@ -26,12 +65,12 @@ form {
       font-weight: 500;
     }
 
-    input, textarea, select {
-      width: 100%;
+    .form-control {
       padding: 0.75rem;
       border: 2px solid #e2e8f0;
-      border-radius: 6px;
+      border-radius: 8px;
       font-size: 0.95rem;
+      transition: all 0.2s ease;
 
       &:focus {
         outline: none;
@@ -40,81 +79,235 @@ form {
       }
     }
 
-    textarea {
+    textarea.form-control {
       min-height: 100px;
       resize: vertical;
     }
   }
 
   .questions-section {
-    margin-top: 2rem;
-    padding: 1.5rem;
-    background: #f8fafc;
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+
+      h3 {
+        margin: 0;
+        color: #2d3748;
+        font-size: 1.25rem;
+        font-weight: 600;
+      }
+    }
+  }
+
+  .question-card {
+    background: white;
+    border: 1px solid #e2e8f0;
     border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    animation: fadeIn 0.3s ease-out;
 
-    .question-item {
-      background: white;
-      border-radius: 8px;
-      padding: 1.5rem;
+    &:hover {
+      border-color: #4a90e2;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .question-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 1rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 
-      .options-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-        margin: 1rem 0;
+      .question-number {
+        font-weight: 600;
+        color: #4a5568;
+      }
+    }
+
+    .question-content {
+      .question-text {
+        margin-bottom: 1rem;
+      }
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin: 1rem 0;
+
+      .option-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        .option-label {
+          font-weight: 600;
+          color: #4a5568;
+          width: 30px;
+        }
+      }
+    }
+
+    .correct-answer {
+      margin-top: 1rem;
+
+      label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #4a5568;
+        font-weight: 500;
       }
 
-      .actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 1rem;
-        margin-top: 1rem;
+      select {
+        width: 200px;
       }
     }
   }
 
   .form-actions {
+    padding: 1.5rem 2rem;
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
     display: flex;
     justify-content: flex-end;
     gap: 1rem;
-    margin-top: 2rem;
-    padding-top: 1rem;
-    border-top: 1px solid #e2e8f0;
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    background: white;
+  }
+}
 
-    button {
-      padding: 0.75rem 1.5rem;
-      border-radius: 6px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s ease;
+// Botões
+.btn-primary, .btn-secondary, .btn-add, .btn-remove {
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 
-      &.primary {
-        background-color: #4a90e2;
-        color: white;
-        border: none;
+  i {
+    font-size: 1rem;
+  }
 
-        &:hover:not(:disabled) {
-          background-color: #357abd;
-          transform: translateY(-2px);
-        }
-      }
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+}
 
-      &.secondary {
-        background-color: #e2e8f0;
-        color: #4a5568;
-        border: none;
+.btn-primary {
+  background: #4a90e2;
+  color: white;
 
-        &:hover {
-          background-color: #cbd5e0;
-          transform: translateY(-2px);
-        }
-      }
+  &:hover:not(:disabled) {
+    background: #357abd;
+    transform: translateY(-1px);
+  }
+}
 
-      &:disabled {
-        opacity: 0.7;
-        cursor: not-allowed;
+.btn-secondary {
+  background: #e2e8f0;
+  color: #4a5568;
+
+  &:hover {
+    background: #cbd5e0;
+    transform: translateY(-1px);
+  }
+}
+
+.btn-add {
+  background: #48bb78;
+  color: white;
+
+  &:hover {
+    background: #38a169;
+    transform: translateY(-1px);
+  }
+}
+
+.btn-remove {
+  padding: 0.5rem;
+  background: #fc8181;
+  color: white;
+
+  &:hover {
+    background: #f56565;
+    transform: translateY(-1px);
+  }
+}
+
+// Animações
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+// Ajustes para o modal
+:host-context(app-modal) {
+  .exam-form {
+    border-radius: 0;
+    box-shadow: none;
+    max-height: none;
+    max-width: 1400px;
+  }
+}
+
+// Responsividade melhorada
+@media (max-width: 1400px) {
+  :host-context(app-modal) {
+    .exam-form {
+      width: 90vw;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+
+  .exam-form {
+    .form-header,
+    .form-content,
+    .form-actions {
+      padding: 1rem;
+    }
+
+    .question-card {
+      padding: 1rem;
+    }
+
+    .options-grid {
+      grid-template-columns: 1fr !important;
+      gap: 0.75rem;
+    }
+
+    .form-actions {
+      flex-direction: column;
+
+      button {
+        justify-content: center;
       }
     }
   }

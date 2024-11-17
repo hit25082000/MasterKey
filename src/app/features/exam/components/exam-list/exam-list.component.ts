@@ -6,11 +6,12 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ExamService } from '../../../../core/services/exam.service';
 import { ExamFormComponent } from '../exam-form/exam-form.component';
+import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 
 @Component({
   selector: 'app-exam-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, ExamFormComponent],
+  imports: [CommonModule, RouterLink, ExamFormComponent, ModalComponent],
   templateUrl: './exam-list.component.html',
   styleUrls: ['./exam-list.component.scss'],
 })

@@ -53,6 +53,14 @@
       transition: all 0.3s ease;
       white-space: nowrap;
     }
+
+    &.active-parent {
+      background: rgba(255, 255, 255, 0.15);
+
+      .icon {
+        color: #4a90e2;
+      }
+    }
   }
 
   &.expanded button .label {
@@ -86,6 +94,38 @@
         color: #fff;
         transform: translateX(4px);
       }
+
+      &.active {
+        background: rgba(74, 144, 226, 0.15);
+        color: #4a90e2;
+        font-weight: 500;
+
+        &::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 0;
+          bottom: 0;
+          width: 3px;
+          background: #4a90e2;
+        }
+      }
+
+      &.active-route {
+        background: rgba(74, 144, 226, 0.15);
+        color: #4a90e2;
+        font-weight: 500;
+
+        &::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 0;
+          bottom: 0;
+          width: 3px;
+          background: #4a90e2;
+        }
+      }
     }
   }
 }
@@ -100,3 +140,41 @@ button:hover .icon {
 }
 
 // Adicione isso ao seu componente TypeScript para controlar a animação do dropdown
+
+// Animação para transição de cores
+button, a {
+  transition: all 0.3s ease;
+}
+
+// Efeito de hover melhorado
+.dropdown a:hover {
+  &:not(.active) {
+    background: rgba(255, 255, 255, 0.1);
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: rgba(74, 144, 226, 0.5);
+    }
+  }
+}
+
+.modal-link {
+  padding: 10px 12px 10px 44px;
+  color: #e0e0e0;
+  text-decoration: none;
+  display: block;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    transform: translateX(4px);
+  }
+}

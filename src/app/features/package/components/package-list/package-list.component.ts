@@ -36,6 +36,10 @@ export class PackageListComponent implements OnInit {
     //this.packageManagementService.delete(id)
   }
 
+  createPackage(){
+    this.router.navigate(['/admin/package-form']);
+  }
+
   editStudent(id : string){
     this.router.navigate(['/admin/package-form', id]);
   }

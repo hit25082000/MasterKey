@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Output } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, EventEmitter, Output, ViewChild } from '@angular/core';
+import { RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { ModalComponent } from '../modal/modal.component';
 import { WhatsAppMessageComponent } from '../../../features/chat/components/whats-app-message/whats-app-message.component';
+import { filter } from 'rxjs/operators';
 
 interface SubMenuItem {
   label: string;
@@ -21,7 +22,7 @@ interface MenuItem {
 @Component({
   selector: 'app-sidenav',
   standalone: true,
-  imports: [RouterLink, CommonModule, ModalComponent, WhatsAppMessageComponent],
+  imports: [RouterLink, RouterLinkActive, CommonModule, ModalComponent, WhatsAppMessageComponent],
   templateUrl: './sidenav.component.html',
   styleUrls: ['./sidenav.component.scss'],
 })
@@ -29,6 +30,9 @@ export class SidenavComponent {
   @Output() expanded = new EventEmitter<boolean>();
   isExpanded = false;
   dropdownState: { [key: string]: boolean } = {};
+  activeRoute = '';
+
+  @ViewChild('whatsAppModal') whatsAppModal!: ModalComponent;
 
   menuItems: MenuItem[] = [
     {
@@ -72,7 +76,7 @@ export class SidenavComponent {
       label: 'Categorias',
       icon: 'fas fa-tags',
       subItems: [
-        { label: 'Criar Categorias', route: '/admin/category-register' },
+        { label: 'Criar Categorias', route: '/admin/category-form' },
         { label: 'Listar Categorias', route: '/admin/category-list' }
       ]
     },
@@ -105,27 +109,111 @@ export class SidenavComponent {
     }
   ];
 
-  expandSidenav() {
-    this.isExpanded = true;
-    this.expanded.emit(true);
+  constructor(private router: Router) {
+    // Observa mudanças na rota
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe((event: any) => {
+      this.activeRoute = event.url;
+      // Atualiza os estados dos dropdowns e expande a sidenav se houver rota ativa
+      this.updateDropdownStates();
+      this.checkAndExpandForActiveRoute();
+    });
   }
 
-  collapseSidenav() {
-    const allClosed = Object.values(this.dropdownState).every(
-      (state) => state === false
-    );
+  checkAndExpandForActiveRoute() {
+    // Verifica se há alguma rota ativa
+    const hasActiveRoute = this.menuItems.some(item => this.hasActiveRoute(item));
+    if (hasActiveRoute) {
+      this.isExpanded = true;
+      this.expanded.emit(true);
+    }
+  }
 
-    if (allClosed) {
+  updateDropdownStates(shouldExpand: boolean = true) {
+    // Fecha todos os dropdowns primeiro
+    Object.keys(this.dropdownState).forEach(key => {
+      this.dropdownState[key] = false;
+    });
+
+    // Abre apenas o dropdown que contém a rota ativa
+    for (const item of this.menuItems) {
+      if (this.hasActiveRoute(item)) {
+        this.dropdownState[item.id] = true;
+        // Expande a sidenav se houver rota ativa
+        this.isExpanded = true;
+        this.expanded.emit(true);
+        break;
+      }
+    }
+  }
+
+  hasActiveRoute(item: MenuItem): boolean {
+    return item.subItems.some(subItem =>
+      this.activeRoute.startsWith(subItem.route) && subItem.route !== ''
+    );
+  }
+
+  isRouteActive(route: string): boolean {
+    return this.activeRoute === route;
+  }
+
+  toggleDropdown(dropdown: string) {
+    // Expande a sidenav antes de abrir o dropdown
+    this.isExpanded = true;
+    this.expanded.emit(true);
+
+    // Fecha todos os outros dropdowns
+    Object.keys(this.dropdownState).forEach(key => {
+      if (key !== dropdown) {
+        this.dropdownState[key] = false;
+      }
+    });
+    // Toggle do dropdown clicado
+    this.dropdownState[dropdown] = !this.dropdownState[dropdown];
+
+    // Se todos os dropdowns estiverem fechados, permite que a sidenav seja recolhida
+    if (Object.values(this.dropdownState).every(state => !state)) {
       this.isExpanded = false;
       this.expanded.emit(false);
     }
   }
 
-  toggleDropdown(dropdown: string) {
-    this.dropdownState[dropdown] = !this.dropdownState[dropdown];
+  openModal(subItem: SubMenuItem) {
+    if (subItem.isModal) {
+      switch (subItem.component) {
+        case WhatsAppMessageComponent:
+          this.whatsAppModal.toggle();
+          break;
+        // Adicione outros casos para diferentes modais aqui
+        default:
+          console.warn('Modal component não reconhecido:', subItem.component);
+      }
+    }
   }
 
-  isDropdownOpen(dropdown: string): boolean {
-    return this.dropdownState[dropdown];
+  expandSidenav() {
+    this.isExpanded = true;
+    this.expanded.emit(true);
+    // Atualiza os dropdowns quando expandir manualmente
+    this.updateDropdownStates(true);
+  }
+
+  collapseSidenav() {
+    // Não colapsa se houver rota ativa
+    if (this.menuItems.some(item => this.hasActiveRoute(item))) {
+      return;
+    }
+
+    // Só permite colapsar se não houver nenhum dropdown aberto
+    const anyDropdownOpen = Object.values(this.dropdownState).some(state => state);
+    if (!anyDropdownOpen) {
+      this.isExpanded = false;
+      this.expanded.emit(false);
+    }
+  }
+
+  isDropdownOpen(dropdownId: string): boolean {
+    return this.dropdownState[dropdownId] || false;
   }
 }
