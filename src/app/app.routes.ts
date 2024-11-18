@@ -22,7 +22,7 @@ export const routes: Routes = [
     path: 'admin',
     component: AdminComponent,
     canActivate: [AuthGuard, RoleGuard],
-    data: { permission: RoutePermission.ADMIN_PANEL },
+    data: { permission: RoutePermission.ADMIN },
     children: ADMIN_ROUTES,
   },
   { path: 'login', component: LoginComponent },

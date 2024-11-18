@@ -1,33 +1,83 @@
-import { Injectable } from '@angular/core';
-import { FirestoreService } from '../../../core/services/firestore.service';
-import { Course } from '../../../core/models/course.model';
-import { Package } from '../../../core/models/package.model';
+import { inject, Injectable, signal, WritableSignal } from '@angular/core';
+import { Firestore, collection, collectionData, CollectionReference, doc, getDoc } from '@angular/fire/firestore';
 import { Class } from '../../../core/models/class.model';
-import { collection, getDocs, query, where } from '@angular/fire/firestore';
+import { EmployeeService } from '../../employees/services/employee.service';
+
+const CLASSES_PATH = 'classes';
+const CLASS_STUDENTS_PATH = 'class_students';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ClassService {
-  constructor(private firestore : FirestoreService) { }
+  firestore = inject(Firestore);
+  employeeService = inject(EmployeeService);
 
-  getAll(): Promise<Class[]> {
-    return this.firestore.getCollection<Class>('classes');
+  classesCollection = collection(
+    this.firestore,
+    CLASSES_PATH
+  ) as CollectionReference<Class>;
+
+  classes = signal<Class[]>([]);
+  selectedClass = signal<Class | undefined>(undefined);
+  isLoading = signal<boolean>(true);
+
+  constructor() {
+    // Carrega todas as turmas
+    collectionData(this.classesCollection, { idField: 'id' }).subscribe(
+      (data) => {
+        this.classes.set(data);
+        this.isLoading.set(false);
+      },
+      (error) => {
+        console.error("Erro ao buscar turmas:", error);
+        this.isLoading.set(false);
+      }
+    );
   }
 
-  async getById(id : string): Promise<Class>{
-    return await this.firestore.getDocument<Class>('classes', id);
+  async selectClass(id: string): Promise<WritableSignal<Class | undefined>> {
+    while (this.isLoading()) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    const classItem = this.classes().find(c => c.id === id);
+    this.selectedClass.set(classItem);
+    return this.selectedClass;
   }
 
-  async delete(id : string){
-    this.firestore.deleteDocument('classes',id)
+  async getById(id: string): Promise<Class> {
+    while (this.isLoading()) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    const classItem = this.classes().find(c => c.id === id);
+    if (!classItem) {
+      throw new Error('Turma não encontrada');
+    }
+    return classItem;
   }
 
-  async getStudentClasses(studentId : string){
-    return await this.firestore.getDocumentsByArrayItemId('class_students','students',studentId)
+  async getClassStudents(classId: string): Promise<any> {
+    const docRef = doc(this.firestore, CLASS_STUDENTS_PATH, classId);
+    const docSnap = await getDoc(docRef);
+    return docSnap.exists() ? docSnap.data() : { students: [] };
   }
 
-  async getClassStudents(classId: string): Promise<any[]> {
-    return this.firestore.getDocument('class_students', classId);
+  async getTeacherName(teacherId: string): Promise<string> {
+    try {
+      const teacher = await this.employeeService.getById(teacherId);
+      return teacher?.name || 'Professor não encontrado';
+    } catch (error) {
+      console.error('Erro ao buscar nome do professor:', error);
+      return 'Professor não encontrado';
+    }
+  }
+
+  async getStudentClasses(studentId: string): Promise<Class[]> {
+    const studentClasses = await this.getClassStudents(studentId);
+    return this.classes().filter(c =>
+      studentClasses.students?.includes(studentId)
+    );
   }
 }

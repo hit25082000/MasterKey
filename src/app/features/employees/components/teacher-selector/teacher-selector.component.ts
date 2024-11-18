@@ -1,8 +1,9 @@
 import { EmployeeService } from './../../../employees/services/employee.service';
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal, computed, input, inject, forwardRef } from '@angular/core';
+import { Component, OnInit, signal, computed, input, inject, forwardRef, Output } from '@angular/core';
 import BaseUser from '../../../../core/models/base-user.model';
-import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { EventEmitter } from '@angular/core';
 
 @Component({
   selector: 'app-teacher-selector',
@@ -16,7 +17,7 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
     multi: true,
   }]
 })
-export class TeacherSelectorComponent implements OnInit {
+export class TeacherSelectorComponent implements OnInit, ControlValueAccessor {
   allTeachers = signal<BaseUser[]>([]);
   selectedTeacherId = signal<string>('');
   employeeService = inject(EmployeeService)
@@ -27,6 +28,8 @@ export class TeacherSelectorComponent implements OnInit {
 
   private onChange: (value: string) => void = () => {};
   private onTouched: () => void = () => {};
+
+  @Output() teacherSelected = new EventEmitter<{teacherId: string, teacherName: string}>();
 
   async ngOnInit() {
     await this.loadallTeachers();
@@ -41,9 +44,14 @@ export class TeacherSelectorComponent implements OnInit {
     this.onChange(defaultSelect);
   }
 
-  onSelectTeacher(teacherId: string): void {
-    this.selectedTeacherId.set(teacherId);
-    this.onChange(teacherId);
+  onSelectTeacher(teacher: BaseUser): void {
+    this.selectedTeacherId.set(teacher.id);
+    this.onChange(teacher.id);
+    this.onTouched();
+    this.teacherSelected.emit({
+      teacherId: teacher.id,
+      teacherName: teacher.name
+    });
   }
 
   writeValue(value: string): void {

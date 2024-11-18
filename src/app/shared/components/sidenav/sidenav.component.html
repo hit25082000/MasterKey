@@ -4,7 +4,7 @@
   (mouseenter)="expandSidenav()"
   (mouseleave)="collapseSidenav()"
 >
-  <ul>
+  <ul class="menu-list">
     <li *ngFor="let item of menuItems">
       <button
         (click)="toggleDropdown(item.id)"
@@ -34,6 +34,14 @@
       </ul>
     </li>
   </ul>
+
+  <!-- Botão de Logout -->
+  <div class="logout-container">
+    <button class="logout-button" (click)="logout()">
+      <i class="fas fa-sign-out-alt"></i>
+      <span class="label">Sair</span>
+    </button>
+  </div>
 </div>
 
 <!-- Modais -->

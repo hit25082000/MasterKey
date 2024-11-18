@@ -20,8 +20,18 @@
           <input *ngSwitchCase="'date'" [id]="field.name" [formControlName]="field.name"
                 class="form-control" type="date">
 
-          <input *ngSwitchCase="'file'" [id]="field.name" [formControlName]="field.name"
-                class="form-control" type="file" (change)="field.onFileChange && field.onFileChange($event)">
+          <ng-container *ngSwitchCase="'file'">
+            <div class="file-input-container">
+              <input
+                [id]="field.name"
+                [formControlName]="field.name"
+                class="form-control"
+                type="file"
+                (change)="field.onFileChange && field.onFileChange($event)"
+              >
+
+            </div>
+          </ng-container>
 
           <input *ngSwitchCase="'password'" [id]="field.name" [formControlName]="field.name"
                 class="form-control" type="password">

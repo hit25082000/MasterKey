@@ -459,3 +459,27 @@ form {
     }
   }
 }
+
+.file-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  .image-preview {
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+
+    img {
+      width: 100%;
+      height: auto;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+
+      &:hover {
+        transform: scale(1.05);
+      }
+    }
+  }
+}

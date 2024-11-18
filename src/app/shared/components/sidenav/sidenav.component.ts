@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, inject, Output, ViewChild } from '@angular/core';
 import { RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { ModalComponent } from '../modal/modal.component';
 import { WhatsAppMessageComponent } from '../../../features/chat/components/whats-app-message/whats-app-message.component';
 import { filter } from 'rxjs/operators';
+import { AuthService } from '../../../core/services/auth.service';
 
 interface SubMenuItem {
   label: string;
@@ -31,6 +32,8 @@ export class SidenavComponent {
   isExpanded = false;
   dropdownState: { [key: string]: boolean } = {};
   activeRoute = '';
+  auth = inject(AuthService)
+
 
   @ViewChild('whatsAppModal') whatsAppModal!: ModalComponent;
 
@@ -85,7 +88,7 @@ export class SidenavComponent {
       label: 'Turmas',
       icon: 'fas fa-users',
       subItems: [
-        { label: 'Adicionar Turma', route: '/admin/class-register' },
+        { label: 'Adicionar Turma', route: '/admin/class-form' },
         { label: 'Listar Turmas', route: '/admin/class-list' }
       ]
     },
@@ -94,7 +97,7 @@ export class SidenavComponent {
       label: 'Funcionarios',
       icon: 'fas fa-user-tie',
       subItems: [
-        { label: 'Adicionar Funcionario', route: '/admin/employee-register' },
+        { label: 'Adicionar Funcionario', route: '/admin/employee-form' },
         { label: 'Listar Funcionarios', route: '/admin/employee-list' }
       ]
     },
@@ -103,13 +106,15 @@ export class SidenavComponent {
       label: 'Permissões',
       icon: 'fas fa-lock',
       subItems: [
-        { label: 'Adicionar Permissões', route: '/admin/role-register' },
+        { label: 'Adicionar Permissões', route: '/admin/role-form' },
         { label: 'Listar Permissões', route: '/admin/role-list' }
       ]
     }
   ];
 
-  constructor(private router: Router) {
+  constructor(
+    private router: Router,
+  ) {
     // Observa mudanças na rota
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
@@ -215,5 +220,14 @@ export class SidenavComponent {
 
   isDropdownOpen(dropdownId: string): boolean {
     return this.dropdownState[dropdownId] || false;
+  }
+
+  async logout() {
+    try {
+      await this.auth.logout();
+      this.router.navigate(['/login']);
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    }
   }
 }

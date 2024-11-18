@@ -39,8 +39,15 @@ export class GenericFormComponent {
 
   private initForm() {
     const formGroupConfig: { [key: string]: any } = {};
+
+    console.log('Iniciando formulário com config:', this.formConfig()); // Debug
+
     for (const field of this.formConfig()) {
-      formGroupConfig[field.name] = [field.value || '', field.validators || []];
+      // Não define valor inicial para campos do tipo file
+      const value = field.type === 'file' ? null : (field.value !== undefined ? field.value : '');
+      formGroupConfig[field.name] = [value, field.validators || []];
+
+      console.log(`Campo ${field.name}:`, { value, validators: field.validators }); // Debug
     }
 
     const newForm = this.fb.group(formGroupConfig, {
@@ -49,6 +56,7 @@ export class GenericFormComponent {
 
     queueMicrotask(() => {
       this.form.set(newForm);
+      console.log('Formulário inicializado:', this.form().value); // Debug
     });
   }
 

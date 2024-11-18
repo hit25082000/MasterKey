@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -17,9 +17,9 @@ import { NotificationService } from '../../../../shared/services/notification.se
 export class CategoryListComponent implements OnInit {
   categorys : Category[] = []
   loading = true;
+  router = inject(Router)
 
   constructor(private categoryService : CategoryService,
-    private router: Router,
     private notificationService: NotificationService){}
 
     async ngOnInit(): Promise<void> {

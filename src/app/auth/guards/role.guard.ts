@@ -6,7 +6,7 @@ import { Role } from '../../core/models/role.model';
 import { RoutePermission } from '../../features/role/components/permission-select/permission.enum';
 import { Observable, of } from 'rxjs';
 import { map, switchMap, take } from 'rxjs/operators';
-import { ModalService } from '../../shared/services/modal.service';
+import { NotificationService } from '../../shared/services/notification.service';
 
 @Injectable({
   providedIn: 'root',
@@ -16,7 +16,7 @@ export class RoleGuard implements CanActivate {
     private firestore: FirestoreService,
     private auth: AuthService,
     private router: Router,
-    private modalService: ModalService
+    private notificationService: NotificationService
   ) {}
 
   canActivate(route: ActivatedRouteSnapshot): Observable<boolean> {
@@ -39,23 +39,35 @@ export class RoleGuard implements CanActivate {
               userRole
             );
 
-            if (
-              roleDoc.length > 0 &&
-              roleDoc[0].permissions.includes(requiredPermission)
-            ) {
-              return true;
-            }
-              switch (userRole) {
-                case 'student':
-                  this.router.navigate(['/classroom']);
-                  break;
-                case 'teacher':
-                case 'admin':
-                  this.router.navigate(['/admin']);
-                  break;
-                default:
-                  this.router.navigate(['/unauthorized']);
+            if (roleDoc.length > 0) {
+              const userPermissions = roleDoc[0].permissions;
+
+              // Se o usuário tem permissão ADMIN, permite tudo
+              if (userPermissions.includes(RoutePermission.ADMIN)) {
+                return true;
               }
+
+              // Verifica se o usuário tem a permissão específica
+              if (userPermissions.includes(requiredPermission)) {
+                return true;
+              }
+            }
+          }
+
+          // Se chegou aqui, não tem permissão
+          this.notificationService.error('Você não tem permissão para acessar esta página');
+
+          // Redireciona baseado no papel do usuário
+          switch (userRole) {
+            case 'student':
+              this.router.navigate(['/classroom']);
+              break;
+            case 'teacher':
+            case 'admin':
+              this.router.navigate(['/admin']);
+              break;
+            default:
+              this.router.navigate(['/unauthorized']);
           }
         } else {
           this.router.navigate(['/login']);

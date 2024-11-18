@@ -7,10 +7,12 @@ import {
   input,
   forwardRef,
   inject,
+  Output,
+  EventEmitter,
 } from '@angular/core';
 import { SearchBarComponent } from '../../../../shared/components/search-bar/search-bar.component';
 import { Student } from '../../../../core/models/student.model';
-import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { StudentService } from '../../../student/services/student.service';
 import { ClassService } from '../../../class/services/class.service';
 
@@ -28,7 +30,7 @@ import { ClassService } from '../../../class/services/class.service';
     },
   ],
 })
-export class StudentsSelectorComponent implements OnInit {
+export class StudentsSelectorComponent implements OnInit, ControlValueAccessor {
   allStudents = signal<Student[]>([]);
   selectedStudentsIds = signal<Set<string>>(new Set());
   studentService = inject(StudentService);
@@ -44,6 +46,8 @@ export class StudentsSelectorComponent implements OnInit {
 
   private onChange: (value: string[]) => void = () => {};
   private onTouched: () => void = () => {};
+
+  @Output() studentsSelected = new EventEmitter<string[]>();
 
   async ngOnInit() {
     await this.loadAllStudents();
@@ -78,7 +82,9 @@ export class StudentsSelectorComponent implements OnInit {
     }
 
     this.selectedStudentsIds.set(updatedSelection);
-    this.onChange(Array.from(this.selectedStudentsIds()));
+    const selectedIds = Array.from(this.selectedStudentsIds());
+    this.onChange(selectedIds);
+    this.studentsSelected.emit(selectedIds);
   }
 
   writeValue(value: string[]): void {

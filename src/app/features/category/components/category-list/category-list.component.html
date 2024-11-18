@@ -1,21 +1,40 @@
-<h2>Lista de Funções</h2>
-<table>
-  <thead>
-    <tr>
-      <th>Nome</th>
-      <th>Imagem</th>
-      <th>Ações</th>
-    </tr>
-  </thead>
-  <tbody>
-    @for (category of categorys; track category.name) {
-      <tr>
-        <td> {{ category.name }}  </td>
-        <td>
-          <img [src]="category.image" alt="Imagem da Categoria" style="width: 100px; height: 100px;">
-        </td>
-        <td><button (click)="edit(category.id)">Editar</button><button (click)="delete(category.id)">Excluir</button></td>
-      </tr>
+<div class="category-list-container">
+  <div class="list-header">
+    <h2>Lista de Categorias</h2>
+    <button class="btn-add" (click)="router.navigate(['/admin/category-form'])">
+      <i class="fas fa-plus"></i>
+      Nova Categoria
+    </button>
+  </div>
+
+  <div class="category-grid">
+    @for (category of categorys; track category.id) {
+      <div class="category-card">
+        <div class="category-image">
+          <img [src]="category.image" [alt]="category.name">
+        </div>
+        <div class="category-content">
+          <h3>{{ category.name }}</h3>
+        </div>
+        <div class="category-actions">
+          <button class="btn-edit" (click)="edit(category.id)">
+            <i class="fas fa-edit"></i>
+            Editar
+          </button>
+          <button class="btn-delete" (click)="delete(category.id)">
+            <i class="fas fa-trash"></i>
+            Excluir
+          </button>
+        </div>
+      </div>
+    } @empty {
+      <div class="no-categories">
+        <i class="fas fa-folder-open"></i>
+        <p>Nenhuma categoria encontrada</p>
+        <button class="btn-add" (click)="router.navigate(['/admin/category-form'])">
+          Criar Primeira Categoria
+        </button>
+      </div>
     }
-  </tbody>
-</table>
+  </div>
+</div>

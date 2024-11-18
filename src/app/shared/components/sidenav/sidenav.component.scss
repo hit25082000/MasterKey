@@ -9,6 +9,9 @@
   overflow: hidden;
   z-index: 1000;
   box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 
   &.expanded {
     width: 250px;
@@ -126,6 +129,53 @@
           background: #4a90e2;
         }
       }
+    }
+  }
+
+  .menu-list {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .logout-container {
+    padding: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+    .logout-button {
+      width: 100%;
+      padding: 12px;
+      background: transparent;
+      border: none;
+      color: #e53e3e;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border-radius: 8px;
+
+      &:hover {
+        background: rgba(229, 62, 62, 0.1);
+      }
+
+      i {
+        min-width: 24px;
+        margin-right: 12px;
+        font-size: 1.2rem;
+      }
+
+      .label {
+        opacity: 0;
+        transform: translateX(-10px);
+        transition: all 0.3s ease;
+        white-space: nowrap;
+      }
+    }
+  }
+
+  &.expanded {
+    .logout-button .label {
+      opacity: 1;
+      transform: translateX(0);
     }
   }
 }

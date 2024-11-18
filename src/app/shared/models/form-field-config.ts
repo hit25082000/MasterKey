@@ -24,11 +24,17 @@ export interface ModalConfig {
 export interface FormFieldConfig {
   name: string;
   label: string;
-  type: 'text' | 'email' | 'number' | 'date' | 'file' | 'password' | 'select' | 'textarea' | 'checkbox' | 'modal-select';
-  value: any;
-  validators?: ValidatorFn[];
-  errorMessages?: ErrorMessages;
-  options?: { value: string; label: string }[];
+  type: 'text' | 'email' | 'password' | 'number' | 'file' | 'select' | 'textarea' | 'checkbox' | 'date' | 'modal-select';
+  value?: any;
+  validators?: any[];
+  errorMessages?: { [key: string]: string };
+  options?: { value: any; label: string }[];
   onFileChange?: (event: Event) => void;
-  modalConfig?: ModalConfig;
+  imagePreview?: string;
+  modalConfig?: {
+    component: any;
+    displayValue: string | (() => string);
+    inputs?: { [key: string]: any };
+    outputs?: { [key: string]: (event: any) => void };
+  };
 }

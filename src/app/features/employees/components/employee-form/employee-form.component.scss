@@ -5,3 +5,60 @@
 .btn {
   margin-top: 20px;
 }
+
+:host {
+  display: block;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+
+  &::before {
+    content: '';
+    width: 20px;
+    height: 20px;
+    border: 2px solid #4a90e2;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+}
+
+.current-image {
+  margin: 1rem 0;
+  text-align: center;
+
+  .profile-image {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+
+    &:hover {
+      transform: scale(1.05);
+    }
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+// Responsividade
+@media (max-width: 768px) {
+  :host {
+    padding: 1rem;
+  }
+}
