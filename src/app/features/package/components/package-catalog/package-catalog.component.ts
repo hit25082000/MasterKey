@@ -27,7 +27,7 @@ import { switchMap, take } from 'rxjs/operators';
               <h3>{{ packageItem.name }}</h3>
               <p>{{ packageItem.description }}</p>
               <div class="package-info">
-                <span><i class="fas fa-book"></i> {{ packageItem.courses?.length || 0 }} cursos</span>
+                <span><i class="fas fa-book"></i> {{ packageItem.courses.length || 0 }} cursos</span>
                 <span><i class="fas fa-tag"></i> {{ packageItem.price | currency:'BRL' }}</span>
               </div>
               <button class="btn-details" (click)="openPackageDetails(packageItem);packageModal.toggle()">

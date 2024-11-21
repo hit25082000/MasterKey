@@ -26,6 +26,7 @@ import { MeetingComponent } from '../../features/meet/components/meet/meet.compo
 import { JobVacancyFormComponent } from '../../features/student/components/job-vacancy-form/job-vacancy-form.component';
 import { JobVacancyListComponent } from '../../features/student/components/job-vacancy-list/job-vacancy-list.component';
 import { EmployeeListComponent } from '../../features/employees/components/employee-list/employee-list.component';
+import { LibraryListComponent } from '../../features/library/components/library-list/library-list.component';
 
 export const ADMIN_ROUTES: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
@@ -219,5 +220,20 @@ export const ADMIN_ROUTES: Routes = [
         component: MeetingComponent,
         canActivate: [RoleGuard],
         data: { permission: RoutePermission.VIEW_MEETINGS }
-      }
+      },
+      {
+        path: 'library-list',
+        component: LibraryListComponent,
+        data: { permission: RoutePermission.ADMIN }
+      },
+      // {
+      //   path: 'library-form',
+      //   component: LibraryFormComponent,
+      //   data: { permission: RoutePermission.ADMIN }
+      // },
+      // {
+      //   path: 'library-form/:id',
+      //   component: Libr,
+      //   data: { permission: RoutePermission.ADMIN }
+      // }
 ];

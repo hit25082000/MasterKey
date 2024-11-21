@@ -1,8 +1,12 @@
-export interface Conversation {
+import { Entity } from './entity';
+
+export interface Conversation extends Entity {
   userId: string;
   userName: string;
   lastMessage: string;
   lastMessageTimestamp: Date;
-  participants: string[]; // Nova propriedade adicionada
+  lastMessageSender: string;
+  lastMessageSenderName: string;
+  participants: string[];
   unreadCount?: number;
 }

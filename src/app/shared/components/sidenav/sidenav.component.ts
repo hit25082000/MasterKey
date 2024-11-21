@@ -109,6 +109,15 @@ export class SidenavComponent {
         { label: 'Adicionar Permissões', route: '/admin/role-form' },
         { label: 'Listar Permissões', route: '/admin/role-list' }
       ]
+    },
+    {
+      id: 'library',
+      label: 'Biblioteca',
+      icon: 'fas fa-book',
+      subItems: [
+            { label: 'Adicionar Livro', route: '/admin/library-form' },
+        { label: 'Listar Livros', route: '/admin/library-list' }
+      ]
     }
   ];
 
