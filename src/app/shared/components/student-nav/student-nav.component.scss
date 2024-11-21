@@ -1,33 +1,138 @@
 .student-nav {
+  width: 280px;
   height: 100vh;
   position: fixed;
   left: 0;
   top: 0;
-  background-color: #f0f0f0;
-  padding: 20px;
-  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-  overflow-y: auto;
+  background: linear-gradient(180deg, #2c3e50 0%, #1a252f 100%);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  animation: slideIn 0.3s ease-out;
 
-  ul {
-    list-style-type: none;
-    padding: 0;
+  .nav-header {
+    padding: 2rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+    h2 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #fff;
+      text-align: center;
+    }
+  }
+
+  .nav-menu {
+    flex: 1;
+    list-style: none;
+    padding: 1.5rem 0;
+    margin: 0;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+    }
 
     li {
-      margin-bottom: 10px;
+      margin: 0.5rem 0;
 
       a {
+        display: flex;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        color: rgba(255, 255, 255, 0.7);
         text-decoration: none;
-        color: #333;
-        font-weight: bold;
+        transition: all 0.3s ease;
+        border-left: 3px solid transparent;
 
-        &.active {
-          color: #007bff;
+        i {
+          font-size: 1.2rem;
+          margin-right: 1rem;
+          width: 24px;
+          text-align: center;
+          transition: transform 0.3s ease;
+        }
+
+        span {
+          font-size: 0.95rem;
         }
 
         &:hover {
-          text-decoration: underline;
+          color: white;
+          background: rgba(255, 255, 255, 0.1);
+          transform: translateX(4px);
+
+          i {
+            transform: scale(1.1);
+          }
+        }
+
+        &.active {
+          color: white;
+          background: rgba(74, 144, 226, 0.2);
+          border-left-color: #4a90e2;
+
+          i {
+            color: #4a90e2;
+          }
         }
       }
     }
+  }
+
+  .nav-footer {
+    padding: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+    .logout-button {
+      width: 100%;
+      padding: 0.75rem;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateY(-2px);
+      }
+
+      i {
+        font-size: 1.1rem;
+      }
+
+      span {
+        font-size: 0.95rem;
+      }
+    }
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
   }
 }

@@ -5,12 +5,17 @@ import { CourseCatalogComponent } from '../../features/course/components/course-
 import { PackageCatalogComponent } from '../../features/package/components/package-catalog/package-catalog.component';
 import { StudentExamsComponent } from '../../features/student/components/student-exams/student-exams.component';
 import { ExamDetailsComponent } from '../../features/student/components/exam-details/exam-details.component';
+import { StudentDashboardComponent } from '../../features/student/components/student-dashboard/student-dashboard.component';
 
 export const CLASSROOM_ROUTES: Routes = [
       {
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full',
+      },
+      {
+        path: 'dashboard',
+        component: StudentDashboardComponent,
       },
       {
         path: 'course-player/:id',

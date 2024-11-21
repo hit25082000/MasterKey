@@ -1,83 +1,235 @@
 .course-player {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-  font-family: Arial, sans-serif;
+  min-height: 100vh;
+  background: #f8fafc;
+  padding: 2rem;
 
-  h2 {
-    font-size: 28px;
-    color: #333;
-    margin-bottom: 20px;
+  .loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    color: #718096;
+
+    i {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      color: #4a90e2;
+    }
+
+    p {
+      font-size: 1.1rem;
+      margin: 0;
+    }
   }
 
-  .video-player {
-    margin-bottom: 30px;
+  .player-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    max-width: 1800px;
+    margin: 0 auto;
+    animation: fadeIn 0.3s ease-out;
 
-    iframe {
-      width: 100%;
-      max-width: 640px;
-      height: 360px;
-      border: none;
+    .player-section {
+      background: white;
+      border-radius: 12px;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-  }
+      overflow: hidden;
 
-  .video-list, .exams {
-    background-color: #f5f5f5;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 30px;
+      h2 {
+        padding: 1.5rem;
+        margin: 0;
+        color: #2d3748;
+        font-size: 1.5rem;
+        font-weight: 600;
+        border-bottom: 1px solid #e9ecef;
+      }
 
-    h3 {
-      font-size: 20px;
-      color: #444;
-      margin-bottom: 15px;
-    }
+      .video-player {
+        position: relative;
+        padding-top: 56.25%; // 16:9 Aspect Ratio
+        background: #000;
 
-    ul {
-      list-style-type: none;
-      padding: 0;
+        iframe {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+        }
+      }
 
-      li {
-        padding: 10px;
-        border-bottom: 1px solid #ddd;
-        cursor: pointer;
-        transition: background-color 0.3s;
+      .current-video-info {
+        padding: 1.5rem;
+        border-top: 1px solid #e9ecef;
 
-        &:last-child {
-          border-bottom: none;
+        h3 {
+          color: #2d3748;
+          font-size: 1.25rem;
+          margin: 0 0 0.5rem 0;
         }
 
-        &:hover {
-          background-color: #e0e0e0;
-        }
+        .duration {
+          color: #718096;
+          font-size: 0.875rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
 
-        &.watched {
-          color: #888;
-          text-decoration: line-through;
+          i {
+            color: #4a90e2;
+          }
         }
       }
     }
-  }
 
-  .exams {
-    ul {
-      li {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+    .content-section {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
 
-        button {
-          background-color: #4CAF50;
-          color: white;
-          border: none;
-          padding: 8px 15px;
-          border-radius: 4px;
+      .videos-section, .exams-section {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+
+        h3 {
+          padding: 1.5rem;
+          margin: 0;
+          color: #2d3748;
+          font-size: 1.25rem;
+          font-weight: 600;
+          border-bottom: 1px solid #e9ecef;
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+
+          i {
+            color: #4a90e2;
+          }
+        }
+      }
+
+      .video-list {
+        max-height: 400px;
+        overflow-y: auto;
+
+        &::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        &::-webkit-scrollbar-track {
+          background: #f7fafc;
+        }
+
+        &::-webkit-scrollbar-thumb {
+          background: #cbd5e0;
+          border-radius: 3px;
+        }
+
+        .video-item {
+          padding: 1rem 1.5rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
           cursor: pointer;
-          transition: background-color 0.3s;
+          transition: all 0.2s ease;
+          border-left: 3px solid transparent;
 
           &:hover {
-            background-color: #45a049;
+            background: #f8fafc;
+          }
+
+          &.active {
+            background: #ebf8ff;
+            border-left-color: #4a90e2;
+
+            .video-status i {
+              color: #4a90e2;
+            }
+          }
+
+          &.watched {
+            .video-status i {
+              color: #48bb78;
+            }
+          }
+
+          .video-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+
+            .video-status {
+              font-size: 1.1rem;
+              width: 24px;
+              text-align: center;
+            }
+
+            .video-name {
+              color: #4a5568;
+              font-size: 0.95rem;
+            }
+          }
+
+          .video-duration {
+            color: #718096;
+            font-size: 0.875rem;
+          }
+        }
+      }
+
+      .exam-list {
+        .exam-item {
+          padding: 1rem 1.5rem;
+          border-bottom: 1px solid #e9ecef;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+
+          .exam-info {
+            flex: 1;
+
+            .exam-name {
+              display: block;
+              color: #2d3748;
+              font-size: 0.95rem;
+              margin-bottom: 0.25rem;
+            }
+
+            .exam-status {
+              font-size: 0.875rem;
+              color: #e53e3e;
+
+              &.completed {
+                color: #48bb78;
+              }
+            }
+          }
+
+          .btn-start {
+            padding: 0.5rem 1rem;
+            background: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+
+            &:hover {
+              background: #357abd;
+              transform: translateY(-1px);
+            }
+
+            i {
+              font-size: 0.9rem;
+            }
           }
         }
       }
@@ -85,25 +237,38 @@
   }
 }
 
-@media (max-width: 768px) {
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Responsividade
+@media (max-width: 1200px) {
   .course-player {
-    padding: 10px;
+    padding: 1rem;
 
-    h2 {
-      font-size: 24px;
-    }
+    .player-container {
+      grid-template-columns: 1fr;
 
-    .video-player {
-      iframe {
-        height: 240px;
+      .content-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       }
     }
+  }
+}
 
-    .video-list, .exams {
-      padding: 15px;
-
-      h3 {
-        font-size: 18px;
+@media (max-width: 768px) {
+  .course-player {
+    .player-container {
+      .content-section {
+        grid-template-columns: 1fr;
       }
     }
   }

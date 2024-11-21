@@ -10,7 +10,59 @@ import { TimestampPipe } from '../../../../shared/pipes/timestamp.pipe';
   selector: 'app-student-exams',
   standalone: true,
   imports: [CommonModule, RouterModule, TimestampPipe],
-  templateUrl: './student-exams.component.html',
+  template: `
+    <div class="exams-container">
+      <div class="exams-header">
+        <h2>Meus Exames</h2>
+      </div>
+
+      @if (!isLoading()) {
+        <div class="exams-grid">
+          @for (exam of studentExams(); track exam.examId) {
+            <div class="exam-card">
+              <div class="exam-header">
+                <span class="semester-badge">{{ getSemester(exam.submittedAt) }}</span>
+                <span class="score-badge" [class.high-score]="exam.score >= 70">
+                  {{ exam.score.toFixed(0) }}%
+                </span>
+              </div>
+
+              <div class="exam-content">
+                <h3>{{ exam.examName || 'Carregando...' }}</h3>
+                <div class="exam-info">
+                  <span class="info-item">
+                    <i class="fas fa-calendar"></i>
+                    {{ exam.submittedAt | timestamp:'dd/MM/yyyy' }}
+                  </span>
+                  <span class="info-item">
+                    <i class="fas fa-clock"></i>
+                    {{ exam.submittedAt | timestamp:'HH:mm' }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="exam-actions">
+                <a [routerLink]="['/classroom/exam-details', exam.examId]" class="btn-details">
+                  <i class="fas fa-eye"></i>
+                  Ver Detalhes
+                </a>
+              </div>
+            </div>
+          } @empty {
+            <div class="no-exams">
+              <i class="fas fa-file-alt"></i>
+              <p>Nenhum exame realizado ainda</p>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="loading">
+          <i class="fas fa-spinner fa-spin"></i>
+          <p>Carregando exames...</p>
+        </div>
+      }
+    </div>
+  `,
   styleUrls: ['./student-exams.component.scss']
 })
 export class StudentExamsComponent implements OnInit {

@@ -11,8 +11,41 @@ import { RouterLink } from '@angular/router';
   selector: 'app-course-catalog',
   standalone: true,
   imports: [CommonModule, RouterLink],
-  templateUrl: './course-catalog.component.html',
-  styleUrl: './course-catalog.component.scss'
+  template: `
+    <div class="catalog-container">
+      <div class="catalog-header">
+        <h2>Seus Cursos</h2>
+      </div>
+
+      <div class="course-grid">
+        @for (course of studentCourses; track course.id) {
+          <div class="course-card">
+            <div class="course-image">
+              <img [src]="course.image || 'assets/images/default-course.jpg'" [alt]="course.name">
+            </div>
+            <div class="course-content">
+              <h3>{{ course.name }}</h3>
+              <p>{{ course.description }}</p>
+              <div class="course-info">
+                <span><i class="fas fa-clock"></i> {{ course.workHours }}h</span>
+                <span><i class="fas fa-video"></i> {{ course.videos?.length || 0 }} aulas</span>
+              </div>
+              <a [routerLink]="['/classroom/course-player/', course.id]" class="btn-access">
+                <i class="fas fa-play-circle"></i>
+                Acessar Curso
+              </a>
+            </div>
+          </div>
+        } @empty {
+          <div class="no-courses">
+            <i class="fas fa-book-open"></i>
+            <p>Você ainda não tem cursos disponíveis</p>
+          </div>
+        }
+      </div>
+    </div>
+  `,
+  styleUrls: ['./course-catalog.component.scss']
 })
 export class CourseCatalogComponent implements OnInit {
   studentCourses: Course[] = [];

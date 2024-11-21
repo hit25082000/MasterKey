@@ -1,6 +1,4 @@
-import { Component, inject } from '@angular/core';
-import { SystemLogService } from '../../core/services/system-log.service';
-import { AuthService } from '../../core/services/auth.service';
+import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { StudentNavComponent } from "../../shared/components/student-nav/student-nav.component";
 
@@ -8,7 +6,14 @@ import { StudentNavComponent } from "../../shared/components/student-nav/student
   selector: 'app-classroom',
   standalone: true,
   imports: [RouterOutlet, StudentNavComponent],
-  templateUrl: './classroom.component.html',
-  styleUrl: './classroom.component.scss',
+  template: `
+    <div class="classroom-container">
+      <app-student-nav></app-student-nav>
+      <main class="classroom-content">
+        <router-outlet></router-outlet>
+      </main>
+    </div>
+  `,
+  styleUrls: ['./classroom.component.scss']
 })
 export class ClassroomComponent {}

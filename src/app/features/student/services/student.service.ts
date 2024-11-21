@@ -9,6 +9,7 @@ import { firstValueFrom } from 'rxjs';
 const USERS_PATH = 'users';
 const STUDENT_COURSES_PATH = 'student_courses';
 const STUDENT_PACKAGES_PATH = 'student_packages';
+const STUDENT_PROGRESS_PATH = 'student_progress';
 
 @Injectable({
   providedIn: 'root',
@@ -94,7 +95,7 @@ export class StudentService {
     }
   }
 
-  private async getCourses(studentId: string): Promise<string[]> {
+  async getCourses(studentId: string): Promise<string[]> {
     if (!studentId) return [];
 
     try {
@@ -108,5 +109,84 @@ export class StudentService {
       console.error('Erro ao buscar cursos:', error);
       return [];
     }
+  }
+
+  async getWatchedVideos(studentId: string, courseId: string): Promise<string[]> {
+    try {
+      const progressId = `${courseId}_${studentId}`;
+      const progress = await this.firestoreS.getDocument(STUDENT_PROGRESS_PATH, progressId);
+      return progress?.watchedVideos || [];
+    } catch (error) {
+      console.error('Erro ao buscar vídeos assistidos:', error);
+      return [];
+    }
+  }
+
+  async saveVideoProgress(studentId: string, courseId: string, videoId: string): Promise<void> {
+    try {
+      const progressId = `${courseId}_${studentId}`;
+      
+      // Primeiro, verifica se o documento existe
+      const existingProgress = await this.firestoreS.getDocument(STUDENT_PROGRESS_PATH, progressId);
+      
+      if (!existingProgress) {
+        // Se não existe, cria o documento com o array inicial
+        await this.firestoreS.addToCollectionWithId(STUDENT_PROGRESS_PATH, progressId, {
+          watchedVideos: [videoId]
+        });
+      } else {
+        // Se já existe, atualiza o array
+        await this.firestoreS.updateArrayField(
+          STUDENT_PROGRESS_PATH,
+          progressId,
+          'watchedVideos',
+          videoId
+        );
+      }
+    } catch (error) {
+      console.error('Erro ao salvar progresso do vídeo:', error);
+      throw error;
+    }
+  }
+
+  async removeVideoProgress(studentId: string, courseId: string, videoId: string): Promise<void> {
+    try {
+      const progressId = `${courseId}_${studentId}`;
+      const watchedVideos = await this.getWatchedVideos(studentId, courseId);
+      const updatedVideos = watchedVideos.filter(id => id !== videoId);
+
+      // Usa addToCollectionWithId ao invés de setDocument
+      await this.firestoreS.addToCollectionWithId(
+        STUDENT_PROGRESS_PATH, 
+        progressId, 
+        {
+          watchedVideos: updatedVideos
+        }
+      );
+    } catch (error) {
+      console.error('Erro ao remover progresso do vídeo:', error);
+      throw error;
+    }
+  }
+
+  async getCourseProgress(studentId: string, courseId: string): Promise<number> {
+    try {
+      const watchedVideos = await this.getWatchedVideos(studentId, courseId);
+      const course = await this.firestoreS.getDocument<Course>('courses', courseId);
+
+      if (!course?.videos || course.videos.length === 0) {
+        return 0;
+      }
+
+      return (watchedVideos.length / course.videos.length) * 100;
+    } catch (error) {
+      console.error('Erro ao calcular progresso do curso:', error);
+      return 0;
+    }
+  }
+
+  async isVideoWatched(studentId: string, courseId: string, videoId: string): Promise<boolean> {
+    const watchedVideos = await this.getWatchedVideos(studentId, courseId);
+    return watchedVideos.includes(videoId);
   }
 }

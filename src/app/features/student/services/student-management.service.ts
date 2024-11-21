@@ -11,6 +11,8 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 
+const STUDENT_PROGRESS_PATH = 'student_progress';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -165,5 +167,49 @@ export class StudentManagementService {
     } catch (error) {
       throw this.handleError(error);
     }
+  }
+
+  async saveVideoProgress(studentId: string, courseId: string, videoId: string): Promise<void> {
+    try {
+      await this.studentService.saveVideoProgress(studentId, courseId, videoId);
+      this.logVideoProgress(studentId, courseId, videoId, 'watched');
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async removeVideoProgress(studentId: string, courseId: string, videoId: string): Promise<void> {
+    try {
+      await this.studentService.removeVideoProgress(studentId, courseId, videoId);
+      this.logVideoProgress(studentId, courseId, videoId, 'removed');
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async resetCourseProgress(studentId: string, courseId: string): Promise<void> {
+    try {
+      const progressId = `${courseId}_${studentId}`;
+      await this.firestoreService.updateArrayField(STUDENT_PROGRESS_PATH, progressId, 'watchedVideos', []);
+      this.logCourseProgressReset(studentId, courseId);
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  private logVideoProgress(studentId: string, courseId: string, videoId: string, action: 'watched' | 'removed') {
+    const currentUser = this.authService.getCurrentUser();
+    const logDetails = `Usuário ${currentUser?.name} (ID: ${currentUser?.id}) ${
+      action === 'watched' ? 'marcou como assistido' : 'removeu a visualização do'
+    } vídeo ${videoId} do curso ${courseId} para o estudante ${studentId} em ${new Date().toLocaleString()}`;
+
+    this.systemLog.logVideoProgress(studentId, logDetails,videoId, action);
+  }
+
+  private logCourseProgressReset(studentId: string, courseId: string) {
+    const currentUser = this.authService.getCurrentUser();
+    const logDetails = `Usuário ${currentUser?.name} (ID: ${currentUser?.id}) resetou o progresso do curso ${courseId} para o estudante ${studentId} em ${new Date().toLocaleString()}`;
+
+    this.systemLog.logCourseProgressReset(studentId, logDetails);
   }
 }
