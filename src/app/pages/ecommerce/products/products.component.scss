@@ -124,6 +124,52 @@ $color-secondary: #ee3c48;
               font-size: 1.2rem;
             }
           }
+
+          .card-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+            button {
+              flex: 1;
+              padding: 0.75rem;
+              border: none;
+              border-radius: 6px;
+              font-weight: 500;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 0.5rem;
+              transition: all 0.3s ease;
+
+              i {
+                font-size: 1rem;
+              }
+
+              &.btn-details {
+                background: rgba(255, 255, 255, 0.1);
+                color: white;
+
+                &:hover {
+                  background: rgba(255, 255, 255, 0.2);
+                  transform: translateY(-2px);
+                }
+              }
+
+              &.btn-buy {
+                background: $color-secondary;
+                color: white;
+
+                &:hover {
+                  background: darken($color-secondary, 10%);
+                  transform: translateY(-2px);
+                }
+              }
+            }
+          }
         }
       }
     }

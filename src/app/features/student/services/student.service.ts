@@ -5,6 +5,7 @@ import { FirestoreService } from '../../../core/services/firestore.service';
 import { Package } from '../../../core/models/package.model';
 import { Course } from '../../../core/models/course.model';
 import { firstValueFrom } from 'rxjs';
+import { NotificationService } from '../../../shared/services/notification.service';
 
 const USERS_PATH = 'users';
 const STUDENT_COURSES_PATH = 'student_courses';
@@ -17,6 +18,7 @@ const STUDENT_PROGRESS_PATH = 'student_progress';
 export class StudentService {
   firestore = inject(Firestore);
   firestoreS = inject(FirestoreService);
+  notificationService = inject(NotificationService);
 
   studentsCollection = collection(
     this.firestore,
@@ -125,10 +127,10 @@ export class StudentService {
   async saveVideoProgress(studentId: string, courseId: string, videoId: string): Promise<void> {
     try {
       const progressId = `${courseId}_${studentId}`;
-      
+
       // Primeiro, verifica se o documento existe
       const existingProgress = await this.firestoreS.getDocument(STUDENT_PROGRESS_PATH, progressId);
-      
+
       if (!existingProgress) {
         // Se não existe, cria o documento com o array inicial
         await this.firestoreS.addToCollectionWithId(STUDENT_PROGRESS_PATH, progressId, {
@@ -157,8 +159,8 @@ export class StudentService {
 
       // Usa addToCollectionWithId ao invés de setDocument
       await this.firestoreS.addToCollectionWithId(
-        STUDENT_PROGRESS_PATH, 
-        progressId, 
+        STUDENT_PROGRESS_PATH,
+        progressId,
         {
           watchedVideos: updatedVideos
         }

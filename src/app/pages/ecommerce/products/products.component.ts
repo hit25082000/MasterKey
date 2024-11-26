@@ -19,7 +19,7 @@ import { Router } from '@angular/router';
     BenefitsComponent,
     TestimonialsComponent,
     OurSpaceComponent,
-    SearchBarComponent    
+    SearchBarComponent
   ],
   templateUrl: './products.component.html',
   styleUrl: './products.component.scss'
@@ -96,6 +96,16 @@ export class ProductsComponent implements OnInit {
 
   redirectToCourse(courseId : string){
     this.router.navigate(['/course', courseId]);
+  }
+
+  buyCourse(course: Course) {
+    // Se tiver URL de checkout, redireciona
+    if (course.checkoutUrl) {
+      window.location.href = course.checkoutUrl;
+    } else {
+      // Se não tiver, redireciona para página de detalhes
+      this.redirectToCourse(course.id!);
+    }
   }
 
 }

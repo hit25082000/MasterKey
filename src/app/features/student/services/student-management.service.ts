@@ -1,6 +1,6 @@
 import { QuerySnapshot, Firestore } from '@angular/fire/firestore';
 import { Student } from './../../../core/models/student.model';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { FirestoreService } from '../../../core/services/firestore.service';
 import { StorageService } from '../../../core/services/storage.service';
 import { AdminService } from '../../../core/services/admin.service';
@@ -10,19 +10,25 @@ import { SystemLogService } from '../../../core/services/system-log.service';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
+import { NotificationService } from '../../../shared/services/notification.service';
+import { addDoc, collection, updateDoc } from '@angular/fire/firestore';
 
 const STUDENT_PROGRESS_PATH = 'student_progress';
+const STUDENT_COURSES_PATH = 'student_courses';
 
 @Injectable({
   providedIn: 'root',
 })
 export class StudentManagementService {
+  private firestore = inject(Firestore);
+  private firestoreService = inject(FirestoreService);
+  private notificationService = inject(NotificationService);
+  private studentService = inject(StudentService);
+
   constructor(
     private authService: AuthService,
-    private studentService: StudentService,
     private adminService: AdminService,
-    private systemLog: SystemLogService,
-    private firestoreService: FirestoreService
+    private systemLog: SystemLogService
   ) {}
 
   async create(newStudent: Student, icon: File | null): Promise<string> {
@@ -211,5 +217,51 @@ export class StudentManagementService {
     const logDetails = `Usuário ${currentUser?.name} (ID: ${currentUser?.id}) resetou o progresso do curso ${courseId} para o estudante ${studentId} em ${new Date().toLocaleString()}`;
 
     this.systemLog.logCourseProgressReset(studentId, logDetails);
+  }
+
+  async addCourseToStudent(studentId: string, courseId: string) {
+    try {
+      // Busca os cursos atuais do aluno
+      const studentCourses = await this.firestoreService.getDocument(STUDENT_COURSES_PATH, studentId);
+
+      let courses = [];
+      if (studentCourses && studentCourses.courses) {
+        // Se já existem cursos, adiciona o novo
+        courses = [...studentCourses.courses];
+        if (!courses.includes(courseId)) {
+          courses.push(courseId);
+        }
+      } else {
+        // Se não tem cursos ainda, cria o array com o primeiro curso
+        courses = [courseId];
+      }
+
+      // Cria/atualiza o documento de cursos do aluno
+      const coursesRef = collection(this.firestore, STUDENT_COURSES_PATH);
+      await addDoc(coursesRef, {
+        id: studentId,
+        courses: courses,
+        updatedAt: new Date()
+      });
+
+      // Cria um registro de progresso vazio para o curso
+      const progressRef = collection(this.firestore, STUDENT_PROGRESS_PATH);
+      await addDoc(progressRef, {
+        studentId,
+        courseId,
+        watchedVideos: [],
+        lastAccess: new Date(),
+        progress: 0
+      });
+
+      // Atualiza o signal de cursos no StudentService
+      await this.studentService.selectStudent(studentId);
+
+      this.notificationService.success('Curso adicionado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao adicionar curso ao aluno:', error);
+      this.notificationService.error('Erro ao adicionar curso');
+      throw error;
+    }
   }
 }

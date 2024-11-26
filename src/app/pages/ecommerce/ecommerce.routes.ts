@@ -5,6 +5,7 @@ import { ProductsComponent } from './products/products.component';
 import { AboutComponent } from './about/about.component';
 import { ContactComponent } from './contact/contact.component';
 import { CoursePreviewComponent } from './course-preview/course-preview.component';
+import { CourseCheckoutComponent } from '../../features/checkout/components/course-checkout/course-checkout.component';
 
 export const ECOMMERCE_ROUTES: Routes = [
     {
@@ -36,5 +37,10 @@ export const ECOMMERCE_ROUTES: Routes = [
         path: 'course/:id',
         component: CoursePreviewComponent,
         title: 'Curso'
+      },
+      {
+        path: 'checkout/:id',
+        component: CourseCheckoutComponent,
+        title: 'Checkout'
       }
 ];

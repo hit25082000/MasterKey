@@ -1,0 +1,153 @@
+.checkout-container {
+  min-height: calc(100vh - 80px);
+  padding: 4rem 2rem;
+  background: linear-gradient(90deg, rgba(238, 60, 72, 0.2) 0%, rgba(56, 74, 135, 0.2) 100%), #000000;
+
+  .loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    color: white;
+    font-size: 1.2rem;
+  }
+
+  .checkout-content {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(8px);
+
+    .course-info {
+      img {
+        width: 100%;
+        height: 250px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+      }
+
+      h2 {
+        color: white;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      p {
+        color: rgba(255, 255, 255, 0.8);
+        margin-bottom: 1.5rem;
+      }
+
+      .price-details {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 1rem;
+        border-radius: 8px;
+
+        .price, .promo-price {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 0.5rem;
+          color: white;
+
+          .label {
+            font-weight: 500;
+          }
+
+          .amount {
+            font-size: 1.2rem;
+            font-weight: 600;
+          }
+        }
+
+        .promo-price .amount {
+          color: #48bb78;
+        }
+      }
+    }
+
+    .payment-section {
+      h3 {
+        color: white;
+        font-size: 1.25rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .payment-options {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+
+        .payment-button {
+          padding: 1rem;
+          border: none;
+          border-radius: 8px;
+          font-size: 1rem;
+          font-weight: 500;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          transition: all 0.3s ease;
+
+          i {
+            font-size: 1.2rem;
+          }
+
+          &.credit-card {
+            background: #4a90e2;
+            color: white;
+
+            &:hover:not(:disabled) {
+              background: #357abd;
+              transform: translateY(-2px);
+            }
+          }
+
+          &.pix {
+            background: #48bb78;
+            color: white;
+
+            &:hover:not(:disabled) {
+              background: #38a169;
+              transform: translateY(-2px);
+            }
+          }
+
+          &.boleto {
+            background: #ed8936;
+            color: white;
+
+            &:hover:not(:disabled) {
+              background: #dd6b20;
+              transform: translateY(-2px);
+            }
+          }
+
+          &:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .checkout-container {
+    padding: 2rem 1rem;
+
+    .checkout-content {
+      grid-template-columns: 1fr;
+    }
+  }
+}
