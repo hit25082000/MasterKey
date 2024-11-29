@@ -189,7 +189,7 @@ export class CourseFormComponent implements OnInit {
       id: [video.id],
       name: [video.name, Validators.required],
       duration: [video.duration, Validators.required],
-      webViewLink: [video.webViewLink, Validators.required],
+      url: [video.url, Validators.required],
       active: [video.active !== undefined ? video.active : true]
     });
   }

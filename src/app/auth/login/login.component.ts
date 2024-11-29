@@ -85,8 +85,9 @@ import { NotificationService } from '../../shared/services/notification.service'
   styles: [`
     .login-container {
       min-height: 100vh;
-      background: linear-gradient(135deg, #384A87 0%, #ee3c48 100%);
-      display: flex;
+      background:
+      linear-gradient(90deg, rgba(238, 60, 72, 0.2) 0%, rgba(56, 74, 135, 0.2) 100%), #000000;
+            display: flex;
       flex-direction: column;
       padding: 2rem;
       position: relative;
@@ -120,7 +121,6 @@ import { NotificationService } from '../../shared/services/notification.service'
         width: 100%;
         margin: auto;
         background: white;
-        border-radius: 16px;
         overflow: hidden;
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -128,7 +128,8 @@ import { NotificationService } from '../../shared/services/notification.service'
         animation: slideUp 0.5s ease-out;
 
         .login-banner {
-          background: linear-gradient(135deg, #384A87 0%, #ee3c48 100%);
+          background:
+          linear-gradient(90deg, rgba(238, 60, 72, 0.2) 0%, rgba(56, 74, 135, 0.2) 100%), #000000;
           padding: 3rem;
           display: flex;
           flex-direction: column;

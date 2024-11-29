@@ -21,15 +21,18 @@
   </thead>
   <tbody>
     <tr *ngFor="let attendance of searchBar.filteredList()">
-      <td>{{ attendance.student.name }}</td>
+      <td class="student-name">{{ attendance.student?.name || 'Nome não encontrado' }}</td>
       <td
         *ngFor="let day of daysInMonth()"
         [ngClass]="{
           present: attendance.dates[day.toISOString().split('T')[0]],
-          absent: !attendance.dates[day.toISOString().split('T')[0]]
+          absent: !attendance.dates[day.toISOString().split('T')[0]] && !isFutureDate(day),
+          future: isFutureDate(day)
         }"
       >
-        {{ attendance.dates[day.toISOString().split('T')[0]] ? "✓" : "✗" }}
+        @if (!isFutureDate(day)) {
+          {{ attendance.dates[day.toISOString().split('T')[0]] ? "✓" : "✗" }}
+        }
       </td>
     </tr>
   </tbody>

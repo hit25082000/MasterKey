@@ -300,28 +300,12 @@ export class ClassFormComponent implements OnInit {
         await this.classManagementService.update({
           ...classData,
           id: this.classId()
-        });
-
-        // Atualiza lista de alunos separadamente
-        await this.classManagementService.updateClassStudents(
-          this.classId()!,
-          this.selectedStudents()
-        );
+        }, this.selectedStudents());
 
         this.notificationService.success('Turma atualizada com sucesso');
       } else {
-        // Converte o Observable para Promise e aguarda o resultado
-        const newClassId = await firstValueFrom(
-          this.classManagementService.create(classData)
-        );
 
-        // Cria lista de alunos separadamente
-        if (newClassId!) {
-          await this.classManagementService.updateClassStudents(
-            newClassId,
-            this.selectedStudents()
-          );
-        }
+        await this.classManagementService.create(classData, this.selectedStudents())
 
         this.notificationService.success('Turma criada com sucesso');
       }

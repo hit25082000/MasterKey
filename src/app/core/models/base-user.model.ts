@@ -18,7 +18,7 @@ export default interface BaseUser extends Entity {
   sex: string;
   polo: string;
   role: string;
-  iconUrl?: string;
+  profilePic?: string;
   phone2?: string;
   description?: string;
 }

@@ -1,48 +1,55 @@
-import { Component, EventEmitter, input, Input, Output, OnInit } from '@angular/core';
-import {
-  FormBuilder,
-  FormGroup,
-  FormArray,
-  Validators,
-  ReactiveFormsModule,
-  ValidatorFn,
-  AbstractControl,
-} from '@angular/forms';
+import { Component, EventEmitter, input, Output, OnInit, inject } from '@angular/core';
+import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Exam, Question, Options } from '../../../../core/models/exam.model';
 import { CommonModule } from '@angular/common';
-import { Course } from '../../../../core/models/course.model';
-import { CourseSelectorComponent } from '../../../course/components/course-selector/course-selector.component';
-import { ModalComponent } from "../../../../shared/components/modal/modal.component";
+import { NotificationService } from '../../../../shared/services/notification.service';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-exam-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, CourseSelectorComponent, ModalComponent],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './exam-form.component.html',
-  styleUrls: ['./exam-form.component.scss'],
+  styleUrl: './exam-form.component.scss',
 })
 export class ExamFormComponent implements OnInit {
-  exam = input.required<Exam | null>();
-  @Output() formSubmit = new EventEmitter<Exam>();
+  // Inputs e Outputs
+  exam = input<Exam | null>();
+  @Output() formSubmit = new EventEmitter<void>();
   @Output() formCancel = new EventEmitter<void>();
-  Options = Object.keys(Options);
-  examForm: FormGroup;
-  questionForm!: FormArray;
 
-  constructor(private fb: FormBuilder) {
+  // Constantes
+  readonly Options = Object.values(Options);
+
+  // Form
+  examForm!: FormGroup;
+
+  // Injeções
+  private readonly fb = inject(FormBuilder);
+  private readonly notificationService = inject(NotificationService);
+  private readonly route = inject(ActivatedRoute);
+
+  ngOnInit(): void {
+    this.initForm();
+    this.loadExamData();
+  }
+
+  private initForm(): void {
     this.examForm = this.fb.group({
-      title: ['', Validators.required],
-      description: ['', Validators.required],
-      courseId: ['', Validators.required],
-      questions: this.fb.array([]),
+      title: ['', [Validators.required, Validators.minLength(3)]],
+      description: ['', [Validators.required, Validators.minLength(10)]],
+      questions: this.fb.array([], [Validators.required, Validators.minLength(1)])
     });
   }
 
-  ngOnInit() {
-    if (this.exam() != null) {
-      console.log(this.exam())
-      this.examForm.patchValue(this.exam()!);
-      this.exam()!.questions.forEach((question) => this.addQuestion(question));
+  private loadExamData(): void {
+    if (this.exam()) {
+      this.examForm.patchValue({
+        title: this.exam()?.title,
+        description: this.exam()?.description
+      });
+
+      this.exam()?.questions.forEach(question => this.addQuestion(question));
     }
   }
 
@@ -50,51 +57,44 @@ export class ExamFormComponent implements OnInit {
     return this.examForm.get('questions') as FormArray;
   }
 
-  addQuestion(question?: Question) {
+  addQuestion(question?: Question): void {
     const questionForm = this.fb.group({
-      id: [question?.id || ''],
-      text: [question?.text || '', Validators.required],
+      text: [question?.text || '', [Validators.required, Validators.minLength(10)]],
       options: this.fb.array(
-        question?.options || [Options.A, Options.B, Options.C, Options.D],
-        [Validators.required, Validators.minLength(4), Validators.maxLength(4), this.uniqueOptionsValidator()]
+        question?.options || Array(4).fill(''),
+        [Validators.required]
       ),
-      correctAnswer: [question?.correctAnswer || null, Validators.required],
+      correctAnswer: [question?.correctAnswer || '', Validators.required]
     });
+
     this.questionsFormArray.push(questionForm);
   }
 
-  removeQuestion(index: number) {
+  removeQuestion(index: number): void {
     this.questionsFormArray.removeAt(index);
   }
 
-  onSubmit() {
-    if (this.examForm.valid) {
-      const examData: Exam = {
-        ...this.examForm.value,
-      };
-
-      if (!examData.createdAt) {
-        examData.createdAt = new Date();
-      }
-      examData.updatedAt = new Date();
-
-      this.formSubmit.emit(examData);
+  onSubmit(): void {
+    if (this.examForm.invalid) {
+      this.markFormGroupTouched(this.examForm);
+      this.notificationService.error('Por favor, preencha todos os campos obrigatórios');
+      return;
     }
+
+    this.formSubmit.emit();
   }
 
-  onCancel() {
+  onCancel(): void {
     this.formCancel.emit();
   }
 
-  private generateId(): string {
-    return Date.now().toString();
-  }
-
-  uniqueOptionsValidator(): ValidatorFn {
-    return (control: AbstractControl): {[key: string]: any} | null => {
-      const options = control.value;
-      const uniqueOptions = new Set(options);
-      return uniqueOptions.size === options.length ? null : { 'duplicateOptions': true };
-    };
+  private markFormGroupTouched(formGroup: FormGroup): void {
+    Object.values(formGroup.controls).forEach(control => {
+      if (control instanceof FormGroup) {
+        this.markFormGroupTouched(control);
+      } else {
+        control.markAsTouched();
+      }
+    });
   }
 }

@@ -121,6 +121,9 @@ export class StudentManagementService {
     if(error.message != null){
       return new Error(error.message);
     }
+    if(error.error != null){
+      return new Error(error.error);
+    }
     return new Error('Erro desconhecido');
   }
 

@@ -11,24 +11,22 @@ import { catchError } from 'rxjs/operators';
 export class ClassManagementService {
   constructor(private firestore: FirestoreService) {}
 
-  create(newClass: Class): Observable<void> {
-    return from(this.createClass(newClass)).pipe(
+  create(newClass: Class, students: string[]): Observable<void> {
+    return from(this.createClass(newClass, students)).pipe(
       catchError(this.handleError)
     );
   }
 
-  private async createClass(newClass: any): Promise<void> {
+  private async createClass(newClass: any, classStudents: string[]): Promise<void> {
     const existingClasses = await this.firestore.getDocumentsByAttribute('classes', 'name', newClass.name);
     if (existingClasses.length > 0) {
       throw new Error('Já existe uma turma com este nome.');
     }
-
-    const classItem = this.prepareClassItem(newClass);
-    const classe = await this.firestore.addToCollection('classes', classItem);
-    await this.firestore.addToCollectionWithId('class_students', classe.id, { students: newClass.students});
+    const classe = await this.firestore.addToCollection('classes', newClass);
+    await this.firestore.addToCollectionWithId('class_students', classe.id, { students: classStudents});
   }
 
-  async update(newClass: any): Promise<void> {
+  async update(newClass: any, students: string[]): Promise<void> {
     try {
       const oldClass = await this.firestore.getDocument('classes', newClass.id) as Class;
       if (!oldClass) {
@@ -37,7 +35,7 @@ export class ClassManagementService {
 
       const classItem = this.prepareClassItem(newClass);
       await this.firestore.updateDocument('classes', newClass.id, classItem);
-      await this.firestore.updateDocument('class_students', newClass.id, { students: newClass.students });
+      await this.firestore.updateDocument('class_students', newClass.id, { students: students });
     } catch (error) {
       throw this.handleError(error);
     }

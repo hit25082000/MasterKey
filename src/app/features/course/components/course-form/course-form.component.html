@@ -39,14 +39,21 @@
 
     <!-- Vídeos -->
     <div class="selector-item">
-      <button type="button" class="selector-button" (click)="videoModal.toggle()" [disabled]="!isAuthenticated()">
-        <span class="button-icon">
-          <i class="fas fa-video"></i>
-        </span>
-        <span class="button-text">
-          {{ isAuthenticated() ? 'Gerenciar Vídeos' : 'Autenticar com Google' }}
-        </span>
-      </button>
+      @if (isAuthenticated()) {
+        <button type="button" class="selector-button" (click)="videoModal.toggle()">
+          <span class="button-icon">
+            <i class="fas fa-video"></i>
+          </span>
+          <span class="button-text">Gerenciar Vídeos</span>
+        </button>
+      } @else {
+        <button type="button" class="selector-button google-auth" (click)="authenticateWithGoogle()">
+          <span class="button-icon">
+            <i class="fab fa-google"></i>
+          </span>
+          <span class="button-text">Autenticar com Google</span>
+        </button>
+      }
 
       <app-modal #videoModal position="top">
         <div class="modal-header">

@@ -253,4 +253,4 @@ export class LibraryListComponent implements OnInit {
     this.selectedImage = null;
     this.selectedPdf = null;
   }
-} 
+}

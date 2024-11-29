@@ -6,11 +6,18 @@ import { Package } from '../../../core/models/package.model';
 import { Course } from '../../../core/models/course.model';
 import { firstValueFrom } from 'rxjs';
 import { NotificationService } from '../../../shared/services/notification.service';
+import { Observable, map } from 'rxjs';
 
 const USERS_PATH = 'users';
 const STUDENT_COURSES_PATH = 'student_courses';
 const STUDENT_PACKAGES_PATH = 'student_packages';
 const STUDENT_PROGRESS_PATH = 'student_progress';
+
+interface StudentExam {
+  examId: string;
+  grade: number;
+  completedAt: Date;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -190,5 +197,26 @@ export class StudentService {
   async isVideoWatched(studentId: string, courseId: string, videoId: string): Promise<boolean> {
     const watchedVideos = await this.getWatchedVideos(studentId, courseId);
     return watchedVideos.includes(videoId);
+  }
+
+  async getStudentExams(studentId: string, courseId: string): Promise<StudentExam[]> {
+    try {
+      // Busca os registros de exames do estudante para o curso específico
+      const examRecords = await this.firestoreS.getDocumentsByAttribute(
+        'student_exams',
+        'studentId',
+        studentId
+      );
+
+      // Mapeia os registros para o formato StudentExam
+      return examRecords.map((record: any) => ({
+        examId: record.examId,
+        grade: record.grade,
+        completedAt: record.completedAt // Converte Timestamp do Firestore para Date
+      }));
+    } catch (error) {
+      console.error('Erro ao buscar exames do estudante:', error);
+      throw error;
+    }
   }
 }

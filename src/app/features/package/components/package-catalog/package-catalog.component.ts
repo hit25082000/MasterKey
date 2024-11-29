@@ -55,7 +55,7 @@ import { switchMap, take } from 'rxjs/operators';
                 <h3>{{ course.name }}</h3>
                 <p>{{ course.description }}</p>
               </div>
-              <a [routerLink]="['/classroom/course-player', course.id]" 
+              <a [routerLink]="['/classroom/course-player', course.id]"
                  (click)="closeModal()"
                  class="btn-access">
                 <i class="fas fa-play-circle"></i>

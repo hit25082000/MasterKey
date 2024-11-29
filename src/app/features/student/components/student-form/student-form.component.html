@@ -1,4 +1,3 @@
-<h1 class="form-title">{{isEditMode() ? 'Atualizar' : 'Cadastrar'}} Estudante</h1>
 <section class="student-features">
   <app-generic-form
     *ngIf="!(loadingService.isLoading())"
@@ -6,7 +5,13 @@
     [submitButtonText]="isEditMode() ? 'Atualizar' : 'Cadastrar'"
     (formSubmit)="onSubmit($event)"
     [formTitle]="isEditMode() ? 'Atualizar Estudante' : 'Cadastrar Estudante'"
-  ></app-generic-form>
+  >
+    @if (currentImage()) {
+      <div class="current-image">
+        <img [src]="getImageUrl(currentImage())" alt="Foto do estudante" class="profile-image">
+      </div>
+    }
+  </app-generic-form>
 
   <div class="modal-buttons" *ngIf="isEditMode() && !loadingService.isLoading()">
     <button class="modal-button" (click)="classModal.toggle()">

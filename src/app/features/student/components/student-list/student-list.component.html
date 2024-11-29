@@ -28,6 +28,10 @@
             <i class="fas fa-edit"></i>
             Editar
           </button>
+          <button class="btn-certificate" (click)="openCertificateModal(student.id);certificateModal.toggle()">
+            <i class="fas fa-certificate"></i>
+            Certificado
+          </button>
           <button class="btn-delete" (click)="deleteStudent(student.id)">
             <i class="fas fa-trash"></i>
             Excluir
@@ -45,3 +49,7 @@
     (pageChange)="onPageChange($event)"
   ></app-pagination>
 </div>
+
+<app-modal #certificateModal>
+  <app-student-certificate [studentId]="selectedStudentId()"></app-student-certificate>
+</app-modal>

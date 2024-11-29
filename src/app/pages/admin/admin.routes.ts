@@ -5,10 +5,8 @@ import { StudentListComponent } from '../../features/student/components/student-
 import { StudentLoginListComponent } from '../../features/student/components/student-login-list/student-login-list.component';
 import { LibraryCourseComponent } from '../../features/library/components/library-course/library-course.component';
 import { StudentFormComponent } from '../../features/student/components/student-form/student-form.component';
-import { CourseDetailsComponent } from '../../features/course/components/course-details/course-details.component';
 import { ExamListComponent } from '../../features/exam/components/exam-list/exam-list.component';
 import { CourseListComponent } from '../../features/course/components/course-list/course-list.component';
-import { CourseRegisterComponent } from '../../features/course/components/course-register/course-register.component';
 import { PackageFormComponent } from '../../features/package/components/package-form/package-form.component';
 import { PackageListComponent } from '../../features/package/components/package-list/package-list.component';
 import { ClassFormComponent } from '../../features/class/components/class-form/class-form.component';
@@ -79,12 +77,6 @@ export const ADMIN_ROUTES: Routes = [
         component: CourseFormComponent,
         canActivate: [RoleGuard],
         data: { permission: RoutePermission.EDIT_COURSE }
-      },
-      {
-        path: 'course-detail/:id',
-        component: CourseDetailsComponent,
-        canActivate: [RoleGuard],
-        data: { permission: RoutePermission.VIEW_COURSES }
       },
       // Rotas de Pacotes
       {

@@ -19,7 +19,7 @@ export class ChatService {
   unreadMessages = signal<number>(0);
   activeConversations = signal<Conversation[]>([]);
   currentMessages = signal<Message[]>([]);
-  
+
   getUsers(): Observable<any[]> {
     return from(this.firestore.getCollection<any>('users'));
   }
@@ -63,11 +63,11 @@ export class ChatService {
     };
 
     const messageId = await this.firestore.addToCollection('messages', message);
-    
+
     // Atualiza a última mensagem na conversa
     await this.updateConversation(currentUserId, selectedUserId, content, userName);
     await this.incrementUnreadCount(currentUserId, selectedUserId);
-    
+
     // Notifica o usuário receptor
     this.notifyUser(selectedUserId, userName, content);
   }
@@ -79,7 +79,7 @@ export class ChatService {
     senderName: string
   ): Promise<void> {
     const conversationId = [currentUserId, selectedUserId].sort().join('_');
-    
+
     const conversationUpdate = {
       lastMessage,
       lastMessageTimestamp: new Date(),
@@ -102,13 +102,13 @@ export class ChatService {
     }
 
     const existingConversation = await this.findExistingConversation(currentUserId, selectedUserId);
-    
+
     if (existingConversation) {
       return;
     }
 
     const conversationId = [currentUserId, selectedUserId].sort().join('_');
-    
+
     const conversation: Omit<ConversationWithParticipants, 'id' | 'active'> = {
       userId: selectedUserId,
       userName: selectedUserName,
@@ -140,7 +140,7 @@ export class ChatService {
       where('participants', 'array-contains', userId),
       orderBy('lastMessageTimestamp', 'desc')
     );
-    
+
     this.activeConversations.set(conversations);
     this.updateUnreadCount(conversations);
     return conversations;
@@ -165,7 +165,7 @@ export class ChatService {
     await this.firestore.updateDocument('conversations', conversationId, {
       unreadCount: 0,
     });
-    
+
     // Atualiza o contador de mensagens não lidas
     const conversations = await this.getConversations(currentUserId);
     this.updateUnreadCount(conversations);
@@ -195,7 +195,7 @@ export class ChatService {
       await this.firestore.updateDocument('conversations', conversationId, {
         unreadCount: newUnreadCount,
       });
-      
+
       // Atualiza o contador local
       const conversations = await this.getConversations(otherUserId);
       this.updateUnreadCount(conversations);

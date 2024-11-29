@@ -50,7 +50,7 @@ export class BookService {
       };
 
       await this.firestore.updateDocument('books', bookId, updatedBook);
-      
+
       this.notificationService.success('Livro criado com sucesso');
       return bookId;
     } catch (error) {
@@ -71,7 +71,7 @@ export class BookService {
       if (imageFile) {
         updatedBook.imageUrl = await this.storage.uploadBookImage(imageFile, book.id);
       }
-      
+
       if (pdfFile) {
         updatedBook.pdfUrl = await this.storage.uploadBookPdf(pdfFile, book.id);
       }
@@ -88,9 +88,9 @@ export class BookService {
   async deleteBook(bookId: string): Promise<void> {
     // try {
     //   await this.storage.deleteBookFiles(bookId);
-      
+
     //   await this.firestore.deleteDocument('books', bookId);
-      
+
     //   this.notificationService.success('Livro excluído com sucesso');
     // } catch (error) {
     //   console.error('Erro ao excluir livro:', error);
@@ -104,7 +104,7 @@ export class BookService {
       const courseBooks = await this.firestore.getDocument<{bookIds: string[]}>('course_books', courseId);
       if (!courseBooks?.bookIds?.length) return [];
 
-      const bookPromises = courseBooks.bookIds.map((id: string) => 
+      const bookPromises = courseBooks.bookIds.map((id: string) =>
         this.firestore.getDocument<Book>('books', id)
       );
 

@@ -5,9 +5,10 @@ import { SystemLogService } from '../../../../core/services/system-log.service';
 import { StudentService } from '../../services/student.service';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { SearchBarComponent } from "../../../../shared/components/search-bar/search-bar.component";
+import { Student } from '../../../../core/models/student.model';
 
 interface StudentAttendance {
-  student: any; // Alterado de studentName para student
+  student: Student;
   dates: { [date: string]: boolean };
 }
 
@@ -26,6 +27,10 @@ export class StudentLoginListComponent implements OnInit {
 
   // Signals
   currentMonth = signal<Date>(new Date());
+  today = signal<Date>(new Date());
+  studentAttendance = signal<StudentAttendance[]>([]);
+
+  // Computed para dias do mês
   daysInMonth = computed(() => {
     const date = this.currentMonth();
     const year = date.getFullYear();
@@ -37,7 +42,20 @@ export class StudentLoginListComponent implements OnInit {
     );
   });
 
-  studentAttendance = signal<StudentAttendance[]>([]);
+  // Verifica se uma data é futura
+  isFutureDate(date: Date): boolean {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return date > today;
+  }
+
+  // Verifica se é o mês atual
+  isCurrentMonth = computed(() => {
+    const current = this.currentMonth();
+    const today = this.today();
+    return current.getMonth() === today.getMonth() &&
+           current.getFullYear() === today.getFullYear();
+  });
 
   ngOnInit(): void {
     this.loadAttendanceData();
@@ -60,8 +78,9 @@ export class StudentLoginListComponent implements OnInit {
         const date = new Date(log.timestamp).toISOString().split('T')[0];
 
         if (!attendanceMap[studentId]) {
+          const student = await this.studentService.selectStudent(studentId);
           attendanceMap[studentId] = {
-            student: await this.studentService.selectStudent(studentId),
+            student: student(),
             dates: {},
           };
         }
@@ -82,6 +101,7 @@ export class StudentLoginListComponent implements OnInit {
     this.currentMonth.update(date =>
       new Date(date.getFullYear(), date.getMonth() - 1, 1)
     );
+    this.today.set(new Date());
     this.loadAttendanceData();
   }
 
@@ -89,6 +109,7 @@ export class StudentLoginListComponent implements OnInit {
     this.currentMonth.update(date =>
       new Date(date.getFullYear(), date.getMonth() + 1, 1)
     );
+    this.today.set(new Date());
     this.loadAttendanceData();
   }
 }

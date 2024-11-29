@@ -47,6 +47,7 @@ export class StudentFormComponent implements OnInit {
   formConfig = signal<FormFieldConfig[]>([]);
   selectedFile = signal<File | null>(null);
   submitButtonText = computed(() => this.isEditMode() ? 'Atualizar' : 'Cadastrar');
+  currentImage = signal<string>('');
 
   constructor(
   ) {
@@ -64,6 +65,17 @@ export class StudentFormComponent implements OnInit {
         errorMessages: {
           required: 'Nome é obrigatório',
           minlength: 'Nome deve ter pelo menos 3 caracteres'
+        }
+      },
+      {
+        name: 'email',
+        label: 'E-mail',
+        type: 'text',
+        value: '',
+        validators: [Validators.required, Validators.email],
+        errorMessages: {
+          required: 'E-mail é obrigatório',
+          email: 'E-mail inválido'
         }
       },
       {
@@ -269,7 +281,17 @@ export class StudentFormComponent implements OnInit {
   }
 
   onFileChange(event: any) {
-    this.selectedFile.set(event.target.files[0]);
+    const file = event.target.files[0];
+    if (file) {
+      this.selectedFile.set(file);
+
+      // Adiciona preview da imagem
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.currentImage.set(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
   }
 
   async ngOnInit() {
@@ -279,7 +301,7 @@ export class StudentFormComponent implements OnInit {
     if (this.isEditMode() && this.studentId() != null) {
       try {
         await this.studentService.selectStudent(this.studentId()!);
-        const student = this.studentService.selectedStudent
+        const student = this.studentService.selectedStudent;
 
         if(student() == undefined){
           this.notificationService.error(
@@ -287,9 +309,14 @@ export class StudentFormComponent implements OnInit {
             5000
           );
           this.loadingService.hide();
-
           return;
         }
+
+        // Atualiza a imagem atual
+        if (student()?.profilePic) {
+          this.currentImage.set(student()?.profilePic!);
+        }
+
         this.formConfig.set(this.formConfig().map(field => ({
           ...field,
           value: student()![field.name as keyof Student]
@@ -301,7 +328,6 @@ export class StudentFormComponent implements OnInit {
         );
       }
     }
-
     this.loadingService.hide();
   }
 
@@ -309,6 +335,9 @@ export class StudentFormComponent implements OnInit {
     this.loadingService.show();
     const studentData: Student = formData;
     studentData.id = this.studentId()!;
+    studentData.role = 'student';
+
+    console.log(studentData);
     const operation = this.isEditMode()
       ? this.studentManagement.update(studentData, this.selectedFile())
       : this.studentManagement.create(studentData, this.selectedFile());
@@ -328,5 +357,11 @@ export class StudentFormComponent implements OnInit {
         );
         this.loadingService.hide();
       });
+  }
+
+  getImageUrl(url: string): string {
+    if (!url) return '';
+    // Adiciona timestamp como parâmetro para evitar cache
+    return `${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}`;
   }
 }

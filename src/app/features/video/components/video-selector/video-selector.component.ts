@@ -81,7 +81,7 @@ export class VideoSelectorComponent implements OnInit {
           id: file.id,
           name: file.name,
           duration: 0,
-          webViewLink: this.formatVideoLink(file.webViewLink),
+          url: this.formatVideoLink(file.webViewLink),
           active: true
         })));
       },

@@ -19,9 +19,7 @@ export class EmployeeManagementService {
     private authService: AuthService,
     private employeeService: EmployeeService,
     private adminService: AdminService,
-    private systemLog: SystemLogService,
-    private firestoreService: FirestoreService
-  ) {}
+    private systemLog: SystemLogService  ) {}
 
   async create(employee: Employee, icon: File | null): Promise<string> {
     try {
@@ -33,6 +31,7 @@ export class EmployeeManagementService {
             resolve('Funcionario criado com sucesso!');
           },
           (error) => {
+            console.log(error);
             reject(this.handleError(error));
           }
         );
@@ -97,10 +96,17 @@ export class EmployeeManagementService {
     });
   }
 
-  private handleError(error: unknown): Error {
+  private handleError(error: any): Error {
     if (error instanceof Error || error instanceof HttpErrorResponse) {
       return new Error(error.message);
     }
+    if(error.message != null){
+      return new Error(error.message);
+    }
+    if(error.error != null){
+      return new Error(error.error);
+    }
+    console.log(error);
     return new Error('Erro desconhecido');
   }
 

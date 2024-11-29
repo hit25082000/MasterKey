@@ -32,7 +32,7 @@ import { NotificationService } from '../../../../shared/services/notification.se
             <div class="video-player">
               <iframe
                 #videoPlayer
-                [src]="getEmbedUrl(currentVideo.webViewLink) | safe:'resourceUrl'"
+                [src]="getEmbedUrl(currentVideo.url) | safe:'resourceUrl'"
                 frameborder="0"
                 allowfullscreen
                 (load)="onVideoLoad()"
@@ -56,8 +56,8 @@ import { NotificationService } from '../../../../shared/services/notification.se
               </h3>
               <div class="video-list">
                 @for (video of course?.videos; track video.id) {
-                  <div 
-                    class="video-item" 
+                  <div
+                    class="video-item"
                     [class.active]="video.id === currentVideo.id"
                     [class.watched]="watchedVideos.has(video.id)"
                     (click)="playVideo(video)"
@@ -228,13 +228,13 @@ export class CoursePlayerComponent implements OnInit {
     const sharePattern = /\/file\/d\/([^\/]+)/;
     // Padrão para URLs do tipo visualização
     const viewPattern = /id=([^&]+)/;
-    
+
     let match = url.match(sharePattern);
     if (match) return match[1];
-    
+
     match = url.match(viewPattern);
     if (match) return match[1];
-    
+
     // Se não encontrar o padrão, retorna a URL original
     // Você pode querer tratar isso de forma diferente
     return url;

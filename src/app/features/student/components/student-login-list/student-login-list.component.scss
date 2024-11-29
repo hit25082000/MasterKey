@@ -101,24 +101,27 @@ table {
     color: #333;
   }
 
+  .student-name {
+    font-weight: 500;
+    color: #2d3748;
+    text-align: left;
+    padding-left: 1rem;
+    min-width: 200px;
+  }
+
   .present {
     background-color: #d4edda;
     color: #155724;
-    transition: background-color 0.3s;
-
-    &:hover {
-      background-color: #c3e6cb;
-    }
   }
 
   .absent {
     background-color: #f8d7da;
     color: #721c24;
-    transition: background-color 0.3s;
+  }
 
-    &:hover {
-      background-color: #f5c6cb;
-    }
+  .future {
+    background-color: #f8f9fa;
+    color: #6c757d;
   }
 
   tr:hover td:not(.present):not(.absent) {

@@ -20,8 +20,7 @@ import { LoadingOverlayComponent } from "../../../../shared/components/loading-o
     CommonModule,
     ModalComponent,
     CourseSelectorComponent,
-    GenericFormComponent,
-    LoadingOverlayComponent
+    GenericFormComponent
   ],
   templateUrl: './package-form.component.html',
   styleUrls: ['./package-form.component.scss'],
@@ -109,7 +108,6 @@ export class PackageFormComponent implements OnInit {
         );
       }
     }
-
     this.loadingService.hide();
   }
 
@@ -141,6 +139,7 @@ export class PackageFormComponent implements OnInit {
           `Erro ao ${this.isEditMode() ? 'atualizar' : 'criar'} o pacote: ${error}`,
           5000
         );
+        this.loadingService.hide();
       },
       complete: () => {
         this.loadingService.hide();

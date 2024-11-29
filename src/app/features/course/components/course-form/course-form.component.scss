@@ -466,3 +466,26 @@
     grid-template-columns: 1fr;
   }
 }
+
+.selector-button {
+  &.google-auth {
+    background: #fff;
+    color: #757575;
+    border: 1px solid #ddd;
+    transition: all 0.3s ease;
+
+    .button-icon {
+      color: #4285f4;
+    }
+
+    &:hover {
+      background: #f8f9fa;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+}

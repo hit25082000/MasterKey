@@ -39,8 +39,8 @@ import { NotificationService } from '../../../../shared/services/notification.se
           @if (!selectedConversation()) {
             <div class="conversation-list">
               @for (conversation of conversations(); track conversation.userId) {
-                <div 
-                  class="conversation-item" 
+                <div
+                  class="conversation-item"
                   [class.unread]="conversation.unreadCount! > 0"
                   (click)="selectConversation(conversation)"
                 >
@@ -56,7 +56,7 @@ import { NotificationService } from '../../../../shared/services/notification.se
                       <p class="last-message">
                         @if (conversation.lastMessage) {
                           <span class="sender-name" *ngIf="conversation.lastMessageSender !== currentUserId()">
-                            {{ conversation.lastMessageSenderName }}: 
+                            {{ conversation.lastMessageSenderName }}:
                           </span>
                           {{ conversation.lastMessage }}
                         } @else {
@@ -82,8 +82,8 @@ import { NotificationService } from '../../../../shared/services/notification.se
             <div class="chat-area">
               <div class="messages" #messageContainer>
                 @for (message of messages(); track message.timestamp) {
-                  <div 
-                    class="message" 
+                  <div
+                    class="message"
                     [class.outgoing]="message.senderId === currentUserId()"
                     [class.incoming]="message.senderId !== currentUserId()"
                   >
@@ -125,7 +125,7 @@ export class ChatModalComponent implements OnInit {
   private notificationService = inject(NotificationService);
 
   // Signals
-  isMinimized = signal(false);
+  isMinimized = signal(true);
   currentUserId = signal<string | null>(null);
   currentUserName = signal<string | null>(null);
   selectedConversation = signal<Conversation | null>(null);
@@ -243,7 +243,7 @@ export class ChatModalComponent implements OnInit {
 
   formatTime(timestamp: any): string {
     if (!timestamp) return '';
-    
+
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     const now = new Date();
     const diff = now.getTime() - date.getTime();
@@ -272,4 +272,4 @@ export class ChatModalComponent implements OnInit {
       this.notificationService.error('Erro ao iniciar conversa');
     }
   }
-} 
+}

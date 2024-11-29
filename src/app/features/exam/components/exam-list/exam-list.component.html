@@ -1,52 +1,56 @@
 <div class="exam-list-container">
-  <div class="list-header">
-    <h2>Lista de Exames</h2>
-    <button class="btn-add" (click)="examFormModal.toggle()">
+  <div class="header">
+    <h2>Exames</h2>
+    <button class="btn-add" (click)="modalExam.toggle()">
       <i class="fas fa-plus"></i>
-      Criar Novo Exame
+      Novo Exame
     </button>
   </div>
 
-  <div class="exam-grid">
-    @for (exam of exams$ | async; track exam.id) {
-      <div class="exam-card">
-        <div class="exam-content">
-          <h3>{{ exam.title }}</h3>
-          <p>{{ exam.description }}</p>
-          <div class="exam-info">
-            <span>{{ exam.questions?.length || 0 }} questões</span>
-            <span>Criado em: {{ exam.createdAt | date }}</span>
-          </div>
-        </div>
-        <div class="exam-actions">
-          <button class="btn-edit" (click)="editExam(exam)">
-            <i class="fas fa-edit"></i>
-            Editar
-          </button>
-          <button class="btn-delete" (click)="deleteExam(exam)">
-            <i class="fas fa-trash"></i>
-            Apagar
-          </button>
-        </div>
-      </div>
-    } @empty {
-      <div class="no-exams">
-        <i class="fas fa-file-alt"></i>
-        <p>Nenhum exame encontrado</p>
-      </div>
-    }
-  </div>
 
-    <app-modal
-      position="center"
-      #examFormModal
-      [showCancelButton]="true"
-      cancelButtonText="Cancelar"
-    >
+    <app-modal #modalExam>
       <app-exam-form
-        [exam]="selectedExam"
-        (formSubmit)="onFormSubmit($event)"
-        (formCancel)="examFormModal.toggle()"
+        [exam]="selectedExam()"
+        (formSubmit)="onFormSuccess()"
+        (formCancel)="onFormCancel()"
       ></app-exam-form>
     </app-modal>
+
+
+  @if (exams$ | async; as exams) {
+    @if (exams.length === 0) {
+      <div class="no-exams">
+        <p>Nenhum exame cadastrado para este curso.</p>
+      </div>
+    } @else {
+      <div class="exams-grid">
+        @for (exam of exams; track exam.id) {
+          <div class="exam-card">
+            <div class="exam-info">
+              <h3>{{ exam.title }}</h3>
+              <p>{{ exam.description }}</p>
+              <div class="exam-meta">
+                <span>{{ exam.questions?.length || 0 }} questões</span>
+                <span>Criado em: {{ exam.createdAt | date }}</span>
+              </div>
+            </div>
+            <div class="exam-actions">
+              <button class="btn-edit" (click)="editExam(exam)">
+                <i class="fas fa-edit"></i>
+                Editar
+              </button>
+              <button class="btn-delete" (click)="deleteExam(exam)">
+                <i class="fas fa-trash"></i>
+                Excluir
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  } @else {
+    <div class="loading">
+      <p>Carregando exames...</p>
+    </div>
+  }
 </div>

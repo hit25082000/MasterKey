@@ -19,8 +19,8 @@ import BaseUser from '../../../core/models/base-user.model';
           <span class="user-role">{{ user()?.role | titlecase }}</span>
         </div>
         <div class="user-avatar">
-          @if (user()?.iconUrl) {
-            <img [src]="user()?.iconUrl" 
+          @if (user()?.profilePic) {
+            <img [src]="user()?.profilePic"
                  [alt]="user()?.name"
                  class="avatar-image"
                  (error)="handleImageError($event)">
@@ -77,7 +77,7 @@ import BaseUser from '../../../core/models/base-user.model';
 
         &:hover {
           background: #f8fafc;
-          
+
           .user-avatar {
             .avatar-image, .default-avatar {
               transform: scale(1.05);
@@ -181,4 +181,4 @@ export class AdminHeaderComponent {
       </div>
     `);
   }
-} 
+}

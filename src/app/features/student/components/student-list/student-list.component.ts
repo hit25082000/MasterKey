@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, signal, computed, inject, ViewChild, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Student } from '../../../../core/models/student.model';
 import { StudentManagementService } from '../../services/student-management.service';
@@ -9,11 +9,13 @@ import { PaginationComponent } from '../../../../shared/components/pagination/pa
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { LoadingService } from '../../../../shared/services/loading.service';
 import { SearchBarComponent } from '../../../../shared/components/search-bar/search-bar.component';
+import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { StudentCertificateComponent } from '../student-certificate/student-certificate.component';
 
 @Component({
   selector: 'app-student-list',
   standalone: true,
-  imports: [CommonModule, PaginationComponent, SearchBarComponent],
+  imports: [CommonModule, PaginationComponent, SearchBarComponent, ModalComponent, StudentCertificateComponent],
   templateUrl: './student-list.component.html',
   styleUrl: './student-list.component.scss',
 })
@@ -28,6 +30,7 @@ export class StudentListComponent implements OnInit {
   currentPage = signal<number>(1);
   pageSize = signal<number>(10);
   error = signal<string>('');
+  selectedStudentId = signal<string>('');
 
   displayedStudents = computed(() => {
     const startIndex = (this.currentPage() - 1) * this.pageSize();
@@ -71,5 +74,9 @@ export class StudentListComponent implements OnInit {
 
   editStudent(id: string) {
     this.router.navigate(['/admin/student-register', id]);
+  }
+
+  openCertificateModal(studentId: string) {
+    this.selectedStudentId.set(studentId);
   }
 }
