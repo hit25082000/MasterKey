@@ -4,7 +4,7 @@ export interface Video extends Entity {
   id: string;
   name: string;
   duration: number;
-  url: string;
+  webViewLink: string;
 }
 
 export interface CourseReview extends Entity {

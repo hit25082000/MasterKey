@@ -1,53 +1,68 @@
 <div class="student-list-container">
   <div class="header">
-    <h2>Lista de Alunos</h2>
+    <div class="title-section">
+      <h2>Lista de Alunos</h2>
+      <button class="btn-add" routerLink="/admin/student-register">
+        <i class="fas fa-plus"></i>
+        Novo Aluno
+      </button>
+    </div>
     <app-search-bar [dataList]="students()" #searchBar></app-search-bar>
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Foto</th>
-        <th>Nome</th>
-        <th>Fone</th>
-        <th>Idade</th>
-        <th>Polo</th>
-        <th>Ação</th>
-      </tr>
-    </thead>
-    <tbody>
-      @for (student of searchBar.filteredList(); track student.cpf) {
-      <tr>
-        <td><img width="25" [src]="student.profilePic" alt="" /></td>
-        <td>{{ student.name }}</td>
-        <td>{{ student.phone1 }}</td>
-        <td>{{ student.yearsOld }}</td>
-        <td>{{ student.polo }}</td>
-        <td class="action-buttons">
-          <button class="btn-edit" (click)="editStudent(student.id)">
-            <i class="fas fa-edit"></i>
-            Editar
-          </button>
-          <button class="btn-certificate" (click)="openCertificateModal(student.id);certificateModal.toggle()">
-            <i class="fas fa-certificate"></i>
-            Certificado
-          </button>
-          <button class="btn-delete" (click)="deleteStudent(student.id)">
-            <i class="fas fa-trash"></i>
-            Excluir
-          </button>
-        </td>
-      </tr>
-      }
-    </tbody>
-  </table>
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th class="th-image">Foto</th>
+          <th class="th-name">Nome</th>
+          <th class="th-phone">Fone</th>
+          <th class="th-age">Idade</th>
+          <th class="th-polo">Polo</th>
+          <th class="th-actions">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (student of searchBar.filteredList(); track student.id) {
+        <tr>
+          <td class="td-image">
+            <div class="student-image">
+              <img [src]="getImageUrl(student.profilePic)"
+                   [alt]="student.name"
+                    />
+            </div>
+          </td>
+          <td class="td-name">{{ student.name }}</td>
+          <td class="td-phone">{{ student.phone1 }}</td>
+          <td class="td-age">{{ student.yearsOld }}</td>
+          <td class="td-polo">{{ student.polo }}</td>
+          <td class="td-actions">
+            <div class="action-buttons">
+              <button class="btn-edit" (click)="editStudent(student.id)">
+                <i class="fas fa-edit"></i>
+                <span>Editar</span>
+              </button>
+              <button class="btn-certificate"
+                      (click)="openCertificateModal(student.id);certificateModal.toggle()">
+                <i class="fas fa-certificate"></i>
+                <span>Certificado</span>
+              </button>
+            </div>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
 
-  <app-pagination
-    [currentPage]="currentPage()"
-    [totalItems]="students().length"
-    [pageSize]="pageSize()"
-    (pageChange)="onPageChange($event)"
-  ></app-pagination>
+  <div class="pagination-container">
+    <app-pagination
+      [currentPage]="currentPage()"
+      [totalItems]="students().length"
+      [pageSize]="pageSize()"
+      (pageChange)="onPageChange($event)"
+    ></app-pagination>
+  </div>
 </div>
 
 <app-modal #certificateModal>

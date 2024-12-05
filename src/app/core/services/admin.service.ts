@@ -36,9 +36,9 @@ export class AdminService {
       email: user.email,
       password: user.password,
       userData: user,
-      iconFile: icon,
+      iconFile: icon || '',
     };
-
+    console.log(body);
     return this.getHeaders().pipe(
       switchMap((headers) =>
         this.http.post(`${this.apiUrl}/createUserWithProfile`, body, {

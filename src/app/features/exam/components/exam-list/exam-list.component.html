@@ -1,7 +1,7 @@
 <div class="exam-list-container">
   <div class="header">
     <h2>Exames</h2>
-    <button class="btn-add" (click)="modalExam.toggle()">
+    <button class="btn-add" (click)="openExamForm(); modalExam.toggle()">
       <i class="fas fa-plus"></i>
       Novo Exame
     </button>
@@ -10,8 +10,8 @@
 
     <app-modal #modalExam>
       <app-exam-form
-        [exam]="selectedExam()"
-        (formSubmit)="onFormSuccess()"
+        [exam]="selectedExam()!"
+        (formSubmit)="onFormSuccess($event)"
         (formCancel)="onFormCancel()"
       ></app-exam-form>
     </app-modal>

@@ -7,6 +7,11 @@
     <div class="form-group">
       <label for="title">Título</label>
       <input id="title" formControlName="title" required class="form-control" />
+      @if (shouldShowError('title')) {
+        <div class="error-message">
+          {{ getErrorMessage('title') }}
+        </div>
+      }
     </div>
 
     <div class="form-group">
@@ -17,11 +22,16 @@
         required
         class="form-control"
       ></textarea>
+      @if (shouldShowError('description')) {
+        <div class="error-message">
+          {{ getErrorMessage('description') }}
+        </div>
+      }
     </div>
 
     <div formArrayName="questions" class="questions-section">
       <div class="section-header">
-        <h3>Questões</h3>
+        <h3>Questões ({{ questionsFormArray.length }})</h3>
         <button type="button" class="btn-add" (click)="addQuestion()">
           <i class="fas fa-plus"></i>
           Adicionar Questão
@@ -32,7 +42,13 @@
         <div [formGroupName]="$index" class="question-card">
           <div class="question-header">
             <span class="question-number">Questão {{ $index + 1 }}</span>
-            <button type="button" class="btn-remove" (click)="removeQuestion($index)">
+            <button
+              type="button"
+              class="btn-remove"
+              (click)="removeQuestion($index)"
+              [disabled]="questionsFormArray.length === 1"
+              [title]="questionsFormArray.length === 1 ? 'O exame deve ter pelo menos uma questão' : 'Remover questão'"
+            >
               <i class="fas fa-trash"></i>
             </button>
           </div>
@@ -43,6 +59,11 @@
               placeholder="Digite a pergunta aqui..."
               class="form-control question-text"
             />
+            @if (shouldShowQuestionError($index, 'text')) {
+              <div class="error-message">
+                {{ getQuestionErrorMessage($index, 'text') }}
+              </div>
+            }
 
             <div formArrayName="options" class="options-grid">
               @for (option of questionForm.get('options')?.value; track $index) {
@@ -56,6 +77,11 @@
                 </div>
               }
             </div>
+            @if (questionForm.get('options')?.touched && questionForm.get('options')?.invalid) {
+              <div class="error-message">
+                {{ getQuestionErrorMessage($index, 'options') }}
+              </div>
+            }
 
             <div class="correct-answer">
               <label>Alternativa correta:</label>
@@ -66,18 +92,55 @@
                 }
               </select>
             </div>
+            @if (questionForm.get('correctAnswer')?.touched && questionForm.get('correctAnswer')?.invalid) {
+              <div class="error-message">
+                {{ getQuestionErrorMessage($index, 'correctAnswer') }}
+              </div>
+            }
           </div>
         </div>
       }
     </div>
   </div>
 
+  @if (examForm.invalid) {
+    <div class="validation-summary">
+      <h4>Por favor, corrija os seguintes erros:</h4>
+      <ul>
+        @if (examForm.get('title')?.errors) {
+          <li>{{ getErrorMessage('title') }}</li>
+        }
+        @if (examForm.get('description')?.errors) {
+          <li>{{ getErrorMessage('description') }}</li>
+        }
+        @if (questionsFormArray.length === 0) {
+          <li>Adicione pelo menos uma questão</li>
+        }
+        @for (questionForm of questionsFormArray.controls; track $index) {
+          @if (questionForm.get('text')?.errors) {
+            <li>Questão {{ $index + 1 }}: {{ getQuestionErrorMessage($index, 'text') }}</li>
+          }
+          @if (questionForm.get('options')?.errors) {
+            <li>Questão {{ $index + 1 }}: {{ getQuestionErrorMessage($index, 'options') }}</li>
+          }
+          @if (questionForm.get('correctAnswer')?.errors) {
+            <li>Questão {{ $index + 1 }}: {{ getQuestionErrorMessage($index, 'correctAnswer') }}</li>
+          }
+        }
+      </ul>
+    </div>
+  }
+
   <div class="form-actions">
     <button type="button" class="btn-secondary" (click)="onCancel()">
       <i class="fas fa-times"></i>
       Cancelar
     </button>
-    <button type="submit" class="btn-primary" [disabled]="examForm.invalid">
+    <button
+      type="submit"
+      class="btn-primary"
+      [class.has-errors]="!examForm.valid"
+    >
       <i class="fas fa-save"></i>
       {{ exam() ? 'Atualizar' : 'Criar' }} Exame
     </button>

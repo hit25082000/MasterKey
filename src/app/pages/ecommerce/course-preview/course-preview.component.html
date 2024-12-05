@@ -1,35 +1,62 @@
 <div class="course-preview" *ngIf="course">
-  <div class="course-preview-detail">
-    <img [src]="course.image" class="course-img" [alt]="course.name">
-    <div class="course-header">
-      <h1><img src="assets/icons/interrogacao.png" alt="ícone de interrogação" class="icon">Sobre nosso curso de {{course.name}}: </h1>
-      <p class="description"><img src="assets/icons/livro.png" alt="ícone de livro" class="icon">{{course.description}}</p>
-      <p class="description"><img src="assets/icons/relogio.png" alt="ícone de livro" class="icon">{{course.workHours}} hora(s) <img src="assets/icons/tag.png" alt="ícone de livro" class="icon"> categoria {{course.category}}</p>
-    </div>
-    <div class="course-body">
-
+  <div class="course-header">
+    <div class="course-main-info">
+      <img [src]="course.image" class="course-img" [alt]="course.name">
+      <div class="course-details">
+        <h1>
+          <img src="assets/icons/interrogacao.png" alt="ícone de interrogação" class="icon">
+          Sobre nosso curso de {{course.name}}
+        </h1>
+        <p class="description">
+          <img src="assets/icons/livro.png" alt="ícone de livro" class="icon">
+          {{course.description}}
+        </p>
+        <div class="course-meta">
+          <span>
+            <img src="assets/icons/relogio.png" alt="ícone de relógio" class="icon">
+            {{course.workHours}} hora(s)
+          </span>
+          <span>
+            <img src="assets/icons/tag.png" alt="ícone de tag" class="icon">
+            {{course.category}}
+          </span>
+        </div>
+      </div>
     </div>
   </div>
 
   <div class="preview-section">
-    <div class="video-container" *ngIf="safeVideoUrl">
-      <iframe [src]="safeVideoUrl"
-              frameborder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowfullscreen>
-      </iframe>
+    <div class="video-preview">
+      <h2>Aula Demonstrativa</h2>
+      <div class="video-container">
+        @if (safeVideoUrl()) {
+          <iframe [src]="safeVideoUrl()"
+                  frameborder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen>
+          </iframe>
+        } @else {
+          <div class="video-placeholder">
+            <p>Vídeo não disponível</p>
+          </div>
+        }
+      </div>
     </div>
 
     <div class="course-info">
-      <div class="price-info" *ngIf="!course.hidePrice">
-        <span class="original-price" *ngIf="course.promoPrice">R$ {{course.price}}</span>
-        <span class="promo-price">R$ {{course.promoPrice || course.price}}</span>
-        <span class="portion-info" *ngIf="course.portionCount">
-          ou {{course.portionCount}}x de R$ {{(course.promoPrice || course.price) / course.portionCount | number:'1.2-2'}}
-        </span>
+      <div class="info-card">
+        <h3>Informações do Curso</h3>
+        <div class="price-info" *ngIf="!course.hidePrice">
+          <div class="price-container">
+            <span class="original-price" *ngIf="course.promoPrice">R$ {{course.price}}</span>
+            <span class="promo-price">R$ {{course.promoPrice || course.price}}</span>
+          </div>
+          <span class="portion-info" *ngIf="course.portionCount">
+            ou {{course.portionCount}}x de R$ {{(course.promoPrice || course.price) / course.portionCount | number:'1.2-2'}}
+          </span>
+        </div>
+        <a [href]="course.checkoutUrl" class="buy-button">Matricular-se Agora</a>
       </div>
-
-      <a [href]="course.checkoutUrl" class="buy-button">Matricular-se</a>
     </div>
   </div>
 
@@ -40,7 +67,10 @@
         <span class="video-number">{{i + 1}}</span>
         <div class="video-info">
           <h3>{{video.name}}</h3>
-          <span class="duration">{{video.duration | number:'1.0-0'}} minutos</span>
+          <span class="duration">
+            <img src="assets/icons/relogio.png" alt="ícone de duração" class="icon-small">
+            {{video.duration | number:'1.0-0'}} minutos
+          </span>
         </div>
       </div>
     </div>

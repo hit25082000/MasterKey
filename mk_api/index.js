@@ -1,25 +1,21 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const cors = require('cors')({
-  origin: (origin, callback) => {
-    const allowedOrigins = [
-      'http://localhost:4200',
-      'https://seu-dominio.com',
-      'https://master-key-a3c69.web.app'
-    ];
-
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Não permitido pelo CORS'));
-    }
-  }
+  origin: ['http://localhost:4200', 'https://master-key-a3c69.web.app'],
+  credentials: true
 });
 const { Storage } = require('@google-cloud/storage');
+const { MercadoPagoConfig, Preference } = require('mercadopago');
+const config = require('./config');
 
 admin.initializeApp();
 const storage = new Storage();
 const bucket = storage.bucket('master-key-a3c69.appspot.com');
+
+// Configuração do Mercado Pago usando a nova sintaxe
+const client = new MercadoPagoConfig({
+  accessToken: config.mercadoPago.accessToken
+});
 
 async function authenticateRequest(req, res, next) {
   const idToken = req.headers.authorization?.split('Bearer ')[1];
@@ -33,7 +29,7 @@ async function authenticateRequest(req, res, next) {
     req.user = decodedToken;
     next();
   } catch (error) {
-    return res.status(403).json({ error: error.message });
+    return res.status(403).json({ error: 'Proibido: Token inválido ou expirado.' });
   }
 }
 
@@ -58,67 +54,66 @@ exports.getUsers = functions.https.onRequest((req, res) => {
 exports.createUserWithProfile = functions.https.onRequest((req, res) => {
   cors(req, res, async () => {
     try {
-      await authenticateRequest(req);
+      await authenticateRequest(req, res, async () => {
+        const { email, password, userData, iconFile } = req.body;
 
-      const { email, password, userData, iconFile } = req.body;
+        if (!email || !password || !userData) {
+          return res.status(400).json({ error: 'Dados incompletos.' });
+        }
 
-      if (!email || !password || !userData) {
-        return res.status(400).json({ message: 'Dados incompletos.' });
-      }
-
-      try {
-        const userRecord = await admin.auth().createUser({
-          email,
-          password,
-          displayName: userData.name,
-          disabled: false
-        });
-
-        // Fazer upload do ícone, se fornecido
-        let iconUrl = null;
-        if (iconFile) {
-          // Adiciona timestamp ao nome do arquivo
-          const timestamp = Date.now();
-          const fileName = `profiles/${userRecord.uid}_${timestamp}_profile.png`;
-          const file = bucket.file(fileName);
-
-          const imageBuffer = Buffer.from(iconFile.split(',')[1], 'base64');
-          await file.save(imageBuffer, {
-            metadata: {
-              contentType: 'image/png',
-              cacheControl: 'no-cache, no-store, must-revalidate' // Previne cache
-            }
+        try {
+          // Criar usuário de autenticação
+          const userRecord = await admin.auth().createUser({
+            email,
+            password,
           });
 
-          await file.makePublic();
-          // Adiciona parâmetro de versão na URL
-          iconUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}?v=${timestamp}`;
+          // Fazer upload do ícone, se fornecido
+          let iconUrl = null;
+          if (iconFile) {
+            const fileName = `${userRecord.uid}_profile.png`;
+            const file = bucket.file(fileName);
+
+            // Decodificar a string base64 e salvar como buffer
+            const imageBuffer = Buffer.from(iconFile.split(',')[1], 'base64');
+
+            await file.save(imageBuffer, {
+              metadata: {
+                contentType: 'image/png', // ou 'image/png' se for PNG
+              },
+            });
+
+            // Tornar o arquivo público
+            await file.makePublic();
+
+            iconUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+          }
+
+          // Adicionar iconUrl aos dados do usuário
+          const userDataWithIcon = {
+            ...userData,
+            profilePic: iconUrl || null
+          };
+
+          // Salvar dados do usuário no Firestore
+          await admin.firestore().collection('users').doc(userRecord.uid).set(userDataWithIcon);
+
+          // Atualizar o photoURL do usuário de autenticação
+          if (iconUrl) {
+            await admin.auth().updateUser(userRecord.uid, { photoURL: iconUrl });
+          }
+
+          res.status(201).json({ ...userDataWithIcon, uid: userRecord.uid });
+        } catch (authError) {
+          if (authError.code === 'auth/email-already-exists') {
+            return res.status(400).json({ message: 'O e-mail fornecido já está em uso.' });
+          }
+          throw authError; // Lança o erro para ser capturado pelo catch externo
         }
-
-        // Adicionar iconUrl aos dados do usuário
-        const userDataWithIcon = {
-          ...userData,
-          profilePic: iconUrl || null
-        };
-
-        // Salvar dados do usuário no Firestore
-        await admin.firestore().collection('users').doc(userRecord.uid).set(userDataWithIcon);
-
-        // Atualizar o photoURL do usuário de autenticação
-        if (iconUrl) {
-          await admin.auth().updateUser(userRecord.uid, { photoURL: iconUrl });
-        }
-
-        res.status(201).json({ ...userDataWithIcon, uid: userRecord.uid });
-      } catch (authError) {
-        if (authError.code === 'auth/email-already-exists') {
-          return res.status(400).json({ message: 'O e-mail fornecido já está em uso.' });
-        }
-        throw authError; // Lança o erro para ser capturado pelo catch externo
-      }
+      });
     } catch (error) {
       console.error('Erro ao criar usuário:', error);
-      res.status(500).json({ message: `Erro ao criar usuário: ${error.message}` });
+      res.status(500).json({ error: `Erro ao criar usuário: ${error.message}` });
     }
   });
 });
@@ -126,72 +121,65 @@ exports.createUserWithProfile = functions.https.onRequest((req, res) => {
 exports.updateUserWithProfile = functions.https.onRequest((req, res) => {
   cors(req, res, async () => {
     try {
-      await authenticateRequest(req);
+      await authenticateRequest(req, res, async () => {
+        const { uid, email, password, userData, iconFile } = req.body;
 
-      const { uid, userData, iconFile } = req.body;
+        if (!uid) {
+          return res.status(400).json({ error: 'UID do usuário é obrigatório.' });
+        }
 
-      if (!uid) {
-        return res.status(400).json({ message: 'UID do usuário é obrigatório.' });
-      }
+        try {
+          // Atualizar usuário de autenticação
+          const updateData = {};
+          if (email) updateData.email = email;
+          if (password) updateData.password = password;
 
-      try {
-        let iconUrl = userData.profilePic;
+          // Primeiro, obter os dados atuais do usuário
+          const currentUserData = await admin.firestore().collection('users').doc(uid).get();
 
-        if (iconFile) {
-          // Adiciona timestamp ao nome do arquivo
-          const timestamp = Date.now();
-          const fileName = `profiles/${uid}_${timestamp}_profile.png`;
-          const file = bucket.file(fileName);
+          // Fazer upload do ícone, se fornecido
+          let iconUrl = currentUserData.data()?.profilePic || null; // Mantém o URL atual se não houver novo ícone
+          if (iconFile) {
+            const fileName = `${uid}_profile.jpg`;
+            const file = bucket.file(fileName);
 
-          const imageBuffer = Buffer.from(iconFile.split(',')[1], 'base64');
-          await file.save(imageBuffer, {
-            metadata: {
-              contentType: 'image/png',
-              cacheControl: 'no-cache, no-store, must-revalidate' // Previne cache
-            }
-          });
+            // Decodificar a string base64 e salvar como buffer
+            const imageBuffer = Buffer.from(iconFile.split(',')[1], 'base64');
 
-          await file.makePublic();
-          // Adiciona parâmetro de versão na URL
-          iconUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}?v=${timestamp}`;
+            await file.save(imageBuffer, {
+              metadata: {
+                contentType: 'image/jpg',
+              },
+            });
 
-          // Tenta deletar a imagem antiga se existir
-          if (userData.profilePic) {
-            try {
-              const oldFileName = userData.profilePic.split('/').pop().split('?')[0];
-              const oldFile = bucket.file(`profiles/${oldFileName}`);
-              await oldFile.delete().catch(() => {}); // Ignora erro se arquivo não existir
-            } catch (error) {
-              console.log('Erro ao deletar imagem antiga:', error);
-            }
+            await file.makePublic();
+
+            iconUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+            updateData.profilePic = iconUrl; // Adicionar photoURL ao updateData
           }
+
+          // Atualizar usuário de autenticação com todos os dados
+          const userRecord = await admin.auth().updateUser(uid, updateData);
+
+          // Atualizar dados do usuário no Firestore
+          const userDataWithIcon = {
+            ...userData,
+            profilePic: iconUrl // Usar o iconUrl atualizado ou o existente
+          };
+
+          await admin.firestore().collection('users').doc(uid).update(userDataWithIcon);
+
+          res.status(200).json({ ...userRecord, ...userDataWithIcon });
+        } catch (authError) {
+          if (authError.code === 'auth/email-already-in-use') {
+            return res.status(400).json({ message: 'O e-mail fornecido já está em uso.' });
+          }
+          throw authError;
         }
-
-        // Atualizar usuário de autenticação com todos os dados
-        const updateData = {};
-        if (userData.email) updateData.email = userData.email;
-        if (userData.password) updateData.password = userData.password;
-
-        const userRecord = await admin.auth().updateUser(uid, updateData);
-
-        // Atualizar dados do usuário no Firestore
-        const userDataWithIcon = {
-          ...userData,
-          profilePic: iconUrl // Usar o iconUrl atualizado ou o existente
-        };
-
-        await admin.firestore().collection('users').doc(uid).update(userDataWithIcon);
-
-        res.status(200).json({ ...userRecord, ...userDataWithIcon });
-      } catch (authError) {
-        if (authError.code === 'auth/email-already-in-use') {
-          return res.status(400).json({ message: 'O e-mail fornecido já está em uso.' });
-        }
-        throw authError;
-      }
+      });
     } catch (error) {
       console.error('Erro ao atualizar usuário:', error);
-      res.status(500).json({ message: `Erro ao atualizar usuário: ${error.message}` });
+      res.status(500).json({ error: `Erro ao atualizar usuário: ${error.message}` });
     }
   });
 });
@@ -203,7 +191,7 @@ exports.deleteUserWithProfile = functions.https.onRequest((req, res) => {
         const { uid } = req.body;
 
         if (!uid) {
-          return res.status(400).json({ message: 'UID do usuário é obrigatório.' });
+          return res.status(400).json({ error: 'UID do usuário é obrigatório.' });
         }
 
         // Inativar usuário no Firestore
@@ -219,7 +207,195 @@ exports.deleteUserWithProfile = functions.https.onRequest((req, res) => {
       });
     } catch (error) {
       console.error('Erro ao inativar usuário:', error);
-      res.status(500).json({ message: `Erro ao inativar usuário: ${error.message}` });
+      res.status(500).json({ error: `Erro ao inativar usuário: ${error.message}` });
+    }
+  });
+});
+
+// Função para criar preferência de pagamento
+exports.createPaymentPreference = functions.https.onRequest((req, res) => {
+  res.set({
+    'Access-Control-Allow-Origin': 'http://localhost:4200',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept',
+    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Max-Age': '86400'
+  });
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+
+  cors(req, res, async () => {
+    try {
+      const { title, price, quantity, courseId, description, picture_url, test_mode } = req.body;
+
+      if (!title || !price || !courseId) {
+        return res.status(400).json({
+          error: 'Dados incompletos para criar preferência de pagamento'
+        });
+      }
+
+      const preference = {
+        items: [
+          {
+            id: courseId,
+            title,
+            description: description || title,
+            picture_url: picture_url || '',
+            unit_price: Number(price),
+            quantity: Number(quantity) || 1,
+            currency_id: 'BRL'
+          }
+        ],
+        back_urls: {
+          success: `${config.frontend.url}/payment/success`,
+          failure: `${config.frontend.url}/payment/failure`,
+          pending: `${config.frontend.url}/payment/pending`
+        },
+        auto_return: 'approved',
+        external_reference: courseId,
+        notification_url: `${config.functions.url}/paymentWebhook`,
+        statement_descriptor: 'MASTERKEY',
+        payment_methods: {
+          excluded_payment_methods: [],
+          excluded_payment_types: [],
+          installments: 12
+        },
+        binary_mode: true, // Aceita apenas pagamentos aprovados ou rejeitados
+        expires: true,
+        expiration_date_to: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 horas
+        marketplace: 'MASTERKEY',
+        marketplace_fee: 0 // Sem taxa de marketplace
+      };
+
+      try {
+        const preferenceClient = new Preference(client);
+        const response = await preferenceClient.create({ body: preference });
+        console.log('Preferência criada:', response);
+
+        // Se estiver em modo de teste, use sandbox_init_point
+        const redirectUrl = test_mode ? response.sandbox_init_point : response.init_point;
+
+        res.status(200).json({
+          id: response.id,
+          init_point: response.init_point,
+          sandbox_init_point: response.sandbox_init_point,
+          redirect_url: redirectUrl
+        });
+      } catch (mpError) {
+        console.error('Erro Mercado Pago:', mpError);
+        res.status(500).json({
+          error: 'Erro ao criar preferência de pagamento',
+          details: mpError.message
+        });
+      }
+    } catch (error) {
+      console.error('Erro geral:', error);
+      res.status(500).json({
+        error: 'Erro interno do servidor',
+        details: error.message
+      });
+    }
+  });
+});
+
+// Webhook para receber notificações do Mercado Pago
+exports.paymentWebhook = functions.https.onRequest((req, res) => {
+  cors(req, res, async () => {
+    try {
+      const { type, data } = req.body;
+
+      if (type === 'payment') {
+        const paymentId = data.id;
+        const { Payment } = require('mercadopago');
+        const paymentClient = new Payment(client);
+
+        // Buscar informações do pagamento
+        const payment = await paymentClient.get({ id: paymentId });
+        const preferenceId = payment.preference_id;
+
+        // Atualizar status da transação no Firestore
+        const transactionQuery = await admin.firestore()
+          .collection('transactions')
+          .where('preferenceId', '==', preferenceId)
+          .limit(1)
+          .get();
+
+        if (!transactionQuery.empty) {
+          const transactionDoc = transactionQuery.docs[0];
+          await transactionDoc.ref.update({
+            status: payment.status,
+            paymentId: paymentId,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            paymentDetails: payment
+          });
+
+          // Se o pagamento foi aprovado, liberar acesso ao curso
+          if (payment.status === 'approved') {
+            const transaction = transactionDoc.data();
+            await admin.firestore().collection('userCourses').add({
+              userId: transaction.userId,
+              courseId: transaction.courseId,
+              purchaseDate: admin.firestore.FieldValue.serverTimestamp(),
+              transactionId: transactionDoc.id
+            });
+          }
+        }
+      }
+
+      res.status(200).send('OK');
+    } catch (error) {
+      console.error('Erro no webhook:', error);
+      res.status(500).json({ error: 'Erro ao processar webhook' });
+    }
+  });
+});
+
+// Função para verificar status do pagamento
+exports.checkPaymentStatus = functions.https.onRequest((req, res) => {
+  cors(req, res, async () => {
+    try {
+      await authenticateRequest(req, res, async () => {
+        const { transactionId } = req.query;
+
+        if (!transactionId) {
+          return res.status(400).json({
+            error: 'ID da transação não fornecido'
+          });
+        }
+
+        const transactionDoc = await admin.firestore()
+          .collection('transactions')
+          .doc(transactionId)
+          .get();
+
+        if (!transactionDoc.exists) {
+          return res.status(404).json({
+            error: 'Transação não encontrada'
+          });
+        }
+
+        const transaction = transactionDoc.data();
+
+        // Verificar se o usuário tem permissão para ver esta transação
+        if (transaction.userId !== req.user.uid) {
+          return res.status(403).json({
+            error: 'Não autorizado'
+          });
+        }
+
+        res.status(200).json({
+          status: transaction.status,
+          paymentDetails: transaction.paymentDetails || null
+        });
+      });
+    } catch (error) {
+      console.error('Erro ao verificar status:', error);
+      res.status(500).json({
+        error: 'Erro ao verificar status do pagamento'
+      });
     }
   });
 });

@@ -18,21 +18,147 @@ import { Employee } from '../../../../core/models/employee.model';
     @if (loading()) {
       <div class="loading">Carregando...</div>
     } @else {
-      <app-generic-form
-        [config]="formConfig()"
-        [submitButtonText]="isEditMode() ? 'Atualizar Funcionário' : 'Criar Funcionário'"
-        (formSubmit)="onSubmit($event)"
-        [formTitle]="isEditMode() ? 'Editar Funcionário' : 'Novo Funcionário'"
-      >
-        @if (currentImage()) {
-          <div class="current-image">
-            <img [src]="currentImage()" alt="Foto do funcionário" class="profile-image">
+      <div class="employee-form-container">
+        <!-- Formulário -->
+        <div class="form-container">
+          <app-generic-form
+            [config]="formConfig()"
+            [submitButtonText]="isEditMode() ? 'Atualizar Funcionário' : 'Criar Funcionário'"
+            (formSubmit)="onSubmit($event)"
+            [formTitle]="isEditMode() ? 'Editar Funcionário' : 'Novo Funcionário'"
+          >
+          </app-generic-form>
+        </div>
+
+        <!-- Preview da imagem -->
+        <div class="image-preview-section">
+          <div class="image-preview-container" [class.has-image]="currentImage()">
+            <div class="image-preview">
+              <img
+                [src]="currentImage() || 'assets/images/default-profile.png'"
+                alt="Foto do funcionário"
+                class="profile-image"
+                (error)="currentImage.set('')"
+              >
+              @if (currentImage()) {
+                <button type="button" class="clear-image" (click)="currentImage.set('')">
+                  <i class="fas fa-times"></i>
+                </button>
+              }
+            </div>
+            <span class="image-label">Foto do Funcionário</span>
           </div>
-        }
-      </app-generic-form>
+        </div>
+      </div>
     }
   `,
-  styleUrls: ['./employee-form.component.scss']
+  styles: [`
+    .employee-form-container {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 2rem;
+      padding: 1rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .form-container {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      padding: 1rem;
+    }
+
+    .image-preview-section {
+      position: sticky;
+      top: 1rem;
+      height: fit-content;
+    }
+
+    .image-preview-container {
+      width: 250px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+
+      &.has-image {
+        border: 2px solid #4CAF50;
+      }
+    }
+
+    .image-preview {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .profile-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+
+      &:hover {
+        transform: scale(1.05);
+      }
+    }
+
+    .clear-image {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      background: rgba(255, 0, 0, 0.7);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+
+      &:hover {
+        background: rgba(255, 0, 0, 0.9);
+      }
+    }
+
+    .image-label {
+      display: block;
+      text-align: center;
+      margin-top: 0.5rem;
+      color: #666;
+      font-size: 0.875rem;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: #666;
+    }
+
+    @media (max-width: 1200px) {
+      .employee-form-container {
+        grid-template-columns: 1fr;
+      }
+
+      .image-preview-section {
+        position: relative;
+        top: 0;
+      }
+
+      .image-preview-container {
+        width: 200px;
+        margin: 0 auto;
+      }
+    }
+  `]
 })
 export class EmployeeFormComponent implements OnInit {
   formConfig = signal<FormFieldConfig[]>([]);

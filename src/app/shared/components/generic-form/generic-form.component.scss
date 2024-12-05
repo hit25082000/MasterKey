@@ -164,14 +164,14 @@ form {
 .form-container {
   display: flex;
   flex-direction: column;
-  max-height: calc(100vh - 2rem);
   padding: 1rem;
-  overflow-y: auto;
+  max-height: none;
+  overflow: visible;
 
   .form-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(5, minmax(150px, 1fr));
+    gap: 0.75rem;
     width: 100%;
   }
 
@@ -183,21 +183,29 @@ form {
     margin-bottom: 0.5rem;
 
     &.full-width {
-      grid-column: 2 / -1;
+      grid-column: 1 / -1;
+    }
+
+    &.medium-width {
+      grid-column: span 2;
+    }
+
+    &.large-width {
+      grid-column: span 3;
     }
 
     label {
-      font-size: 0.9rem;
-      margin-bottom: 0.25rem;
+      font-size: 0.8rem;
+      margin-bottom: 0.2rem;
       color: #333;
     }
 
     .form-control {
       width: 100%;
-      padding: 0.5rem;
+      padding: 0.4rem 0.6rem;
       border: 1px solid #ddd;
       border-radius: 4px;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
 
       &:focus {
         outline: none;
@@ -207,8 +215,8 @@ form {
     }
 
     textarea.form-control {
-      max-height: 150px;
-      resize: vertical;
+      min-height: 80px;
+      max-height: 80px;
     }
 
     .text-danger {
@@ -231,6 +239,10 @@ form {
     margin-top: 1rem;
     padding: 0.5rem 1rem;
     align-self: flex-end;
+    position: sticky;
+    bottom: 1rem;
+    right: 1rem;
+    z-index: 10;
 
     &.btn-primary {
       background-color: #4a90e2;
@@ -238,10 +250,11 @@ form {
       border: none;
       border-radius: 4px;
       cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 
-      &:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
+      &:hover {
+        background-color: darken(#4a90e2, 10%);
+        transform: translateY(-2px);
       }
     }
   }
@@ -254,42 +267,33 @@ form {
     text-align: left;
     width: 100%;
   }
-}
 
-// Ajustes para telas menores
-@media (max-width: 768px) {
-  .form-container {
-    padding: 0.5rem;
-
+  @media (max-width: 1600px) {
     .form-grid {
-      grid-template-columns: 1fr;
-      gap: 0.5rem;
-    }
-
-    .form-group {
-      margin-bottom: 0.25rem;
-    }
-
-    .btn {
-      width: 100%;
-      margin-top: 0.5rem;
+      grid-template-columns: repeat(4, 1fr);
     }
   }
-}
 
-// Ajustes para telas muito pequenas
-@media (max-height: 600px) {
-  .form-container {
-    .form-group {
-      margin-bottom: 0.15rem;
+  @media (max-width: 1200px) {
+    .form-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
 
-      label {
-        font-size: 0.8rem;
-      }
+  @media (max-width: 992px) {
+    .form-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
 
-      .form-control {
-        padding: 0.35rem;
-      }
+  @media (max-width: 576px) {
+    .form-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .form-group.medium-width,
+    .form-group.large-width {
+      grid-column: 1;
     }
   }
 }
@@ -481,5 +485,48 @@ form {
         transform: scale(1.05);
       }
     }
+  }
+}
+
+.multiselect-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #fff;
+
+  .checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+
+    &:hover {
+      background-color: #f5f5f5;
+    }
+
+    label {
+      cursor: pointer;
+      font-size: 0.9rem;
+      margin: 0;
+    }
+
+    .multiselect-checkbox {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #4a90e2;
+    }
+  }
+}
+
+// Responsividade
+@media (max-width: 768px) {
+  .multiselect-container {
+    grid-template-columns: 1fr;
   }
 }

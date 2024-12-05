@@ -6,6 +6,9 @@ import { AboutComponent } from './about/about.component';
 import { ContactComponent } from './contact/contact.component';
 import { CoursePreviewComponent } from './course-preview/course-preview.component';
 import { CourseCheckoutComponent } from '../../features/checkout/components/course-checkout/course-checkout.component';
+import { PaymentSuccessComponent } from './payment/payment-success/payment-success.component';
+import { PaymentFailureComponent } from './payment/payment-failure/payment-failure.component';
+import { PaymentPendingComponent } from './payment/payment-pending/payment-pending.component';
 
 export const ECOMMERCE_ROUTES: Routes = [
     {
@@ -42,5 +45,17 @@ export const ECOMMERCE_ROUTES: Routes = [
         path: 'checkout/:id',
         component: CourseCheckoutComponent,
         title: 'Checkout'
+      },
+      {
+        path: 'payment/success',
+        component: PaymentSuccessComponent
+      },
+      {
+        path: 'payment/failure',
+        component: PaymentFailureComponent
+      },
+      {
+        path: 'payment/pending',
+        component: PaymentPendingComponent
       }
 ];

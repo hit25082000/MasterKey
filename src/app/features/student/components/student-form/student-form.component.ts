@@ -283,12 +283,31 @@ export class StudentFormComponent implements OnInit {
   onFileChange(event: any) {
     const file = event.target.files[0];
     if (file) {
+      // Validar tipo de arquivo
+      if (!file.type.startsWith('image/')) {
+        this.notificationService.error('Por favor, selecione apenas arquivos de imagem');
+        return;
+      }
+
+      // Validar tamanho (5MB)
+      const maxSize = 5 * 1024 * 1024;
+      if (file.size > maxSize) {
+        this.notificationService.error('A imagem deve ter no máximo 5MB');
+        return;
+      }
+
       this.selectedFile.set(file);
 
-      // Adiciona preview da imagem
+      // Criar preview
       const reader = new FileReader();
-      reader.onload = (e: any) => {
-        this.currentImage.set(e.target.result);
+      reader.onload = () => {
+        if (reader.result) {
+          this.currentImage.set(reader.result as string);
+        }
+      };
+      reader.onerror = () => {
+        this.notificationService.error('Erro ao carregar a imagem');
+        this.currentImage.set('');
       };
       reader.readAsDataURL(file);
     }
@@ -334,10 +353,9 @@ export class StudentFormComponent implements OnInit {
   onSubmit(formData: any) {
     this.loadingService.show();
     const studentData: Student = formData;
-    studentData.id = this.studentId()!;
+    studentData.id = this.studentId() || '';
     studentData.role = 'student';
 
-    console.log(studentData);
     const operation = this.isEditMode()
       ? this.studentManagement.update(studentData, this.selectedFile())
       : this.studentManagement.create(studentData, this.selectedFile());
@@ -360,8 +378,20 @@ export class StudentFormComponent implements OnInit {
   }
 
   getImageUrl(url: string): string {
-    if (!url) return '';
-    // Adiciona timestamp como parâmetro para evitar cache
+    if (!url) return 'assets/images/default-profile.png';
+
+    // Se for uma URL base64 (preview local), retorna diretamente
+    if (url.startsWith('data:image')) {
+      return url;
+    }
+
+    // Para URLs do Storage, adiciona timestamp para evitar cache
+    if (url.includes('storage.googleapis.com')) {
+      const baseUrl = url.split('?')[0]; // Remove parâmetros existentes
+      return `${baseUrl}?t=${Date.now()}`; // Adiciona novo timestamp
+    }
+
+    // Para outras URLs
     return `${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}`;
   }
 }

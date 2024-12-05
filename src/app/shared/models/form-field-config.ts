@@ -24,7 +24,7 @@ export interface ModalConfig {
 export interface FormFieldConfig {
   name: string;
   label: string;
-  type: 'text' | 'email' | 'password' | 'number' | 'file' | 'select' | 'textarea' | 'checkbox' | 'date' | 'modal-select';
+  type: 'text' | 'email' | 'password' | 'number' | 'file' | 'select' | 'textarea' | 'checkbox' | 'date' | 'modal-select' | 'multiselect';
   value?: any;
   validators?: any[];
   errorMessages?: { [key: string]: string };

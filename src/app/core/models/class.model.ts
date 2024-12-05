@@ -4,7 +4,7 @@ export interface Class {
   id?: string;
   name: string;
   time: string;
-  dayWeek: string;
+  daysWeek: string[];
   startDate: string;
   finishDate: string;
   status: boolean;

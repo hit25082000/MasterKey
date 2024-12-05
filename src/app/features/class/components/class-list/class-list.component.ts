@@ -32,7 +32,7 @@ import { NotificationService } from '../../../../shared/services/notification.se
                 </div>
                 <div class="info-item">
                   <i class="fas fa-calendar"></i>
-                  <span>{{ classItem.dayWeek }}</span>
+                  <span>{{ formatDaysWeek(classItem.daysWeek) }}</span>
                 </div>
                 <div class="info-item">
                   <i class="fas fa-door-open"></i>
@@ -78,6 +78,16 @@ import { NotificationService } from '../../../../shared/services/notification.se
 export class ClassListComponent implements OnInit {
   loading = signal(true);
 
+  private readonly dayWeekMap = {
+    'MONDAY': 'Segunda',
+    'TUESDAY': 'Terça',
+    'WEDNESDAY': 'Quarta',
+    'THURSDAY': 'Quinta',
+    'FRIDAY': 'Sexta',
+    'SATURDAY': 'Sábado',
+    'SUNDAY': 'Domingo'
+  };
+
   constructor(
     public classService: ClassService,
     private notificationService: NotificationService,
@@ -92,6 +102,12 @@ export class ClassListComponent implements OnInit {
       this.notificationService.error('Erro ao carregar turmas');
       console.error(error);
     }
+  }
+
+  formatDaysWeek(days: string[]): string {
+    if (!days || days.length === 0) return 'Não definido';
+    return days.map(day => this.dayWeekMap[day as keyof typeof this.dayWeekMap] || day)
+               .join(', ');
   }
 
   async delete(id: string) {

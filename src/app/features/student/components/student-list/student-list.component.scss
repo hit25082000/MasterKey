@@ -80,7 +80,7 @@ table {
 }
 
 .student-list-container {
-  padding: 2rem;
+  padding: 1.5rem;
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
@@ -88,94 +88,83 @@ table {
 
 .header {
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 
-  h2 {
-    color: #2c3e50;
-    font-size: 1.8rem;
-    position: relative;
-
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: -8px;
-      left: 0;
-      width: 60px;
-      height: 4px;
-      background: #3498db;
-      border-radius: 2px;
-    }
+  .title-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
   }
 
-  app-search-bar {
-    width: 300px;
-  }
-}
+  .btn-add {
+    background: #4CAF50;
+    color: white;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
 
-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  margin-bottom: 2rem;
-
-  th, td {
-    padding: 1rem;
-    text-align: left;
-  }
-
-  thead {
-    background: #f8f9fa;
-
-    th {
-      font-weight: 600;
-      color: #2c3e50;
-      border-bottom: 2px solid #e9ecef;
-      transition: background-color 0.3s;
-    }
-  }
-
-  tbody {
-    tr {
-      transition: all 0.2s ease;
-
-      &:hover {
-        background-color: #f8f9fa;
-        transform: translateX(5px);
-      }
-
-      td {
-        border-bottom: 1px solid #e9ecef;
-
-        img {
-          border-radius: 50%;
-          object-fit: cover;
-          transition: transform 0.3s;
-
-          &:hover {
-            transform: scale(1.2);
-          }
-        }
-      }
+    &:hover {
+      background: #45a049;
+      transform: translateY(-2px);
     }
   }
 }
+
+.table-responsive {
+  overflow-x: auto;
+  margin: 1rem 0;
+
+  table {
+    min-width: 800px;
+    width: 100%;
+  }
+}
+
+.student-image {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+// Definindo larguras específicas para as colunas
+.th-image, .td-image { width: 60px; }
+.th-name, .td-name { width: 25%; }
+.th-phone, .td-phone { width: 15%; }
+.th-age, .td-age { width: 10%; }
+.th-polo, .td-polo { width: 15%; }
+.th-actions, .td-actions { width: 20%; }
 
 .action-buttons {
   display: flex;
   gap: 0.5rem;
+  flex-wrap: nowrap;
 
   button {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
+    padding: 0.5rem;
     border: none;
     border-radius: 6px;
-    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
     cursor: pointer;
     transition: all 0.2s ease;
+    white-space: nowrap;
 
     i {
       font-size: 0.9rem;
@@ -188,45 +177,38 @@ table {
       &:hover {
         background: #2980b9;
         transform: translateY(-2px);
-        box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
-      }
-    }
-
-    &.btn-delete {
-      background: #e74c3c;
-      color: white;
-
-      &:hover {
-        background: #c0392b;
-        transform: translateY(-2px);
-        box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
       }
     }
 
     &.btn-certificate {
       background: #22c55e;
+      color: white;
 
       &:hover {
         background: #16a34a;
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);
       }
     }
   }
 }
 
-// Estilização da barra de pesquisa
-::ng-deep app-search-bar {
-  .form-control {
-    width: 100%;
-    padding: 0.8rem 1rem;
-    border: 2px solid #e9ecef;
-    border-radius: 8px;
-    font-size: 1rem;
-    transition: all 0.3s;
+// Responsividade
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
 
-    &:focus {
-      outline: none;
+  .action-buttons {
+    button span {
+      display: none; // Esconde o texto em telas menores
     }
   }
+}
+
+// Estilização da paginação
+.pagination-container {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: center;
 }

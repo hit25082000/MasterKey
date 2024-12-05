@@ -32,7 +32,7 @@ import { NotificationService } from '../../../../shared/services/notification.se
             <div class="video-player">
               <iframe
                 #videoPlayer
-                [src]="getEmbedUrl(currentVideo.url) | safe:'resourceUrl'"
+                [src]="getEmbedUrl(currentVideo.webViewLink) | safe:'resourceUrl'"
                 frameborder="0"
                 allowfullscreen
                 (load)="onVideoLoad()"

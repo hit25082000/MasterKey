@@ -40,14 +40,12 @@ export class GenericFormComponent {
   private initForm() {
     const formGroupConfig: { [key: string]: any } = {};
 
-    console.log('Iniciando formulário com config:', this.formConfig()); // Debug
 
     for (const field of this.formConfig()) {
       // Não define valor inicial para campos do tipo file
       const value = field.type === 'file' ? null : (field.value !== undefined ? field.value : '');
       formGroupConfig[field.name] = [value, field.validators || []];
 
-      console.log(`Campo ${field.name}:`, { value, validators: field.validators }); // Debug
     }
 
     const newForm = this.fb.group(formGroupConfig, {
@@ -56,7 +54,6 @@ export class GenericFormComponent {
 
     queueMicrotask(() => {
       this.form.set(newForm);
-      console.log('Formulário inicializado:', this.form().value); // Debug
     });
   }
 
@@ -101,5 +98,49 @@ export class GenericFormComponent {
       const control = this.form().get(key);
       control?.markAsTouched();
     });
+  }
+
+  shouldBeMediumWidth(fieldName: string): boolean {
+    const mediumWidthFields = [
+      'email',
+      'street',
+      'responsible'
+    ];
+    return mediumWidthFields.includes(fieldName);
+  }
+
+  shouldBeLargeWidth(fieldName: string): boolean {
+    const largeWidthFields = [
+      'description'
+    ];
+    return largeWidthFields.includes(fieldName);
+  }
+
+  getFieldClass(field: FormFieldConfig): string {
+    if (field.type === 'textarea') return 'large-width';
+    if (this.shouldBeLargeWidth(field.name)) return 'large-width';
+    if (this.shouldBeMediumWidth(field.name)) return 'medium-width';
+    return '';
+  }
+
+  isOptionSelected(fieldName: string, value: string): boolean {
+    const control = this.form().get(fieldName);
+    if (!control) return false;
+
+    const selectedValues = control.value as string[];
+    return selectedValues?.includes(value) || false;
+  }
+
+  toggleOption(fieldName: string, value: string): void {
+    const control = this.form().get(fieldName);
+    if (!control) return;
+
+    const currentValues = (control.value as string[]) || [];
+    const newValues = currentValues.includes(value)
+      ? currentValues.filter(v => v !== value)
+      : [...currentValues, value];
+
+    control.setValue(newValues);
+    control.markAsTouched();
   }
 }

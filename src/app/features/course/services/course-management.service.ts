@@ -103,16 +103,16 @@ export class CourseManagementService {
       // Processa cada vídeo
       const processedVideos = await Promise.all(
         videos.map(async (video) => {
-          if (!video.url) return video;
+          if (!video.webViewLink) return video;
 
           // Extrai ID do vídeo do Google Drive
-          const videoId = this.extractVideoId(video.url);
+          const videoId = this.extractVideoId(video.webViewLink);
           if (!videoId) return video;
 
           // Atualiza URL do vídeo
           return {
             ...video,
-            url: `https://drive.google.com/file/d/${videoId}/preview`
+            webViewLink: `https://drive.google.com/file/d/${videoId}/preview`
           };
         })
       );

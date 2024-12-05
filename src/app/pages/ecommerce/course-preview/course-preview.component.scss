@@ -3,59 +3,82 @@
   min-height: calc(100vh - 80px);
   color: white;
   padding: 4rem 0;
-  background:
-  linear-gradient(90deg, rgba(238, 60, 72, 0.2) 0%, rgba(56, 74, 135, 0.2) 100%), #000000;
+  background: linear-gradient(90deg, rgba(238, 60, 72, 0.2) 0%, rgba(56, 74, 135, 0.2) 100%), #000000;
 }
 
 .icon {
-  width: 30px; // ajuste conforme necessário
-  height: 30px; // ajuste conforme necessário
+  width: 24px;
+  height: 24px;
   margin-right: 10px;
   vertical-align: middle;
 }
-.course-preview {
-  .course-preview-detail{
-    display: flex;
-    flex-direction: row;
-    .course-img{
-      border-radius: 1rem;
-      object-fit: cover;
-      width: 30vw;
-      margin:  0 2rem 2rem 0;
-    }
-    .course-body{
-      border-top: 1px solid white;
-    }
-    div{
-      gap: 2rem;
-      h1{
-        font-size: x-large;
-      }
-      border-radius: 1rem;
-      background: rgba(255, 255, 255, 0.1);
-      box-shadow: 4px 4px 25px rgba(0, 0, 0, 0.5);
-      backdrop-filter: blur(20px);
-      width: 50vw;
-      padding: 1rem;
-      text-align: center;
-    }
-  }
 
+.icon-small {
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.course-preview {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 0 2rem;
 
   .course-header {
-    margin-bottom: 2rem;
+    margin-bottom: 4rem;
 
-    h1 {
-      font-size: 2.5rem;
-      margin-bottom: 1rem;
-    }
+    .course-main-info {
+      display: flex;
+      gap: 3rem;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 1rem;
+      padding: 2rem;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 
-    .description {
-      font-size: 1.1rem;
-      color: #666;
+      @media (max-width: 768px) {
+        flex-direction: column;
+      }
+
+      .course-img {
+        width: 300px;
+        height: 300px;
+        object-fit: cover;
+        border-radius: 1rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+
+      .course-details {
+        flex: 1;
+
+        h1 {
+          font-size: 2rem;
+          margin-bottom: 1.5rem;
+          color: #fff;
+          display: flex;
+          align-items: center;
+        }
+
+        .description {
+          font-size: 1.1rem;
+          line-height: 1.6;
+          margin-bottom: 2rem;
+          color: rgba(255, 255, 255, 0.9);
+        }
+
+        .course-meta {
+          display: flex;
+          gap: 2rem;
+
+          span {
+            display: flex;
+            align-items: center;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+          }
+        }
+      }
     }
   }
 
@@ -63,39 +86,159 @@
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 2rem;
-    margin-bottom: 3rem;
+    margin-bottom: 4rem;
 
-    .video-container {
-      aspect-ratio: 16/9;
+    @media (max-width: 968px) {
+      grid-template-columns: 1fr;
+    }
 
-      iframe {
-        width: 100%;
-        height: 100%;
-        border-radius: 8px;
+    .video-preview {
+      h2 {
+        margin-bottom: 1.5rem;
+        font-size: 1.8rem;
+        color: #fff;
+      }
+
+      .video-container {
+        aspect-ratio: 16/9;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 1rem;
+        overflow: hidden;
+
+        iframe {
+          width: 100%;
+          height: 100%;
+          border: none;
+        }
+
+        .video-placeholder {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(0, 0, 0, 0.5);
+          color: rgba(255, 255, 255, 0.7);
+          font-size: 1.1rem;
+        }
       }
     }
 
     .course-info {
-      .price-info {
-        margin-bottom: 1.5rem;
+      .info-card {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 1rem;
+        padding: 2rem;
+        backdrop-filter: blur(10px);
 
-        .original-price {
-          text-decoration: line-through;
-          color: #666;
+        h3 {
+          font-size: 1.5rem;
+          margin-bottom: 1.5rem;
+          color: #fff;
+        }
+
+        .price-info {
+          margin-bottom: 2rem;
+
+          .price-container {
+            margin-bottom: 0.5rem;
+          }
+
+          .original-price {
+            text-decoration: line-through;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 1.2rem;
+            margin-right: 1rem;
+          }
+
+          .promo-price {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #2ecc71;
+          }
+
+          .portion-info {
+            display: block;
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 0.5rem;
+          }
+        }
+
+        .buy-button {
+          display: block;
+          width: 100%;
+          padding: 1rem;
+          background: #ee3c48;
+          color: white;
+          text-align: center;
+          text-decoration: none;
+          border-radius: 0.5rem;
           font-size: 1.1rem;
-          display: block;
+          font-weight: 500;
+          transition: all 0.3s ease;
+
+          &:hover {
+            background: darken(#ee3c48, 10%);
+            transform: translateY(-2px);
+          }
+        }
+      }
+    }
+  }
+
+  .course-content {
+    h2 {
+      font-size: 1.8rem;
+      margin-bottom: 2rem;
+      color: #fff;
+    }
+
+    .video-list {
+      display: grid;
+      gap: 1rem;
+
+      .video-item {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        transition: all 0.3s ease;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.15);
+          transform: translateX(5px);
         }
 
-        .promo-price {
-          font-size: 2rem;
-          font-weight: bold;
-          color: #2ecc71;
-          display: block;
+        .video-number {
+          width: 40px;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(238, 60, 72, 0.2);
+          border-radius: 50%;
+          font-weight: 500;
+          color: #ee3c48;
         }
 
-        .portion-info {
-          font-size: 0.9rem;
-          color: #666;
+        .video-info {
+          flex: 1;
+
+          h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: #fff;
+          }
+
+          .duration {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            align-items: center;
+          }
         }
       }
     }

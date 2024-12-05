@@ -1,1 +1,63 @@
-<p>contact works!</p>
+<div class="contact-container">
+  <div class="contact-content">
+    <h1>Contato</h1>
+
+    <div class="social-links">
+      <a href="tel:+5500000000000" target="_blank" class="social-link">
+        <img src="assets/icons/telvermelho.png" alt="telefone">
+      </a>
+      <a href="https://wa.me/5500000000000" target="_blank" class="social-link">
+        <img src="assets/icons/whatsappverde.png" alt="whatsApp">
+      </a>
+      <a href="https://facebook.com/sua-pagina" target="_blank" class="social-link">
+        <img src="assets/icons/facebookazul.png" alt="facebook">
+      </a>
+      <a href="https://instagram.com/seu-perfil" target="_blank" class="social-link">
+        <img src="assets/icons/instaamarelo.png" alt="Instagram">
+      </a>
+    </div>
+
+    <p class="contact-description">Ou se preferir, nos envie um e-mail:</p>
+
+    <form [formGroup]="contatoForm" (ngSubmit)="onSubmit()" class="contact-form">
+      <mat-form-field appearance="outline">
+        <mat-label>Nome</mat-label>
+        <input matInput formControlName="nome" placeholder="Seu nome">
+        <mat-error *ngIf="contatoForm.get('nome')?.errors?.['required']">
+          Nome é obrigatório
+        </mat-error>
+        <mat-error *ngIf="contatoForm.get('nome')?.errors?.['minlength']">
+          Nome deve ter no mínimo 3 caracteres
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>E-mail</mat-label>
+        <input matInput formControlName="email" placeholder="seu@email.com">
+        <mat-error *ngIf="contatoForm.get('email')?.errors?.['required']">
+          E-mail é obrigatório
+        </mat-error>
+        <mat-error *ngIf="contatoForm.get('email')?.errors?.['email']">
+          Digite um e-mail válido
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Mensagem</mat-label>
+        <textarea matInput formControlName="mensagem" rows="4" placeholder="Sua mensagem"></textarea>
+        <mat-error *ngIf="contatoForm.get('mensagem')?.errors?.['required']">
+          Mensagem é obrigatória
+        </mat-error>
+        <mat-error *ngIf="contatoForm.get('mensagem')?.errors?.['minlength']">
+          Mensagem deve ter no mínimo 10 caracteres
+        </mat-error>
+      </mat-form-field>
+
+      <button mat-raised-button color="primary" type="submit" [disabled]="!contatoForm.valid">
+        Enviar
+      </button>
+    </form>
+  </div>
+</div>
+
+<app-faq></app-faq>

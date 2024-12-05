@@ -87,6 +87,7 @@ export class CategoryFormComponent implements OnInit {
   loading = signal(true);
   selectedFile: File | null = null;
   categoryId = signal<string | null>(null);
+  categoryData = signal<Category | null>(null);
 
   constructor(
     private categoryManagementService: CategoryManagementService,
@@ -99,7 +100,6 @@ export class CategoryFormComponent implements OnInit {
   async ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
     this.categoryId.set(id);
-    console.log("ID",id)
 
     if (this.isEditMode()) {
       await this.loadCategory();
@@ -120,35 +120,13 @@ export class CategoryFormComponent implements OnInit {
   private async loadCategory() {
     try {
       const category = await this.categoryService.getById(this.categoryId()!);
-      console.log('Categoria carregada:', category);
+      this.categoryData.set(category);
 
       if (category.image) {
         this.currentImage.set(category.image);
       }
 
-      const config: FormFieldConfig[] = [
-        {
-          name: 'name',
-          label: 'Nome da Categoria',
-          type: 'text',
-          value: category.name,
-          validators: [Validators.required],
-          errorMessages: {
-            required: 'Nome é obrigatório'
-          }
-        },
-        {
-          name: 'image',
-          label: 'Imagem da Categoria',
-          type: 'file',
-          value: category.image || '',
-          onFileChange: (event: Event) => this.onFileChange(event),
-          imagePreview: category.image || ''
-        }
-      ];
-
-      console.log('Configurando form com:', config);
-      this.formConfig.set(config);
+      this.initFormConfig(category);
     } catch (error) {
       this.notificationService.error('Erro ao carregar categoria');
       console.error('Erro ao carregar categoria:', error);
@@ -173,16 +151,10 @@ export class CategoryFormComponent implements OnInit {
         name: 'image',
         label: 'Imagem da Categoria',
         type: 'file',
-        value: category?.image || '',
-        onFileChange: (event: Event) => this.onFileChange(event),
-        imagePreview: category?.image || ''
+        value: '',
+        onFileChange: (event: Event) => this.onFileChange(event)
       }
     ];
-
-    console.log('Configurando form com:', {
-      category,
-      config
-    });
 
     this.formConfig.set(config);
   }
@@ -196,34 +168,35 @@ export class CategoryFormComponent implements OnInit {
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.currentImage.set(e.target.result);
-
-        // Atualiza o preview no formConfig
-        this.formConfig.update(config => {
-          return config.map(field => {
-            if (field.name === 'image') {
-              return {
-                ...field,
-                imagePreview: e.target.result
-              };
-            }
-            return field;
-          });
-        });
       };
       reader.readAsDataURL(this.selectedFile);
+
+      // Mantém os valores atuais do formulário
+      const currentConfig = this.formConfig();
+      this.formConfig.set(currentConfig.map(field => {
+        if (field.name === 'image') {
+          return { ...field, value: input.value };
+        }
+        return field;
+      }));
     }
   }
 
   async onSubmit(formData: any) {
     try {
       if (this.isEditMode()) {
-        const updatedData = {
-          ...formData,
+        const updatedData: Category = {
           id: this.categoryId()!,
-          image: this.selectedFile ? undefined : this.currentImage()
+          name: formData.name,
+          image: this.selectedFile ? '' : this.categoryData()?.image || '',
+          active: true
         };
 
-        console.log('Atualizando categoria:', updatedData);
+        console.log('Dados para atualização:', {
+          id: this.categoryId(),
+          data: updatedData,
+          newImage: this.selectedFile
+        });
 
         await this.categoryManagementService.update(
           this.categoryId()!,
@@ -233,8 +206,17 @@ export class CategoryFormComponent implements OnInit {
         this.notificationService.success('Categoria atualizada com sucesso');
       } else {
         const newCategory: Category = {
-          ...formData
+          id: "",
+          name: formData.name,
+          image: "",
+          active: true
         };
+
+        console.log('Dados para criação:', {
+          category: newCategory,
+          image: this.selectedFile
+        });
+
         await this.categoryManagementService.create(newCategory, this.selectedFile);
         this.notificationService.success('Categoria criada com sucesso');
       }
@@ -243,10 +225,10 @@ export class CategoryFormComponent implements OnInit {
     } catch (error) {
       this.notificationService.error(
         this.isEditMode()
-          ? 'Erro ao atualizar categoria'
-          : 'Erro ao criar categoria'
+          ? 'Erro ao atualizar categoria: ' + error
+          : 'Erro ao criar categoria: ' + error
       );
-      console.error(error);
+      console.error('Erro ao salvar categoria:', error);
     }
   }
 }

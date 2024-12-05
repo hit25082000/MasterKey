@@ -4,51 +4,103 @@
     <p class="subtitle">Veja quais são as dúvidas mais recorrentes.</p>
 
     <div class="faq-list">
-      <div class="faq-item"
-           role="button"
-           [attr.aria-expanded]="activeFaq() === 0"
-           (click)="toggleFaq(0)"
-           [class.active]="activeFaq() === 0">
-        <div class="faq-header">
-          <h3>Como funciona o suporte dos cursos?</h3>
-          <svg class="toggle-icon" viewBox="0 0 24 24">
-            <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
-          </svg>
+      <div class="faq-column">
+        <div class="faq-item"
+             role="button"
+             [attr.aria-expanded]="activeFaq() === 0"
+             (click)="toggleFaq(0)"
+             [class.active]="activeFaq() === 0">
+          <div class="faq-header">
+            <h3>Como funciona o suporte dos cursos?</h3>
+            <svg class="toggle-icon" viewBox="0 0 24 24">
+              <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+            </svg>
+          </div>
+          <div class="faq-content">
+            <p>Nosso suporte online está disponível das 08:00 às 18:00, pronto para esclarecer dúvidas sobre as aulas e os conteúdos abordados ao longo de todo o curso. Contamos com uma equipe especializada para te auxiliar em todas as etapas do seu aprendizado.</p>
+          </div>
         </div>
-        <div class="faq-content">
-          <p>Nosso suporte online está disponível das 08:00 às 18:00, pronto para esclarecer dúvidas sobre as aulas e os conteúdos abordados ao longo de todo o curso.</p>
+
+        <div class="faq-item"
+             role="button"
+             [attr.aria-expanded]="activeFaq() === 1"
+             (click)="toggleFaq(1)"
+             [class.active]="activeFaq() === 1">
+          <div class="faq-header">
+            <h3>Como funcionam as aulas?</h3>
+            <svg class="toggle-icon" viewBox="0 0 24 24">
+              <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+            </svg>
+          </div>
+          <div class="faq-content">
+            <p>As aulas são 100% online e você pode assistir no seu próprio ritmo. Cada módulo inclui vídeoaulas, material complementar, exercícios práticos e testes para fixação do conteúdo. Você também terá acesso a uma comunidade exclusiva de alunos.</p>
+          </div>
+        </div>
+
+        <div class="faq-item"
+             role="button"
+             [attr.aria-expanded]="activeFaq() === 2"
+             (click)="toggleFaq(2)"
+             [class.active]="activeFaq() === 2">
+          <div class="faq-header">
+            <h3>O certificado é válido?</h3>
+            <svg class="toggle-icon" viewBox="0 0 24 24">
+              <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+            </svg>
+          </div>
+          <div class="faq-content">
+            <p>Sim! Nossa certificação é válida em todo território nacional e reconhecida pelo mercado. Emitimos certificados digitais com verificação online e carga horária detalhada de cada curso concluído.</p>
+          </div>
         </div>
       </div>
 
-      <div class="faq-item"
-           role="button"
-           [attr.aria-expanded]="activeFaq() === 1"
-           (click)="toggleFaq(1)"
-           [class.active]="activeFaq() === 1">
-        <div class="faq-header">
-          <h3>Como funcionam as aulas?</h3>
-          <svg class="toggle-icon" viewBox="0 0 24 24">
-            <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
-          </svg>
+      <div class="faq-column">
+        <div class="faq-item"
+             role="button"
+             [attr.aria-expanded]="activeFaq() === 3"
+             (click)="toggleFaq(3)"
+             [class.active]="activeFaq() === 3">
+          <div class="faq-header">
+            <h3>Qual o prazo de acesso aos cursos?</h3>
+            <svg class="toggle-icon" viewBox="0 0 24 24">
+              <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+            </svg>
+          </div>
+          <div class="faq-content">
+            <p>Você terá acesso vitalício ao curso após a compra. Isso significa que pode estudar no seu próprio ritmo e revisar o conteúdo sempre que precisar, sem prazo de expiração.</p>
+          </div>
         </div>
-        <div class="faq-content">
-          <p>Todos os nossos cursos incluem vídeos, apostilas, material de apoio, exercícios ao longo das aulas e uma breve prova ao final de cada aula.</p>
-        </div>
-      </div>
 
-      <div class="faq-item"
-           role="button"
-           [attr.aria-expanded]="activeFaq() === 2"
-           (click)="toggleFaq(2)"
-           [class.active]="activeFaq() === 2">
-        <div class="faq-header">
-          <h3>O certificado é válido mesmo?</h3>
-          <svg class="toggle-icon" viewBox="0 0 24 24">
-            <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
-          </svg>
+        <div class="faq-item"
+             role="button"
+             [attr.aria-expanded]="activeFaq() === 4"
+             (click)="toggleFaq(4)"
+             [class.active]="activeFaq() === 4">
+          <div class="faq-header">
+            <h3>Posso assistir as aulas pelo celular?</h3>
+            <svg class="toggle-icon" viewBox="0 0 24 24">
+              <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+            </svg>
+          </div>
+          <div class="faq-content">
+            <p>Sim! Nossa plataforma é totalmente responsiva e você pode acessar as aulas de qualquer dispositivo: computador, tablet ou smartphone. Também oferecemos um app exclusivo para estudos offline.</p>
+          </div>
         </div>
-        <div class="faq-content">
-          <p>Nossa certificação é válida em todo Brasil</p>
+
+        <div class="faq-item"
+             role="button"
+             [attr.aria-expanded]="activeFaq() === 5"
+             (click)="toggleFaq(5)"
+             [class.active]="activeFaq() === 5">
+          <div class="faq-header">
+            <h3>Quais formas de pagamento são aceitas?</h3>
+            <svg class="toggle-icon" viewBox="0 0 24 24">
+              <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+            </svg>
+          </div>
+          <div class="faq-content">
+            <p>Aceitamos cartões de crédito, débito, boleto bancário e PIX. Oferecemos parcelamento em até 12x sem juros nos cartões de crédito e descontos especiais para pagamento à vista.</p>
+          </div>
         </div>
       </div>
     </div>

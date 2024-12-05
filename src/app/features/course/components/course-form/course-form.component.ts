@@ -189,7 +189,7 @@ export class CourseFormComponent implements OnInit {
       id: [video.id],
       name: [video.name, Validators.required],
       duration: [video.duration, Validators.required],
-      url: [video.url, Validators.required],
+      url: [video.webViewLink, Validators.required],
       active: [video.active !== undefined ? video.active : true]
     });
   }
@@ -332,16 +332,13 @@ export class CourseFormComponent implements OnInit {
   }
 
   async onSubmit(formData: any) {
-    if (!this.categoryControl?.valid || !this.courseForm().valid || !this.genericForm?.form().valid) {
-      if (!this.genericForm?.form().valid) {
-        this.notificationService.error('Por favor, preencha todos os campos obrigatórios do curso', 5000);
-      }
-      if (!this.categoryControl?.valid) {
-        this.notificationService.error('Por favor, selecione uma categoria', 5000);
-      }
-      if (!this.courseForm().valid) {
-        this.notificationService.error('Por favor, verifique os dados dos vídeos', 5000);
-      }
+    if (!this.genericForm?.form().valid) {
+      this.notificationService.error('Por favor, preencha todos os campos obrigatórios do curso', 5000);
+      return;
+    }
+
+    if (!this.categoryControl?.valid) {
+      this.notificationService.error('Por favor, selecione uma categoria', 5000);
       return;
     }
 
@@ -355,10 +352,12 @@ export class CourseFormComponent implements OnInit {
         imageUrl = await this.storageService.uploadCourseImage(this.selectedFile, courseId);
       }
 
-      const processedVideos = this.videosArray.value.map((video: any) => ({
-        ...video,
-        active: Boolean(video.active)
-      }));
+      const processedVideos = this.videosArray.length > 0
+        ? this.videosArray.value.map((video: any) => ({
+            ...video,
+            active: Boolean(video.active)
+          }))
+        : [];
 
       const courseData: Course = {
         id: this.courseId() || undefined!,
@@ -378,8 +377,6 @@ export class CourseFormComponent implements OnInit {
         active: true
       };
 
-      console.log('Dados do curso a serem salvos:', courseData);
-
       if (this.isEditMode()) {
         if (!courseData.id) {
           throw new Error('ID do curso não encontrado para atualização');
@@ -389,17 +386,15 @@ export class CourseFormComponent implements OnInit {
         const updatedCourse: Course = {
           ...existingCourse,
           ...courseData,
-          category: this.categoryControl?.value,
+          category: this.categoryControl?.value || existingCourse.category,
           reviews: existingCourse.reviews || [],
-          videos: processedVideos,
+          videos: processedVideos.length > 0 ? processedVideos : existingCourse.videos,
           image: imageUrl || existingCourse.image
         };
 
         await this.courseManagement.update(updatedCourse);
-        console.log('Curso atualizado:', updatedCourse);
       } else {
         await this.courseManagement.create(courseData);
-        console.log('Curso criado:', courseData);
       }
 
       this.notificationService.success(

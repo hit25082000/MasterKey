@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, inject, ViewChild, viewChild } from '@angular/core';
+import { Component, OnInit, signal, computed, inject, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Student } from '../../../../core/models/student.model';
 import { StudentManagementService } from '../../services/student-management.service';
@@ -57,20 +57,20 @@ export class StudentListComponent implements OnInit {
     this.currentPage.set(Number(page));
   }
 
-  deleteStudent(id: string) {
-    this.studentManagementService
-      .delete(id)
-      .then((success) => {
-        this.students.update(students =>
-          students.filter(student => student.id !== id)
-        );
-        this.notificationService.success(success, 1);
-      })
-      .catch((error) => {
-        console.log(error);
-        this.notificationService.success(error, 1);
-      });
-  }
+  // deleteStudent(id: string) {
+  //   this.studentManagementService
+  //     .delete(id)
+  //     .then((success) => {
+  //       this.students.update(students =>
+  //         students.filter(student => student.id !== id)
+  //       );
+  //       this.notificationService.success(success, 1);
+  //     })
+  //     .catch((error) => {
+  //       console.log(error);
+  //       this.notificationService.success(error, 1);
+  //     });
+  // }
 
   editStudent(id: string) {
     this.router.navigate(['/admin/student-register', id]);
@@ -78,5 +78,11 @@ export class StudentListComponent implements OnInit {
 
   openCertificateModal(studentId: string) {
     this.selectedStudentId.set(studentId);
+  }
+
+  getImageUrl(url: string | undefined): string {
+    if (!url) return 'assets/images/default-profile.png';
+    // Adiciona timestamp para evitar cache
+    return `${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}`;
   }
 }

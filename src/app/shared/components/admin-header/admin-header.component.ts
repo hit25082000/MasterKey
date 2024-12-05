@@ -43,7 +43,7 @@ import BaseUser from '../../../core/models/base-user.model';
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 2rem;
+      margin-bottom: .5rem;
       top: 0;
       right: 0;
       left: 280px; // Largura inicial do sidenav

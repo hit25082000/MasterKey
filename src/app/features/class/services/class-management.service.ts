@@ -45,7 +45,7 @@ export class ClassManagementService {
     return {
       id: classData.id,
       name: classData.name,
-      dayWeek: classData.dayWeek,
+      daysWeek: classData.daysWeek,
       startDate: classData.startDate,
       finishDate: classData.finishDate,
       time: classData.time,

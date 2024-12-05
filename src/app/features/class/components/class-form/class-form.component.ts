@@ -22,19 +22,13 @@ import { firstValueFrom } from 'rxjs';
     GenericFormComponent,
     ModalComponent,
     TeacherSelectorComponent,
-    StudentsSelectorComponent,
-    DayWeekSelectorComponent
+    StudentsSelectorComponent
   ],
   template: `
     @if (loading()) {
       <div class="loading">Carregando...</div>
     } @else {
-      <app-generic-form #genericForm
-        [config]="formConfig()"
-        [submitButtonText]="isEditMode() ? 'Atualizar Turma' : 'Criar Turma'"
-        (formSubmit)="onSubmit($event)"
-        [formTitle]="isEditMode() ? 'Editar Turma' : 'Nova Turma'"
-      >
+      <div class="class-form-container">
         <!-- Seção de Seletores -->
         <div class="selectors-section">
           <!-- Professor -->
@@ -47,14 +41,6 @@ import { firstValueFrom } from 'rxjs';
                 {{ selectedTeacherName() || 'Selecionar Professor' }}
               </span>
             </button>
-
-            <app-modal #teacherModal position="center">
-              <div class="modal-body">
-                <app-teacher-selector
-                  (teacherSelected)="onTeacherSelected($event)"
-                ></app-teacher-selector>
-              </div>
-            </app-modal>
           </div>
 
           <!-- Alunos -->
@@ -67,18 +53,36 @@ import { firstValueFrom } from 'rxjs';
                 {{ selectedStudentsCount() > 0 ? selectedStudentsCount() + ' alunos selecionados' : 'Selecionar Alunos' }}
               </span>
             </button>
-
-            <app-modal #studentsModal position="center">
-              <div class="modal-body">
-                <app-student-selector
-                  [classId]="classId()!"
-                  (studentsSelected)="onStudentsSelected($event)"
-                ></app-student-selector>
-              </div>
-            </app-modal>
           </div>
         </div>
-      </app-generic-form>
+
+        <!-- Formulário -->
+        <app-generic-form
+          [config]="formConfig()"
+          [submitButtonText]="isEditMode() ? 'Atualizar Turma' : 'Criar Turma'"
+          (formSubmit)="onSubmit($event)"
+          [formTitle]="isEditMode() ? 'Editar Turma' : 'Nova Turma'"
+        >
+        </app-generic-form>
+
+        <!-- Modais -->
+        <app-modal #teacherModal position="center">
+          <div class="modal-body">
+            <app-teacher-selector
+              (teacherSelected)="onTeacherSelected($event)"
+            ></app-teacher-selector>
+          </div>
+        </app-modal>
+
+        <app-modal #studentsModal position="center">
+          <div class="modal-body">
+            <app-student-selector
+              [classId]="classId()!"
+              (studentsSelected)="onStudentsSelected($event)"
+            ></app-student-selector>
+          </div>
+        </app-modal>
+      </div>
     }
   `,
   styleUrls: ['./class-form.component.scss']
@@ -158,12 +162,12 @@ export class ClassFormComponent implements OnInit {
         errorMessages: { required: 'Horário é obrigatório' }
       },
       {
-        name: 'dayWeek',
-        label: 'Dia da Semana',
-        type: 'select',
-        value: classData?.dayWeek || '',
+        name: 'daysWeek',
+        label: 'Dias da Semana',
+        type: 'multiselect',
+        value: classData?.daysWeek || [],
         validators: [Validators.required],
-        errorMessages: { required: 'Dia da semana é obrigatório' },
+        errorMessages: { required: 'Selecione pelo menos um dia da semana' },
         options: [
           { value: 'MONDAY', label: 'Segunda-feira' },
           { value: 'TUESDAY', label: 'Terça-feira' },
@@ -228,12 +232,12 @@ export class ClassFormComponent implements OnInit {
         errorMessages: { required: 'Horário é obrigatório' }
       },
       {
-        name: 'dayWeek',
-        label: 'Dia da Semana',
-        type: 'select',
-        value: '',
+        name: 'daysWeek',
+        label: 'Dias da Semana',
+        type: 'multiselect',
+        value: [],
         validators: [Validators.required],
-        errorMessages: { required: 'Dia da semana é obrigatório' },
+        errorMessages: { required: 'Selecione pelo menos um dia da semana' },
         options: [
           { value: 'MONDAY', label: 'Segunda-feira' },
           { value: 'TUESDAY', label: 'Terça-feira' },

@@ -9,7 +9,9 @@ import { Course } from '../../../core/models/course.model';
 import { FormsModule } from '@angular/forms';
 import { CategoryService } from '../../../features/category/services/category.service';
 import { Router } from '@angular/router';
-
+import { PaymentService } from '../../../core/services/payment.service';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 @Component({
   selector: 'app-products',
   standalone: true,
@@ -31,6 +33,7 @@ export class ProductsComponent implements OnInit {
   selectedCategory = signal<string>('Todos');
   selectedOrder = signal<string>('Alfabética');
   priceRange = signal<number>(1000);
+  private readonly paymentService = inject(PaymentService);
 
   filteredCourses = computed(() => {
     let filtered = [...this.courses()];
@@ -98,13 +101,28 @@ export class ProductsComponent implements OnInit {
     this.router.navigate(['/course', courseId]);
   }
 
-  buyCourse(course: Course) {
-    // Se tiver URL de checkout, redireciona
-    if (course.checkoutUrl) {
-      window.location.href = course.checkoutUrl;
-    } else {
-      // Se não tiver, redireciona para página de detalhes
-      this.redirectToCourse(course.id!);
+  async buyCourse(course: Course) {
+    try {
+      const preference = await firstValueFrom(this.paymentService.createPayment(course));
+
+      if (preference?.init_point) {
+        // Salvar informações da compra no localStorage para recuperar depois
+        localStorage.setItem('currentPurchase', JSON.stringify({
+          courseId: course.id,
+          timestamp: new Date().getTime()
+        }));
+
+        // Redirecionar para o Mercado Pago
+        window.location.href = environment.production
+          ? preference.init_point
+          : preference.sandbox_init_point;
+      } else {
+        console.error('Erro: Link de pagamento não gerado');
+        // Adicione aqui sua lógica de notificação de erro
+      }
+    } catch (error) {
+      console.error('Erro ao processar pagamento:', error);
+      // Adicione aqui sua lógica de notificação de erro
     }
   }
 
