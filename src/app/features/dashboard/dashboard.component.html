@@ -1,1 +1,49 @@
-<p>DASHBOARD</p>
+<div class="dashboard">
+  <h2>Dashboard</h2>
+
+  <div class="stats-grid">
+    <div class="stat-card students">
+      <div class="stat-info">
+        <h3>Estudantes</h3>
+        <div class="stat-numbers">
+          <p>Total: {{ studentsData().total }}</p>
+          <p>Ativos: {{ studentsData().active }}</p>
+          <p>Inativos: {{ studentsData().inactive }}</p>
+        </div>
+      </div>
+      <div class="chart-container">
+        <canvas baseChart
+          [type]="'doughnut'"
+          [data]="studentsChartData"
+          [options]="chartOptions">
+        </canvas>
+      </div>
+    </div>
+
+    <div class="stat-card courses">
+      <div class="stat-info">
+        <h3>Cursos</h3>
+        <div class="stat-numbers">
+          <p>Total: {{ coursesCount().total }}</p>
+          <p>Ativos: {{ coursesCount().active }}</p>
+        </div>
+      </div>
+      <div class="chart-container">
+        <canvas baseChart
+          [type]="'doughnut'"
+          [data]="coursesChartData"
+          [options]="chartOptions">
+        </canvas>
+      </div>
+    </div>
+
+    <div class="stat-card teachers">
+      <div class="stat-info">
+        <h3>Professores</h3>
+        <div class="stat-numbers">
+          <p>Total: {{ teachersCount() }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
