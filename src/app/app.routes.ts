@@ -11,6 +11,8 @@ import { RoutePermission } from './features/role/components/permission-select/pe
 import { ECOMMERCE_ROUTES } from './pages/ecommerce/ecommerce.routes';
 import { CLASSROOM_ROUTES } from './pages/classroom/classroom.routes';
 import { ADMIN_ROUTES } from './pages/admin/admin.routes';
+import { ExamListComponent } from './features/exam/components/exam-list/exam-list.component';
+import { ExamFormComponent } from './features/exam/components/exam-form/exam-form.component';
 
 export const routes: Routes = [
   {
@@ -33,5 +35,22 @@ export const routes: Routes = [
     children: CLASSROOM_ROUTES,
   },
   { path: 'unauthorized', component: UnauthorizedComponent },
+  {
+    path: 'courses/:id/exams',
+    children: [
+      {
+        path: '',
+        component: ExamListComponent
+      },
+      {
+        path: 'new',
+        component: ExamFormComponent
+      },
+      {
+        path: 'edit/:examId',
+        component: ExamFormComponent
+      }
+    ]
+  },
   { path: '**', component: NotFoundComponent },
 ];

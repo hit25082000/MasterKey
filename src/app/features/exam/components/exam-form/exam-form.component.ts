@@ -1,4 +1,4 @@
-import { Component, EventEmitter, input, Input, Output, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -6,37 +6,50 @@ import {
   Validators,
   ReactiveFormsModule,
   ValidatorFn,
-  AbstractControl,
+  AbstractControl
 } from '@angular/forms';
 import { Exam, Question, Options } from '../../../../core/models/exam.model';
 import { CommonModule } from '@angular/common';
-import { Course } from '../../../../core/models/course.model';
-import { CourseSelectorComponent } from '../../../course/components/course-selector/course-selector.component';
-import { ModalComponent } from "../../../../shared/components/modal/modal.component";
+import { ActivatedRoute, Router } from '@angular/router';
 import { NotificationService } from '../../../../shared/services/notification.service';
-import { ActivatedRoute } from '@angular/router';
+import { ExamService } from '../../../../core/services/exam.service';
+import { LoadingService } from '../../../../shared/services/loading.service';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-exam-form',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './exam-form.component.html',
-  styleUrls: ['./exam-form.component.scss'],
+  styleUrls: ['./exam-form.component.scss']
 })
 export class ExamFormComponent implements OnInit {
-  exam = input.required<Exam | undefined>();
-  @Output() formSubmit = new EventEmitter<Exam>();
-  @Output() formCancel = new EventEmitter<void>();
-  Options = Object.keys(Options);
-  examForm: FormGroup;
-  notificationService = inject(NotificationService);
   private route = inject(ActivatedRoute);
-  courseId = signal<string>('');
-  showErrors = signal<boolean>(false);
+  private router = inject(Router);
+  private examService = inject(ExamService);
+  private notificationService = inject(NotificationService);
+  private loadingService = inject(LoadingService);
+  private fb = inject(FormBuilder);
 
-  constructor(private fb: FormBuilder) {
-    // Inicializa o formulário com validações e mensagens de erro
-    this.examForm = this.fb.group({
+  Options = [
+    { value: 'A', label: 'A' },
+    { value: 'B', label: 'B' },
+    { value: 'C', label: 'C' },
+    { value: 'D', label: 'D' }
+  ];
+  examForm: FormGroup;
+  courseId = signal<string>('');
+  examId = signal<string | null>(null);
+  isLoading = signal(true);
+  showErrors = signal(false);
+
+  constructor() {
+    this.examForm = this.initForm();
+  }
+
+  private initForm(): FormGroup {
+    return this.fb.group({
+      id: [''],
       title: ['', [Validators.required, Validators.minLength(3)]],
       description: ['', [Validators.required, Validators.minLength(10)]],
       courseId: ['', Validators.required],
@@ -44,24 +57,84 @@ export class ExamFormComponent implements OnInit {
     });
   }
 
-  ngOnInit() {
-    // Pega o courseId da URL
-    const courseIdFromUrl = this.route.snapshot.paramMap.get('id');
-    if (courseIdFromUrl) {
-      this.courseId.set(courseIdFromUrl);
-      this.examForm.patchValue({ courseId: courseIdFromUrl });
-    }
+  async ngOnInit() {
+    try {
+      const params = this.route.snapshot.paramMap.get('id');
+      if (!params) {
+        throw new Error('Parâmetros não fornecidos');
+      }
 
-    if (this.exam() != undefined) {
-      // Preenche o formulário com os dados do exame existente
+      if (params.includes('_')) {
+        const [courseId, examId] = params.split('_');
+        this.examId.set(examId);
+        this.courseId.set(courseId);
+        await this.loadExam(examId);
+      } else {
+        this.courseId.set(params);
+        this.addQuestion();
+      }
+
+      this.examForm.patchValue({ courseId: this.courseId() });
+    } catch (error) {
+      console.error('Erro ao inicializar:', error);
+      this.notificationService.error('Erro ao carregar formulário');
+      this.router.navigate(['/admin/courses']);
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  async loadExam(examId: string) {
+    try {
+      this.loadingService.show();
+
+      const exam = await firstValueFrom(this.examService.getExamById(examId));
+
+      if (!exam) {
+        throw new Error('Exame não encontrado');
+      }
+
+      // Limpa o formulário antes de carregar os novos dados
+      this.examForm.reset();
+
+      // Limpa o array de questões
+      while (this.questionsFormArray.length) {
+        this.questionsFormArray.removeAt(0);
+      }
+
+      // Preenche os dados básicos do exame
       this.examForm.patchValue({
-        title: this.exam()?.title,
-        description: this.exam()?.description,
-        courseId: this.exam()?.courseId || this.courseId()
+        id: exam.id,
+        title: exam.title,
+        description: exam.description,
+        courseId: exam.courseId
       });
 
-      // Adiciona as questões existentes
-      this.exam()?.questions.forEach(question => this.addQuestion(question));
+      // Adiciona cada questão ao formulário
+      if (exam.questions && exam.questions.length > 0) {
+        exam.questions.forEach(question => {
+          // Garante que temos 4 opções, preenchendo com strings vazias se necessário
+          const options = Array(4).fill('').map((_, i) => question.options?.[i] || '');
+
+          const questionGroup = this.fb.group({
+            id: [question.id],
+            text: [question.text, [Validators.required, Validators.minLength(10)]],
+            options: this.fb.array(
+              options,
+              [Validators.required, this.uniqueOptionsValidator()]
+            ),
+            correctAnswer: [question.correctAnswer || '', [Validators.required]]
+          });
+
+          this.questionsFormArray.push(questionGroup);
+        });
+      }
+
+    } catch (error) {
+      console.error('Erro ao carregar exame:', error);
+      this.notificationService.error('Erro ao carregar exame');
+    } finally {
+      this.loadingService.hide();
     }
   }
 
@@ -70,27 +143,8 @@ export class ExamFormComponent implements OnInit {
   }
 
   addQuestion(question?: Question) {
-    const questionForm = this.fb.group({
-      id: [question?.id || ''],
-      text: [question?.text || '', [
-        Validators.required,
-        Validators.minLength(10)
-      ]],
-      options: this.fb.array(
-        question?.options || [Options.A, Options.B, Options.C, Options.D],
-        [
-          Validators.required,
-          Validators.minLength(4),
-          Validators.maxLength(4),
-          this.uniqueOptionsValidator()
-        ]
-      ),
-      correctAnswer: [question?.correctAnswer || '', [
-        Validators.required
-      ]],
-    });
-
-    this.questionsFormArray.push(questionForm);
+    const questionGroup = this.createQuestionGroup(question);
+    this.questionsFormArray.push(questionGroup);
   }
 
   removeQuestion(indexToRemove: number) {
@@ -116,38 +170,49 @@ export class ExamFormComponent implements OnInit {
     }
   }
 
-  onSubmit() {
+  async onSubmit() {
     if (this.examForm.valid) {
-      const examData: Exam = {
-        ...this.examForm.value,
-        courseId: this.courseId(),
-        createdAt: this.exam()?.createdAt || new Date(),
-        updatedAt: new Date()
-      };
-      console.log(examData);
-      this.formSubmit.emit(examData);
+      try {
+        this.loadingService.show();
+        const formValue = this.examForm.value;
+
+        const examData: Exam = {
+          id: this.examId() || '',
+          title: formValue.title,
+          description: formValue.description,
+          courseId: this.courseId(),
+          questions: formValue.questions.map((question: any) => ({
+            ...question,
+            id: question.id || crypto.randomUUID()
+          })),
+          createdAt: formValue.createdAt || new Date(),
+          updatedAt: new Date()
+        };
+
+        if (this.examId()) {
+          await firstValueFrom(this.examService.updateExam(examData));
+          this.notificationService.success('Exame atualizado com sucesso');
+        } else {
+          const createdExam = await firstValueFrom(this.examService.createExam(examData));
+          console.log('Exame criado:', createdExam);
+          this.notificationService.success('Exame criado com sucesso');
+        }
+
+        this.router.navigate(['/admin/exams', this.courseId()]);
+      } catch (error) {
+        console.error('Erro ao salvar exame:', error);
+        this.notificationService.error('Erro ao salvar exame');
+      } finally {
+        this.loadingService.hide();
+      }
     } else {
-      // Marca todos os campos como touched e mostra mensagens de erro
-      Object.keys(this.examForm.controls).forEach(key => {
-        const control = this.examForm.get(key);
-        control?.markAsTouched();
-      });
-
-      // Marca campos das questões como touched
-      this.questionsFormArray.controls.forEach(questionControl => {
-        const questionGroup = questionControl as FormGroup;
-        Object.keys(questionGroup.controls).forEach(key => {
-          const control = questionGroup.get(key);
-          control?.markAsTouched();
-        });
-      });
-
-      this.notificationService.error('Por favor, corrija os erros no formulário antes de enviar');
+      this.showErrors.set(true);
+      this.notificationService.error('Por favor, corrija os erros no formulário');
     }
   }
 
   onCancel() {
-    this.formCancel.emit();
+    this.router.navigate(['/admin/exams', this.courseId()]);
   }
 
   uniqueOptionsValidator(): ValidatorFn {
@@ -259,5 +324,30 @@ export class ExamFormComponent implements OnInit {
   shouldShowError(controlName: string): boolean {
     const control = this.examForm.get(controlName);
     return control ? (control.invalid && (control.touched || control.dirty)) : false;
+  }
+
+  // Método auxiliar para criar uma questão
+  private createQuestionGroup(question?: Question): FormGroup {
+    return this.fb.group({
+      id: [question?.id || ''],
+      text: [question?.text || '', [Validators.required, Validators.minLength(10)]],
+      options: this.fb.array(
+        question?.options || Array(4).fill(''),
+        [Validators.required, this.uniqueOptionsValidator()]
+      ),
+      correctAnswer: [question?.correctAnswer || '', [Validators.required]]
+    });
+  }
+
+  // Método para obter as opções de uma questão específica
+  getQuestionOptions(questionIndex: number): FormArray {
+    const questionGroup = this.questionsFormArray.at(questionIndex) as FormGroup;
+    return questionGroup.get('options') as FormArray;
+  }
+
+  // Método para verificar se uma opção está selecionada como correta
+  isCorrectAnswer(questionIndex: number, option: string): boolean {
+    const questionGroup = this.questionsFormArray.at(questionIndex) as FormGroup;
+    return questionGroup.get('correctAnswer')?.value === option;
   }
 }

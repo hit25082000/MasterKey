@@ -27,7 +27,19 @@ export class ExamService {
   }
 
   createExam(exam: Exam): Observable<Exam> {
-    return from(this.firestore.addToCollection('exams', exam).then(() => exam));
+    const { id, ...examData } = exam;
+
+    return from(
+      this.firestore.addToCollection('exams', examData)
+        .then(docRef => {
+          return {
+            ...examData,
+            id: docRef.id,
+            createdAt: examData.createdAt || new Date(),
+            updatedAt: new Date()
+          };
+        })
+    );
   }
 
   updateExam(exam: Exam): Observable<Exam> {

@@ -25,6 +25,7 @@ import { JobVacancyFormComponent } from '../../features/student/components/job-v
 import { JobVacancyListComponent } from '../../features/student/components/job-vacancy-list/job-vacancy-list.component';
 import { EmployeeListComponent } from '../../features/employees/components/employee-list/employee-list.component';
 import { LibraryListComponent } from '../../features/library/components/library-list/library-list.component';
+import { ExamFormComponent } from '../../features/exam/components/exam-form/exam-form.component';
 
 export const ADMIN_ROUTES: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
@@ -196,6 +197,12 @@ export const ADMIN_ROUTES: Routes = [
       {
         path: 'exams/:id',
         component: ExamListComponent,
+        canActivate: [RoleGuard],
+        data: { permission: RoutePermission.VIEW_EXAMS }
+      },
+      {
+        path: 'exams-form/:id',
+        component: ExamFormComponent,
         canActivate: [RoleGuard],
         data: { permission: RoutePermission.VIEW_EXAMS }
       },

@@ -11,6 +11,8 @@ import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { environment } from '../environments/environment';
 import { WhatsAppStatusWidgetComponent } from './features/chat/components/whats-app-status-widget/whats-app-status-widget.component';
+import { withDefaultRegisterables } from 'ng2-charts';
+import { provideCharts } from 'ng2-charts';
 
 export const appConfig: ApplicationConfig = {
   providers: [provideRouter(routes),
@@ -20,7 +22,9 @@ export const appConfig: ApplicationConfig = {
     provideFirestore(() => getFirestore()),
     provideFunctions(() => getFunctions()),
     provideMessaging(() => getMessaging()),
-    provideStorage(() => getStorage()), provideAnimationsAsync(),
+    provideStorage(() => getStorage()),
+    provideAnimationsAsync(),
+    provideCharts(withDefaultRegisterables()),
     WhatsAppStatusWidgetComponent
   ]
 };

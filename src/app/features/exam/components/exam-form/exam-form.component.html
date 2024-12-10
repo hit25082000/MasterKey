@@ -1,6 +1,6 @@
 <form [formGroup]="examForm" (ngSubmit)="onSubmit()" class="exam-form">
   <div class="form-header">
-    <h2>{{ exam() ? 'Editar' : 'Novo' }} Exame</h2>
+    <h2>{{ examId() ? 'Editar' : 'Novo' }} Exame</h2>
   </div>
 
   <div class="form-content">
@@ -65,38 +65,30 @@
               </div>
             }
 
-            <div formArrayName="options" class="options-grid">
-              @for (option of questionForm.get('options')?.value; track $index) {
-                <div class="option-item">
-                  <span class="option-label">{{ Options[$index] }}</span>
-                  <input
-                    [formControlName]="$index"
-                    placeholder="Opção {{ $index + 1 }}"
-                    class="form-control"
-                  />
+            <div class="options-container">
+              <label>Opções:</label>
+              <div class="options-list" formArrayName="options">
+                <div *ngFor="let option of getQuestionOptions($index).controls; let j = index">
+                  <div class="option-row">
+                    <span class="option-label">{{ Options[j].label }})</span>
+                    <input [formControlName]="j" type="text" class="option-input">
+                  </div>
                 </div>
-              }
-            </div>
-            @if (questionForm.get('options')?.touched && questionForm.get('options')?.invalid) {
-              <div class="error-message">
-                {{ getQuestionErrorMessage($index, 'options') }}
               </div>
-            }
+            </div>
 
             <div class="correct-answer">
-              <label>Alternativa correta:</label>
-              <select formControlName="correctAnswer" class="form-control">
-                <option value="">Selecione a resposta correta</option>
-                @for (option of Options; track $index) {
-                  <option [value]="option">{{ option }}</option>
-                }
+              <label>Alternativa Correta:</label>
+              <select formControlName="correctAnswer">
+                <option value="">Selecione a alternativa correta</option>
+                <option *ngFor="let opt of Options" [value]="opt.value">
+                  {{ opt.label }}
+                </option>
               </select>
-            </div>
-            @if (questionForm.get('correctAnswer')?.touched && questionForm.get('correctAnswer')?.invalid) {
-              <div class="error-message">
+              <div class="error-message" *ngIf="shouldShowQuestionError($index, 'correctAnswer')">
                 {{ getQuestionErrorMessage($index, 'correctAnswer') }}
               </div>
-            }
+            </div>
           </div>
         </div>
       }
@@ -142,7 +134,7 @@
       [class.has-errors]="!examForm.valid"
     >
       <i class="fas fa-save"></i>
-      {{ exam() ? 'Atualizar' : 'Criar' }} Exame
+      {{ examId() ? 'Atualizar' : 'Criar' }} Exame
     </button>
   </div>
 </form>

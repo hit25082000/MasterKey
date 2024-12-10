@@ -46,8 +46,8 @@ import { CommonModule } from '@angular/common';
                 </div>
               </div>
 
-              <div class="employee-role" [class.teacher]="employee.role === 'teacher'">
-                {{ employee.role === 'teacher' ? 'Professor' : 'Funcionário' }}
+              <div class="employee-role">
+                {{ employee.role }}
               </div>
             </div>
 
@@ -82,7 +82,6 @@ export class EmployeeListComponent implements OnInit {
 
   constructor(
     private employeeService: EmployeeService,
-    private employeeManagementService: EmployeeManagementService,
   ) {
     this.router.routeReuseStrategy.shouldReuseRoute = () => {
       return false;
@@ -92,16 +91,14 @@ export class EmployeeListComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     try {
       this.employees = await this.employeeService.getAll();
+      console.log(this.employees);
     } catch (err) {
-      //this.error = 'Erro ao carregar os alunos';
       console.error(err);
     } finally {
-      //this.loading = false;
     }
   }
 
   deleteEmployees(id: string) {
-    //this.employeeManagementService.delete(id);
     this.router.navigateByUrl('/admin/employee-list');
   }
 

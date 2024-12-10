@@ -18,7 +18,7 @@ interface StudentCourseStatus {
 }
 
 const positions = {
-  studentName: { x: 200, y: 400 },
+  studentName: { x: 120, y: 40 },
   coursesList: { x: 100, y: 300 },
   date: { x: 150, y: 200 }
 };
@@ -110,20 +110,35 @@ export class StudentCertificateComponent {
         if (exams.length === 0) {
           return {
             course,
-            completionPercentage: 100, // Considera 100% já que não há exames
-            averageGrade: 10, // Nota máxima já que não há exames
+            completionPercentage: 100,
+            averageGrade: 10,
             totalExams: 0,
             completedExams: 0,
-            isCompleted: true // Considera completo já que não há exames para fazer
+            isCompleted: true
           };
         }
 
         const totalExams = exams.length;
         const completedExams = studentExams.length;
-        const averageGrade = completedExams > 0
-          ? studentExams.reduce((acc, exam) => acc + exam.grade, 0) / completedExams
-          : 0;
-        const completionPercentage = (completedExams / totalExams) * 100;
+
+        // Correção no cálculo da média
+        let averageGrade = 0;
+        if (completedExams > 0) {
+          const totalGrades = studentExams.reduce((acc, exam) => {
+            // Verifica se exam.grade é um número válido
+            const grade = Number(exam.grade);
+            return acc + (isNaN(grade) ? 0 : grade);
+          }, 0);
+
+          averageGrade = Number((totalGrades / completedExams).toFixed(1));
+
+          // Garante que a média seja um número válido
+          if (isNaN(averageGrade)) {
+            averageGrade = 0;
+          }
+        }
+
+        const completionPercentage = Math.round((completedExams / totalExams) * 100);
         const isCompleted = averageGrade >= 7 && completionPercentage === 100;
 
         return {
@@ -140,11 +155,25 @@ export class StudentCertificateComponent {
       this.courseStatus.set(statuses);
 
     } catch (error) {
+      console.error('Erro ao carregar cursos:', error);
       this.notificationService.error('Erro ao carregar cursos do estudante');
-      console.error(error);
     } finally {
       this.loading.set(false);
     }
+  }
+
+  // Função auxiliar para formatar a data por extenso
+  private formatDateExtensive(): string {
+    const date = new Date();
+    const day = date.getDate();
+    const months = [
+      'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+      'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
+    ];
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
+
+    return `${day} de ${month} de ${year}`;
   }
 
   async generateDocument(status: StudentCourseStatus) {
@@ -218,70 +247,86 @@ export class StudentCertificateComponent {
       if (studentName) {
         // Nome do estudante centralizado
         page1.drawText(studentName, {
-          x: page1.getWidth() / 2 - customFont.widthOfTextAtSize(studentName, 48) / 2,
-          y: page1.getHeight() / 2 + 50, // Ajustado para cima para dar espaço ao texto do curso
+          x: page1.getWidth() / 2 - customFont.widthOfTextAtSize(studentName, 48) / 2 + positions.studentName.x,
+          y: page1.getHeight() / 2 + 50 - positions.studentName.y, // Ajustado para cima para dar espaço ao texto do curso
           size: 48,
           font: customFont,
           color: rgb(0, 0, 0)
         });
 
         // Texto do curso concluído
-        const courseText = `concluiu com êxito o curso de`;
-        page1.drawText(courseText, {
-          x: page1.getWidth() / 2 - regularFont.widthOfTextAtSize(courseText, 16) / 2,
-          y: page1.getHeight() / 2, // Posicionado abaixo do nome
-          size: 16,
+        const courseText1 = `concluiu com êxito o curso de ${status.course.name} oferecido.`;
+        page1.drawText(courseText1, {
+          x: page1.getWidth() / 2 - regularFont.widthOfTextAtSize(courseText1, 14) / 2 + positions.studentName.x,
+          y: page1.getHeight() / 2 - positions.studentName.y, // Posicionado abaixo do nome
+          size: 14,
           font: regularFont,
           color: rgb(0, 0, 0)
         });
 
         // Nome do curso em negrito
-        const courseName = status.course.name.toUpperCase();
-        page1.drawText(courseName, {
-          x: page1.getWidth() / 2 - regularFont.widthOfTextAtSize(courseName, 20) / 2,
-          y: page1.getHeight() / 2 - 30, // Posicionado abaixo do texto anterior
-          size: 20,
+        const courseText2 = `por Master Key - Centro de Treinamento e Desenvolvimento`
+        page1.drawText(courseText2, {
+          x: page1.getWidth() / 2 - regularFont.widthOfTextAtSize(courseText2, 14) / 2 + positions.studentName.x,
+          y: page1.getHeight() / 2 - 15 - positions.studentName.y, // Posicionado abaixo do texto anterior
+          size: 14,
           font: regularFont,
           color: rgb(0, 0, 0)
         });
 
-        // Texto adicional
-        const additionalText = `oferecido por Master Key - Centro de Treinamento e Desenvolvimento Profissional, com carga horária de ${status.course.workHours} horas.`;
-        const words = additionalText.split(' ');
-        let currentLine = '';
-        let yPos = page1.getHeight() / 2 - 60;
-        const maxWidth = 400; // Largura máxima para o texto
-
-        words.forEach(word => {
-          const testLine = currentLine + (currentLine ? ' ' : '') + word;
-          const lineWidth = regularFont.widthOfTextAtSize(testLine, 14);
-
-          if (lineWidth > maxWidth && currentLine !== '') {
-            // Desenhar a linha atual
-            page1.drawText(currentLine, {
-              x: page1.getWidth() / 2 - regularFont.widthOfTextAtSize(currentLine, 14) / 2,
-              y: yPos,
-              size: 14,
-              font: regularFont,
-              color: rgb(0, 0, 0)
-            });
-            currentLine = word;
-            yPos -= 20; // Espaçamento entre linhas
-          } else {
-            currentLine = testLine;
-          }
+        const courseText3 =  `Profissional, com carga horária de ${status.course.workHours} horas. Durante sua`;
+        page1.drawText(courseText3, {
+          x: page1.getWidth() / 2 - regularFont.widthOfTextAtSize(courseText3, 14) / 2 + positions.studentName.x,
+          y: page1.getHeight() / 2 - 30 - positions.studentName.y, // Posicionado abaixo do texto anterior
+          size: 14,
+          font: regularFont,
+          color: rgb(0, 0, 0)
         });
 
-        // Desenhar a última linha
-        if (currentLine) {
-          page1.drawText(currentLine, {
-            x: page1.getWidth() / 2 - regularFont.widthOfTextAtSize(currentLine, 14) / 2,
-            y: yPos,
-            size: 14,
-            font: regularFont,
-            color: rgb(0, 0, 0)
-          });
-        }
+        const courseText4 =  `participação no curso, demonstrou um notável`;
+        page1.drawText(courseText4, {
+          x: page1.getWidth() / 2 - regularFont.widthOfTextAtSize(courseText4, 14) / 2 + positions.studentName.x,
+          y: page1.getHeight() / 2 - 45 - positions.studentName.y, // Posicionado abaixo do texto anterior
+          size: 14,
+          font: regularFont,
+          color: rgb(0, 0, 0)
+        });
+
+        const courseText5 =  `comprometimento e dedicação, destacando-se pelo empenho`;
+        page1.drawText(courseText5, {
+          x: page1.getWidth() / 2 - regularFont.widthOfTextAtSize(courseText5, 14) / 2 + positions.studentName.x,
+          y: page1.getHeight() / 2 - 60 - positions.studentName.y, // Posicionado abaixo do texto anterior
+          size: 14,
+          font: regularFont,
+          color: rgb(0, 0, 0)
+        });
+
+        const courseText6 =  `exemplar em todas as atividades propostas, obtendo média`;
+        page1.drawText(courseText6, {
+          x: page1.getWidth() / 2 - regularFont.widthOfTextAtSize(courseText6, 14) / 2 + positions.studentName.x,
+          y: page1.getHeight() / 2 - 75 - positions.studentName.y, // Posicionado abaixo do texto anterior
+          size: 14,
+          font: regularFont,
+          color: rgb(0, 0, 0)
+        });
+
+        const courseText7 =  `final ${status.averageGrade.toFixed(1)}.`;
+        page1.drawText(courseText7, {
+          x: page1.getWidth() / 2 - regularFont.widthOfTextAtSize(courseText7, 14) / 2 + positions.studentName.x,
+          y: page1.getHeight() / 2 - 90 - positions.studentName.y, // Posicionado abaixo do texto anterior
+          size: 14,
+          font: regularFont,
+          color: rgb(0, 0, 0)
+        });
+
+        const courseText8 = `${student()?.city}, ${this.formatDateExtensive()}.`;
+        page1.drawText(courseText8, {
+          x: page1.getWidth() / 2 - regularFont.widthOfTextAtSize(courseText8, 14) / 2 + positions.studentName.x,
+          y: page1.getHeight() / 2 - 120 - positions.studentName.y,
+          size: 14,
+          font: regularFont,
+          color: rgb(0, 0, 0)
+        });
       }
 
       // 8. Criar segunda página com a imagem de fundo
@@ -293,20 +338,10 @@ export class StudentCertificateComponent {
         height: page2.getHeight(),
       });
 
-      // 9. Adicionar título da lista de cursos centralizado
-      const courseListTitle = 'GRADE DO CURSO';
-      page2.drawText(courseListTitle, {
-        x: page2.getWidth() / 2 - regularFont.widthOfTextAtSize(courseListTitle, 24) / 2,
-        y: page2.getHeight() - 100,
-        size: 24,
-        font: regularFont,
-        color: rgb(0, 0, 0)
-      });
-
       // Lista de cursos (mantém o código existente para a lista)
-      let yPosition = page2.getHeight() - 200;
+      let yPosition = page2.getHeight() - 150;
       const lineSpacing = 40;
-      const bulletRadius = 3;
+      const bulletRadius = 6;
       const bulletX = 100;
 
       this.courseStatus().forEach((courseStatus) => {
@@ -315,20 +350,20 @@ export class StudentCertificateComponent {
           x: bulletX,
           y: yPosition + 6,
           size: bulletRadius,
-          color: rgb(0.8, 0, 0),
+          color: rgb(0.5, 0, 0),
           opacity: 1,
         });
 
         // Nome do curso
         const courseName = courseStatus.course.name;
-        const textWidth = regularFont.widthOfTextAtSize(courseName, 14);
+        const textWidth = regularFont.widthOfTextAtSize(courseName, 29);
 
         page2.drawText(courseName, {
           x: page2.getWidth() - textWidth - 100,
           y: yPosition,
-          size: 14,
+          size: 29,
           font: regularFont,
-          color: rgb(0.8, 0, 0),
+          color: rgb(0.5, 0, 0),
         });
 
         yPosition -= lineSpacing;

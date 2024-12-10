@@ -9,6 +9,8 @@ import { GenericFormComponent } from '../../../../shared/components/generic-form
 import { Validators } from '@angular/forms';
 import { ValidatorCpf } from '../../../../shared/Validators/cpf.validator';
 import { Employee } from '../../../../core/models/employee.model';
+import { RoleService } from '../../../role/service/role.service';
+import { Role } from '../../../../core/models/role.model';
 
 @Component({
   selector: 'app-employee-form',
@@ -166,23 +168,33 @@ export class EmployeeFormComponent implements OnInit {
   loading = signal(true);
   selectedFile: File | null = null;
   employeeId = signal<string | null>(null);
+  roles = signal<Role[]>([]);
 
   constructor(
     private employeeManagementService: EmployeeManagementService,
     private employeeService: EmployeeService,
+    private roleService: RoleService,
     private notificationService: NotificationService,
     private router: Router,
     private route: ActivatedRoute
   ) {}
 
   async ngOnInit() {
-    const id = this.route.snapshot.paramMap.get('id');
-    this.employeeId.set(id);
+    try {
+      const allRoles = await this.roleService.getAll();
+      const filteredRoles = allRoles.filter(role => role.name.toLowerCase() !== 'student');
+      this.roles.set(filteredRoles);
 
-    if (this.isEditMode()) {
-      await this.loadEmployee();
-    } else {
-      this.initNewEmployee();
+      const id = this.route.snapshot.paramMap.get('id');
+      this.employeeId.set(id);
+
+      if (this.isEditMode()) {
+        await this.loadEmployee();
+      } else {
+        this.initNewEmployee();
+      }
+    } catch (error) {
+      this.notificationService.error('Erro ao carregar dados');
     }
   }
 
@@ -356,6 +368,17 @@ export class EmployeeFormComponent implements OnInit {
         type: 'file',
         value: employee?.profilePic || '',
         onFileChange: (event: Event) => this.onFileChange(event)
+      },
+      {
+        type: 'select',
+        label: 'Cargo',
+        name: 'role',
+        options: this.roles().map(role => ({
+          value: role.name,
+          label: role.name
+        })),
+        validators: [Validators.required],
+        value: employee?.role || ''
       }
     ];
 

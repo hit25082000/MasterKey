@@ -1,8 +1,12 @@
 <div class="dashboard">
-  <h2>Dashboard</h2>
+  <div class="dashboard-header">
+    <h2>Dashboard</h2>
+  </div>
 
   <div class="stats-grid">
+    <!-- Cards de Estatísticas -->
     <div class="stat-card students">
+      <div class="stat-icon">👥</div>
       <div class="stat-info">
         <h3>Estudantes</h3>
         <div class="stat-numbers">
@@ -11,16 +15,10 @@
           <p>Inativos: {{ studentsData().inactive }}</p>
         </div>
       </div>
-      <div class="chart-container">
-        <canvas baseChart
-          [type]="'doughnut'"
-          [data]="studentsChartData"
-          [options]="chartOptions">
-        </canvas>
-      </div>
     </div>
 
     <div class="stat-card courses">
+      <div class="stat-icon">📚</div>
       <div class="stat-info">
         <h3>Cursos</h3>
         <div class="stat-numbers">
@@ -28,22 +26,69 @@
           <p>Ativos: {{ coursesCount().active }}</p>
         </div>
       </div>
-      <div class="chart-container">
-        <canvas baseChart
-          [type]="'doughnut'"
-          [data]="coursesChartData"
-          [options]="chartOptions">
-        </canvas>
+    </div>
+
+    <div class="stat-card sales">
+      <div class="stat-icon">💰</div>
+      <div class="stat-info">
+        <h3>Vendas</h3>
+        <div class="stat-numbers">
+          <p>Total: {{ salesData().totalSales }}</p>
+          <p>Receita: R$ {{ salesData().totalRevenue | number:'1.2-2' }}</p>
+        </div>
       </div>
     </div>
 
     <div class="stat-card teachers">
+      <div class="stat-icon">👨‍🏫</div>
       <div class="stat-info">
         <h3>Professores</h3>
         <div class="stat-numbers">
           <p>Total: {{ teachersCount() }}</p>
         </div>
       </div>
+    </div>
+  </div>
+
+  <div class="charts-grid">
+    <!-- Gráfico de Pizza - Estudantes -->
+    <div class="chart-card">
+      <h3>Distribuição de Estudantes</h3>
+      <canvas baseChart
+        [type]="'pie'"
+        [data]="studentsChartData"
+        [options]="pieChartOptions">
+      </canvas>
+    </div>
+
+    <!-- Gráfico de Pizza - Cursos -->
+    <div class="chart-card">
+      <h3>Status dos Cursos</h3>
+      <canvas baseChart
+        [type]="'pie'"
+        [data]="coursesChartData"
+        [options]="pieChartOptions">
+      </canvas>
+    </div>
+
+    <!-- Gráfico de Linha - Vendas Mensais -->
+    <div class="chart-card full-width">
+      <h3>Vendas Mensais</h3>
+      <canvas baseChart
+        [type]="'line'"
+        [data]="monthlyChartData"
+        [options]="lineChartOptions">
+      </canvas>
+    </div>
+
+    <!-- Gráfico de Pizza - Vendas por Curso -->
+    <div class="chart-card">
+      <h3>Vendas por Curso</h3>
+      <canvas baseChart
+        [type]="'pie'"
+        [data]="coursesSalesChartData"
+        [options]="pieChartOptions">
+      </canvas>
     </div>
   </div>
 </div>
