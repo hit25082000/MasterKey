@@ -10,7 +10,7 @@
 
     <app-modal #modalExam>
       <app-exam-form
-        [exam]="selectedExam()!"
+        [exam]="selectedExam()"
         (formSubmit)="onFormSuccess($event)"
         (formCancel)="onFormCancel()"
       ></app-exam-form>

@@ -15,7 +15,8 @@ export enum LogCategory {
   VIDEO_WATCHED = 'video_watched',
   VIDEO_PROGRESS_REMOVED = 'video_progress_removed',
   COURSE_PROGRESS_RESET = 'course_progress_reset',
-  STUDENT_ACTION = 'student_action'
+  STUDENT_ACTION = 'student_action',
+  NOTIFICATION = 'notification'
 }
 
 export interface LogEntry {

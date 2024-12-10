@@ -254,21 +254,54 @@ export class MeetingComponent implements OnInit {
   }
 
   async notifyStudents(meetingData: any, meetLink: string) {
-    const message = `Nova reunião: ${meetingData.title}. Link: ${meetLink}. Início: ${meetingData.startDateTime}`;
-    for (const email of this.selectedClassEmails) {
-      const student = await this.firestoreService.getDocumentsByAttribute(
-        'users',
-        'email',
-        email
-      );
-      if (student.length > 0) {
-        await this.chatService.sendMessage(
-          'SYSTEM',
-          student[0].id,
-          message,
-          'Sistema'
+    try {
+      const message = `Nova reunião agendada: ${meetingData.title}\n\nLink do Meet: ${meetLink}\n\nData: ${new Date(meetingData.startDateTime).toLocaleDateString()}\nHorário: ${new Date(meetingData.startDateTime).toLocaleTimeString()}`;
+
+      // Para cada email de aluno
+      for (const email of this.selectedClassEmails) {
+        // Busca o usuário pelo email
+        const users = await this.firestoreService.getDocumentsByAttribute(
+          'users',
+          'email',
+          email
         );
+
+        // Se encontrou o usuário
+        if (users && users.length > 0) {
+          const studentUser = users[0];
+
+          // Envia a mensagem no chat
+          await this.chatService.sendMessage(
+            'SYSTEM', // ID do remetente (sistema)
+            studentUser.id, // ID do aluno
+            message, // Mensagem com detalhes da reunião
+            'Sistema' // Nome do remetente
+          );
+
+          // Registra log da notificação
+          await this.systemLogService.logAction(
+            LogCategory.NOTIFICATION,
+            'Notificação de reunião enviada',
+            {
+              studentId: studentUser.id,
+              meetingTitle: meetingData.title,
+              meetLink
+            }
+          ).toPromise();
+        }
       }
+
+      this.notificationService.success(
+        'Notificações enviadas com sucesso para todos os alunos',
+        1
+      );
+
+    } catch (error) {
+      console.error('Erro ao enviar notificações:', error);
+      this.notificationService.error(
+        'Erro ao enviar algumas notificações. Por favor, verifique o chat.',
+        5000
+      );
     }
   }
 
