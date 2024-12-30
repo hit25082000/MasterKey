@@ -194,13 +194,28 @@ export class CourseFormComponent implements OnInit {
     });
   }
 
-  removeVideo(index: number) {
-    const videoId = this.videosArray.at(index).get('id')?.value;
-    this.videosArray.removeAt(index);
-    if (this.videoSelector) {
-      this.videoSelector.removeVideo(videoId);
+  removeVideo(indexToRemove: number) {  
+    try {
+      // Cria um novo array de controles excluindo o índice especificado
+      const newControls = this.videosArray.controls
+        .filter((_, index) => index !== indexToRemove);
+
+      // Reseta o FormArray
+      this.courseForm().setControl('videos', this.fb.array([]));
+
+      // Adiciona os controles filtrados de volta
+      newControls.forEach(control => {
+        (this.courseForm().get('videos') as FormArray).push(control);
+      });
+
+      // Atualiza validação
+      this.courseForm().updateValueAndValidity();
+
+      this.notificationService.success('Questão removida com sucesso');
+    } catch (error) {
+      this.notificationService.error('Erro ao remover questão');
     }
-  }
+  }  
 
   async ngOnInit() {
     this.loadingService.show();
