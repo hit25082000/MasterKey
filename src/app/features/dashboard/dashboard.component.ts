@@ -18,7 +18,7 @@ interface StudentActivity {
   selector: 'app-dashboard',
   standalone: true,
   imports: [CommonModule, BaseChartDirective],
-    templateUrl: './dashboard.component.html',
+  templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })
 export class DashboardComponent implements OnInit {
@@ -27,6 +27,9 @@ export class DashboardComponent implements OnInit {
   private employeeService = inject(EmployeeService);
   private systemLogService = inject(SystemLogService);
   private paymentService = inject(PaymentService);
+
+  isLoading = signal<boolean>(true);
+  chartsReady = signal<boolean>(false);
 
   // Signals para armazenar dados de atividade
   private studentActivityMap = signal<Map<string, Date>>(new Map());
@@ -120,6 +123,7 @@ export class DashboardComponent implements OnInit {
 
   lineChartOptions: ChartConfiguration['options'] = {
     responsive: true,
+    maintainAspectRatio: false,
     scales: {
       y: {
         beginAtZero: true,
@@ -138,6 +142,7 @@ export class DashboardComponent implements OnInit {
 
   pieChartOptions: ChartConfiguration['options'] = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'right'
@@ -145,18 +150,29 @@ export class DashboardComponent implements OnInit {
     }
   };
 
-  ngOnInit(): void {
-    this.loadDashboardData();
+  async ngOnInit(): Promise<void> {
+    this.isLoading.set(true);
+    await this.loadDashboardData();
+    
+    // Aguarda o próximo ciclo de renderização antes de atualizar os gráficos
+    setTimeout(() => {
+      this.updateCharts();
+      this.chartsReady.set(true);
+      this.isLoading.set(false);
+    }, 0);
   }
 
   async loadDashboardData(): Promise<void> {
-    await Promise.all([
-      this.loadStudentActivity(),
-      this.loadCourseData(),
-      this.loadTeacherData(),
-      this.loadSalesData()
-    ]);
-    this.updateCharts();
+    try {
+      await Promise.all([
+        this.loadStudentActivity(),
+        this.loadCourseData(),
+        this.loadTeacherData(),
+        this.loadSalesData()
+      ]);
+    } catch (error) {
+      console.error('Erro ao carregar dados do dashboard:', error);
+    }
   }
 
   private async loadStudentActivity(): Promise<void> {
@@ -267,16 +283,21 @@ export class DashboardComponent implements OnInit {
 
   private updateCharts(): void {
     // Atualiza gráfico de estudantes
-    this.studentsChartData.datasets[0].data = [
-      this.activeStudentsCount(),
-      this.inactiveStudentsCount()
-    ];
+    this.studentsChartData = {
+      ...this.studentsChartData,
+      datasets: [{
+        ...this.studentsChartData.datasets[0],
+        data: [this.studentsData().active, this.studentsData().inactive]
+      }]
+    };
 
     // Atualiza gráfico de cursos
-    const courseData = this.coursesCount();
-    this.coursesChartData.datasets[0].data = [
-      courseData.active,
-      courseData.total - courseData.active
-    ];
+    this.coursesChartData = {
+      ...this.coursesChartData,
+      datasets: [{
+        ...this.coursesChartData.datasets[0],
+        data: [this.coursesCount().active, this.coursesCount().total - this.coursesCount().active]
+      }]
+    };
   }
 }

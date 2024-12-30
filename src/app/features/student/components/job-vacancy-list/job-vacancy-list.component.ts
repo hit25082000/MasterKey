@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Component, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { JobVacancyService } from '../../services/job-vacancy.service';
 import { JobVacancy } from '../../../../core/models/job-vacancy.model';
 import { RouterLink } from '@angular/router';
@@ -12,14 +12,9 @@ import { CommonModule } from '@angular/common';
   templateUrl: './job-vacancy-list.component.html',
   styleUrls: ['./job-vacancy-list.component.scss'],
 })
-export class JobVacancyListComponent implements OnInit {
-  vacancies$!: Observable<JobVacancy[]>;
-
-  constructor(private jobVacancyService: JobVacancyService) {}
-
-  ngOnInit(): void {
-    this.vacancies$ = this.jobVacancyService.getVacancies();
-  }
+export class JobVacancyListComponent {
+  private jobVacancyService = inject(JobVacancyService);
+  vacancies = toSignal(this.jobVacancyService.getVacancies(), { initialValue: [] as JobVacancy[] });
 
   deleteVacancy(id: string): void {
     if (confirm('Tem certeza que deseja excluir esta vaga?')) {

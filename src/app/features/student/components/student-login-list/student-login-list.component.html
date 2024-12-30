@@ -1,43 +1,72 @@
-<h2>Calendário de Presença dos Estudantes</h2>
+<div class="attendance-container">
+  <div class="header">
+    <h2>Calendário de Presença dos Estudantes</h2>
+    <app-search-bar #searchBar [dataList]="studentAttendance()"></app-search-bar>
+  </div>
 
-<app-search-bar #searchBar [dataList]="studentAttendance()"></app-search-bar>
+  <div class="calendar-controls">
+    <button class="control-btn" (click)="previousMonth()" [disabled]="isLoading()">
+      <i class="fas fa-chevron-left"></i>
+      <span>Mês anterior</span>
+    </button>
+    <h3>{{ formattedMonth() }}</h3>
+    <button class="control-btn" 
+            (click)="nextMonth()" 
+            [disabled]="isLoading() || isCurrentMonth()">
+      <span>Próximo mês</span>
+      <i class="fas fa-chevron-right"></i>
+    </button>
+  </div>
 
-<div class="calendar-controls">
-  <button class="control-btn" (click)="previousMonth()">
-    <i class="fas fa-chevron-left"></i> Mês anterior
-  </button>
-  <h3>{{ currentMonth() | date : "MMMM yyyy" }}</h3>
-  <button class="control-btn" (click)="nextMonth()">
-    Próximo mês <i class="fas fa-chevron-right"></i>
-  </button>
-</div>
-
-<table *ngIf="studentAttendance().length > 0">
-  <thead>
-    <tr>
-      <th>Estudante</th>
-      <th *ngFor="let day of daysInMonth()">{{ day | date : "dd" }}</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let attendance of searchBar.filteredList()">
-      <td class="student-name">{{ attendance.student?.name || 'Nome não encontrado' }}</td>
-      <td
-        *ngFor="let day of daysInMonth()"
-        [ngClass]="{
-          present: attendance.dates[day.toISOString().split('T')[0]],
-          absent: !attendance.dates[day.toISOString().split('T')[0]] && !isFutureDate(day),
-          future: isFutureDate(day)
-        }"
-      >
-        @if (!isFutureDate(day)) {
-          {{ attendance.dates[day.toISOString().split('T')[0]] ? "✓" : "✗" }}
-        }
-      </td>
-    </tr>
-  </tbody>
-</table>
-
-<div *ngIf="studentAttendance().length === 0" class="no-data">
-  Nenhum dado de presença encontrado para este mês.
+  @if (isLoading()) {
+    <div class="loading-container">
+      <div class="spinner"></div>
+      <p>Carregando dados de presença...</p>
+    </div>
+  } @else {
+    @if (studentAttendance().length > 0) {
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th class="student-col">Estudante</th>
+              @for (week of daysInMonth(); track week.weekNumber) {
+                <th *ngFor="let day of week.days" 
+                    [attr.title]="day | date:'EEEE, dd/MM/yyyy'"
+                    [class.week-start]="isFirstDayOfWeek(day)">
+                  {{ day | date : "dd" }}
+                </th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let attendance of searchBar.filteredList()">
+              <td class="student-name">{{ attendance.student?.name || 'Nome não encontrado' }}</td>
+              @for (week of daysInMonth(); track week.weekNumber) {
+                <td *ngFor="let day of week.days"
+                    [ngClass]="{
+                      'present': attendance.dates[day.toISOString().split('T')[0]],
+                      'absent': !attendance.dates[day.toISOString().split('T')[0]] && !isFutureDate(day),
+                      'future': isFutureDate(day),
+                      'week-start': isFirstDayOfWeek(day)
+                    }"
+                    [attr.title]="day | date:'EEEE, dd/MM/yyyy'">
+                  @if (!isFutureDate(day)) {
+                    <span class="status-icon">
+                      {{ attendance.dates[day.toISOString().split('T')[0]] ? "✓" : "✗" }}
+                    </span>
+                  }
+                </td>
+              }
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <div class="no-data">
+        <i class="fas fa-calendar-times"></i>
+        <p>Nenhum dado de presença encontrado para este mês.</p>
+      </div>
+    }
+  }
 </div>

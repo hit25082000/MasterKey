@@ -24,7 +24,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 
       <div class="role-grid">
         @for (role of roles; track role.id) {
-          <div class="role-card">
+          <div class="role-card" [class.blocked-role]="isBlockedRole(role)">
             <div class="role-content">
               <h3>{{ role.name }}</h3>
 
@@ -140,14 +140,21 @@ import { ReactiveFormsModule } from '@angular/forms';
             </div>
 
             <div class="role-actions">
-              <button class="btn-edit" (click)="editRole(role.id!)">
-                <i class="fas fa-edit"></i>
-                Editar
-              </button>
-              <button class="btn-delete" (click)="deleteRole(role.id!)">
-                <i class="fas fa-trash"></i>
-                Excluir
-              </button>
+              @if (!isBlockedRole(role)) {
+                <button class="btn-edit" (click)="editRole(role.id!)">
+                  <i class="fas fa-edit"></i>
+                  Editar
+                </button>
+                <button class="btn-delete" (click)="deleteRole(role.id!)">
+                  <i class="fas fa-trash"></i>
+                  Excluir
+                </button>
+              } @else {
+                <div class="blocked-message">
+                  <i class="fas fa-lock"></i>
+                  Função do sistema - Não editável
+                </div>
+              }
             </div>
           </div>
         } @empty {
@@ -166,12 +173,15 @@ import { ReactiveFormsModule } from '@angular/forms';
 })
 export class RoleListComponent implements OnInit {
   roles: Role[] = [];
-  router = inject(Router)
+  router = inject(Router);
+  roleService = inject(RoleService);
+  auth = inject(AuthService);
 
-  constructor(
-    private roleService: RoleService,
-    private auth: AuthService,
-  ) {}
+  private readonly BLOCKED_ROLES = ['admin', 'student'];
+
+  isBlockedRole(role: Role): boolean {
+    return this.BLOCKED_ROLES.includes(role.name?.toLowerCase() ?? '');
+  }
 
   async ngOnInit(): Promise<void> {
     try {

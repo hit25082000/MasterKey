@@ -13,6 +13,7 @@ import { CLASSROOM_ROUTES } from './pages/classroom/classroom.routes';
 import { ADMIN_ROUTES } from './pages/admin/admin.routes';
 import { ExamListComponent } from './features/exam/components/exam-list/exam-list.component';
 import { ExamFormComponent } from './features/exam/components/exam-form/exam-form.component';
+import { CourseFormComponent } from './features/course/components/course-form/course-form.component'; // Added import
 
 export const routes: Routes = [
   {
@@ -25,7 +26,21 @@ export const routes: Routes = [
     component: AdminComponent,
     canActivate: [AuthGuard, RoleGuard],
     data: { permission: RoutePermission.ADMIN },
-    children: ADMIN_ROUTES,
+    children: [
+      {
+        path: 'course-form',
+        component: CourseFormComponent
+      },
+      {
+        path: 'course-form/:id',
+        component: CourseFormComponent
+      },
+      {
+        path: 'course/auth',
+        component: CourseFormComponent
+      },
+      ...ADMIN_ROUTES, // Added spread operator to include existing admin routes
+    ],
   },
   { path: 'login', component: LoginComponent },
   {

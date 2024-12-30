@@ -1,16 +1,21 @@
 import { Component, inject, signal, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/services/auth.service';
+import { Router, RouterModule } from '@angular/router';
 import BaseUser from '../../../core/models/base-user.model';
 
 @Component({
   selector: 'app-admin-header',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   template: `
     <header class="admin-header" [class.expanded]="expanded">
       <div class="logo-container">
-        <img src="assets/logo.png" alt="Logo da Empresa" class="company-logo">
+        <img src="assets/logo.png" 
+             alt="Logo da Empresa" 
+             class="company-logo" 
+             [routerLink]="['dashboard']" 
+             style="cursor: pointer;">
       </div>
 
       <div class="user-container">
@@ -63,7 +68,11 @@ import BaseUser from '../../../core/models/base-user.model';
         .company-logo {
           height: 40px;
           width: auto;
-          transition: all 0.3s ease;
+          transition: transform 0.3s ease;
+
+          &:hover {
+            transform: scale(1.05);
+          }
         }
       }
 

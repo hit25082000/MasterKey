@@ -119,7 +119,7 @@ export class GoogleAuthService {
     return this.accessToken$;
   }
 
-  private isTokenExpired(): boolean {
+  isTokenExpired(): boolean {
     return this.tokenExpirationTime
       ? Date.now() > this.tokenExpirationTime
       : true;

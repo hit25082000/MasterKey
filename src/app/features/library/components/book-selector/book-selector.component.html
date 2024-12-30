@@ -1,1 +1,36 @@
-<p>book-selector works!</p>
+<div class="book-selector">
+  <app-search-bar
+    [dataList]="nonSelectedBooks()"
+    #searchBarComponent
+  ></app-search-bar>
+
+  <div
+    *ngFor="let book of searchBarComponent.filteredList()"
+    class="form-group"
+  >
+    <label>
+      <input
+        type="checkbox"
+        [checked]="selectedBookIds().has(book.id)"
+        (change)="onCheckboxChange(book.id, $event)"
+      />
+      {{ book.name }}
+    </label>
+  </div>
+
+  <div class="selected-books">
+    <h4>Livros Selecionados</h4>
+    <ul>
+      <li *ngFor="let book of selectedBooks()">
+        {{ book.name }}
+        <button type="button" (click)="removeBook(book.id)">
+          Remover
+        </button>
+      </li>
+    </ul>
+  </div>
+
+  <button (click)="updateCourseBooks()" [disabled]="isSaving()">
+    {{ isSaving() ? "Salvando..." : "Salvar Alterações" }}
+  </button>  
+</div>

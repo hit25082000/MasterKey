@@ -55,21 +55,23 @@ export class RoleGuard implements CanActivate {
           }
 
           // Se chegou aqui, não tem permissão
-          this.notificationService.error('Você não tem permissão para acessar esta página');
-
+          
           // Redireciona baseado no papel do usuário
           switch (userRole) {
             case 'student':
               this.router.navigate(['/classroom']);
               break;
-            case 'teacher':
-            case 'admin':
-              this.router.navigate(['/admin']);
-              break;
-            default:
-              this.router.navigate(['/unauthorized']);
-          }
-        } else {
+              case 'teacher':
+                this.router.navigate(['/admin']);
+                break;
+                case 'admin':
+                  this.router.navigate(['/admin']);
+                  break;
+                  default:
+                    this.router.navigate(['/unauthorized']);
+                  }
+                } else {
+          this.notificationService.error('Você não tem permissão para acessar esta página');
           this.router.navigate(['/login']);
         }
         return false;

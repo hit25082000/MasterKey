@@ -12,6 +12,11 @@ interface StudentAttendance {
   dates: { [date: string]: boolean };
 }
 
+interface WeekGroup {
+  weekNumber: number;
+  days: Date[];
+}
+
 @Component({
   selector: 'app-student-login-list',
   standalone: true,
@@ -25,40 +30,84 @@ export class StudentLoginListComponent implements OnInit {
   private studentService = inject(StudentService);
   private systemLogService = inject(SystemLogService);
 
+  // Mapeamento de meses em português
+  private monthsInPortuguese: { [key: string]: string } = {
+    'January': 'Janeiro',
+    'February': 'Fevereiro',
+    'March': 'Março',
+    'April': 'Abril',
+    'May': 'Maio',
+    'June': 'Junho',
+    'July': 'Julho',
+    'August': 'Agosto',
+    'September': 'Setembro',
+    'October': 'Outubro',
+    'November': 'Novembro',
+    'December': 'Dezembro'
+  };
+
   // Signals
   currentMonth = signal<Date>(new Date());
   today = signal<Date>(new Date());
   studentAttendance = signal<StudentAttendance[]>([]);
+  isLoading = signal<boolean>(false);
 
-  // Computed para dias do mês
+  // Computed para o mês atual em português
+  formattedMonth = computed(() => {
+    const date = this.currentMonth();
+    const monthInEnglish = date.toLocaleString('en-US', { month: 'long' });
+    const year = date.getFullYear();
+    return `${this.monthsInPortuguese[monthInEnglish]} ${year}`;
+  });
+
+  // Computed para dias do mês agrupados por semana (excluindo domingos)
   daysInMonth = computed(() => {
     const date = this.currentMonth();
     const year = date.getFullYear();
     const month = date.getMonth();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    return Array.from(
+    
+    const days = Array.from(
       { length: daysInMonth },
       (_, i) => new Date(year, month, i + 1)
-    );
+    ).filter(date => date.getDay() !== 0); // Exclui domingos
+
+    // Agrupa os dias por semana
+    const weeks: WeekGroup[] = [];
+    let currentWeek: Date[] = [];
+    let currentWeekNumber = 0;
+
+    days.forEach((day) => {
+      // Se é segunda-feira (1) ou é o primeiro dia
+      if (day.getDay() === 1 || currentWeek.length === 0) {
+        if (currentWeek.length > 0) {
+          weeks.push({ weekNumber: currentWeekNumber++, days: [...currentWeek] });
+          currentWeek = [];
+        }
+      }
+      currentWeek.push(day);
+    });
+
+    // Adiciona a última semana se houver dias restantes
+    if (currentWeek.length > 0) {
+      weeks.push({ weekNumber: currentWeekNumber, days: currentWeek });
+    }
+
+    return weeks;
   });
 
-  // Verifica se uma data é futura
-  isFutureDate(date: Date): boolean {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return date > today;
+  // Verifica se é domingo
+  isSunday(date: Date): boolean {
+    return date.getDay() === 0;
   }
 
-  // Verifica se é o mês atual
-  isCurrentMonth = computed(() => {
-    const current = this.currentMonth();
-    const today = this.today();
-    return current.getMonth() === today.getMonth() &&
-           current.getFullYear() === today.getFullYear();
-  });
+  // Verifica se é o primeiro dia da semana (segunda-feira)
+  isFirstDayOfWeek(date: Date): boolean {
+    return date.getDay() === 1;
+  }
 
-  ngOnInit(): void {
-    this.loadAttendanceData();
+  async ngOnInit(): Promise<void> {
+    await this.loadAttendanceData();
   }
 
   async loadAttendanceData(): Promise<void> {
@@ -97,19 +146,34 @@ export class StudentLoginListComponent implements OnInit {
     }
   }
 
+  // Métodos de navegação
   previousMonth(): void {
-    this.currentMonth.update(date =>
-      new Date(date.getFullYear(), date.getMonth() - 1, 1)
-    );
-    this.today.set(new Date());
+    const current = this.currentMonth();
+    this.currentMonth.set(new Date(current.getFullYear(), current.getMonth() - 1, 1));
     this.loadAttendanceData();
   }
 
   nextMonth(): void {
-    this.currentMonth.update(date =>
-      new Date(date.getFullYear(), date.getMonth() + 1, 1)
-    );
-    this.today.set(new Date());
-    this.loadAttendanceData();
+    const current = this.currentMonth();
+    const nextDate = new Date(current.getFullYear(), current.getMonth() + 1, 1);
+    if (nextDate <= this.today()) {
+      this.currentMonth.set(nextDate);
+      this.loadAttendanceData();
+    }
   }
+
+  // Verifica se uma data é futura
+  isFutureDate(date: Date): boolean {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return date > today;
+  }
+
+  // Verifica se é o mês atual
+  isCurrentMonth = computed(() => {
+    const current = this.currentMonth();
+    const today = this.today();
+    return current.getMonth() === today.getMonth() &&
+           current.getFullYear() === today.getFullYear();
+  });
 }

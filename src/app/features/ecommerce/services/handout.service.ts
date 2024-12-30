@@ -19,7 +19,11 @@ export class HandoutService {
   }
 
   async add(handout: Handout): Promise<Handout> {
-    return await this.firestore.addToCollection<Handout>('handouts', handout);
+    const docRef = await this.firestore.addToCollection<Handout>('handouts', handout);
+    return {
+      ...handout,
+      id: docRef.id
+    };
   }
 
   async delete(id: string) {

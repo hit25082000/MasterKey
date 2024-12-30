@@ -1,0 +1,163 @@
+.book-selector {
+  padding: 1.5rem;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+
+  .form-group {
+    margin-bottom: 1.25rem;
+    
+    label {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      background: #f8f9fa;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+
+      &:hover {
+        background: #f1f3f5;
+      }
+
+      input[type="checkbox"] {
+        width: 1.25rem;
+        height: 1.25rem;
+        border: 2px solid #6c757d;
+        border-radius: 4px;
+        cursor: pointer;
+        
+        &:checked {
+          background-color: #007bff;
+          border-color: #007bff;
+        }
+      }
+    }
+
+    input.form-control {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.2s ease;
+
+      &:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+      }
+    }
+  }
+
+  .selected-books {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+
+    h4 {
+      margin: 0 0 1rem;
+      color: #343a40;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+
+      li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem;
+        background: white;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+
+        button {
+          padding: 0.5rem 1rem;
+          background: #dc3545;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 0.875rem;
+          cursor: pointer;
+          transition: background 0.2s ease;
+
+          &:hover {
+            background: #c82333;
+          }
+        }
+      }
+    }
+  }
+
+  .add-new-book {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+
+    h4 {
+      margin: 0 0 1.5rem;
+      color: #343a40;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    form {
+      display: grid;
+      gap: 1.25rem;
+    }
+  }
+
+  button[type="submit"],
+  button:not([type="button"]) {
+    width: 100%;
+    padding: 0.875rem;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #0056b3;
+    }
+
+    &:disabled {
+      background: #e9ecef;
+      color: #6c757d;
+      cursor: not-allowed;
+    }
+
+    &:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+    }
+  }
+
+  // Animações
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .form-group,
+  .selected-books li {
+    animation: fadeIn 0.3s ease forwards;
+  }
+}

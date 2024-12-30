@@ -12,8 +12,8 @@ import { Book } from '../../../../core/models/book.model';
       <h2>Biblioteca do Curso</h2>
       <div class="book-grid">
         <div *ngFor="let book of books" class="book-card">
-          <img [src]="book.imageUrl" [alt]="book.title" />
-          <h3>{{ book.title }}</h3>
+          <img [src]="book.imageUrl" [alt]="book.name" />
+          <h3>{{ book.name }}</h3>
           <p>{{ book.author }}</p>
           <a [href]="book.pdfUrl" target="_blank">Ver PDF</a>
         </div>

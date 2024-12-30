@@ -3,8 +3,10 @@ import { Entity } from "./entity";
 export interface Video extends Entity {
   id: string;
   name: string;
+  description: string;
   duration: number;
   webViewLink: string;
+  thumbnail: string;
 }
 
 export interface CourseReview extends Entity {

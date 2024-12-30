@@ -20,12 +20,12 @@ import { AuthGuard } from '../../auth/guards/auth.guard';
 import { RoleGuard } from '../../auth/guards/role.guard';
 import { RoutePermission } from '../../features/role/components/permission-select/permission.enum';
 import { CourseFormComponent } from '../../features/course/components/course-form/course-form.component';
-import { MeetingComponent } from '../../features/meet/components/meet/meet.component';
 import { JobVacancyFormComponent } from '../../features/student/components/job-vacancy-form/job-vacancy-form.component';
 import { JobVacancyListComponent } from '../../features/student/components/job-vacancy-list/job-vacancy-list.component';
 import { EmployeeListComponent } from '../../features/employees/components/employee-list/employee-list.component';
 import { LibraryListComponent } from '../../features/library/components/library-list/library-list.component';
 import { ExamFormComponent } from '../../features/exam/components/exam-form/exam-form.component';
+import { MeetComponent } from '../../features/meet/components/meet/meet.component';
 
 export const ADMIN_ROUTES: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
@@ -216,7 +216,7 @@ export const ADMIN_ROUTES: Routes = [
       // Rotas de Aulas ao Vivo
       {
         path: 'meet',
-        component: MeetingComponent,
+        component: MeetComponent,
         canActivate: [RoleGuard],
         data: { permission: RoutePermission.VIEW_MEETINGS }
       },

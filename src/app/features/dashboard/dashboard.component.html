@@ -51,44 +51,60 @@
   </div>
 
   <div class="charts-grid">
-    <!-- Gráfico de Pizza - Estudantes -->
-    <div class="chart-card">
-      <h3>Distribuição de Estudantes</h3>
-      <canvas baseChart
-        [type]="'pie'"
-        [data]="studentsChartData"
-        [options]="pieChartOptions">
-      </canvas>
-    </div>
+    <ng-container *ngIf="isLoading(); else charts">
+      <div class="loading-spinner">
+        <div class="spinner"></div>
+        <p>Carregando dados...</p>
+      </div>
+    </ng-container>
+    <ng-template #charts>
+      <!-- Gráfico de Pizza - Estudantes -->
+      <div class="chart-card">
+        <h3>Distribuição de Estudantes</h3>
+        <ng-container *ngIf="chartsReady()">
+          <canvas baseChart
+            [type]="'pie'"
+            [data]="studentsChartData"
+            [options]="pieChartOptions">
+          </canvas>
+        </ng-container>
+      </div>
 
-    <!-- Gráfico de Pizza - Cursos -->
-    <div class="chart-card">
-      <h3>Status dos Cursos</h3>
-      <canvas baseChart
-        [type]="'pie'"
-        [data]="coursesChartData"
-        [options]="pieChartOptions">
-      </canvas>
-    </div>
+      <!-- Gráfico de Pizza - Cursos -->
+      <div class="chart-card">
+        <h3>Status dos Cursos</h3>
+        <ng-container *ngIf="chartsReady()">
+          <canvas baseChart
+            [type]="'pie'"
+            [data]="coursesChartData"
+            [options]="pieChartOptions">
+          </canvas>
+        </ng-container>
+      </div>
 
-    <!-- Gráfico de Linha - Vendas Mensais -->
-    <div class="chart-card full-width">
-      <h3>Vendas Mensais</h3>
-      <canvas baseChart
-        [type]="'line'"
-        [data]="monthlyChartData"
-        [options]="lineChartOptions">
-      </canvas>
-    </div>
+      <!-- Gráfico de Linha - Vendas Mensais -->
+      <div class="chart-card full-width">
+        <h3>Vendas Mensais</h3>
+        <ng-container *ngIf="chartsReady()">
+          <canvas baseChart
+            [type]="'line'"
+            [data]="monthlyChartData"
+            [options]="lineChartOptions">
+          </canvas>
+        </ng-container>
+      </div>
 
-    <!-- Gráfico de Pizza - Vendas por Curso -->
-    <div class="chart-card">
-      <h3>Vendas por Curso</h3>
-      <canvas baseChart
-        [type]="'pie'"
-        [data]="coursesSalesChartData"
-        [options]="pieChartOptions">
-      </canvas>
-    </div>
+      <!-- Gráfico de Pizza - Vendas por Curso -->
+      <div class="chart-card">
+        <h3>Vendas por Curso</h3>
+        <ng-container *ngIf="chartsReady()">
+          <canvas baseChart
+            [type]="'pie'"
+            [data]="coursesSalesChartData"
+            [options]="pieChartOptions">
+          </canvas>
+        </ng-container>
+      </div>
+    </ng-template>
   </div>
 </div>

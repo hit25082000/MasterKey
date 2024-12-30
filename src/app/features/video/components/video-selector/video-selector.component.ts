@@ -68,7 +68,7 @@ export class VideoSelectorComponent implements OnInit {
 
         const params = {
           q: "mimeType contains 'video/'",
-          fields: 'files(id, name, mimeType, webViewLink)',
+          fields: 'files(id, name, mimeType, webViewLink, videoMediaMetadata)',
           pageSize: '100',
           orderBy: 'modifiedTime desc'
         };
@@ -80,9 +80,11 @@ export class VideoSelectorComponent implements OnInit {
         this.allVideos.set(files.map(file => ({
           id: file.id,
           name: file.name,
-          duration: 0,
+          duration: file.videoMediaMetadata?.durationMillis ? Math.floor(file.videoMediaMetadata.durationMillis / 1000) : 0,
           webViewLink: this.formatVideoLink(file.webViewLink),
-          active: true
+          active: true,
+          description: '',
+          thumbnail: '',
         })));
       },
       error: (error) => {

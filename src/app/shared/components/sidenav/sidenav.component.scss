@@ -1,4 +1,4 @@
-.sidenav {
+.sidenav {  
   width: 65px;
   height: 100vh;
   background: linear-gradient(180deg, #2c3e50 0%, #1a252f 100%);
@@ -71,6 +71,41 @@
     transform: translateX(0);
   }
 
+  &.collapsed {
+    .logout-container {
+      align-items: center;
+      padding: 1rem 0;
+
+      .logout-button {
+        width: 40px;
+        min-width: 40px;
+        padding: 0.5rem;
+        justify-content: center;
+
+        span {
+          display: none;
+        }
+
+        i {
+          margin: 0;
+        }
+      }
+    }
+
+    button {
+      padding: 0.75rem 1rem;
+      justify-content: center;
+
+      .icon {
+        margin: 0;
+      }
+
+      .label {
+        display: none;
+      }
+    }
+  }
+
   .dropdown {
     max-height: 0;
     margin: 0;
@@ -138,36 +173,31 @@
   }
 
   .logout-container {
-    padding: 8px;
+    margin-top: auto;
+    padding: 1rem;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 
     .logout-button {
-      width: 100%;
-      padding: 12px;
-      background: transparent;
-      border: none;
-      color: #e53e3e;
       display: flex;
       align-items: center;
+      gap: 8px;
+      width: 100%;
+      border: none;
+      border-radius: 4px;
+      background: #dc3545;
+      color: white;
       cursor: pointer;
-      transition: all 0.2s ease;
-      border-radius: 8px;
+      transition: background-color 0.3s ease;
 
       &:hover {
-        background: rgba(229, 62, 62, 0.1);
+        background: #c82333;
       }
 
       i {
-        min-width: 24px;
-        margin-right: 12px;
-        font-size: 1.2rem;
-      }
-
-      .label {
-        opacity: 0;
-        transform: translateX(-10px);
-        transition: all 0.3s ease;
-        white-space: nowrap;
+        font-size: 16px;
       }
     }
   }
@@ -176,6 +206,28 @@
     .logout-button .label {
       opacity: 1;
       transform: translateX(0);
+    }
+  }
+
+  &.collapsed {
+    .logout-container {
+      align-items: center;
+      padding: 1rem 0;
+
+      .logout-button {
+        width: 40px;
+        min-width: 40px;
+        padding: 0.5rem;
+        justify-content: center;
+
+        span {
+          display: none;
+        }
+
+        i {
+          margin: 0;
+        }
+      }
     }
   }
 }

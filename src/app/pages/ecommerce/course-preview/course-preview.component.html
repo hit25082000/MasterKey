@@ -46,16 +46,19 @@
     <div class="course-info">
       <div class="info-card">
         <h3>Informações do Curso</h3>
-        <div class="price-info" *ngIf="!course.hidePrice">
-          <div class="price-container">
+        <div class="price-info" >
+          <div class="price-container" *ngIf="!course.hidePrice">
             <span class="original-price" *ngIf="course.promoPrice">R$ {{course.price}}</span>
             <span class="promo-price">R$ {{course.promoPrice || course.price}}</span>
           </div>
-          <span class="portion-info" *ngIf="course.portionCount">
+          <span class="portion-info" *ngIf="course.portionCount && !course.hidePrice">
             ou {{course.portionCount}}x de R$ {{(course.promoPrice || course.price) / course.portionCount | number:'1.2-2'}}
           </span>
+          <button class="buy-button" (click)="buyCourse()">
+            <i class="fas fa-graduation-cap"></i>
+            Matricule-se Agora
+          </button>
         </div>
-        <a [href]="course.checkoutUrl" class="buy-button">Matricular-se Agora</a>
       </div>
     </div>
   </div>

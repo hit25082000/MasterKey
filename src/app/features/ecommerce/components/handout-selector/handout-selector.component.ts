@@ -122,25 +122,27 @@ export class HandoutSelectorComponent implements OnInit {
 
   async addNewHandout() {
     if (this.newHandoutForm.valid) {
-      const newHandout: Handout = {
-        id: '', // Será preenchido pelo serviço
-        ...this.newHandoutForm.value
-      };
-
       try {
+        const newHandout: Handout = {
+          id: '', // Será preenchido pelo serviço
+          ...this.newHandoutForm.value,
+          active: true
+        };
+
         const addedHandout = await this.handoutService.add(newHandout);
-        this.allHandouts.update(handouts => [...handouts, addedHandout]);
+        
+        // Atualiza a lista local com a nova apostila
+        const currentHandouts = this.allHandouts();
+        this.allHandouts.set([...currentHandouts, addedHandout]);
+        
         this.newHandoutForm.reset();
-        this.notificationService.success(
-          'Nova apostila adicionada com sucesso',
-         1
-        );
+        this.notificationService.success('Nova apostila adicionada com sucesso');
       } catch (error) {
-        this.notificationService.success(
-          'Erro ao adicionar nova apostila',
-          1
-        );
+        console.error('Erro ao adicionar apostila:', error);
+        this.notificationService.error('Erro ao adicionar nova apostila');
       }
+    } else {
+      this.notificationService.error('Por favor, preencha todos os campos obrigatórios');
     }
   }
 }

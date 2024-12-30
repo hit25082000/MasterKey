@@ -26,15 +26,12 @@ export interface FormFieldConfig {
   label: string;
   type: 'text' | 'email' | 'password' | 'number' | 'file' | 'select' | 'textarea' | 'checkbox' | 'date' | 'modal-select' | 'multiselect';
   value?: any;
-  validators?: any[];
-  errorMessages?: { [key: string]: string };
+  validators?: ValidatorFn[];
+  errorMessages?: ErrorMessages;
   options?: { value: any; label: string }[];
   onFileChange?: (event: Event) => void;
   imagePreview?: string;
-  modalConfig?: {
-    component: any;
-    displayValue: string | (() => string);
-    inputs?: { [key: string]: any };
-    outputs?: { [key: string]: (event: any) => void };
-  };
+  modalConfig?: ModalConfig;
+  placeholder?: string;
+  accept?: string;
 }

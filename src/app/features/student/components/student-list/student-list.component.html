@@ -1,11 +1,7 @@
 <div class="student-list-container">
   <div class="header">
     <div class="title-section">
-      <h2>Lista de Alunos</h2>
-      <button class="btn-add" routerLink="/admin/student-register">
-        <i class="fas fa-plus"></i>
-        Novo Aluno
-      </button>
+      <h2>Lista de Alunos</h2>      
     </div>
     <app-search-bar [dataList]="students()" #searchBar></app-search-bar>
   </div>

@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, inject, Output, ViewChild } from '@angular/core';
-import { RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
+import { RouterLink, RouterLinkActive, Router, NavigationEnd, RouterModule } from '@angular/router';
 import { ModalComponent } from '../modal/modal.component';
 import { WhatsAppMessageComponent } from '../../../features/chat/components/whats-app-message/whats-app-message.component';
 import { filter } from 'rxjs/operators';
 import { AuthService } from '../../../core/services/auth.service';
+import { GoogleAuthButtonComponent } from '../google-auth-button/google-auth-button.component';
 
 interface SubMenuItem {
   label: string;
@@ -23,7 +24,15 @@ interface MenuItem {
 @Component({
   selector: 'app-sidenav',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, CommonModule, ModalComponent, WhatsAppMessageComponent],
+  imports: [
+    CommonModule,
+    RouterModule,
+    RouterLink,
+    RouterLinkActive,
+    ModalComponent,
+    WhatsAppMessageComponent,
+    GoogleAuthButtonComponent
+  ],
   templateUrl: './sidenav.component.html',
   styleUrls: ['./sidenav.component.scss'],
 })
@@ -115,7 +124,6 @@ export class SidenavComponent {
       label: 'Biblioteca',
       icon: 'fas fa-book',
       subItems: [
-            { label: 'Adicionar Livro', route: '/admin/library-form' },
         { label: 'Listar Livros', route: '/admin/library-list' }
       ]
     }

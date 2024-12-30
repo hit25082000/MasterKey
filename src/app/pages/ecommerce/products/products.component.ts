@@ -12,6 +12,9 @@ import { Router } from '@angular/router';
 import { PaymentService } from '../../../core/services/payment.service';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../../environments/environment';
+import { LoadingService } from '../../../shared/services/loading.service';
+import { NotificationService, NotificationType } from '../../../shared/services/notification.service';
+
 @Component({
   selector: 'app-products',
   standalone: true,
@@ -28,12 +31,16 @@ import { environment } from '../../../../environments/environment';
 })
 export class ProductsComponent implements OnInit {
   router = inject(Router)
+  courseService = inject(CourseService);
+  categoryService = inject(CategoryService);
+  private readonly loadingService = inject(LoadingService);
+  private readonly paymentService = inject(PaymentService);
+  private readonly notificationService = inject(NotificationService);
   courses = signal<Course[]>([]);
   categories = signal<string[]>(['Todos']);
   selectedCategory = signal<string>('Todos');
   selectedOrder = signal<string>('Alfabética');
   priceRange = signal<number>(1000);
-  private readonly paymentService = inject(PaymentService);
 
   filteredCourses = computed(() => {
     let filtered = [...this.courses()];
@@ -62,20 +69,21 @@ export class ProductsComponent implements OnInit {
     return filtered;
   });
 
-  constructor(
-    private courseService: CourseService,
-    private categoryService: CategoryService
-  ) {}
-
   async ngOnInit() {
-    // Buscar cursos e categorias
-    const [allCourses, allCategories] = await Promise.all([
-      this.courseService.getAll(),
-      this.categoryService.getAll()
-    ]);
-
-    this.courses.set(allCourses);
-    this.categories.set(['Todos', ...allCategories.map(cat => cat.name)]);
+    this.loadingService.show();
+    try {    
+      const [allCourses, allCategories] = await Promise.all([
+        this.courseService.getAll(),
+        this.categoryService.getAll()
+      ]);
+      
+      this.courses.set(allCourses);
+      this.categories.set(['Todos', ...allCategories.map(cat => cat.name)]);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      this.loadingService.hide();
+    }
   }
 
   onSearch(searchTerm: string) {
@@ -117,12 +125,17 @@ export class ProductsComponent implements OnInit {
           ? preference.init_point
           : preference.sandbox_init_point;
       } else {
-        console.error('Erro: Link de pagamento não gerado');
-        // Adicione aqui sua lógica de notificação de erro
+        this.notificationService.show(
+          'Não foi possível processar o pagamento. Por favor, tente novamente mais tarde.',
+          NotificationType.ERROR
+        );
       }
     } catch (error) {
       console.error('Erro ao processar pagamento:', error);
-      // Adicione aqui sua lógica de notificação de erro
+      this.notificationService.show(
+        'Serviço temporariamente indisponível. Por favor, tente novamente mais tarde.',
+        NotificationType.ERROR
+      );
     }
   }
 

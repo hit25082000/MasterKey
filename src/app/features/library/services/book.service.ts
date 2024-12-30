@@ -134,6 +134,14 @@ export class BookService {
     }
   }
 
+  async add(book: Book): Promise<Book> {
+    const docRef = await this.firestore.addToCollection<Book>('books', book);
+    return {
+      ...book,
+      id: docRef.id
+    };
+  }
+
   async removeBookFromCourse(courseId: string, bookId: string): Promise<void> {
     try {
       const courseBooks = await this.firestore.getDocument<{bookIds: string[]}>('course_books', courseId);

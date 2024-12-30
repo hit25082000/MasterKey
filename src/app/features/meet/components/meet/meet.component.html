@@ -1,69 +1,83 @@
-<form [formGroup]="meetingForm" (ngSubmit)="onSubmit()">
+<form [formGroup]="meetingForm" (ngSubmit)="onSubmit()" class="meeting-form">
+  <div *ngIf="!isGoogleConnected()" class="google-auth-warning">
+    <i class="fas fa-exclamation-triangle"></i>
+    <p>Por favor, conecte sua conta Google para criar reuniões.</p>
+  </div>
+
   <div class="form-group">
     <label for="title">Título da Reunião</label>
-    <input id="title" formControlName="title" class="form-control" />
+    <input
+      type="text"
+      id="title"
+      formControlName="title"
+      class="form-control"
+      placeholder="Digite o título da reunião"
+      [attr.disabled]="!isGoogleConnected() ? '' : null"
+    />
   </div>
 
   <div class="form-group">
     <label for="startDate">Data</label>
     <input
-      id="startDate"
       type="date"
+      id="startDate"
       formControlName="startDate"
       class="form-control"
+      [attr.disabled]="!isGoogleConnected() ? '' : null"
     />
   </div>
 
   <div class="form-group">
-    <label for="startTime">Hora de Início</label>
+    <label for="startTime">Horário de Início</label>
     <input
-      id="startTime"
       type="time"
+      id="startTime"
       formControlName="startTime"
       class="form-control"
+      [attr.disabled]="!isGoogleConnected() ? '' : null"
     />
   </div>
 
   <div class="form-group">
-    <label for="endTime">Hora de Término</label>
+    <label for="endTime">Horário de Término</label>
     <input
-      id="endTime"
       type="time"
+      id="endTime"
       formControlName="endTime"
       class="form-control"
+      [attr.disabled]="!isGoogleConnected() ? '' : null"
     />
   </div>
 
   <div class="form-group">
-    <label for="selectedClass">Selecione a Turma</label>
+    <label for="selectedClass">Turma</label>
     <select
       id="selectedClass"
       formControlName="selectedClass"
       class="form-control"
+      [attr.disabled]="!isGoogleConnected() ? '' : null"
     >
-      <option *ngFor="let class of availableClasses" [value]="class.id">
+      <option value="">Selecione uma turma</option>
+      <option *ngFor="let class of availableClasses()" [value]="class.id">
         {{ class.name }}
       </option>
     </select>
   </div>
 
-  <button
-    type="button"
-    (click)="authenticateWithGoogle()"
-    *ngIf="!isAuthenticated"
-  >
-    Autenticar com Google
-  </button>
-
-  <button type="submit" [disabled]="!isAuthenticated || meetingForm.invalid">
-    Criar Reunião
-  </button>
-
-  <ng-container *ngIf="showMeetIcon">
-    <button class="meet-icon-button" (click)="openMeetLink()">
-      <i class="fas fa-video"></i> Abrir Google Meet
+  <div class="form-actions">
+    <button
+      type="submit"
+      class="btn btn-primary"
+      [disabled]="!meetingForm.valid || !isGoogleConnected()"
+    >
+      Criar Reunião
     </button>
-  </ng-container>
+  </div>
 </form>
 
-<p *ngIf="isAuthenticated">Autenticado com sucesso!</p>
+<div *ngIf="meetLink()" class="meet-link">
+  <button class="btn btn-success" (click)="openMeetLink()">
+    <i class="fas fa-video"></i>
+    Abrir Google Meet
+  </button>
+</div>

@@ -108,6 +108,78 @@ button {
   }
 }
 
+.google-auth-warning {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #fff3cd;
+  border: 1px solid #ffeeba;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+
+  i {
+    font-size: 1.5rem;
+    color: #856404;
+  }
+
+  p {
+    margin: 0;
+    color: #856404;
+  }
+}
+
+.form-actions {
+  margin-top: 2rem;
+
+  .btn {
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &.btn-primary {
+      background: #3498db;
+      color: white;
+
+      &:hover:not(:disabled) {
+        background: #2980b9;
+      }
+
+      &:disabled {
+        background: #95a5a6;
+        cursor: not-allowed;
+      }
+    }
+
+    &.btn-success {
+      background: #2ecc71;
+      color: white;
+
+      &:hover {
+        background: #27ae60;
+      }
+    }
+  }
+}
+
+.meet-link {
+  margin-top: 1.5rem;
+  text-align: center;
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    i {
+      font-size: 1.2rem;
+    }
+  }
+}
+
 p {
   text-align: center;
   color: #48bb78;

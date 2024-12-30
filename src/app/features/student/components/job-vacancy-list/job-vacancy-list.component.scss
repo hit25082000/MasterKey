@@ -83,6 +83,125 @@ ul {
   }
 }
 
+.job-vacancy-container {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+
+  h1 {
+    font-size: 2rem;
+    color: #2c3e50;
+    margin: 0;
+  }
+}
+
+.btn-create {
+  background-color: #4CAF50;
+  color: white;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color 0.3s;
+
+  &:hover {
+    background-color: #45a049;
+  }
+
+  .material-icons {
+    font-size: 20px;
+    line-height: 1;
+  }
+}
+
+.vacancy-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.vacancy-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s, box-shadow 0.3s;
+  overflow: hidden;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.vacancy-content {
+  padding: 1.5rem;
+
+  h3 {
+    margin: 0 0 0.5rem;
+    color: #2c3e50;
+    font-size: 1.25rem;
+  }
+
+  .company {
+    color: #7f8c8d;
+    margin: 0 0 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+
+  button, a {
+    flex: 1;
+    padding: 0.6rem;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+
+    .material-icons {
+      font-size: 18px;
+      line-height: 1;
+    }
+  }
+}
+
+.btn-delete {
+  background-color: #ff4757;
+  color: white;
+
+  &:hover {
+    background-color: #ff6b81;
+  }
+}
+
+.btn-edit {
+  background-color: #2196F3;
+  color: white;
+
+  &:hover {
+    background-color: #1e88e5;
+  }
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

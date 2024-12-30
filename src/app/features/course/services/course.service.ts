@@ -24,13 +24,24 @@ export class CourseService {
     this.firestore.deleteDocument('courses', id);
   }
 
-  async getHandouts(id: string) {
-    const courses = (await this.firestore.getDocument(
-      'course_handouts',
-      id
-    )) as any;
-
-    return courses.courses;
+  async getHandouts(id: string): Promise<string[]> {
+    try {
+      const courseHandouts = await this.firestore.getDocument('course_handouts', id);
+      return courseHandouts?.handoutIds || [];
+    } catch (error) {
+      console.error('Erro ao buscar apostilas do curso:', error);
+      return [];
+    }
+  }
+  
+  async getBooks(id: string): Promise<string[]> {
+    try {
+      const courseBooks = await this.firestore.getDocument('course_books', id);
+      return courseBooks?.bookIds || [];
+    } catch (error) {
+      console.error('Erro ao buscar livros do curso:', error);
+      return [];
+    }
   }
 
   async getReviews(id: string) {

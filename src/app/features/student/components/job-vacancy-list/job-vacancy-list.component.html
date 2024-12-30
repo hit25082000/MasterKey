@@ -1,9 +1,28 @@
-<h2>Vagas de Emprego</h2>
-<ul>
-  <li *ngFor="let vacancy of vacancies$ | async">
-    {{ vacancy.titulo }} - {{ vacancy.empresa }}
-    <button (click)="deleteVacancy(vacancy.id!)">Excluir</button>
-    <a [routerLink]="['/admin/edit-vacancy', vacancy.id]">Editar</a>
-  </li>
-</ul>
-<a routerLink="/admin/create-vacancy">Criar Nova Vaga</a>
+<div class="job-vacancy-container">
+  <header class="header">
+    <h1>Vagas de Emprego</h1>
+    <a routerLink="/admin/create-vacancy" class="btn-create">
+      <span class="material-icons">add</span>
+      Nova Vaga
+    </a>
+  </header>
+
+  <div class="vacancy-grid">
+    <div *ngFor="let vacancy of vacancies()" class="vacancy-card">
+      <div class="vacancy-content">
+        <h3>{{ vacancy.titulo }}</h3>
+        <p class="company">{{ vacancy.empresa }}</p>
+        <div class="actions">
+          <button (click)="deleteVacancy(vacancy.id!)" class="btn-delete">
+            <span class="material-icons">delete</span>
+            Excluir
+          </button>
+          <a [routerLink]="['/admin/edit-vacancy', vacancy.id]" class="btn-edit">
+            <span class="material-icons">edit</span>
+            Editar
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

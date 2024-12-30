@@ -25,10 +25,10 @@ import { NotificationService } from '../../../../shared/services/notification.se
         @for (book of books(); track book.id) {
           <div class="book-card">
             <div class="book-image">
-              <img [src]="book.imageUrl || 'assets/images/default-book.jpg'" [alt]="book.title">
+              <img [src]="book.imageUrl || 'assets/images/default-book.jpg'" [alt]="book.name">
             </div>
             <div class="book-content">
-              <h3>{{ book.title }}</h3>
+              <h3>{{ book.name }}</h3>
               <p class="author">{{ book.author }}</p>
               <div class="book-info">
                 @if (book.year) {
@@ -179,7 +179,7 @@ export class LibraryListComponent implements OnInit {
   editBook(book: Book) {
     this.selectedBook.set(book);
     this.bookForm.patchValue({
-      title: book.title,
+      title: book.name,
       author: book.author,
       year: book.year,
       pages: book.pages,

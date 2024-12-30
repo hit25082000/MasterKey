@@ -10,45 +10,69 @@
           <label [for]="field.name">{{ field.label }}</label>
 
           <ng-container *ngSwitchCase="'text'">
-            <input [id]="field.name" [formControlName]="field.name"
-                  class="form-control" type="text">
+            <input [id]="field.name" 
+                  [formControlName]="field.name"
+                  [placeholder]="field.placeholder || ''"
+                  class="form-control" 
+                  type="text">
           </ng-container>
 
-          <input *ngSwitchCase="'email'" [id]="field.name" [formControlName]="field.name"
-                class="form-control" type="email">
+          <input *ngSwitchCase="'email'" 
+                 [id]="field.name" 
+                 [formControlName]="field.name"
+                 [placeholder]="field.placeholder || ''"
+                 class="form-control" 
+                 type="email">
 
-          <input *ngSwitchCase="'number'" [id]="field.name" [formControlName]="field.name"
-                class="form-control" type="number">
+          <input *ngSwitchCase="'number'" 
+                 [id]="field.name" 
+                 [formControlName]="field.name"
+                 [placeholder]="field.placeholder || ''"
+                 class="form-control" 
+                 type="number">
 
-          <input *ngSwitchCase="'date'" [id]="field.name" [formControlName]="field.name"
-                class="form-control" type="date">
+          <input *ngSwitchCase="'date'" 
+                 [id]="field.name" 
+                 [formControlName]="field.name"
+                 [placeholder]="field.placeholder || ''"
+                 class="form-control" 
+                 type="date">
 
           <ng-container *ngSwitchCase="'file'">
             <div class="file-input-container">
-              <input
-                [id]="field.name"
-                [formControlName]="field.name"
-                class="form-control"
-                type="file"
-                (change)="field.onFileChange && field.onFileChange($event)"
-              >
-
+              <input [id]="field.name"
+                     [formControlName]="field.name"
+                     [accept]="field.accept || '*'"
+                     class="form-control"
+                     type="file"
+                     (change)="field.onFileChange && field.onFileChange($event)">
             </div>
           </ng-container>
 
-          <input *ngSwitchCase="'password'" [id]="field.name" [formControlName]="field.name"
-                class="form-control" type="password">
+          <input *ngSwitchCase="'password'" 
+                 [id]="field.name" 
+                 [formControlName]="field.name"
+                 [placeholder]="field.placeholder || ''"
+                 class="form-control" 
+                 type="password">
 
           <input *ngSwitchCase="'checkbox'" [id]="field.name" [formControlName]="field.name"
                 class="form-control-checkbox" type="checkbox">
 
-          <select *ngSwitchCase="'select'" [id]="field.name" [formControlName]="field.name" class="form-control">
+          <select *ngSwitchCase="'select'" 
+                  [id]="field.name" 
+                  [formControlName]="field.name" 
+                  class="form-control">
+            <option value="" disabled selected>{{ field.placeholder || 'Selecione uma opção' }}</option>
             <option *ngFor="let option of field.options" [value]="option.value">
               {{ option.label }}
             </option>
           </select>
 
-          <textarea *ngSwitchCase="'textarea'" [id]="field.name" [formControlName]="field.name"
+          <textarea *ngSwitchCase="'textarea'" 
+                    [id]="field.name" 
+                    [formControlName]="field.name"
+                    [placeholder]="field.placeholder || ''"
                     class="form-control"></textarea>
 
           <ng-container *ngSwitchCase="'multiselect'">
@@ -87,4 +111,3 @@
     {{ submitButtonText() }}
   </button>
 </form>
-

@@ -1,23 +1,21 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Component, OnInit, inject } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
   FormGroup,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 import { FirestoreService } from '../../../../core/services/firestore.service';
-import { ChatService } from '../../../chat/services/chat.service';
-import { environment } from '../../../../../environments/environment';
-import { NotificationType } from '../../../../shared/models/notifications-enum';
-import {
-  SystemLogService,
-  LogCategory,
-} from '../../../../core/services/system-log.service';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { ActivatedRoute } from '@angular/router';
+import { LogCategory, SystemLogService } from '../../../../core/services/system-log.service';
 import { GoogleAuthService } from '../../../../core/services/google-auth.service';
+import { environment } from '../../../../../environments/environment';
+import { Subscription } from 'rxjs';
+import { catchError, switchMap } from 'rxjs/operators';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { ChatService } from '../../../chat/services/chat.service';
 
 @Component({
   selector: 'app-meeting',
@@ -26,303 +24,283 @@ import { NotificationService } from '../../../../shared/services/notification.se
   templateUrl: './meet.component.html',
   styleUrls: ['./meet.component.scss'],
 })
-export class MeetingComponent implements OnInit {
-  meetingForm!: FormGroup;
-  availableClasses: any[] = [];
-  selectedClassEmails: string[] = [];
-  meetLink: string = '';
-  showMeetIcon: boolean = false;
-  private accessToken: string | null = null;
-  isAuthenticated: boolean = false;
-  router = inject(Router)
-  constructor(
-    private fb: FormBuilder,
-    private firestoreService: FirestoreService,
-    private chatService: ChatService,
+export class MeetComponent implements OnInit, OnDestroy {
+  private googleAuthService = inject(GoogleAuthService);
+  private notificationService = inject(NotificationService);
+  private firestoreService = inject(FirestoreService);
+  private chatService = inject(ChatService);
+  private httpClient = inject(HttpClient);
+  private route = inject(ActivatedRoute);
+  private systemLogService = inject(SystemLogService);
+  private fb = inject(FormBuilder);
 
-    private httpClient: HttpClient,
-    private route: ActivatedRoute,
-    private notificationService: NotificationService,
-    private systemLogService: SystemLogService,
-    private googleAuthService: GoogleAuthService
-  ) {}
+  private subscriptions = new Subscription();
+
+  meetingForm = this.fb.group({
+    title: ['', Validators.required],
+    startDate: ['', Validators.required],
+    startTime: ['', Validators.required],
+    endTime: ['', Validators.required],
+    selectedClass: ['', Validators.required],
+  });
+
+  availableClasses = signal<any[]>([]);
+  selectedClassEmails = signal<string[]>([]);
+  meetLink = signal<string>('');
+  showMeetIcon = signal<boolean>(false);
+  isGoogleConnected = signal<boolean>(false);
 
   ngOnInit(): void {
-    this.meetingForm = this.fb.group({
-      title: ['', Validators.required],
-      startDate: ['', Validators.required],
-      startTime: ['', Validators.required],
-      endTime: ['', Validators.required],
-      selectedClass: ['', Validators.required],
-    });
+    // Monitorar status da conexão Google
+    this.subscriptions.add(
+      this.googleAuthService.accessToken$.subscribe(token => {
+        this.isGoogleConnected.set(!!token && !this.googleAuthService.isTokenExpired());
+      })
+    );
 
+    // Carregar turmas disponíveis
     this.loadClasses();
 
-    this.route.queryParams.subscribe((params) => {
-      const code = params['code'] as string;
-      if (code) {
-        this.exchangeCodeForToken(code);
-      }
-    });
-
-    this.googleAuthService.accessToken$.subscribe((token) => {
-      if (token) {
-        this.accessToken = token;
-        this.isAuthenticated = true;
-      } else {
-        this.isAuthenticated = false;
-      }
-    });
-  }
-
-  private exchangeCodeForToken(code: string) {
-    const redirectUri = 'http://localhost:4200/admin/meet';
-    this.googleAuthService.exchangeCodeForToken(code, redirectUri).subscribe(
-      () => {
-        const savedFormData = localStorage.getItem('meetingFormData');
-        if (savedFormData) {
-          this.meetingForm.patchValue(JSON.parse(savedFormData));
-          localStorage.removeItem('meetingFormData');
+    // Verificar código de autenticação
+    this.subscriptions.add(
+      this.route.queryParams.subscribe(params => {
+        const code = params['code'];
+        if (code) {
+          this.handleAuthCode(code);
         }
-      },
-      (error) => {
-        console.error('Erro na autenticação:', error);
-        this.notificationService.success(
-          'Erro na autenticação. Por favor, tente novamente.',
-          1
-        );
-      }
+      })
     );
   }
 
-  authenticateWithGoogle() {
-    const redirectUri = 'http://localhost:4200/admin/meet';
-    localStorage.setItem(
-      'meetingFormData',
-      JSON.stringify(this.meetingForm.value)
-    );
-    this.googleAuthService.initiateOAuthFlow(redirectUri);
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+  }
+
+  private async handleAuthCode(code: string) {
+    try {
+      const redirectUri = window.location.origin + '/admin/meet';
+      await this.googleAuthService.exchangeCodeForToken(code, redirectUri).toPromise();
+      
+      // Restaurar dados do formulário salvos
+      const savedFormData = localStorage.getItem('meetingFormData');
+      if (savedFormData) {
+        this.meetingForm.patchValue(JSON.parse(savedFormData));
+        localStorage.removeItem('meetingFormData');
+      }
+
+      this.notificationService.success('Conectado com sucesso ao Google');
+    } catch (error) {
+      console.error('Erro na autenticação:', error);
+      this.notificationService.error('Erro na autenticação com o Google');
+    }
   }
 
   async loadClasses() {
-    this.availableClasses = await this.firestoreService.getCollection(
-      'classes'
-    );
+    try {
+      const classes = await this.firestoreService.getCollection('classes');
+      this.availableClasses.set(classes);
+    } catch (error) {
+      console.error('Erro ao carregar turmas:', error);
+      this.notificationService.error('Erro ao carregar turmas');
+    }
   }
 
   async onSubmit() {
-    if (this.meetingForm.valid && this.isAuthenticated) {
+    if (!this.isGoogleConnected()) {
+      this.notificationService.error('Por favor, conecte sua conta Google primeiro');
+      return;
+    }
+
+    if (this.meetingForm.valid) {
       try {
-        const { title, startDate, startTime, endTime, selectedClass } =
-          this.meetingForm.value;
+        const formData = this.meetingForm.value;
+        const startDateTime = new Date(`${formData.startDate}T${formData.startTime}`);
+        const endDateTime = new Date(`${formData.startDate}T${formData.endTime}`);
 
-        const startDateTime = new Date(
-          `${startDate}T${startTime}`
-        ).toISOString();
-        const endDateTime = new Date(`${startDate}T${endTime}`).toISOString();
-
-        await this.loadStudentEmails(selectedClass);
+        // Carregar emails dos alunos
+        await this.loadStudentEmails(formData.selectedClass!);
 
         const meetingData = {
-          title,
-          startDateTime,
-          endDateTime,
-          attendeesEmails: this.selectedClassEmails,
+          title: formData.title!,
+          startDateTime: startDateTime.toISOString(),
+          endDateTime: endDateTime.toISOString(),
+          attendeesEmails: this.selectedClassEmails(),
         };
 
+        // Criar reunião no Google Meet
         const meetLink = await this.createGoogleMeet(meetingData);
-        await this.notifyStudents(meetingData, meetLink);
+        
+        if (meetLink) {
+          // Salvar informações da reunião
+          await this.saveMeetingInfo(meetingData, meetLink, formData.selectedClass!);
+          
+          // Notificar alunos
+          await this.notifyStudents(meetingData, meetLink);
 
-        await this.saveMeetingInfo(meetingData, meetLink, selectedClass);
+          // Registrar log
+          await this.systemLogService.logAction(
+            LogCategory.MEETING_CREATION,
+            'Criação de reunião',
+            {
+              meetingTitle: formData.title,
+              classId: formData.selectedClass,
+            }
+          ).toPromise();
 
-        this.notificationService.success(
-          'Reunião criada com sucesso!',
-          1
-        );
-
-        await this.systemLogService
-          .logAction(LogCategory.MEETING_CREATION, 'Criação de reunião', {
-            meetingTitle: title,
-            classId: selectedClass,
-          })
-          .toPromise();
-      } catch (error) {
+          this.notificationService.success('Reunião criada com sucesso!');
+          this.meetingForm.reset();
+        }
+      } catch (error: any) {
         console.error('Erro ao criar reunião:', error);
-        this.notificationService.error(
-          'Erro ao criar reunião. Por favor, tente novamente.',
-          5000
-        );
-        this.googleAuthService.logout()
-      }
-    } else if (!this.isAuthenticated) {
-      this.notificationService.success(
-        'Por favor, autentique-se antes de criar uma reunião.',
-        1
-      );
-    } else {
-      this.notificationService.success(
-        'Por favor, preencha todos os campos obrigatórios.',
-        1
-      );
-    }
-  }
-
-  async loadStudentEmails(classId: string) {
-    const classStudents = await this.firestoreService.getDocumentsByAttribute(
-      'class_students',
-      'classId',
-      classId
-    );
-    const studentIds = classStudents.map((cs) => cs.studentId);
-
-    const students = await Promise.all(
-      studentIds.map((id) => this.firestoreService.getDocument('students', id))
-    );
-    this.selectedClassEmails = students.map((student) => student.email);
-  }
-
-  async createGoogleMeet(meetingData: any): Promise<string> {
-    if (!this.accessToken) {
-      await this.initiateOAuthFlow();
-      return ''; // Retorne vazio, pois o fluxo de autenticação redirecionará a página
-    }
-
-    const endpoint =
-      'https://www.googleapis.com/calendar/v3/calendars/primary/events';
-
-    // Substitua [ACCESS_TOKEN] pelo token de acesso OAuth 2.0 real
-    const headers = new HttpHeaders({
-      Authorization: `Bearer ${this.accessToken}`,
-      'Content-Type': 'application/json',
-    });
-
-    const requestBody = {
-      summary: meetingData.title,
-      description: 'Reunião criada via aplicação',
-      start: {
-        dateTime: meetingData.startDateTime,
-        timeZone: 'America/Sao_Paulo',
-      },
-      end: {
-        dateTime: meetingData.endDateTime,
-        timeZone: 'America/Sao_Paulo',
-      },
-      conferenceData: {
-        createRequest: {
-          requestId: `meet_${new Date().getTime()}`,
-          conferenceSolutionKey: {
-            type: 'hangoutsMeet',
-          },
-        },
-      },
-      attendees: meetingData.attendeesEmails.map((email: string) => ({
-        email,
-      })),
-    };
-
-    try {
-      const response = await this.httpClient
-        .post(endpoint, requestBody, {
-          headers,
-          params: { conferenceDataVersion: '1' },
-        })
-        .toPromise();
-
-      if (
-        (response as any)['conferenceData'] &&
-        (response as any)['conferenceData']['entryPoints']
-      ) {
-        const videoEntryPoint = (response as any)['conferenceData'][
-          'entryPoints'
-        ].find((ep: any) => ep.entryPointType === 'video');
-        if (videoEntryPoint) {
-          this.meetLink = videoEntryPoint.uri;
-          this.showMeetIcon = true;
-          return this.meetLink;
+        
+        if (error.status === 401) {
+          this.notificationService.error('Sessão expirada. Por favor, reconecte sua conta Google');
+          this.googleAuthService.logout();
+        } else {
+          this.notificationService.error('Erro ao criar reunião. Por favor, tente novamente.');
         }
       }
-      throw new Error('Falha ao obter o link da reunião');
-    } catch (error) {
-      throw error;
     }
   }
 
-  openMeetLink() {
-    if (this.meetLink) {
-      window.open(this.meetLink, '_blank');
+  private async loadStudentEmails(classId: string) {
+    try {
+      const classStudents = await this.firestoreService.getDocumentsByAttribute(
+        'class_students',
+        'classId',
+        classId
+      );
+      
+      const studentIds = classStudents.map(cs => cs.studentId);
+      const students = await Promise.all(
+        studentIds.map(id => this.firestoreService.getDocument('students', id))
+      );
+      
+      this.selectedClassEmails.set(students.map(student => student.email));
+    } catch (error) {
+      console.error('Erro ao carregar emails dos alunos:', error);
+      throw new Error('Erro ao carregar emails dos alunos');
     }
+  }
+
+  private async createGoogleMeet(meetingData: any): Promise<string> {
+    return new Promise((resolve, reject) => {
+      this.googleAuthService.getAccessToken().pipe(
+        switchMap(token => {
+          if (!token) {
+            throw new Error('Token não disponível');
+          }
+
+          const endpoint = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
+          const headers = new HttpHeaders({
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          });
+
+          const requestBody = {
+            summary: meetingData.title,
+            description: 'Reunião criada via aplicação',
+            start: {
+              dateTime: meetingData.startDateTime,
+              timeZone: 'America/Sao_Paulo',
+            },
+            end: {
+              dateTime: meetingData.endDateTime,
+              timeZone: 'America/Sao_Paulo',
+            },
+            conferenceData: {
+              createRequest: {
+                requestId: `meet_${new Date().getTime()}`,
+                conferenceSolutionKey: { type: 'hangoutsMeet' },
+              },
+            },
+            attendees: meetingData.attendeesEmails.map((email: string) => ({ email })),
+          };
+
+          return this.httpClient.post(endpoint, requestBody, {
+            headers,
+            params: { conferenceDataVersion: '1' },
+          });
+        }),
+        catchError(error => {
+          console.error('Erro ao criar reunião:', error);
+          if (error.status === 401) {
+            this.googleAuthService.logout();
+          }
+          throw error;
+        })
+      ).subscribe({
+        next: (response: any) => {
+          if (response.conferenceData?.entryPoints) {
+            const videoEntryPoint = response.conferenceData.entryPoints.find(
+              (ep: any) => ep.entryPointType === 'video'
+            );
+            if (videoEntryPoint) {
+              this.meetLink.set(videoEntryPoint.uri);
+              this.showMeetIcon.set(true);
+              resolve(videoEntryPoint.uri);
+            } else {
+              reject(new Error('Link da reunião não encontrado'));
+            }
+          } else {
+            reject(new Error('Dados da conferência não encontrados'));
+          }
+        },
+        error: (error) => reject(error)
+      });
+    });
   }
 
   async notifyStudents(meetingData: any, meetLink: string) {
-    try {
-      const message = `Nova reunião agendada: ${meetingData.title}\n\nLink do Meet: ${meetLink}\n\nData: ${new Date(meetingData.startDateTime).toLocaleDateString()}\nHorário: ${new Date(meetingData.startDateTime).toLocaleTimeString()}`;
+    const message = `Nova reunião agendada: ${meetingData.title}
+Link do Meet: ${meetLink}
+Data: ${new Date(meetingData.startDateTime).toLocaleDateString()}
+Horário: ${new Date(meetingData.startDateTime).toLocaleTimeString()}`;
 
-      // Para cada email de aluno
-      for (const email of this.selectedClassEmails) {
-        // Busca o usuário pelo email
+    for (const email of this.selectedClassEmails()) {
+      try {
         const users = await this.firestoreService.getDocumentsByAttribute(
           'users',
           'email',
           email
         );
 
-        // Se encontrou o usuário
-        if (users && users.length > 0) {
-          const studentUser = users[0];
-
-          // Envia a mensagem no chat
+        if (users?.[0]) {
           await this.chatService.sendMessage(
-            'SYSTEM', // ID do remetente (sistema)
-            studentUser.id, // ID do aluno
-            message, // Mensagem com detalhes da reunião
-            'Sistema' // Nome do remetente
+            'SYSTEM',
+            users[0].id,
+            message,
+            'Sistema'
           );
 
-          // Registra log da notificação
           await this.systemLogService.logAction(
             LogCategory.NOTIFICATION,
             'Notificação de reunião enviada',
             {
-              studentId: studentUser.id,
+              studentId: users[0].id,
               meetingTitle: meetingData.title,
               meetLink
             }
           ).toPromise();
         }
+      } catch (error) {
+        console.error(`Erro ao notificar aluno ${email}:`, error);
       }
-
-      this.notificationService.success(
-        'Notificações enviadas com sucesso para todos os alunos',
-        1
-      );
-
-    } catch (error) {
-      console.error('Erro ao enviar notificações:', error);
-      this.notificationService.error(
-        'Erro ao enviar algumas notificações. Por favor, verifique o chat.',
-        5000
-      );
     }
   }
 
-  async saveMeetingInfo(meetingData: any, meetLink: string, classId: string) {
+  private async saveMeetingInfo(meetingData: any, meetLink: string, classId: string) {
     await this.firestoreService.addToCollection('meetings', {
       ...meetingData,
       meetLink,
       classId,
+      createdAt: new Date().toISOString(),
     });
   }
 
-  private initiateOAuthFlow() {
-    const clientId = environment.googleClientId; // Adicione isso ao seu environment.ts
-    const redirectUri = 'http://localhost:4200/admin/meet'; // Ajuste conforme necessário
-    const scope = 'https://www.googleapis.com/auth/calendar.events';
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?scope=${scope}&access_type=offline&include_granted_scopes=true&response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}`;
-    // Salvar os dados do formulário antes de redirecionar
-    localStorage.setItem(
-      'meetingFormData',
-      JSON.stringify(this.meetingForm.value)
-    );
-    window.location.href = authUrl;
+  openMeetLink() {
+    if (this.meetLink()) {
+      window.open(this.meetLink(), '_blank');
+    }
   }
 }

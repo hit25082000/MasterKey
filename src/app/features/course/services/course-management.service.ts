@@ -131,11 +131,50 @@ export class CourseManagementService {
 
   async updateCourseHandouts(courseId: string, handoutIds: string[]): Promise<string> {
     try {
-      await this.firestore.addToCollectionWithId('course_handouts', courseId, {
-        handoutIds,
-      });
+      // Primeiro, verifica se já existe um documento para este curso
+      const existingDoc = await this.firestore.getDocument('course_handouts', courseId);
+
+      if (existingDoc) {
+        // Se existe, atualiza
+        await this.firestore.updateDocument('course_handouts', courseId, {
+          handoutIds,
+        });
+      } else {
+        // Se não existe, cria
+        await this.firestore.addToCollectionWithId('course_handouts', courseId, {
+          handoutIds,
+        });
+      }
+
+      this.notificationService.success('Apostilas atualizadas com sucesso!');
       return 'Apostilas atualizadas com sucesso!';
     } catch (error) {
+      this.notificationService.error('Erro ao atualizar apostilas');
+      throw this.handleError(error);
+    }
+  }
+
+  async updateCourseBooks(courseId: string, bookIds: string[]): Promise<string> {
+    try {
+      // Primeiro, verifica se já existe um documento para este curso
+      const existingDoc = await this.firestore.getDocument('course_books', courseId);
+
+      if (existingDoc) {
+        // Se existe, atualiza
+        await this.firestore.updateDocument('course_books', courseId, {
+          bookIds,
+        });
+      } else {
+        // Se não existe, cria
+        await this.firestore.addToCollectionWithId('course_books', courseId, {
+          bookIds,
+        });
+      }
+
+      this.notificationService.success('Livros atualizados com sucesso!');
+      return 'Livros atualizados com sucesso!';
+    } catch (error) {
+      this.notificationService.error('Erro ao atualizar livros');
       throw this.handleError(error);
     }
   }
@@ -150,6 +189,34 @@ export class CourseManagementService {
     } catch (error) {
       console.error('Erro ao atualizar avaliações:', error);
       this.notificationService.error('Erro ao adicionar avaliação');
+      throw error;
+    }
+  }
+
+  async updateCourseVideos(courseId: string, videos: Video[]): Promise<void> {
+    try {
+      // Atualiza a lista completa de vídeos do curso, garantindo valores padrão para campos opcionais
+      await this.firestore.updateDocument('courses', courseId, {
+        videos: videos.map(video => {
+          // Cria um objeto com valores padrão para evitar undefined
+          const cleanVideo: Video = {
+            id: video.id || '',
+            name: video.name || '',
+            description: video.description || '',
+            webViewLink: video.webViewLink || '',
+            duration: video.duration, // Mantém o valor original da duração
+            thumbnail: video.thumbnail || '',
+            active: video.active ?? true
+          };
+
+          return cleanVideo;
+        })
+      });
+
+      this.notificationService.success('Vídeos do curso atualizados com sucesso');
+    } catch (error) {
+      console.error('Erro ao atualizar vídeos do curso:', error);
+      this.notificationService.error('Erro ao atualizar vídeos do curso');
       throw error;
     }
   }

@@ -1,0 +1,1 @@
+este é um projeto angular 17 para padronização do projeto faça sempre o uso de Inject() no lugar de contructor e sempre use standalone e de preferencias para usar signals
