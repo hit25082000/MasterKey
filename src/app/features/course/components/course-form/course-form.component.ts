@@ -189,33 +189,20 @@ export class CourseFormComponent implements OnInit {
       id: [video.id],
       name: [video.name, Validators.required],
       duration: [video.duration, Validators.required],
-      url: [video.webViewLink, Validators.required],
+      webViewLink: [video.webViewLink, Validators.required],
       active: [video.active !== undefined ? video.active : true]
     });
   }
 
   removeVideo(indexToRemove: number) {  
     try {
-      // Cria um novo array de controles excluindo o índice especificado
-      const newControls = this.videosArray.controls
-        .filter((_, index) => index !== indexToRemove);
-
-      // Reseta o FormArray
-      this.courseForm().setControl('videos', this.fb.array([]));
-
-      // Adiciona os controles filtrados de volta
-      newControls.forEach(control => {
-        (this.courseForm().get('videos') as FormArray).push(control);
-      });
-
-      // Atualiza validação
-      this.courseForm().updateValueAndValidity();
-
-      this.notificationService.success('Questão removida com sucesso');
+      this.videosArray.removeAt(indexToRemove);
+      this.videosArray.updateValueAndValidity();
+      this.notificationService.success('Vídeo removido com sucesso');
     } catch (error) {
-      this.notificationService.error('Erro ao remover questão');
+      this.notificationService.error('Erro ao remover vídeo');
     }
-  }  
+  }
 
   async ngOnInit() {
     this.loadingService.show();
@@ -264,12 +251,11 @@ export class CourseFormComponent implements OnInit {
             });
           });
         } catch (error) {
-          console.error('Erro ao carregar categoria:', error);
+          this.notificationService.error('Erro ao carregar categoria:', 5000);
         }
       }
 
       await this.updateFormConfig(course);
-
       if (course.videos?.length) {
         course.videos.forEach(video => {
           this.videosArray.push(this.createVideoFormGroup(video));
@@ -403,7 +389,7 @@ export class CourseFormComponent implements OnInit {
           ...courseData,
           category: this.categoryControl?.value || existingCourse.category,
           reviews: existingCourse.reviews || [],
-          videos: processedVideos.length > 0 ? processedVideos : existingCourse.videos,
+          videos: processedVideos, //processedVideos.length > 0 ? processedVideos : existingCourse.videos,
           image: imageUrl || existingCourse.image
         };
 
@@ -416,9 +402,8 @@ export class CourseFormComponent implements OnInit {
         `Curso ${this.isEditMode() ? 'atualizado' : 'criado'} com sucesso!`,
         5000
       );
-      this.router.navigate(['/admin/course-list']);
+     this.router.navigate(['/admin/course-list']);
     } catch (error) {
-      console.error('Erro ao salvar curso:', error);
       this.notificationService.error(
         `Erro ao ${this.isEditMode() ? 'atualizar' : 'criar'} o curso: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
         5000
@@ -437,9 +422,6 @@ export class CourseFormComponent implements OnInit {
       !existingVideos.some((existingVideo : any) => existingVideo.id === newVideo.id)
     );
 
-    console.log('Vídeos existentes:', existingVideos);
-    console.log('Novos vídeos únicos:', uniqueNewVideos);
-
     // Adiciona apenas os novos vídeos ao array
     uniqueNewVideos.forEach(video => {
       const videoWithActive: Video = {
@@ -451,12 +433,10 @@ export class CourseFormComponent implements OnInit {
 
     // Atualiza a lista de vídeos selecionados
     this.selectedVideos.set([...existingVideos, ...uniqueNewVideos]);
-
-    console.log('Array final de vídeos:', this.videosArray.value);
   }
 
   async onCategorySelected(event: { categoryId: string, categoryName: string }) {
-    console.log('Processando seleção de categoria:', event);
+
     if (event?.categoryId) {
       try {
         this.selectedCategoryId.set(event.categoryId);
@@ -466,17 +446,10 @@ export class CourseFormComponent implements OnInit {
           category: event.categoryId
         });
 
-        console.log('Categoria atualizada:', {
-          id: this.selectedCategoryId(),
-          name: this.selectedCategoryName(),
-          formValue: this.courseForm().get('category')?.value
-        });
-
         if (this.categoryModal) {
           this.categoryModal.toggle();
         }
       } catch (error) {
-        console.error('Erro ao buscar categoria:', error);
         this.notificationService.error('Erro ao carregar dados da categoria', 5000);
       }
     }

@@ -68,32 +68,45 @@
 
   <!-- Lista de Vídeos -->
   <div formArrayName="videos" class="videos-list">
-    @for (videoControl of videosArray.controls; track $index) {
-      <div [formGroupName]="$index" class="video-item">
+    @for (video of videosArray.controls; track video) {
+      <div [formGroupName]="videosArray.controls.indexOf(video)" class="video-item">
         <div class="video-info">
           <div class="video-edit-form">
-            <label [for]="'name-' + $index">Nome</label>
-            <input
-              [id]="'name-' + $index"
-              type="text"
-              formControlName="name"
-              class="form-control"
-              placeholder="Nome do vídeo"
-            >
+            <div class="form-group">
+              <label [for]="'name-' + videosArray.controls.indexOf(video)">Nome do Vídeo</label>
+              <input
+                [id]="'name-' + videosArray.controls.indexOf(video)"
+                type="text"
+                formControlName="name"
+                class="form-control"
+                placeholder="Digite o nome do vídeo"
+              >
+            </div>
 
-            <label [for]="'duration-' + $index">Duração (segundos)</label>
-            <input
-              [id]="'duration-' + $index"
-              type="number"
-              formControlName="duration"
-              class="form-control"
-              placeholder="Duração em segundos"
-            >
+            <div class="form-group">
+              <label [for]="'duration-' + videosArray.controls.indexOf(video)">Duração</label>
+              <div class="input-group">
+                <input
+                  [id]="'duration-' + videosArray.controls.indexOf(video)"
+                  type="number"
+                  formControlName="duration"
+                  class="form-control"
+                  placeholder="0"
+                  min="0"
+                >
+                <span class="input-group-text">segundos</span>
+              </div>
+            </div>
 
-            <div class="video-status">
-              <label>
-                <input type="checkbox" formControlName="active">
-                Ativo
+            <div class="form-check mt-2">
+              <input
+                type="checkbox"
+                [id]="'active-' + videosArray.controls.indexOf(video)"
+                formControlName="active"
+                class="form-check-input"
+              >
+              <label class="form-check-label" [for]="'active-' + videosArray.controls.indexOf(video)">
+                Vídeo Ativo
               </label>
             </div>
           </div>
@@ -101,10 +114,11 @@
         <div class="video-actions">
           <button
             type="button"
-            class="btn btn-danger btn-sm"
-            (click)="removeVideo($index)"
+            class="btn btn-outline-danger"
+            (click)="removeVideo(videosArray.controls.indexOf(video))"
           >
-            Remover
+            <i class="bi bi-trash"></i>
+            Remover Vídeo
           </button>
         </div>
       </div>
