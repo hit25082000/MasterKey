@@ -328,8 +328,7 @@ export class CourseFormComponent implements OnInit {
   }
 
   authenticateWithGoogle() {
-    const redirectUri = `http://localhost:4200/admin/course-form'}`;
-    this.googleAuthService.initiateOAuthFlow(redirectUri);
+    this.router.navigate(['/auth/google']);
   }
 
   async onSubmit(formData: any) {

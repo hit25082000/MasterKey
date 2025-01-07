@@ -38,6 +38,24 @@ import { AuthService } from '../../../core/services/auth.service';
             <span>Provas</span>
           </a>
         </li>
+        <li>
+          <a routerLink="/classroom/student-job-vacancies" routerLinkActive="active">
+            <i class="fas fa-briefcase"></i>
+            <span>Vagas de Emprego</span>
+          </a>
+        </li>
+        <li>
+          <a routerLink="/classroom/student-id-card" routerLinkActive="active">
+            <i class="fas fa-id-card"></i>
+            <span>Carteirinha</span>
+          </a>
+        </li>
+        <li>
+          <a routerLink="/classroom/student-financial" routerLinkActive="active">
+            <i class="fas fa-money-bill-wave"></i>
+            <span>Financeiro</span>
+          </a>
+        </li>
       </ul>
 
       <div class="nav-footer">

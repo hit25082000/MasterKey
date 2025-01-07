@@ -31,7 +31,7 @@
       <h3>Provas Disponíveis</h3>
       <ul>
         <li *ngFor="let exam of exams$ | async">
-          {{ exam.title }}
+          {{ exam.name }}
           <button (click)="examModal.toggle()">Iniciar Prova</button>
           <app-modal #examModal>
             <app-exam-take [examId]="exam.id"></app-exam-take>

@@ -301,15 +301,17 @@ export class ClassFormComponent implements OnInit {
       };
 
       if (this.isEditMode()) {
-        await this.classManagementService.update({
-          ...classData,
-          id: this.classId()
-        }, this.selectedStudents());
+        console.log(this.selectedStudents())
+        await this.classManagementService.updateClass(
+          this.classId()!,
+          classData,
+          this.selectedStudents()
+        );
 
         this.notificationService.success('Turma atualizada com sucesso');
       } else {
 
-        await this.classManagementService.create(classData, this.selectedStudents())
+        await this.classManagementService.createClass(classData, this.selectedStudents())
 
         this.notificationService.success('Turma criada com sucesso');
       }

@@ -200,11 +200,21 @@
             }
 
             .exam-status {
-              font-size: 0.875rem;
-              color: #e53e3e;
+              padding: 4px 8px;
+              border-radius: 4px;
+              font-size: 0.9em;
+              font-weight: 500;
 
               &.completed {
-                color: #48bb78;
+                background-color: #e8f5e9;
+                color: #2e7d32;
+                border: 1px solid #a5d6a7;
+              }
+
+              &.available {
+                background-color: #e3f2fd;
+                color: #1976d2;
+                border: 1px solid #90caf9;
               }
             }
           }
@@ -273,4 +283,3 @@
     }
   }
 }
-

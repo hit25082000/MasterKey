@@ -98,7 +98,8 @@ export class SidenavComponent {
       icon: 'fas fa-users',
       subItems: [
         { label: 'Adicionar Turma', route: '/admin/class-form' },
-        { label: 'Listar Turmas', route: '/admin/class-list' }
+        { label: 'Listar Turmas', route: '/admin/class-list' },
+        { label: 'Lista de Presenças', route: '/admin/class-attendance' }
       ]
     },
     {

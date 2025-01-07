@@ -16,10 +16,12 @@ export enum LogCategory {
   VIDEO_PROGRESS_REMOVED = 'video_progress_removed',
   COURSE_PROGRESS_RESET = 'course_progress_reset',
   STUDENT_ACTION = 'student_action',
+  SYSTEM_ACTION = 'system_action',
   NOTIFICATION = 'notification'
 }
 
 export interface LogEntry {
+  id?: string;
   timestamp: string;
   category: LogCategory;
   action: string;
@@ -38,7 +40,7 @@ export class SystemLogService {
     category: LogCategory,
     action: string,
     details: any
-  ): Observable<any> {
+  ): Observable<void> {
     const logEntry: LogEntry = {
       timestamp: new Date().toISOString(),
       category,
@@ -48,6 +50,11 @@ export class SystemLogService {
 
     return from(
       this.firestoreService.addToCollection(this.logCollection, logEntry)
+    ).pipe(
+      map(id => {
+        logEntry.id = id;
+        return;
+      })
     );
   }
 
@@ -172,6 +179,55 @@ export class SystemLogService {
           LogCategory.COURSE_PROGRESS_RESET
         ])
       )
+    );
+  }
+
+  getLogsByDateRange(
+    category: LogCategory,
+    action: string,
+    startDate: Date,
+    endDate: Date
+  ): Observable<LogEntry[]> {
+    return from(
+      this.firestoreService.getDocumentsByQuery<LogEntry>(
+        this.logCollection,
+        where('category', '==', category),
+        where('action', '==', action),
+        where('timestamp', '>=', startDate.toISOString()),
+        where('timestamp', '<=', endDate.toISOString())
+      )
+    ).pipe(
+      map(logs => logs.map(log => ({
+        ...log,
+        id: log.id || ''
+      })))
+    );
+  }
+
+  getLogsAttendanceByDate(
+    category: LogCategory,
+    action: string,
+    startDate: Date,
+    finalDate: Date
+  ): Observable<LogEntry[]> {
+    const startOfDay = startDate.toISOString();
+    const endOfDay = new Date(finalDate);
+    endOfDay.setHours(23, 59, 59, 999);
+    const endDate = endOfDay.toISOString();
+  
+    return from(
+      this.firestoreService.getDocumentsByQuery<LogEntry>(
+        this.logCollection,
+        where('category', '==', category),
+        where('action', '==', action),
+        where('details.date', '>=', startOfDay),
+        where('details.date', '<=', endDate)
+      )
+    ).pipe(
+      map(logs => logs.map(log => ({
+        ...log,
+        id: log.id || ''
+      })))
     );
   }
 }

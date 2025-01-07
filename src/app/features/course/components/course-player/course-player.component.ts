@@ -90,13 +90,19 @@ import { NotificationService } from '../../../../shared/services/notification.se
                   <div class="exam-item">
                     <div class="exam-info">
                       <span class="exam-name">{{ exam.title }}</span>
-                      <span class="exam-status">
+                      @if (studentExams.has(exam.id)) {
+                      <span class="exam-status completed">
+                        Concluído
+                      </span>
+                      }@else {
+                      <span class="exam-status available">
                         Disponível
                       </span>
+                      }
                     </div>
                     <button class="btn-start" (click)="examModal.toggle()">
-                      <i class="fas fa-pencil-alt"></i>
-                      Iniciar Prova
+                      <i class="fas" [class.fa-eye]="studentExams.has(exam.id)" [class.fa-pencil-alt]="!studentExams.has(exam.id)"></i>
+                      {{ studentExams.has(exam.id) ? 'Ver Resultado' : 'Iniciar Prova' }}
                     </button>
 
                     <app-modal #examModal>
@@ -117,6 +123,7 @@ export class CoursePlayerComponent implements OnInit {
   course!: Course;
   currentVideo!: Video;
   watchedVideos: Set<string> = new Set();
+  studentExams: Set<string> = new Set();
   exams$!: Observable<ExamTake[]>;
   isLoading: boolean = true;
   private videoStarted: boolean = false;
@@ -144,6 +151,7 @@ export class CoursePlayerComponent implements OnInit {
         this.loadCourse(courseId);
         this.loadExams(courseId);
         this.loadWatchedVideos(courseId);
+        this.loadStudentExams();
       } else {
         console.error('ID do curso não fornecido');
       }
@@ -154,6 +162,15 @@ export class CoursePlayerComponent implements OnInit {
     try {
       const watched = await this.studentService.getWatchedVideos(this.studentId, courseId);
       this.watchedVideos = new Set(watched);
+    } catch (error) {
+      console.error('Erro ao carregar vídeos assistidos:', error);
+    }
+  }
+
+  private async loadStudentExams() {
+    try {
+      const exams = await this.studentService.getStudentExams(this.studentId, this.course.id!);
+      this.studentExams = new Set(exams.map(exam => exam.id!));
     } catch (error) {
       console.error('Erro ao carregar vídeos assistidos:', error);
     }

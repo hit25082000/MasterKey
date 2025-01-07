@@ -26,6 +26,8 @@ import { EmployeeListComponent } from '../../features/employees/components/emplo
 import { LibraryListComponent } from '../../features/library/components/library-list/library-list.component';
 import { ExamFormComponent } from '../../features/exam/components/exam-form/exam-form.component';
 import { MeetComponent } from '../../features/meet/components/meet/meet.component';
+import { ClassAttendanceComponent } from '../../features/class/components/class-attendance/class-attendance.component';
+import { ClassAttendanceListComponent } from '../../features/class/components/class-attendance-list/class-attendance-list.component';
 
 export const ADMIN_ROUTES: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
@@ -135,6 +137,18 @@ export const ADMIN_ROUTES: Routes = [
         component: ClassFormComponent,
         canActivate: [RoleGuard],
         data: { permission: RoutePermission.EDIT_CLASS }
+      },
+      {
+        path: 'class-attendance',
+        component: ClassAttendanceListComponent,
+        canActivate: [RoleGuard],
+        data: { permission: RoutePermission.VIEW_ATTENDANCE }
+      },
+      {
+        path: 'class-attendance/:id',
+        component: ClassAttendanceComponent,
+        canActivate: [RoleGuard],
+        data: { permission: RoutePermission.EDIT_ATTENDANCE }
       },
       // Rotas de Funcionários
       {

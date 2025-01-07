@@ -13,7 +13,8 @@ import { CLASSROOM_ROUTES } from './pages/classroom/classroom.routes';
 import { ADMIN_ROUTES } from './pages/admin/admin.routes';
 import { ExamListComponent } from './features/exam/components/exam-list/exam-list.component';
 import { ExamFormComponent } from './features/exam/components/exam-form/exam-form.component';
-import { CourseFormComponent } from './features/course/components/course-form/course-form.component'; // Added import
+import { CourseFormComponent } from './features/course/components/course-form/course-form.component';
+import { GoogleAuthComponent } from './features/auth/components/google-auth/google-auth.component';
 
 export const routes: Routes = [
   {
@@ -39,7 +40,7 @@ export const routes: Routes = [
         path: 'course/auth',
         component: CourseFormComponent
       },
-      ...ADMIN_ROUTES, // Added spread operator to include existing admin routes
+      ...ADMIN_ROUTES, 
     ],
   },
   { path: 'login', component: LoginComponent },
@@ -66,6 +67,10 @@ export const routes: Routes = [
         component: ExamFormComponent
       }
     ]
+  },
+  {
+    path: 'auth/google',
+    component: GoogleAuthComponent
   },
   { path: '**', component: NotFoundComponent },
 ];

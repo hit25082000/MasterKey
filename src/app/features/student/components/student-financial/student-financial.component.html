@@ -1,0 +1,72 @@
+<div class="financial-container">
+  <header>
+    <h2>Financeiro</h2>
+  </header>
+
+  @if (loading()) {
+    <div class="loading-container">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Carregando informações financeiras...</p>
+    </div>
+  } @else {
+    <div class="payments-list">
+      <div class="payment-summary">
+        <div class="summary-card pending">
+          <i class="fas fa-clock"></i>
+          <div class="summary-info">
+            <span class="label">Pendentes</span>
+            <span class="value">{{ pendingCount() }}</span>
+          </div>
+        </div>
+        <div class="summary-card paid">
+          <i class="fas fa-check-circle"></i>
+          <div class="summary-info">
+            <span class="label">Pagos</span>
+            <span class="value">{{ paidCount() }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="payments-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Descrição</th>
+              <th>Vencimento</th>
+              <th>Valor</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (payment of payments(); track payment.id) {
+              <tr [class]="getStatusClass(payment.status)">
+                <td>{{ payment.description }}</td>
+                <td>{{ formatDate(payment.dueDate) }}</td>
+                <td class="amount">{{ formatCurrency(payment.amount) }}</td>
+                <td>
+                  <span class="status-badge" [class]="getStatusClass(payment.status)">
+                    {{ getStatusLabel(payment.status) }}
+                  </span>
+                </td>
+                <td>
+                  @if (payment.status === 'pending' && payment.paymentUrl) {
+                    <button class="btn-pay" (click)="openPaymentLink(payment.paymentUrl)">
+                      <i class="fas fa-money-bill-wave"></i>
+                      Pagar
+                    </button>
+                  } @else if (payment.status === 'approved') {
+                    <span class="paid-date">
+                      <i class="fas fa-calendar-check"></i>
+                      Pago em {{ formatDate(payment.paidAt!) }}
+                    </span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>

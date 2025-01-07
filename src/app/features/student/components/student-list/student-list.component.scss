@@ -146,7 +146,8 @@ table {
 .th-image, .td-image { width: 60px; }
 .th-name, .td-name { width: 25%; }
 .th-phone, .td-phone { width: 15%; }
-.th-age, .td-age { width: 10%; }
+.th-age, .td-age { width: 80px; text-align: center; }
+.th-cpf, .td-cpf { width: 120px; font-family: monospace; text-align: center; }
 .th-polo, .td-polo { width: 15%; }
 .th-actions, .td-actions { width: 20%; }
 

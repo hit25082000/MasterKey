@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Answer, Exam, Options, Question, StudentExam } from '../../../../core/models/exam.model';
 import { ExamService } from '../../../../core/services/exam.service';
 import { AuthService } from '../../../../core/services/auth.service';
-import { Observable, switchMap, tap, catchError, of } from 'rxjs';
+import { Observable, switchMap, tap, catchError, of, map } from 'rxjs';
 
 @Component({
   selector: 'app-exam-take',
@@ -23,13 +23,27 @@ export class ExamTakeComponent implements OnInit {
   answers = signal<Answer[]>([]);
   isExamSubmitted = computed(() => !!this.studentExam());
   isLoading = signal(true);
+  hasCompletedExam = signal(false);
 
   constructor() {}
 
   ngOnInit() {
     this.loadExam();
     this.authService.user$.pipe(
-      switchMap(user => user ? this.loadStudentExam(user.uid) : of(null))
+      switchMap(user => {
+        if (!user) return of(null);
+        return this.examService.getStudentExams(user.uid).pipe(
+          map(exams => {
+            const completedExam = exams.find(exam => exam.examId === this.examId());
+            this.hasCompletedExam.set(!!completedExam);
+            if (completedExam) {
+              this.studentExam.set(completedExam);
+              this.answers.set(completedExam.answers);
+            }
+            return completedExam;
+          })
+        );
+      })
     ).subscribe();
   }
 
@@ -43,21 +57,6 @@ export class ExamTakeComponent implements OnInit {
       }),
       tap(() => this.isLoading.set(false))
     ).subscribe();
-  }
-
-  private loadStudentExam(studentId: string): Observable<StudentExam | null> {
-    return this.examService.getStudentExam(this.examId(), studentId).pipe(
-      tap(studentExam => {
-        if (studentExam) {
-          this.studentExam.set(studentExam);
-          this.answers.set(studentExam.answers);
-        }
-      }),
-      catchError(error => {
-        console.error('Erro ao carregar o exame do estudante', error);
-        return of(null);
-      })
-    );
   }
 
   indexToLetter(index: number): string {
@@ -96,8 +95,8 @@ export class ExamTakeComponent implements OnInit {
   }
 
   submitExam() {
-    if (this.isExamSubmitted()) {
-      console.error('Exame já submetido');
+    if (this.hasCompletedExam()) {
+      console.error('Você já realizou este exame');
       return;
     }
 
@@ -111,6 +110,7 @@ export class ExamTakeComponent implements OnInit {
       .pipe(
         tap(studentExam => {
           this.studentExam.set(studentExam);
+          this.hasCompletedExam.set(true);
           console.log('Exame submetido com sucesso', studentExam);
         }),
         catchError(error => {

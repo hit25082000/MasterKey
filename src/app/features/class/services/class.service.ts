@@ -1,7 +1,8 @@
 import { inject, Injectable, signal, WritableSignal } from '@angular/core';
-import { Firestore, collection, collectionData, CollectionReference, doc, getDoc } from '@angular/fire/firestore';
+import { Firestore, collection, collectionData, CollectionReference, doc, getDoc, query, where } from '@angular/fire/firestore';
 import { Class } from '../../../core/models/class.model';
 import { EmployeeService } from '../../employees/services/employee.service';
+import { switchMap } from 'rxjs/operators';
 
 const CLASSES_PATH = 'classes';
 const CLASS_STUDENTS_PATH = 'class_students';
@@ -78,6 +79,29 @@ export class ClassService {
     const studentClasses = await this.getClassStudents(studentId);
     return this.classes().filter(c =>
       studentClasses.students?.includes(studentId)
+    );
+  }
+
+  getClassesByStudentId(studentId: string) {
+    return collectionData(
+      query(
+        collection(this.firestore, CLASS_STUDENTS_PATH),
+        where('studentId', '==', studentId)
+      )
+    ).pipe(
+      switchMap(async (classStudents) => {
+        const classIds = classStudents.map(cs => cs['classId']);
+        const classes: Class[] = [];
+        
+        for (const classId of classIds) {
+          const classDoc = await getDoc(doc(this.classesCollection, classId));
+          if (classDoc.exists()) {
+            classes.push({ id: classDoc.id, ...classDoc.data() });
+          }
+        }
+        
+        return classes;
+      })
     );
   }
 }

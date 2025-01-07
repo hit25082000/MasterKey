@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GoogleAuthService } from '../../../core/services/google-auth.service';
 import { BehaviorSubject } from 'rxjs';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-google-auth-button',
@@ -64,10 +65,10 @@ import { BehaviorSubject } from 'rxjs';
       }
     }
   `]
-
 })
 export class GoogleAuthButtonComponent implements OnInit {
   private googleAuthService = inject(GoogleAuthService);
+  private router = inject(Router);
   private connectionStatus = new BehaviorSubject<'connected' | 'expired' | 'disconnected'>('disconnected');
 
   ngOnInit() {
@@ -100,12 +101,11 @@ export class GoogleAuthButtonComponent implements OnInit {
       case 'expired':
         return 'Reconectar Google';
       default:
-        return 'Conectar Google';
+        return 'Conectar com Google';
     }
   }
 
-  handleAuth() {
-    const currentUrl = window.location.origin + window.location.pathname;
-    this.googleAuthService.initiateOAuthFlow(currentUrl);
+  handleAuth(): void {
+    this.router.navigate(['/auth/google']);
   }
 }

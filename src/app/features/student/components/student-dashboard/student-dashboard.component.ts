@@ -154,12 +154,19 @@ export class StudentDashboardComponent implements OnInit {
             course: this.courseService.getById(courseId),
             watchedVideos: this.studentService.getWatchedVideos(studentId, courseId),
           }).pipe(
-            map(({ course, watchedVideos }) => ({
-              course,
-              progress: (watchedVideos.length / (course.videos?.length || 1)) * 100,
-              watchedVideos: watchedVideos.length,
-              totalVideos: course.videos?.length || 0
-            }))
+            map(({ course, watchedVideos }) => {
+              // Filtra apenas os vídeos que ainda existem no curso
+              const validWatchedVideos = watchedVideos.filter(videoId => 
+                course.videos?.some(video => video.id === videoId)
+              );
+              
+              return {
+                course,
+                progress: course.videos?.length ? (validWatchedVideos.length / course.videos.length) * 100 : 0,
+                watchedVideos: validWatchedVideos.length,
+                totalVideos: course.videos?.length || 0
+              };
+            })
           )
         );
 
@@ -176,4 +183,4 @@ export class StudentDashboardComponent implements OnInit {
       }
     });
   }
-} 
+}

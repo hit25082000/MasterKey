@@ -126,7 +126,7 @@ export class StudentCertificateComponent {
         if (completedExams > 0) {
           const totalGrades = studentExams.reduce((acc, exam) => {
             // Verifica se exam.grade é um número válido
-            const grade = Number(exam.grade);
+            const grade = Number(exam.score);
             return acc + (isNaN(grade) ? 0 : grade);
           }, 0);
 

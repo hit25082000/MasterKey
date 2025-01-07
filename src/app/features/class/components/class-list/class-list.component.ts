@@ -1,126 +1,146 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { Class } from '../../../../core/models/class.model';
-import { ClassService } from '../../services/class.service';
+import { MatTableModule } from '@angular/material/table';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { ClassService } from '../../services/class.service';
+import { ClassManagementService } from '../../services/class-management.service';
+import { firstValueFrom } from 'rxjs';
+import { computed } from '@angular/core';
+import { WeekdayTranslatorPipe } from '../../pipes/weekday-translator.pipe';
 
 @Component({
   selector: 'app-class-list',
   standalone: true,
-  imports: [CommonModule],
-  template: `
-    <div class="class-list-container">
-      <div class="list-header">
-        <h2>Lista de Turmas</h2>
-        <button class="btn-add" (click)="router.navigate(['/admin/class-form'])">
-          <i class="fas fa-plus"></i>
-          Nova Turma
-        </button>
-      </div>
-
-      <div class="class-grid">
-        @for (classItem of classService.classes(); track classItem.id) {
-          <div class="class-card">
-            <div class="class-content">
-              <h3>{{ classItem.name }}</h3>
-
-              <div class="class-info">
-                <div class="info-item">
-                  <i class="fas fa-clock"></i>
-                  <span>{{ classItem.time }}</span>
-                </div>
-                <div class="info-item">
-                  <i class="fas fa-calendar"></i>
-                  <span>{{ formatDaysWeek(classItem.daysWeek) }}</span>
-                </div>
-                <div class="info-item">
-                  <i class="fas fa-door-open"></i>
-                  <span>Sala: {{ classItem.room }}</span>
-                </div>
-              </div>
-
-              <div class="class-dates">
-                <span>Início: {{ classItem.startDate | date }}</span>
-                <span>Término: {{ classItem.finishDate | date }}</span>
-              </div>
-
-              <div class="class-status" [class.active]="classItem.status">
-                {{ classItem.status ? 'Ativa' : 'Inativa' }}
-              </div>
-            </div>
-
-            <div class="class-actions">
-              <button class="btn-edit" (click)="edit(classItem.id!)">
-                <i class="fas fa-edit"></i>
-                Editar
-              </button>
-              <button class="btn-delete" (click)="delete(classItem.id!)">
-                <i class="fas fa-trash"></i>
-                Excluir
-              </button>
-            </div>
-          </div>
-        } @empty {
-          <div class="no-classes">
-            <i class="fas fa-users"></i>
-            <p>Nenhuma turma encontrada</p>
-            <button class="btn-add" (click)="router.navigate(['/admin/class-form'])">
-              Criar Primeira Turma
-            </button>
-          </div>
-        }
-      </div>
-    </div>
-  `,
-  styleUrls: ['./class-list.component.scss']
-})
-export class ClassListComponent implements OnInit {
-  loading = signal(true);
-
-  private readonly dayWeekMap = {
-    'MONDAY': 'Segunda',
-    'TUESDAY': 'Terça',
-    'WEDNESDAY': 'Quarta',
-    'THURSDAY': 'Quinta',
-    'FRIDAY': 'Sexta',
-    'SATURDAY': 'Sábado',
-    'SUNDAY': 'Domingo'
-  };
-
-  constructor(
-    public classService: ClassService,
-    private notificationService: NotificationService,
-    public router: Router
-  ) {}
-
-  async ngOnInit(): Promise<void> {
-    try {
-      // O serviço já carrega as turmas automaticamente
-      this.loading.set(false);
-    } catch (error) {
-      this.notificationService.error('Erro ao carregar turmas');
-      console.error(error);
+  imports: [CommonModule, MatTableModule, MatButtonModule, MatIconModule, WeekdayTranslatorPipe],
+  templateUrl: './class-list.component.html',
+  styles: [`
+    .class-list-container {
+      padding: 2rem;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      color: #333;
+      margin: 0;
+    }
+
+    .btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+    }
+
+    .btn i {
+      font-size: 0.875rem;
+    }
+
+    .btn-primary {
+      background-color: #2196f3;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: #1976d2;
+    }
+
+    .btn-edit {
+      background-color: #4caf50;
+      color: white;
+    }
+
+    .btn-edit:hover {
+      background-color: #388e3c;
+    }
+
+    .btn-delete {
+      background-color: #f44336;
+      color: white;
+    }
+
+    .btn-delete:hover {
+      background-color: #d32f2f;
+    }
+
+    .class-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    .class-table th,
+    .class-table td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .class-table th {
+      background-color: #f5f5f5;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .class-table tr:hover {
+      background-color: #f8f9fa;
+    }
+
+    .actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .actions button {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.875rem;
+    }
+  `]
+})
+export class ClassListComponent {
+  private classService = inject(ClassService);
+  private classManagementService = inject(ClassManagementService);
+  private notificationService = inject(NotificationService);
+  private router = inject(Router);
+
+  classes = computed(() => this.classService.classes());
+  displayedColumns: string[] = ['name', 'description', 'actions'];
+
+  create() {
+    this.router.navigate(['/admin/classes/new']);
   }
 
-  formatDaysWeek(days: string[]): string {
-    if (!days || days.length === 0) return 'Não definido';
-    return days.map(day => this.dayWeekMap[day as keyof typeof this.dayWeekMap] || day)
-               .join(', ');
+  edit(id: string) {
+    this.router.navigate(['/admin/classes/edit', id]);
+  }
+
+  attendance(id: string) {
+    this.router.navigate(['/admin/classes/attendance', id]);
   }
 
   async delete(id: string) {
     try {
-      //await this.classService.delete(id);
+      await firstValueFrom(this.classManagementService.delete(id));
       this.notificationService.success('Turma excluída com sucesso');
     } catch (error) {
       this.notificationService.error('Erro ao excluir turma');
-      console.error(error);
     }
-  }
-
-  edit(id: string) {
-    this.router.navigate(['/admin/class-form', id]);
   }
 }

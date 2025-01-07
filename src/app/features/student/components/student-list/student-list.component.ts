@@ -85,4 +85,9 @@ export class StudentListComponent implements OnInit {
     // Adiciona timestamp para evitar cache
     return `${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}`;
   }
+
+  formatCpf(cpf: string | undefined): string {
+    if (!cpf) return '';
+    return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  }
 }

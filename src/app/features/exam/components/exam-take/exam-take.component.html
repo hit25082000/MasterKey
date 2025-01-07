@@ -41,14 +41,15 @@
 
       <button class="submit-button"
               (click)="submitExam()"
-              [disabled]="isExamSubmitted()"
-              [class.submitted]="isExamSubmitted()">
-        {{ isExamSubmitted() ? 'Exame já enviado' : 'Enviar Exame' }}
+              [disabled]="hasCompletedExam()"
+              [class.submitted]="hasCompletedExam()">
+        {{ hasCompletedExam() ? 'Exame já realizado' : 'Enviar Exame' }}
       </button>
 
       <div *ngIf="studentExam() as studentExam" class="result-container">
         <h3>Resultado do Exame</h3>
-        <p>Pontuação: {{ studentExam.score }} / {{ exam.questions.length }}</p>
+        <p>Pontuação: {{ studentExam.score }}%</p>
+        <p>Data de realização: {{ studentExam.submittedAt | date:'dd/MM/yyyy HH:mm' }}</p>
       </div>
     </div>
   </div>

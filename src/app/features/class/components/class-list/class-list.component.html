@@ -1,21 +1,37 @@
-<h2>Lista de Funções</h2>
-<table>
-  <thead>
-    <tr>
-      <th>Nome</th>
-      <th>Dias da semana</th>
-      <th>Ações</th>
-    </tr>
-  </thead>
-  <tbody>
-    @for (class of classes; track class.name) {
-      <tr>
-       <td> {{ class.name }}  </td><td>
-        {{ class.dayWeek }}
-       </td>
+<div class="class-list-container">
+  <div class="header">
+    <h2>Turmas</h2>
+    <button class="btn btn-primary" (click)="create()">
+      <i class="fas fa-plus"></i>
+      Nova Turma
+    </button>
+  </div>
 
-        <td><button (click)="edit(class.id)">Editar</button><button (click)="delete(class.id)">Excluir</button></td>
+  <table class="class-table">
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Dias da Semana</th>
+        <th>Ações</th>
       </tr>
-    }
-  </tbody>
-</table>
+    </thead>
+    <tbody>
+      @for (class of classes(); track class.name) {
+        <tr>
+          <td>{{ class.name }}</td>
+          <td>{{ class.daysWeek | weekdayTranslator }}</td>
+          <td class="actions">
+            <button class="btn btn-edit" (click)="edit(class.id!)">
+              <i class="fas fa-edit"></i>
+              Editar
+            </button>
+            <button class="btn btn-delete" (click)="delete(class.id!)">
+              <i class="fas fa-trash"></i>
+              Excluir
+            </button>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

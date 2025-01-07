@@ -1,0 +1,19 @@
+<div class="job-vacancy-container">
+  <header class="header">
+    <h1>Vagas de Emprego</h1>
+  </header>
+
+  <div class="vacancy-grid">
+    <div *ngFor="let vacancy of vacancies()" class="vacancy-card" (click)="openVacancyDetails(vacancy)">
+      <div class="vacancy-content">
+        <h3>{{ vacancy.titulo }}</h3>
+        <p class="company">{{ vacancy.empresa }}</p>
+    
+        <p class="salary" *ngIf="vacancy.salario">
+          <span class="material-icons">payments</span>
+          R$ {{ vacancy.salario }}
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

@@ -84,21 +84,63 @@ ul {
 }
 
 .job-vacancy-container {
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-}
+  padding: 20px;
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
+  .header {
+    margin-bottom: 24px;
+    h1 {
+      font-size: 24px;
+      color: #333;
+    }
+  }
 
-  h1 {
-    font-size: 2rem;
-    color: #2c3e50;
-    margin: 0;
+  .vacancy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+  }
+
+  .vacancy-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .vacancy-content {
+      padding: 16px;
+
+      h3 {
+        font-size: 18px;
+        color: #2c3e50;
+        margin-bottom: 8px;
+      }
+
+      .company {
+        color: #7f8c8d;
+        font-size: 14px;
+        margin-bottom: 12px;
+      }
+
+      .location, .salary {
+        display: flex;
+        align-items: center;
+        color: #666;
+        font-size: 14px;
+        margin-top: 8px;
+
+        .material-icons {
+          font-size: 16px;
+          margin-right: 4px;
+          color: #3498db;
+        }
+      }
+    }
   }
 }
 
