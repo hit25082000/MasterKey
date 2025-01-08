@@ -1,7 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { environment } from '../../../../../environments/environment';
+import { GoogleAuthService } from '../../../../core/services/google-auth.service';
 
 @Component({
   selector: 'app-google-auth',
@@ -14,12 +15,26 @@ import { environment } from '../../../../../environments/environment';
           <img src="assets/images/logo.png" alt="MasterKey Logo" />
         </div>
         <h1>Conectar com Google</h1>
-        <p>Clique no botão abaixo para conectar sua conta Google</p>
         
-        <button class="google-button" (click)="connectGoogle()">
-          <i class="fab fa-google"></i>
-          Conectar com Google
-        </button>
+        @if (!isAuthenticated()) {
+          <div>
+            <p>Clique no botão abaixo para conectar sua conta Google</p>
+            <button class="google-button" (click)="connectGoogle()">
+              <i class="fab fa-google"></i>
+              Conectar com Google
+            </button>
+          </div>
+        } @else {
+          <div class="success-message">
+            <p>
+              <i class="fas fa-check-circle"></i>
+              Conexão realizada com sucesso!
+            </p>
+            <button class="return-button" (click)="navigateBack()">
+              Voltar
+            </button>
+          </div>
+        }
 
         <div class="info">
           <p>
@@ -34,20 +49,38 @@ import { environment } from '../../../../../environments/environment';
 })
 export class GoogleAuthComponent {
   private router = inject(Router);
+  private googleAuthService = inject(GoogleAuthService);
+  isAuthenticated = signal(false);
 
   connectGoogle() {
-    const clientId = environment.googleClientId;
-    const redirectUri = 'https://masterkey.com.br/auth/google/callback'; // URL fixa para callback
-    const scope = 'email profile';
-    
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-      `client_id=${clientId}` +
-      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-      `&response_type=code` +
-      `&scope=${encodeURIComponent(scope)}` +
-      `&access_type=offline` +
-      `&prompt=consent`;
+    const redirectUri = `${window.location.origin}/auth/google`;
+    this.googleAuthService.initiateOAuthFlow(redirectUri);
+  }
 
-    window.location.href = authUrl;
+  handleAuthCallback(code: string) {
+    const redirectUri = `${window.location.origin}/auth/google`;
+    this.googleAuthService.exchangeCodeForToken(code, redirectUri).subscribe({
+      next: (response) => {
+        this.isAuthenticated.set(true);
+        this.navigateBack();
+      },
+      error: (error) => {
+        console.error('Erro na autenticação:', error);
+        // TODO: Adicionar tratamento de erro visual para o usuário
+      }
+    });
+  }
+
+  navigateBack() {
+    this.router.navigate(['admin/dashboard']);
+  }
+
+  ngOnInit() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    
+    if (code) {
+      this.handleAuthCallback(code);
+    }
   }
 }
