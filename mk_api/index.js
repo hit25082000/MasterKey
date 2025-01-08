@@ -194,20 +194,96 @@ exports.deleteUserWithProfile = functions.https.onRequest((req, res) => {
           return res.status(400).json({ error: 'UID do usuário é obrigatório.' });
         }
 
-        // Inativar usuário no Firestore
-        await admin.firestore().collection('users').doc(uid).update({
-          isActive: false,
-          inactivatedAt: admin.firestore.FieldValue.serverTimestamp()
-        });
+        try {
+          // 1. Buscar dados do usuário antes de excluir
+          const userDoc = await admin.firestore().collection('users').doc(uid).get();
+          
+          if (!userDoc.exists) {
+            return res.status(404).json({ error: 'Usuário não encontrado.' });
+          }
 
-        // Desabilitar usuário de autenticação
-        await admin.auth().updateUser(uid, { disabled: true });
+          const userData = userDoc.data();
 
-        res.status(200).json({ message: 'Usuário inativado com sucesso.' });
+          // 2. Excluir imagem de perfil se existir
+          if (userData.profilePic) {
+            try {
+              const fileName = `${uid}_profile.jpg`;
+              await bucket.file(fileName).delete();
+              console.log(`Imagem de perfil ${fileName} excluída com sucesso`);
+            } catch (storageError) {
+              console.warn('Erro ao excluir imagem de perfil:', storageError);
+            }
+          }
+
+          // 3. Excluir dados relacionados em batch
+          const batch = admin.firestore().batch();
+
+          // Excluir documento do usuário
+          batch.delete(admin.firestore().collection('users').doc(uid));
+
+          // Buscar e excluir progresso do estudante
+          const progressSnapshot = await admin.firestore()
+            .collection('student_progress')
+            .where('studentId', '==', uid)
+            .get();
+          
+          progressSnapshot.forEach(doc => {
+            batch.delete(doc.ref);
+          });
+
+          // Buscar e excluir cursos do estudante
+          const coursesSnapshot = await admin.firestore()
+            .collection('student_courses')
+            .where('studentId', '==', uid)
+            .get();
+          
+          coursesSnapshot.forEach(doc => {
+            batch.delete(doc.ref);
+          });
+
+          // Buscar e excluir transações do usuário
+          const transactionsSnapshot = await admin.firestore()
+            .collection('transactions')
+            .where('userId', '==', uid)
+            .get();
+          
+          transactionsSnapshot.forEach(doc => {
+            batch.delete(doc.ref);
+          });
+
+          // Executar todas as exclusões em batch
+          await batch.commit();
+          console.log('Dados do usuário excluídos com sucesso do Firestore');
+
+          // 4. Antes de excluir, atualizar o email do usuário para liberar o email original
+          const userRecord = await admin.auth().getUser(uid);
+          const originalEmail = userRecord.email;
+          
+          // Gerar um email temporário único
+          const tempEmail = `deleted_${uid}_${Date.now()}@deleted.com`;
+          
+          // Atualizar o email do usuário antes de excluí-lo
+          await admin.auth().updateUser(uid, {
+            email: tempEmail,
+            disabled: true
+          });
+          
+          // Agora sim, excluir o usuário
+          await admin.auth().deleteUser(uid);
+          console.log('Usuário excluído do Firebase Auth');
+
+          res.status(200).json({ 
+            message: 'Usuário excluído com sucesso.',
+            email: originalEmail // Retornar o email original para confirmação
+          });
+        } catch (deleteError) {
+          console.error('Erro durante o processo de exclusão:', deleteError);
+          throw deleteError;
+        }
       });
     } catch (error) {
-      console.error('Erro ao inativar usuário:', error);
-      res.status(500).json({ error: `Erro ao inativar usuário: ${error.message}` });
+      console.error('Erro ao excluir usuário:', error);
+      res.status(500).json({ error: `Erro ao excluir usuário: ${error.message}` });
     }
   });
 });

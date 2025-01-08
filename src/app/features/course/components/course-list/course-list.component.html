@@ -1,48 +1,68 @@
 <div class="course-list">
-  @for (course of courses$ | async; track course.id) {
+  @for (course of courses(); track course.id) {
     <div class="course-item">
       <div class="status-badge" [class.active]="course.active" [class.inactive]="!course.active">
         {{ course.active ? 'Ativo' : 'Inativo' }}
       </div>
-
+      
       <h3>{{ course.name }}</h3>
       <p>{{ course.description }}</p>
 
-      <p>
-        <strong>Preço:</strong>
-        {{ course.price | currency:'BRL' }}
-        @if (course.promoPrice > 0) {
-          <span class="promo-price">
-            {{ course.promoPrice | currency:'BRL' }}
-          </span>
+      <!-- Seção de Módulos -->
+      <div class="modules-section">
+        <h4>
+          <i class="pi pi-folder"></i>
+          Módulos ({{ course.modules?.length || 0 }})
+        </h4>
+        @if (course.modules?.length) {
+          <div class="modules-list">
+            @for (module of course.modules; track module.name) {
+              <div class="module-item">
+                <div class="module-header">
+                  <i class="pi pi-folder"></i>
+                  <span class="module-name">{{ module.name }}</span>
+                  <span class="video-count">{{ module.videos?.length || 0 }} vídeos</span>
+                </div>
+                <div class="video-list">
+                  @for (video of module.videos; track video.videoId) {
+                    <div class="video-item">
+                      <i class="pi pi-video"></i>
+                      <span class="video-name">{{ video.name }}</span>
+                      <span class="video-duration">{{ video.duration }}min</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="no-modules">Nenhum módulo disponível</p>
         }
-      </p>
+      </div>
 
-      <p><strong>Categoria:</strong> {{ course.category }}</p>
-      <p><strong>Carga Horária:</strong> {{ course.workHours }} horas</p>
-      <p><strong>Vídeos:</strong> {{ course.videos.length }}</p>
+      <div class="course-info">
+        <p>
+          <strong>Duração Total:</strong>
+          {{ getTotalDuration(course) }} horas
+        </p>
+        <p>
+          <strong>Total de Vídeos:</strong>
+          {{ getTotalVideos(course) }}
+        </p>
+      </div>
 
-      @if (course.highlight) {
-        <p><strong>⭐ Em Destaque</strong></p>
-      }
-
-      <strong>Lista de Vídeos:</strong>
-      <ul>
-        @for (video of course.videos; track video.id) {
-          <li>
-            {{ video.name }}
-            <span class="video-status" [class.active]="video.active">
-              {{ video.active ? '●' : '○' }}
-            </span>
-          </li>
-        }
-      </ul>
-
-      <button (click)="editCourse(course.id!)">
-        Editar Curso
-      </button>
+      <div class="course-actions">
+        <button (click)="editCourse(course)">
+          <i class="pi pi-pencil"></i>
+          Editar
+        </button>
+        <button class="btn-danger" (click)="deleteCourse(course)">
+          <i class="pi pi-trash"></i>
+          Excluir
+        </button>
+      </div>
     </div>
-  } @empty {
-    <div class="loading"></div>
   }
 </div>
+
+<app-confirmation-dialog></app-confirmation-dialog>

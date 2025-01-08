@@ -42,11 +42,9 @@ import { NotificationService } from '../../../../shared/services/notification.se
                 <div class="exam-meta">
                   <span class="question-count">
                     <i class="fas fa-question-circle"></i>
-                    {{ exam.questions?.length || 0 }} questões
-                  </span>
-                  <span class="date">
-                    <i class="fas fa-calendar-alt"></i>
-                    {{ exam.createdAt | date:'shortDate' }}
+                    {{ exam.questions.length || 0 }} questões
+                    <i class="fas fa-book"></i>
+                    Módulo: {{ exam.moduleId }}
                   </span>
                 </div>
               </div>

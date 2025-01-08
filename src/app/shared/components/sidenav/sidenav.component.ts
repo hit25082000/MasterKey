@@ -54,7 +54,6 @@ export class SidenavComponent {
       subItems: [
         { label: 'Cadastrar aluno', route: '/admin/student-register' },
         { label: 'Lista de alunos', route: '/admin/student-list' },
-        { label: 'Lista de presença', route: '/admin/student-login-list' },
         { label: 'Aula ao Vivo', route: '/admin/meet' },
         { label: 'Vagas de emprego', route: '/admin/job-vacancy' },
         {

@@ -1,6 +1,45 @@
 :host {
   display: block;
   padding: 2rem;
+  background: var(--surface-ground);
+  min-height: 100vh;
+
+  --primary-color: #3B82F6;
+  --primary-dark: #2563EB;
+  --surface-border: #E5E7EB;
+  --surface-hover: #F3F4F6;
+  --surface-card: #FFFFFF;
+  --surface-ground: #F9FAFB;
+  --surface-section: #F9FAFB;
+  --text-color: #1F2937;
+  --text-color-secondary: #6B7280;
+  --danger-color: #EF4444;
+  --danger-dark: #DC2626;
+  --success-color: #10B981;
+  --success-dark: #059669;
+  --primary-600: #2563EB;
+  --primary-color-text: #FFFFFF;
+}
+
+.btn-delete {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #c82333;
+  }
+
+  i {
+    font-size: 14px;
+  }
 }
 
 h2 {

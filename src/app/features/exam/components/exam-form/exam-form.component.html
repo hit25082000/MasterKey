@@ -29,6 +29,21 @@
       }
     </div>
 
+    <div class="form-group">
+      <label for="moduleId">Módulo do Curso</label>
+      <select id="moduleId" formControlName="moduleId" class="form-control" required>
+        <option value="">Selecione um módulo</option>
+        @for (module of modules(); track module.name) {
+          <option [value]="module.name">{{ module.name }}</option>
+        }
+      </select>
+      @if (shouldShowError('moduleId')) {
+        <div class="error-message">
+          {{ getErrorMessage('moduleId') }}
+        </div>
+      }
+    </div>
+
     <div formArrayName="questions" class="questions-section">
       <div class="section-header">
         <h3>Questões ({{ questionsFormArray.length }})</h3>
@@ -104,6 +119,9 @@
         }
         @if (examForm.get('description')?.errors) {
           <li>{{ getErrorMessage('description') }}</li>
+        }
+        @if (examForm.get('moduleId')?.errors) {
+          <li>{{ getErrorMessage('moduleId') }}</li>
         }
         @if (questionsFormArray.length === 0) {
           <li>Adicione pelo menos uma questão</li>

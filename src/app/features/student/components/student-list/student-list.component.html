@@ -43,6 +43,10 @@
                 <i class="fas fa-certificate"></i>
                 <span>Certificado</span>
               </button>
+              <button class="btn-delete" (click)="deleteStudent(student)">
+                <i class="fas fa-trash"></i>
+                <span>Excluir</span>
+              </button>
             </div>
           </td>
         </tr>
@@ -64,3 +68,5 @@
 <app-modal #certificateModal>
   <app-student-certificate [studentId]="selectedStudentId()"></app-student-certificate>
 </app-modal>
+
+<app-confirmation-dialog></app-confirmation-dialog>

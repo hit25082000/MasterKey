@@ -15,6 +15,8 @@ import { NotificationService } from '../../../../shared/services/notification.se
 import { ExamService } from '../../../../core/services/exam.service';
 import { LoadingService } from '../../../../shared/services/loading.service';
 import { firstValueFrom } from 'rxjs';
+import { Course, CourseModule } from '../../../../core/models/course.model';
+import { FirestoreService } from '../../../../core/services/firestore.service';
 
 @Component({
   selector: 'app-exam-form',
@@ -30,6 +32,7 @@ export class ExamFormComponent implements OnInit {
   private notificationService = inject(NotificationService);
   private loadingService = inject(LoadingService);
   private fb = inject(FormBuilder);
+  private firestoreService = inject(FirestoreService);
 
   Options = [
     { value: 'A', label: 'A' },
@@ -42,6 +45,8 @@ export class ExamFormComponent implements OnInit {
   examId = signal<string | null>(null);
   isLoading = signal(true);
   showErrors = signal(false);
+  course = signal<Course | null>(null);
+  modules = signal<CourseModule[]>([]);
 
   constructor() {
     this.examForm = this.initForm();
@@ -53,6 +58,7 @@ export class ExamFormComponent implements OnInit {
       title: ['', [Validators.required, Validators.minLength(3)]],
       description: ['', [Validators.required, Validators.minLength(10)]],
       courseId: ['', Validators.required],
+      moduleId: ['', Validators.required],
       questions: this.fb.array([], [Validators.required, Validators.minLength(1)])
     });
   }
@@ -74,6 +80,7 @@ export class ExamFormComponent implements OnInit {
         this.addQuestion();
       }
 
+      await this.loadCourse();
       this.examForm.patchValue({ courseId: this.courseId() });
     } catch (error) {
       console.error('Erro ao inicializar:', error);
@@ -107,7 +114,8 @@ export class ExamFormComponent implements OnInit {
         id: exam.id,
         title: exam.title,
         description: exam.description,
-        courseId: exam.courseId
+        courseId: exam.courseId,
+        moduleId: exam.moduleId
       });
 
       // Adiciona cada questão ao formulário
@@ -135,6 +143,20 @@ export class ExamFormComponent implements OnInit {
       this.notificationService.error('Erro ao carregar exame');
     } finally {
       this.loadingService.hide();
+    }
+  }
+
+  async loadCourse() {
+    try {
+      const courseDoc = await this.firestoreService.getDocument('courses', this.courseId());
+      if (!courseDoc) {
+        throw new Error('Curso não encontrado');
+      }
+      this.course.set(courseDoc as Course);
+      this.modules.set(courseDoc.modules || []);
+    } catch (error) {
+      console.error('Erro ao carregar curso:', error);
+      this.notificationService.error('Erro ao carregar informações do curso');
     }
   }
 
@@ -181,6 +203,7 @@ export class ExamFormComponent implements OnInit {
           title: formValue.title,
           description: formValue.description,
           courseId: this.courseId(),
+          moduleId: formValue.moduleId,
           questions: formValue.questions.map((question: any) => ({
             ...question,
             id: question.id || crypto.randomUUID()
@@ -316,11 +339,13 @@ export class ExamFormComponent implements OnInit {
 
     this.onSubmit();
   }
+
   shouldShowQuestionError(questionIndex: number, controlName: string): boolean {
     const questionGroup = this.questionsFormArray.at(questionIndex) as FormGroup;
     const control = questionGroup.get(controlName);
     return control ? (control.invalid && (control.touched || control.dirty)) : false;
   }
+
   shouldShowError(controlName: string): boolean {
     const control = this.examForm.get(controlName);
     return control ? (control.invalid && (control.touched || control.dirty)) : false;

@@ -124,11 +124,11 @@ export class ClassListComponent {
   displayedColumns: string[] = ['name', 'description', 'actions'];
 
   create() {
-    this.router.navigate(['/admin/classes/new']);
+    this.router.navigate(['/admin/class-form']);
   }
 
   edit(id: string) {
-    this.router.navigate(['/admin/classes/edit', id]);
+    this.router.navigate(['/admin/class-form', id]);
   }
 
   attendance(id: string) {

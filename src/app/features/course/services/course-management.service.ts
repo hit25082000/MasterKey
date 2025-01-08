@@ -1,12 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { FirestoreService } from '../../../core/services/firestore.service';
-import { Course } from '../../../core/models/course.model';
+import { Course, CourseModule, CourseVideo } from '../../../core/models/course.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CourseReview } from '../../../core/models/course.model';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { firstValueFrom } from 'rxjs';
 import { GoogleAuthService } from '../../../core/services/google-auth.service';
-import { Video } from '../../../core/models/course.model';
 
 @Injectable({
   providedIn: 'root',
@@ -36,9 +35,9 @@ export class CourseManagementService {
         courseData.image = imageUrl;
       }
 
-      // Processa os vídeos se houver
-      if (courseData.videos?.length) {
-        courseData.videos = await this.processVideos(courseData.videos);
+      // Processa os módulos e seus vídeos se houver
+      if (courseData.modules?.length) {
+        courseData.modules = await this.processModules(courseData.modules);
       }
 
       const { id, ...courseDataWithoutId } = courseData;
@@ -67,9 +66,9 @@ export class CourseManagementService {
         courseData.image = imageUrl;
       }
 
-      // Processa os vídeos se houver alterações
-      if (courseData.videos?.length) {
-        courseData.videos = await this.processVideos(courseData.videos);
+      // Processa os módulos e seus vídeos se houver alterações
+      if (courseData.modules?.length) {
+        courseData.modules = await this.processModules(courseData.modules);
       }
 
       // Atualiza o curso
@@ -93,40 +92,49 @@ export class CourseManagementService {
     }
   }
 
-  private async processVideos(videos: Video[]): Promise<Video[]> {
+  private async processModules(modules: CourseModule[]): Promise<CourseModule[]> {
     try {
       // Verifica autenticação do Google
       if (!this.googleAuthService.getAccessToken()) {
         throw new Error('Usuário não autenticado no Google');
       }
 
-      // Processa cada vídeo
-      const processedVideos = await Promise.all(
-        videos.map(async (video) => {
-          if (!video.webViewLink) return video;
+      // Processa cada módulo e seus vídeos
+      const processedModules = await Promise.all(
+        modules.map(async (module) => {
+          if (module.videos?.length) {
+            // Processa os vídeos do módulo
+            const processedVideos = await Promise.all(
+              module.videos.map(async (video) => {
+                try {
+                  // Aqui você pode adicionar qualquer processamento adicional necessário para os vídeos
+                  // Por exemplo, validar URLs, processar thumbnails, etc.
+                  return {
+                    ...video,
+                    active: video.active !== undefined ? video.active : true
+                  };
+                } catch (error) {
+                  console.error(`Erro ao processar vídeo do módulo ${module.name}:`, error);
+                  throw error;
+                }
+              })
+            );
 
-          // Extrai ID do vídeo do Google Drive
-          const videoId = this.extractVideoId(video.webViewLink);
-          if (!videoId) return video;
+            return {
+              ...module,
+              videos: processedVideos
+            };
+          }
 
-          // Atualiza URL do vídeo
-          return {
-            ...video,
-            webViewLink: `https://drive.google.com/file/d/${videoId}/preview`
-          };
+          return module;
         })
       );
 
-      return processedVideos;
+      return processedModules;
     } catch (error) {
-      console.error('Erro ao processar vídeos:', error);
+      console.error('Erro ao processar módulos:', error);
       throw error;
     }
-  }
-
-  private extractVideoId(url: string): string | null {
-    const fileIdMatch = url.match(/\/d\/([^/]+)/);
-    return fileIdMatch ? fileIdMatch[1] : null;
   }
 
   async updateCourseHandouts(courseId: string, handoutIds: string[]): Promise<string> {
@@ -185,6 +193,15 @@ export class CourseManagementService {
       let reviews = reviewsDoc?.reviews || [];
       reviews.push(review);
       await this.firestore.updateDocument('course_reviews', courseId, { reviews });
+
+      // Atualiza também no documento do curso para manter compatibilidade
+      const course = await this.firestore.getDocument('courses', courseId);
+      if (course) {
+        const courseReviews = course.reviews || [];
+        courseReviews.push(review);
+        await this.firestore.updateDocument('courses', courseId, { reviews: courseReviews });
+      }
+
       this.notificationService.success('Avaliação adicionada com sucesso');
     } catch (error) {
       console.error('Erro ao atualizar avaliações:', error);
@@ -193,30 +210,65 @@ export class CourseManagementService {
     }
   }
 
-  async updateCourseVideos(courseId: string, videos: Video[]): Promise<void> {
+  async addReview(courseId: string, review: CourseReview): Promise<void> {
     try {
-      // Atualiza a lista completa de vídeos do curso, garantindo valores padrão para campos opcionais
-      await this.firestore.updateDocument('courses', courseId, {
-        videos: videos.map(video => {
-          // Cria um objeto com valores padrão para evitar undefined
-          const cleanVideo: Video = {
-            id: video.id || '',
-            name: video.name || '',
-            description: video.description || '',
-            webViewLink: video.webViewLink || '',
-            duration: video.duration, // Mantém o valor original da duração
-            thumbnail: video.thumbnail || '',
-            active: video.active ?? true
-          };
+      const course = await this.firestore.getDocument('courses', courseId);
+      if (!course) {
+        throw new Error('Curso não encontrado');
+      }
 
-          return cleanVideo;
-        })
-      });
+      const reviews = course.reviews || [];
+      reviews.push(review);
 
-      this.notificationService.success('Vídeos do curso atualizados com sucesso');
+      await this.firestore.updateDocument('courses', courseId, { reviews });
+      this.notificationService.success('Avaliação adicionada com sucesso');
     } catch (error) {
-      console.error('Erro ao atualizar vídeos do curso:', error);
-      this.notificationService.error('Erro ao atualizar vídeos do curso');
+      console.error('Erro ao adicionar avaliação:', error);
+      this.notificationService.error('Erro ao adicionar avaliação');
+      throw error;
+    }
+  }
+
+  async updateReview(courseId: string, reviewId: string, updatedReview: CourseReview): Promise<void> {
+    try {
+      const course = await this.firestore.getDocument('courses', courseId);
+      if (!course) {
+        throw new Error('Curso não encontrado');
+      }
+
+      const reviews = course.reviews || [];
+      const reviewIndex = reviews.findIndex((r: CourseReview) => r.id === reviewId);
+
+      if (reviewIndex === -1) {
+        throw new Error('Avaliação não encontrada');
+      }
+
+      reviews[reviewIndex] = { ...reviews[reviewIndex], ...updatedReview };
+
+      await this.firestore.updateDocument('courses', courseId, { reviews });
+      this.notificationService.success('Avaliação atualizada com sucesso');
+    } catch (error) {
+      console.error('Erro ao atualizar avaliação:', error);
+      this.notificationService.error('Erro ao atualizar avaliação');
+      throw error;
+    }
+  }
+
+  async deleteReview(courseId: string, reviewId: string): Promise<void> {
+    try {
+      const course = await this.firestore.getDocument('courses', courseId);
+      if (!course) {
+        throw new Error('Curso não encontrado');
+      }
+
+      const reviews = course.reviews || [];
+      const updatedReviews = reviews.filter((r: CourseReview) => r.id !== reviewId);
+
+      await this.firestore.updateDocument('courses', courseId, { reviews: updatedReviews });
+      this.notificationService.success('Avaliação removida com sucesso');
+    } catch (error) {
+      console.error('Erro ao remover avaliação:', error);
+      this.notificationService.error('Erro ao remover avaliação');
       throw error;
     }
   }

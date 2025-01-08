@@ -1,10 +1,10 @@
-import { Component, OnInit, signal, computed, inject, ViewChild, viewChild } from '@angular/core';
+import { Component, OnInit, signal, computed, inject, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormArray, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CourseService } from '../../services/course.service';
 import { CourseManagementService } from '../../services/course-management.service';
-import { Course, Video } from '../../../../core/models/course.model';
+import { Course, Video, CourseModule, CourseVideo } from '../../../../core/models/course.model';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { VideoSelectorComponent } from '../../../video/components/video-selector/video-selector.component';
 import { LoadingService } from '../../../../shared/services/loading.service';
@@ -13,10 +13,7 @@ import { GenericFormComponent } from '../../../../shared/components/generic-form
 import { FormFieldConfig } from '../../../../shared/models/form-field-config';
 import { GoogleAuthService } from '../../../../core/services/google-auth.service';
 import { StorageService } from '../../../../core/services/storage.service';
-import { createComputed, createSignal } from '@angular/core/primitives/signals';
-import { FormsModule } from '@angular/forms';
 import { CategoryService } from '../../../category/services/category.service';
-import { Category } from '../../../../core/models/category.model';
 import { CategorySelectorComponent } from '../../../category/components/category-selector/category-selector.component';
 import { BookSelectorComponent } from '../../../library/components/book-selector/book-selector.component';
 import { HandoutSelectorComponent } from '../../../ecommerce/components/handout-selector/handout-selector.component';
@@ -28,7 +25,6 @@ import { CourseReviewComponent } from '../course-review/course-review.component'
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    FormsModule,
     GenericFormComponent,
     ModalComponent,
     VideoSelectorComponent,
@@ -43,49 +39,152 @@ import { CourseReviewComponent } from '../course-review/course-review.component'
 })
 export class CourseFormComponent implements OnInit {
   @ViewChild('videoSelector') videoSelector!: VideoSelectorComponent;
+  @ViewChild('videoModal') videoModal!: ModalComponent;
+  @ViewChild('genericForm') genericForm!: GenericFormComponent;
   @ViewChild('categoryModal') categoryModal!: ModalComponent;
 
-  selectedVideos = signal<Video[]>([]);
-
-  private notificationService = inject(NotificationService);
+  private fb = inject(FormBuilder);
   private courseService = inject(CourseService);
   private courseManagement = inject(CourseManagementService);
-  private loadingService = inject(LoadingService);
-  private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private loadingService = inject(LoadingService);
+  private notificationService = inject(NotificationService);
   private googleAuthService = inject(GoogleAuthService);
   private storageService = inject(StorageService);
+  private categoryService = inject(CategoryService);
+
+  courseForm = signal(this.createForm());
   courseId = signal<string | null>(null);
+  currentImage = signal<string | null>(null);
+  submitButtonText = computed(() => this.isEditMode() ? 'Atualizar' : 'Criar');
+  isAuthenticated = signal(false);
+  selectedCategoryId = signal<string | null>(null);
+  selectedCategoryName = signal<string | null>(null);
+  selectedFile: File | null = null;
   isEditMode = computed(() => !!this.courseId());
   formConfig = signal<FormFieldConfig[]>([]);
-  submitButtonText = computed(() => this.isEditMode() ? 'Atualizar' : 'Criar');
   accessToken = signal<string | null>(null);
-  isAuthenticated = signal(false);
-  selectedFile: File | null = null;
+  moduleIndex: number = 0;
 
-  @ViewChild('genericForm') genericForm?: GenericFormComponent;
+  private createForm(): FormGroup {
+    return this.fb.group({
+      name: ['', [Validators.required]],
+      description: ['', [Validators.required]],
+      price: [0, [Validators.required]],
+      promoPrice: [0, [Validators.min(0)]],
+      portionCount: [1, [Validators.min(1)]],
+      hidePrice: [false],
+      imageUrl: [''],
+      category: ['', [Validators.required]],
+      highlight: [false],
+      checkoutUrl: ['', [Validators.required]],
+      workHours: [0, [Validators.required, Validators.min(1)]],
+      modules: this.fb.array([])
+    });
+  }
 
-  courseForm = signal<FormGroup>(this.fb.group({
-    category: ['', Validators.required],
-    videos: this.fb.array([])
-  }));
-
-  currentImage = signal<string | null>(null);
-
-  selectedCategoryId = signal<string>('');
-  selectedCategoryName = signal<string>('');
-
-  get videosArray(): FormArray {
-    return this.courseForm().get('videos') as FormArray;
+  get modulesArray() {
+    return this.courseForm().get('modules') as FormArray;
   }
 
   get categoryControl() {
     return this.courseForm().get('category');
   }
 
-  private categoryService = inject(CategoryService);
+  createModuleForm(): FormGroup {
+    return this.fb.group({
+      name: ['', [Validators.required]],
+      description: ['', [Validators.required]],
+      videos: this.fb.array([])
+    });
+  }
 
-  constructor(private fb: FormBuilder) {
+  getVideosArray(moduleIndex: number): FormArray {
+    return (this.modulesArray.at(moduleIndex) as FormGroup).get('videos') as FormArray;
+  }
+
+  addModule() {
+    this.modulesArray.push(this.createModuleForm());
+  }
+
+  removeModule(index: number) {
+    this.modulesArray.removeAt(index);
+  }
+
+  onVideosSelected(videos: Video[]) {
+    const videosArray = this.getVideosArray(this.moduleIndex);
+    
+    // Limpa os vídeos existentes do módulo
+    const existingVideoIds = videosArray.controls
+      .map(control => control.get('videoId')?.value)
+      .filter(id => id) as string[];
+    
+    // Desseleciona os vídeos que foram removidos
+    const newVideoIds = videos.map(v => v.id);
+    const removedVideoIds = existingVideoIds.filter(id => !newVideoIds.includes(id));
+    if (removedVideoIds.length > 0) {
+      this.videoSelector?.deselectVideos(removedVideoIds);
+    }
+
+    // Limpa o array atual
+    while (videosArray.length !== 0) {
+      videosArray.removeAt(0);
+    }
+
+    // Adiciona os novos vídeos selecionados
+    videos.forEach(video => {
+      if (video.id) {
+        videosArray.push(this.fb.group({
+          videoId: [video.id],
+          name: [video.name || ''],
+          duration: [video.duration || 0],
+          webViewLink: [video.webViewLink || ''],
+          active: [true]
+        }));
+      }
+    });
+
+    // Fecha o modal após a seleção
+    this.videoModal.show = false;
+  }
+
+  removeVideo(moduleIndex: number, videoIndex: number) {
+    const moduleFormGroup = this.modulesArray.at(moduleIndex) as FormGroup;
+    const videosArray = moduleFormGroup.get('videos') as FormArray;
+    const videoToRemove = videosArray.at(videoIndex)?.value;
+    
+    if (videoToRemove?.videoId) {
+      // Desselecionar o vídeo no seletor
+      this.videoSelector?.deselectVideo(videoToRemove.videoId);
+    }
+    
+    videosArray.removeAt(videoIndex);
+  }
+
+  removeAllVideos(moduleIndex: number) {
+    const videosArray = this.getVideosArray(moduleIndex);
+    const videoIds = videosArray.controls
+      .map(control => control.get('videoId')?.value)
+      .filter(id => id) as string[];
+
+    // Desselecionar todos os vídeos no seletor
+    if (videoIds.length > 0) {
+      this.videoSelector?.deselectVideos(videoIds);
+    }
+
+    // Limpar o array de vídeos
+    while (videosArray.length !== 0) {
+      videosArray.removeAt(0);
+    }
+  }
+
+  openVideoSelector(index: number) {
+    this.moduleIndex = index;
+    this.videoModal.show = true;
+  }
+
+  constructor() {
     this.setupGoogleAuth();
     this.initFormConfig();
   }
@@ -184,26 +283,6 @@ export class CourseFormComponent implements OnInit {
     ]);
   }
 
-  createVideoFormGroup(video: Video): FormGroup {
-    return this.fb.group({
-      id: [video.id],
-      name: [video.name, Validators.required],
-      duration: [video.duration, Validators.required],
-      webViewLink: [video.webViewLink, Validators.required],
-      active: [video.active !== undefined ? video.active : true]
-    });
-  }
-
-  removeVideo(indexToRemove: number) {  
-    try {
-      this.videosArray.removeAt(indexToRemove);
-      this.videosArray.updateValueAndValidity();
-      this.notificationService.success('Vídeo removido com sucesso');
-    } catch (error) {
-      this.notificationService.error('Erro ao remover vídeo');
-    }
-  }
-
   async ngOnInit() {
     this.loadingService.show();
     this.courseId.set(this.route.snapshot.paramMap.get('id'));
@@ -256,9 +335,32 @@ export class CourseFormComponent implements OnInit {
       }
 
       await this.updateFormConfig(course);
-      if (course.videos?.length) {
-        course.videos.forEach(video => {
-          this.videosArray.push(this.createVideoFormGroup(video));
+
+      // Carrega os módulos existentes
+      if (course.modules?.length) {
+        course.modules.forEach((module: CourseModule) => {
+          const moduleForm = this.createModuleForm();
+          moduleForm.patchValue({
+            name: module.name,
+            description: module.description
+          });
+
+          // Carrega os vídeos do módulo
+          if (module.videos?.length) {
+            module.videos.forEach((video: CourseVideo) => {
+              (moduleForm.get('videos') as FormArray).push(
+                this.fb.group({
+                  videoId: [video.videoId],
+                  name: [video.name, [Validators.required]],
+                  duration: [video.duration, [Validators.required, Validators.min(0)]],
+                  active: [video.active !== undefined ? video.active : true],
+                  webViewLink: [video.webViewLink]
+                })
+              );
+            });
+          }
+
+          this.modulesArray.push(moduleForm);
         });
       }
     } catch (error) {
@@ -283,10 +385,10 @@ export class CourseFormComponent implements OnInit {
         highlight: false,
         checkoutUrl: '',
         workHours: 0,
-        videos: [],
+        modules: [],
         reviews: [],
         active: true
-      } satisfies Course);
+      });
     } catch (error) {
       throw new Error(`Erro ao inicializar novo curso: ${error}`);
     }
@@ -352,12 +454,13 @@ export class CourseFormComponent implements OnInit {
         imageUrl = await this.storageService.uploadCourseImage(this.selectedFile, courseId);
       }
 
-      const processedVideos = this.videosArray.length > 0
-        ? this.videosArray.value.map((video: any) => ({
-            ...video,
-            active: Boolean(video.active)
-          }))
-        : [];
+      const processedModules = this.modulesArray.value.map((module: CourseModule) => ({
+        ...module,
+        videos: module.videos.map((video: CourseVideo) => ({
+          ...video,
+          active: Boolean(video.active)
+        }))
+      }));
 
       const courseData: Course = {
         id: this.courseId() || undefined!,
@@ -372,7 +475,7 @@ export class CourseFormComponent implements OnInit {
         highlight: Boolean(formData.highlight),
         checkoutUrl: formData.checkoutUrl,
         workHours: Number(formData.workHours),
-        videos: processedVideos,
+        modules: processedModules,
         reviews: [],
         active: true
       };
@@ -388,7 +491,7 @@ export class CourseFormComponent implements OnInit {
           ...courseData,
           category: this.categoryControl?.value || existingCourse.category,
           reviews: existingCourse.reviews || [],
-          videos: processedVideos, //processedVideos.length > 0 ? processedVideos : existingCourse.videos,
+          modules: processedModules,
           image: imageUrl || existingCourse.image
         };
 
@@ -401,7 +504,7 @@ export class CourseFormComponent implements OnInit {
         `Curso ${this.isEditMode() ? 'atualizado' : 'criado'} com sucesso!`,
         5000
       );
-     this.router.navigate(['/admin/course-list']);
+      this.router.navigate(['/admin/course-list']);
     } catch (error) {
       this.notificationService.error(
         `Erro ao ${this.isEditMode() ? 'atualizar' : 'criar'} o curso: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
@@ -412,45 +515,28 @@ export class CourseFormComponent implements OnInit {
     }
   }
 
-  onVideosSelected(newVideos: Video[]) {
-    // Obtém os vídeos existentes
-    const existingVideos = this.videosArray.value;
-
-    // Filtra os novos vídeos para não incluir os que já existem
-    const uniqueNewVideos = newVideos.filter(newVideo =>
-      !existingVideos.some((existingVideo : any) => existingVideo.id === newVideo.id)
-    );
-
-    // Adiciona apenas os novos vídeos ao array
-    uniqueNewVideos.forEach(video => {
-      const videoWithActive: Video = {
-        ...video,
-        active: true
-      };
-      this.videosArray.push(this.createVideoFormGroup(videoWithActive));
-    });
-
-    // Atualiza a lista de vídeos selecionados
-    this.selectedVideos.set([...existingVideos, ...uniqueNewVideos]);
+  async onCategorySelected(categoryId: string) {
+    if (categoryId === this.selectedCategoryId()) return;
+    
+    try {
+      const category = await this.categoryService.getById(categoryId);
+      if (category) {
+        this.selectedCategoryId.set(categoryId);
+        this.selectedCategoryName.set(category.name);
+        
+        // Evitar atualização cíclica verificando se o valor já está definido
+        const currentValue = this.courseForm().get('category')?.value;
+        if (currentValue !== categoryId) {
+          this.courseForm().patchValue({ category: categoryId }, { emitEvent: false });
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao selecionar categoria:', error);
+      this.notificationService.error('Erro ao carregar dados da categoria');
+    }
   }
 
-  async onCategorySelected(event: { categoryId: string, categoryName: string }) {
-
-    if (event?.categoryId) {
-      try {
-        this.selectedCategoryId.set(event.categoryId);
-        this.selectedCategoryName.set(event.categoryName);
-
-        this.courseForm().patchValue({
-          category: event.categoryId
-        });
-
-        if (this.categoryModal) {
-          this.categoryModal.toggle();
-        }
-      } catch (error) {
-        this.notificationService.error('Erro ao carregar dados da categoria', 5000);
-      }
-    }
+  getModuleIndex(moduleControl: any): number {
+    return this.modulesArray.controls.indexOf(moduleControl);
   }
 }

@@ -23,106 +23,86 @@
             <i class="fas fa-folder"></i>
           </span>
           <span class="button-text">
-            {{ 'Categoria: ' + selectedCategoryName() || 'Selecionar Categoria' }}
+            {{ selectedCategoryName() || 'Selecionar Categoria' }}
           </span>
         </button>
-  
+
         <app-modal #categoryModal position="center">
           <div class="modal-body">
             <app-category-selector
               formControlName="category"
-              [defaultCategoryId]="selectedCategoryId()"
+              [defaultCategoryId]="selectedCategoryId() || ''"
+              (ngModelChange)="onCategorySelected($event)"
             ></app-category-selector>
-          </div>
-        </app-modal>
-      </div>
-  
-      <!-- Vídeos -->
-      <div class="selector-item">
-        @if (isAuthenticated()) {
-          <button type="button" class="selector-button" (click)="videoModal.toggle()">
-            <span class="button-icon">
-              <i class="fas fa-video"></i>
-            </span>
-            <span class="button-text">Gerenciar Vídeos</span>
-          </button>
-        } @else {
-          <button type="button" class="selector-button google-auth" (click)="authenticateWithGoogle()">
-            <span class="button-icon">
-              <i class="fab fa-google"></i>
-            </span>
-            <span class="button-text">Autenticar com Google</span>
-          </button>
-        }
-  
-        <app-modal #videoModal position="top">
-          <div class="modal-header">
-            <h4>Selecionar Vídeos</h4>
-          </div>
-          <div class="modal-body">
-            <app-video-selector #videoSelector (videosSelected)="onVideosSelected($event)"></app-video-selector>
           </div>
         </app-modal>
       </div>
     </div>
   
-    <!-- Lista de Vídeos -->
-    <div formArrayName="videos" class="videos-list">
-      @for (video of videosArray.controls; track video) {
-        <div [formGroupName]="videosArray.controls.indexOf(video)" class="video-item">
-          <div class="video-info">
-            <div class="video-edit-form">
+    <!-- Seção de Módulos -->
+    <div class="modules-section" [formGroup]="courseForm()">
+      <h3>Módulos do Curso</h3>
+      
+      <div formArrayName="modules">
+        @for (module of modulesArray.controls; track moduleIndex; let moduleIndex = $index) {
+          <div class="module-item" [formGroupName]="moduleIndex">
+            <div class="module-header">
               <div class="form-group">
-                <label [for]="'name-' + videosArray.controls.indexOf(video)">Nome do Vídeo</label>
-                <input
-                  [id]="'name-' + videosArray.controls.indexOf(video)"
-                  type="text"
-                  formControlName="name"
-                  class="form-control"
-                  placeholder="Digite o nome do vídeo"
-                >
+                <label>Nome do Módulo</label>
+                <input type="text" formControlName="name" placeholder="Nome do módulo">
               </div>
-  
               <div class="form-group">
-                <label [for]="'duration-' + videosArray.controls.indexOf(video)">Duração</label>
-                <div class="input-group">
-                  <input
-                    [id]="'duration-' + videosArray.controls.indexOf(video)"
-                    type="number"
-                    formControlName="duration"
-                    class="form-control"
-                    placeholder="0"
-                    min="0"
-                  >
-                  <span class="input-group-text">segundos</span>
-                </div>
+                <label>Descrição do Módulo</label>
+                <textarea formControlName="description" placeholder="Descrição do módulo"></textarea>
               </div>
+              <button type="button" class="btn-danger" (click)="removeModule(moduleIndex)">
+                <i class="fas fa-trash-alt"></i>
+                Remover Módulo
+              </button>
+            </div>
   
-              <div class="form-check mt-2">
-                <input
-                  type="checkbox"
-                  [id]="'active-' + videosArray.controls.indexOf(video)"
-                  formControlName="active"
-                  class="form-check-input"
-                >
-                <label class="form-check-label" [for]="'active-' + videosArray.controls.indexOf(video)">
-                  Vídeo Ativo
-                </label>
+            <div class="videos-section">
+              <div class="videos-header">
+                <h4>Vídeos do Módulo</h4>
+                @if (getVideosArray(moduleIndex).length > 0) {
+                  <button type="button" class="btn-danger" (click)="removeAllVideos(moduleIndex)">
+                    <i class="fas fa-trash-alt"></i>
+                    Remover Todos os Vídeos
+                  </button>
+                }
               </div>
+              <div [formArrayName]="'videos'">
+                @for (video of getVideosArray(moduleIndex).controls; track videoIndex;let videoIndex = $index) {
+                  <div class="video-item" [formGroupName]="videoIndex">
+                    <div class="video-content">
+                      <input 
+                        type="text" 
+                        formControlName="name" 
+                        class="video-name-input"
+                        placeholder="Nome do vídeo"
+                      >
+                      <div class="video-actions">
+                        <button type="button" class="btn-icon btn-danger" (click)="removeVideo(moduleIndex, videoIndex)">
+                          <i class="fas fa-times"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+              <button type="button" class="btn-secondary" (click)="openVideoSelector(moduleIndex)">
+                <i class="fas fa-plus"></i>
+                Adicionar Vídeos
+              </button>
             </div>
           </div>
-          <div class="video-actions">
-            <button
-              type="button"
-              class="btn btn-outline-danger"
-              (click)="removeVideo(videosArray.controls.indexOf(video))"
-            >
-              <i class="bi bi-trash"></i>
-              Remover Vídeo
-            </button>
-          </div>
-        </div>
-      }
+        }
+      </div>
+  
+      <button type="button" class="btn-primary" (click)="addModule()">
+        <i class="fas fa-plus"></i>
+        Adicionar Módulo
+      </button>
     </div>
   
     <!-- Seção de Recursos Adicionais (apenas no modo de edição) -->
@@ -182,3 +162,30 @@
       </div>
     }
   </form>
+  
+  <!-- Modal de Seleção de Vídeos -->
+  <app-modal #videoModal>
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5>Selecionar Vídeos do Drive</h5>
+          <button type="button" class="close" (click)="videoModal.show = false">
+            <span>&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <button *ngIf="!isAuthenticated" class="google-auth-btn" (click)="authenticateWithGoogle()">
+            <i class="fab fa-google"></i>
+            Autenticar com Google
+          </button>
+          <app-video-selector
+            #videoSelector
+            (videosSelected)="onVideosSelected($event)"
+          ></app-video-selector>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" (click)="videoModal.show = false">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </app-modal>

@@ -1,6 +1,7 @@
 export interface Exam {
   id: string;
   courseId: string;
+  moduleId: string;
   title: string;
   description: string;
   questions: Question[];

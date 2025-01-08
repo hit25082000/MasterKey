@@ -1,30 +1,39 @@
-import { Component, OnInit, signal, computed, inject, ViewChild } from '@angular/core';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Student } from '../../../../core/models/student.model';
 import { StudentManagementService } from '../../services/student-management.service';
 import { Router } from '@angular/router';
 import { StudentService } from '../../services/student.service';
-import { NotificationType } from '../../../../shared/models/notifications-enum';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { LoadingService } from '../../../../shared/services/loading.service';
 import { SearchBarComponent } from '../../../../shared/components/search-bar/search-bar.component';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { StudentCertificateComponent } from '../student-certificate/student-certificate.component';
+import { ConfirmationDialogComponent } from '../../../../shared/components/confirmation-dialog/confirmation-dialog.component';
+import { ConfirmationService } from '../../../../shared/services/confirmation.service';
 
 @Component({
   selector: 'app-student-list',
   standalone: true,
-  imports: [CommonModule, PaginationComponent, SearchBarComponent, ModalComponent, StudentCertificateComponent],
+  imports: [
+    CommonModule, 
+    PaginationComponent, 
+    SearchBarComponent, 
+    ModalComponent, 
+    StudentCertificateComponent,
+    ConfirmationDialogComponent
+  ],
   templateUrl: './student-list.component.html',
   styleUrl: './student-list.component.scss',
 })
 export class StudentListComponent implements OnInit {
-  loadingService = inject(LoadingService);
-  studentService = inject(StudentService);
-  studentManagementService = inject(StudentManagementService);
-  router = inject(Router);
-  notificationService = inject(NotificationService);
+  private loadingService = inject(LoadingService);
+  private studentService = inject(StudentService);
+  private studentManagementService = inject(StudentManagementService);
+  private router = inject(Router);
+  private notificationService = inject(NotificationService);
+  private confirmationService = inject(ConfirmationService);
 
   students = signal<Student[]>([]);
   currentPage = signal<number>(1);
@@ -44,10 +53,7 @@ export class StudentListComponent implements OnInit {
       this.students = this.studentService.students
     } catch (error: any) {
       this.error.set(error);
-      this.notificationService.success(
-        'Erro ao consultar estudantes: ' + error,
-        1
-      );
+      this.notificationService.error('Erro ao consultar estudantes: ' + error);
     } finally {
       this.loadingService.hide();
     }
@@ -57,20 +63,28 @@ export class StudentListComponent implements OnInit {
     this.currentPage.set(Number(page));
   }
 
-  // deleteStudent(id: string) {
-  //   this.studentManagementService
-  //     .delete(id)
-  //     .then((success) => {
-  //       this.students.update(students =>
-  //         students.filter(student => student.id !== id)
-  //       );
-  //       this.notificationService.success(success, 1);
-  //     })
-  //     .catch((error) => {
-  //       console.log(error);
-  //       this.notificationService.success(error, 1);
-  //     });
-  // }
+  deleteStudent(student: Student) {
+    this.confirmationService.confirm({
+      message: `Tem certeza que deseja excluir o estudante "${student.name}"?`,
+      header: 'Confirmar Exclusão',
+      icon: 'pi pi-exclamation-triangle',
+      accept: async () => {
+        try {
+          this.loadingService.show();
+          await this.studentManagementService.delete(student.id);
+          this.students.update(students => 
+            students.filter(s => s.id !== student.id)
+          );
+          this.notificationService.success('Estudante excluído com sucesso');
+        } catch (error) {
+          console.error('Erro ao excluir estudante:', error);
+          this.notificationService.error('Erro ao excluir estudante');
+        } finally {
+          this.loadingService.hide();
+        }
+      }
+    });
+  }
 
   editStudent(id: string) {
     this.router.navigate(['/admin/student-register', id]);
@@ -82,7 +96,6 @@ export class StudentListComponent implements OnInit {
 
   getImageUrl(url: string | undefined): string {
     if (!url) return 'assets/images/default-profile.png';
-    // Adiciona timestamp para evitar cache
     return `${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}`;
   }
 

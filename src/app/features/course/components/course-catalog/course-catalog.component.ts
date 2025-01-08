@@ -28,7 +28,7 @@ import { RouterLink } from '@angular/router';
               <p>{{ course.description }}</p>
               <div class="course-info">
                 <span><i class="fas fa-clock"></i> {{ course.workHours }}h</span>
-                <span><i class="fas fa-video"></i> {{ course.videos?.length || 0 }} aulas</span>
+                <span><i class="fas fa-video"></i> {{ course.modules.length || 0 }} modulos</span>
               </div>
               <a [routerLink]="['/classroom/course-player/', course.id]" class="btn-access">
                 <i class="fas fa-play-circle"></i>

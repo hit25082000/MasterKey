@@ -28,30 +28,38 @@ export class CategorySelectorComponent implements OnInit {
 
   private onChange: (value: string) => void = () => {};
   private onTouched: () => void = () => {};
+  private skipNextEmission = false;
 
   async ngOnInit() {
-    if(this.defaultCategoryId()){
-      this.autoSelect(this.defaultCategoryId())
-    }
     await this.loadallCategory();
+    if(this.defaultCategoryId()){
+      this.autoSelect(this.defaultCategoryId());
+    }
   }
 
   async loadallCategory() {
     this.allCategory.set(await this.categoryService.getAll());
   }
 
-  autoSelect(defaultSelect : string){
-    this.selectedCategoryId.set(defaultSelect)
+  autoSelect(defaultSelect: string) {
+    if (defaultSelect === this.selectedCategoryId()) return;
+    this.skipNextEmission = true;
+    this.selectedCategoryId.set(defaultSelect);
     this.onChange(defaultSelect);
   }
 
   onSelectCategory(categoryId: string): void {
+    if (categoryId === this.selectedCategoryId()) return;
     this.selectedCategoryId.set(categoryId);
-    this.onChange(categoryId);
+    if (!this.skipNextEmission) {
+      this.onChange(categoryId);
+    }
+    this.skipNextEmission = false;
   }
 
   writeValue(value: string): void {
-    if (value) {
+    if (value && value !== this.selectedCategoryId()) {
+      this.skipNextEmission = true;
       this.selectedCategoryId.set(value);
     }
   }

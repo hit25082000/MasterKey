@@ -54,6 +54,24 @@ export class VideoSelectorComponent implements OnInit {
     this.videosSelected.emit(this.selectedVideos());
   }
 
+  deselectVideo(videoId: string) {
+    this.selectedVideoIds.set(new Set([...this.selectedVideoIds()].filter(id => id !== videoId)));
+  }
+
+  // Novo método para desselecionar vídeos
+  deselectVideos(videoIds: string[]) {
+    const currentSelected = new Set(this.selectedVideoIds());
+    videoIds.forEach(id => currentSelected.delete(id));
+    this.selectedVideoIds.set(currentSelected);
+    this.videosSelected.emit(this.selectedVideos());
+  }
+
+  // Novo método para limpar todas as seleções
+  clearSelection() {
+    this.selectedVideoIds.set(new Set());
+    this.videosSelected.emit([]);
+  }
+
   fetchDriveVideos() {
     this.googleAuthService.getAccessToken().pipe(
       switchMap(token => {
@@ -108,10 +126,5 @@ export class VideoSelectorComponent implements OnInit {
     return this.httpClient.get(endpoint, { headers, params }).pipe(
       map((response: any) => response.files || [])
     );
-  }
-
-  // Método público para desselecionar um vídeo
-  deselectVideo(videoId: string) {
-    this.selectedVideoIds.set(new Set([...this.selectedVideoIds()].filter(id => id !== videoId)));
   }
 }

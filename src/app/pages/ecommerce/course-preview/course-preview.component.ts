@@ -2,7 +2,7 @@ import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { CourseService } from '../../../features/course/services/course.service';
-import { Course, Video } from '../../../core/models/course.model';
+import { Course, CourseVideo, Video } from '../../../core/models/course.model';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { PaymentService } from '../../../core/services/payment.service';
 import { firstValueFrom } from 'rxjs';
@@ -18,7 +18,7 @@ import { NotificationService, NotificationType } from '../../../shared/services/
 })
 export class CoursePreviewComponent implements OnInit {
   course?: Course;
-  previewVideo?: Video;
+  previewVideo?: CourseVideo;
   safeVideoUrl = signal<SafeResourceUrl | undefined>(undefined);
 
   private readonly paymentService = inject(PaymentService);
@@ -35,8 +35,8 @@ export class CoursePreviewComponent implements OnInit {
       const courseId = params['id'];
       this.course = await this.courseService.getById(courseId);
 
-      if (this.course?.videos?.length > 0) {
-        this.previewVideo = this.course.videos[0];
+      if (this.course?.modules?.length > 0 && this.course.modules[0].videos?.length > 0) {
+        this.previewVideo = this.course.modules[0].videos[0];
 
         // Verifica se a URL é do YouTube e ajusta se necessário
         if (this.previewVideo.webViewLink) {

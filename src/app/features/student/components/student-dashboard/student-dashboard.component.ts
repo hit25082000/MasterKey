@@ -157,14 +157,14 @@ export class StudentDashboardComponent implements OnInit {
             map(({ course, watchedVideos }) => {
               // Filtra apenas os vídeos que ainda existem no curso
               const validWatchedVideos = watchedVideos.filter(videoId => 
-                course.videos?.some(video => video.id === videoId)
+                course.modules?.some(module => module.videos?.some(video => video.videoId === videoId))
               );
               
               return {
                 course,
-                progress: course.videos?.length ? (validWatchedVideos.length / course.videos.length) * 100 : 0,
+                progress: course.modules?.length ? (validWatchedVideos.length / course.modules.length) * 100 : 0,
                 watchedVideos: validWatchedVideos.length,
-                totalVideos: course.videos?.length || 0
+                totalVideos: course.modules?.length || 0
               };
             })
           )

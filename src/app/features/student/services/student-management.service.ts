@@ -77,19 +77,24 @@ export class StudentManagementService {
     }
   }
 
-  async delete(userId: string): Promise<any> {
+  async delete(userId: string): Promise<string> {
     try {
       const student = await this.studentService.selectStudent(userId);
 
       if(student() === undefined)
-        throw new Error('Estudante não encontrado')
+        throw new Error('Estudante não encontrado');
 
-        this.adminService.deleteUser(userId).subscribe(() => {
-          this.logSuccessfulDelete(student()!);
-
-          return 'Estudante deletado com sucesso!';
+      return new Promise((resolve, reject) => {
+        this.adminService.deleteUser(userId).subscribe({
+          next: () => {
+            this.logSuccessfulDelete(student()!);
+            resolve('Estudante deletado com sucesso!');
+          },
+          error: (error) => {
+            reject(this.handleError(error));
+          }
         });
-
+      });
     } catch (error) {
       throw this.handleError(error);
     }

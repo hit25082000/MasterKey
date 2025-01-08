@@ -1,12 +1,25 @@
 import { Entity } from "./entity";
 
 export interface Video extends Entity {
-  id: string;
   name: string;
   description: string;
   duration: number;
   webViewLink: string;
   thumbnail: string;
+}
+
+export interface CourseVideo {
+  videoId: string;
+  name: string;
+  duration: number;
+  webViewLink: string;
+  active: boolean;
+}
+
+export interface CourseModule {
+  name: string;
+  description: string;
+  videos: CourseVideo[];
 }
 
 export interface CourseReview extends Entity {
@@ -33,8 +46,6 @@ export interface Course extends Entity {
   highlight: boolean;
   checkoutUrl: string;
   workHours: number;
-  videos: Video[];
+  modules: CourseModule[];
   reviews: CourseReview[];
-  // createdAt: Date;
-  // updatedAt: Date;
 }
