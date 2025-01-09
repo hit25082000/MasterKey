@@ -155,16 +155,25 @@ export class StudentDashboardComponent implements OnInit {
             watchedVideos: this.studentService.getWatchedVideos(studentId, courseId),
           }).pipe(
             map(({ course, watchedVideos }) => {
+              // Calcula o total de vídeos em todos os módulos
+              const totalVideos = course.modules?.reduce((total, module) => 
+                total + (module.videos?.length || 0), 0) || 0;
+
               // Filtra apenas os vídeos que ainda existem no curso
               const validWatchedVideos = watchedVideos.filter(videoId => 
-                course.modules?.some(module => module.videos?.some(video => video.videoId === videoId))
+                course.modules?.some(module => 
+                  module.videos?.some(video => video.videoId === videoId)
+                )
               );
               
+              // Calcula o progresso baseado no total de vídeos
+              const progress = totalVideos > 0 ? (validWatchedVideos.length / totalVideos) * 100 : 0;
+
               return {
                 course,
-                progress: course.modules?.length ? (validWatchedVideos.length / course.modules.length) * 100 : 0,
+                progress,
                 watchedVideos: validWatchedVideos.length,
-                totalVideos: course.modules?.length || 0
+                totalVideos
               };
             })
           )

@@ -10,6 +10,12 @@ import fontkit from '@pdf-lib/fontkit';
 
 interface StudentCourseStatus {
   course: Course;
+  modules: {
+    name: string;
+    description: string;
+    completionPercentage: number;
+    averageGrade: number;
+  }[];
   completionPercentage: number;
   averageGrade: number;
   totalExams: number;
@@ -44,15 +50,25 @@ const positions = {
               <div class="course-info">
                 <h3>{{ status.course.name }}</h3>
                 <div class="status-details">
-                  @if (status.totalExams === 0) {
-                    <p>Curso sem avaliações</p>
-                    <p>Progresso: 100%</p>
-                    <p>Status: Completo</p>
-                  } @else {
-                    <p>Progresso: {{ status.completionPercentage }}%</p>
-                    <p>Média: {{ status.averageGrade.toFixed(1) }}</p>
-                    <p>Provas: {{ status.completedExams }}/{{ status.totalExams }}</p>
-                  }
+                  <div class="modules-list">
+                    <h4>Módulos:</h4>
+                    @for (module of status.modules; track module.name) {
+                      <div class="module-item">
+                        <span>{{ module.name }}</span>
+                        <span>Progresso: {{ module.completionPercentage }}%</span>
+                        @if (module.averageGrade > 0) {
+                          <span>Média: {{ module.averageGrade.toFixed(1) }}</span>
+                        }
+                      </div>
+                    }
+                  </div>
+                  <div class="course-summary">
+                    <p>Progresso Total: {{ status.completionPercentage }}%</p>
+                    @if (status.totalExams > 0) {
+                      <p>Média Geral: {{ status.averageGrade.toFixed(1) }}</p>
+                      <p>Provas: {{ status.completedExams }}/{{ status.totalExams }}</p>
+                    }
+                  </div>
                 </div>
               </div>
               <button
@@ -81,10 +97,8 @@ export class StudentCertificateComponent {
   courseStatus = signal<StudentCourseStatus[]>([]);
 
   constructor() {
-    // Effect que observa mudanças no studentId
     effect(() => {
       const id = this.studentId();
-      // Só carrega os cursos se houver um studentId válido
       if (id) {
         queueMicrotask(() => this.loadStudentCourses(id));
       }
@@ -105,44 +119,72 @@ export class StudentCertificateComponent {
         const course = await this.courseService.getById(courseId);
         const exams = await this.courseService.getCourseExams(courseId);
         const studentExams = await this.studentService.getStudentExams(studentId, courseId);
+        const watchedVideos = await this.studentService.getWatchedVideos(studentId, courseId);
 
-        // Verifica se o curso tem exames configurados
-        if (exams.length === 0) {
+        const modules = course.modules.map(module => {
+          const moduleVideos = module.videos.filter(video => video.active);
+          const moduleWatchedVideos = moduleVideos.filter(video => 
+            watchedVideos.includes(video.videoId)
+          );
+          
+          const totalVideos = moduleVideos.length;
+          const watchedCount = moduleWatchedVideos.length;
+          
+          const moduleExams = exams.filter(exam => exam.moduleId === module.name);
+          const moduleStudentExams = moduleExams.flatMap(exam => 
+            studentExams.filter(studentExam => studentExam.examId === exam.id)
+          );
+          
+          const totalModuleExams = moduleExams.length;
+          const completedModuleExams = moduleStudentExams.length;
+          
+          let moduleAverageGrade = 0;
+          if (completedModuleExams > 0) {
+            const totalGrades = moduleStudentExams.reduce((acc, exam) => {
+              const grade = Number(exam.score);
+              return acc + (isNaN(grade) ? 0 : grade);
+            }, 0);
+            moduleAverageGrade = Number((totalGrades / completedModuleExams).toFixed(1));
+          }
+
+          const videosProgress = totalVideos === 0 ? 100 : 
+            Math.round((watchedCount / totalVideos) * 100);
+          
+          const examsProgress = totalModuleExams === 0 ? 100 : 
+            Math.round((completedModuleExams / totalModuleExams) * 100);
+          
+          const moduleCompletionPercentage = Math.round((videosProgress + examsProgress) / 2);
+
           return {
-            course,
-            completionPercentage: 100,
-            averageGrade: 10,
-            totalExams: 0,
-            completedExams: 0,
-            isCompleted: true
+            name: module.name,
+            description: module.description,
+            completionPercentage: moduleCompletionPercentage,
+            averageGrade: moduleAverageGrade
           };
-        }
+        });
 
         const totalExams = exams.length;
         const completedExams = studentExams.length;
 
-        // Correção no cálculo da média
         let averageGrade = 0;
         if (completedExams > 0) {
           const totalGrades = studentExams.reduce((acc, exam) => {
-            // Verifica se exam.grade é um número válido
             const grade = Number(exam.score);
             return acc + (isNaN(grade) ? 0 : grade);
           }, 0);
-
           averageGrade = Number((totalGrades / completedExams).toFixed(1));
-
-          // Garante que a média seja um número válido
-          if (isNaN(averageGrade)) {
-            averageGrade = 0;
-          }
         }
 
-        const completionPercentage = Math.round((completedExams / totalExams) * 100);
+        const completionPercentage = modules.length === 0 ? 0 : 
+          Math.round(
+            modules.reduce((acc, module) => acc + module.completionPercentage, 0) / modules.length
+          );
+
         const isCompleted = averageGrade >= 7 && completionPercentage === 100;
 
         return {
           course,
+          modules,
           completionPercentage,
           averageGrade,
           totalExams,
@@ -162,7 +204,6 @@ export class StudentCertificateComponent {
     }
   }
 
-  // Função auxiliar para formatar a data por extenso
   private formatDateExtensive(): string {
     const date = new Date();
     const day = date.getDate();
@@ -185,13 +226,10 @@ export class StudentCertificateComponent {
         throw new Error('Estudante não encontrado');
       }
 
-      // 1. Criar novo PDF
       const pdfDoc = await PDFDocument.create();
 
-      // 2. Registrar fontkit para suporte a fontes personalizadas
       pdfDoc.registerFontkit(fontkit);
 
-      // 3. Carregar as imagens do template
       let page1ImageBytes, page2ImageBytes;
       try {
         const [page1Response, page2Response] = await Promise.all([
@@ -210,13 +248,11 @@ export class StudentCertificateComponent {
         throw new Error('Não foi possível carregar os templates');
       }
 
-      // 4. Incorporar as imagens
       const [page1Image, page2Image] = await Promise.all([
         pdfDoc.embedPng(page1ImageBytes),
         pdfDoc.embedPng(page2ImageBytes)
       ]);
 
-      // 5. Configurar fontes
       let customFont;
       try {
         const fontResponse = await fetch('assets/fonts/GreatVibes-Regular.ttf');
@@ -227,14 +263,12 @@ export class StudentCertificateComponent {
         customFont = await pdfDoc.embedFont(fontBytes);
       } catch (error) {
         console.error('Erro ao carregar fonte personalizada:', error);
-        // Fallback para fonte padrão em caso de erro
         customFont = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
       }
 
       const regularFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
 
-      // 6. Criar primeira página com a imagem de fundo
-      const page1 = pdfDoc.addPage([842, 595]); // A4 paisagem
+      const page1 = pdfDoc.addPage([842, 595]);
       page1.drawImage(page1Image, {
         x: 0,
         y: 0,
@@ -242,78 +276,74 @@ export class StudentCertificateComponent {
         height: page1.getHeight(),
       });
 
-      // 7. Adicionar nome do aluno e curso na primeira página
       const studentName = student()?.name;
       if (studentName) {
-        // Nome do estudante centralizado
         page1.drawText(studentName, {
           x: page1.getWidth() / 2 - customFont.widthOfTextAtSize(studentName, 48) / 2 + positions.studentName.x,
-          y: page1.getHeight() / 2 + 50 - positions.studentName.y, // Ajustado para cima para dar espaço ao texto do curso
+          y: page1.getHeight() / 2 + 50 - positions.studentName.y,
           size: 48,
           font: customFont,
           color: rgb(0, 0, 0)
         });
 
-        // Texto do curso concluído
-        const courseText1 = `concluiu com êxito o curso de ${status.course.name} oferecido.`;
+        const courseText1 = `concluiu com êxito o curso de ${status.course.name} oferecido`;
         page1.drawText(courseText1, {
           x: page1.getWidth() / 2 - regularFont.widthOfTextAtSize(courseText1, 14) / 2 + positions.studentName.x,
-          y: page1.getHeight() / 2 - positions.studentName.y, // Posicionado abaixo do nome
+          y: page1.getHeight() / 2 - positions.studentName.y,
           size: 14,
           font: regularFont,
           color: rgb(0, 0, 0)
         });
 
-        // Nome do curso em negrito
-        const courseText2 = `por Master Key - Centro de Treinamento e Desenvolvimento`
+        const courseText2 = `por Master Key - Centro de Treinamento e Desenvolvimento`;
         page1.drawText(courseText2, {
           x: page1.getWidth() / 2 - regularFont.widthOfTextAtSize(courseText2, 14) / 2 + positions.studentName.x,
-          y: page1.getHeight() / 2 - 15 - positions.studentName.y, // Posicionado abaixo do texto anterior
+          y: page1.getHeight() / 2 - 15 - positions.studentName.y,
           size: 14,
           font: regularFont,
           color: rgb(0, 0, 0)
         });
 
-        const courseText3 =  `Profissional, com carga horária de ${status.course.workHours} horas. Durante sua`;
+        const courseText3 = `Profissional, com carga horária de ${status.course.workHours} horas. Durante sua`;
         page1.drawText(courseText3, {
           x: page1.getWidth() / 2 - regularFont.widthOfTextAtSize(courseText3, 14) / 2 + positions.studentName.x,
-          y: page1.getHeight() / 2 - 30 - positions.studentName.y, // Posicionado abaixo do texto anterior
+          y: page1.getHeight() / 2 - 30 - positions.studentName.y,
           size: 14,
           font: regularFont,
           color: rgb(0, 0, 0)
         });
 
-        const courseText4 =  `participação no curso, demonstrou um notável`;
+        const courseText4 = `participação no curso, demonstrou um notável`;
         page1.drawText(courseText4, {
           x: page1.getWidth() / 2 - regularFont.widthOfTextAtSize(courseText4, 14) / 2 + positions.studentName.x,
-          y: page1.getHeight() / 2 - 45 - positions.studentName.y, // Posicionado abaixo do texto anterior
+          y: page1.getHeight() / 2 - 45 - positions.studentName.y,
           size: 14,
           font: regularFont,
           color: rgb(0, 0, 0)
         });
 
-        const courseText5 =  `comprometimento e dedicação, destacando-se pelo empenho`;
+        const courseText5 = `comprometimento e dedicação, destacando-se pelo empenho`;
         page1.drawText(courseText5, {
           x: page1.getWidth() / 2 - regularFont.widthOfTextAtSize(courseText5, 14) / 2 + positions.studentName.x,
-          y: page1.getHeight() / 2 - 60 - positions.studentName.y, // Posicionado abaixo do texto anterior
+          y: page1.getHeight() / 2 - 60 - positions.studentName.y,
           size: 14,
           font: regularFont,
           color: rgb(0, 0, 0)
         });
 
-        const courseText6 =  `exemplar em todas as atividades propostas, obtendo média`;
+        const courseText6 = `exemplar em todas as atividades propostas, obtendo média`;
         page1.drawText(courseText6, {
           x: page1.getWidth() / 2 - regularFont.widthOfTextAtSize(courseText6, 14) / 2 + positions.studentName.x,
-          y: page1.getHeight() / 2 - 75 - positions.studentName.y, // Posicionado abaixo do texto anterior
+          y: page1.getHeight() / 2 - 75 - positions.studentName.y,
           size: 14,
           font: regularFont,
           color: rgb(0, 0, 0)
         });
 
-        const courseText7 =  `final ${status.averageGrade.toFixed(1)}.`;
+        const courseText7 = `final ${status.averageGrade.toFixed(1)}.`;
         page1.drawText(courseText7, {
           x: page1.getWidth() / 2 - regularFont.widthOfTextAtSize(courseText7, 14) / 2 + positions.studentName.x,
-          y: page1.getHeight() / 2 - 90 - positions.studentName.y, // Posicionado abaixo do texto anterior
+          y: page1.getHeight() / 2 - 90 - positions.studentName.y,
           size: 14,
           font: regularFont,
           color: rgb(0, 0, 0)
@@ -329,7 +359,6 @@ export class StudentCertificateComponent {
         });
       }
 
-      // 8. Criar segunda página com a imagem de fundo
       const page2 = pdfDoc.addPage([842, 595]);
       page2.drawImage(page2Image, {
         x: 0,
@@ -338,14 +367,23 @@ export class StudentCertificateComponent {
         height: page2.getHeight(),
       });
 
-      // Lista de cursos (mantém o código existente para a lista)
       let yPosition = page2.getHeight() - 150;
       const lineSpacing = 40;
       const bulletRadius = 6;
       const bulletX = 100;
 
-      this.courseStatus().forEach((courseStatus) => {
-        // Bullet point
+      const modulesTitle = 'Módulos Concluídos';
+      page2.drawText(modulesTitle, {
+        x: page2.getWidth() / 2 - regularFont.widthOfTextAtSize(modulesTitle, 24) / 2,
+        y: yPosition + 40,
+        size: 24,
+        font: regularFont,
+        color: rgb(0.5, 0, 0),
+      });
+
+      yPosition -= 20;
+
+      status.modules.forEach((module) => {
         page2.drawCircle({
           x: bulletX,
           y: yPosition + 6,
@@ -354,29 +392,36 @@ export class StudentCertificateComponent {
           opacity: 1,
         });
 
-        // Nome do curso
-        const courseName = courseStatus.course.name;
-        const textWidth = regularFont.widthOfTextAtSize(courseName, 29);
-
-        page2.drawText(courseName, {
-          x: page2.getWidth() - textWidth - 100,
+        const moduleName = module.name;
+        page2.drawText(moduleName, {
+          x: bulletX + 20,
           y: yPosition,
-          size: 29,
+          size: 16,
           font: regularFont,
           color: rgb(0.5, 0, 0),
         });
 
+        if (module.averageGrade > 0) {
+          const gradeText = `Média: ${module.averageGrade.toFixed(1)}`;
+          page2.drawText(gradeText, {
+            x: page2.getWidth() - regularFont.widthOfTextAtSize(gradeText, 14) - 100,
+            y: yPosition,
+            size: 14,
+            font: regularFont,
+            color: rgb(0.5, 0, 0),
+          });
+        }
+
         yPosition -= lineSpacing;
       });
 
-      // 10. Gerar e baixar PDF
       const pdfBytes = await pdfDoc.save();
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
 
-      const fileName = `certificado_${student()?.name}`
+      const fileName = `certificado_${student()?.name}_${status.course.name}`
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .replace(/[^a-zA-Z0-9]/g, '_')

@@ -24,6 +24,9 @@ $color-secondary: #ee3c48;
     gap: 1rem;
 
     h1 {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
       color: #fff;
       font-size: 2.5rem;
       margin-bottom: 1rem;
