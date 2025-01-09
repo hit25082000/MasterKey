@@ -72,7 +72,7 @@
                 }
               </div>
               <div [formArrayName]="'videos'">
-                @for (video of getVideosArray(moduleIndex).controls; track videoIndex;let videoIndex = $index) {
+                @for (video of getVideosArray(moduleIndex).controls; track video.value.webViewLink;let videoIndex = $index) {
                   <div class="video-item" [formGroupName]="videoIndex">
                     <div class="video-content">
                       <input 
@@ -82,7 +82,12 @@
                         placeholder="Nome do vídeo"
                       >
                       <div class="video-actions">
-                        <button type="button" class="btn-icon btn-danger" (click)="removeVideo(moduleIndex, videoIndex)">
+                        <button 
+                          type="button" 
+                          class="btn-icon btn-danger" 
+                          (click)="removeVideo(moduleIndex, videoIndex)"
+                          title="Remover vídeo"
+                        >
                           <i class="fas fa-times"></i>
                         </button>
                       </div>
@@ -180,7 +185,7 @@
           </button>
           <app-video-selector
             #videoSelector
-            (videosSelected)="onVideosSelected($event)"
+            (videoSelected)="onVideoSelected($event)"
           ></app-video-selector>
         </div>
         <div class="modal-footer">

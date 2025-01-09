@@ -101,8 +101,10 @@ export class CourseFormComponent implements OnInit {
   }
 
   getVideosArray(moduleIndex: number): FormArray {
-    return (this.modulesArray.at(moduleIndex) as FormGroup).get('videos') as FormArray;
+    const videosArray = (this.modulesArray.at(moduleIndex) as FormGroup).get('videos') as FormArray;
+    return videosArray;
   }
+
 
   addModule() {
     this.modulesArray.push(this.createModuleForm());
@@ -112,68 +114,57 @@ export class CourseFormComponent implements OnInit {
     this.modulesArray.removeAt(index);
   }
 
-  onVideosSelected(videos: Video[]) {
-    const videosArray = this.getVideosArray(this.moduleIndex);
+  onVideoSelected(video: Video) {
+    const videosArray = (this.modulesArray.at(this.moduleIndex) as FormGroup).get('videos') as FormArray;
     
-    // Limpa os vídeos existentes do módulo
-    const existingVideoIds = videosArray.controls
-      .map(control => control.get('videoId')?.value)
-      .filter(id => id) as string[];
-    
-    // Desseleciona os vídeos que foram removidos
-    const newVideoIds = videos.map(v => v.id);
-    const removedVideoIds = existingVideoIds.filter(id => !newVideoIds.includes(id));
-    if (removedVideoIds.length > 0) {
-      this.videoSelector?.deselectVideos(removedVideoIds);
+    // Verifica se o vídeo já existe no módulo
+    const exists = videosArray.controls.some(control => 
+      control.get('videoId')?.value === video.id
+    );
+
+    if (!exists) {
+      // Adiciona o novo vídeo no final do array
+      videosArray.push(this.fb.group({
+        videoId: [video.id],
+        name: [video.name || ''],
+        duration: [video.duration || 0],
+        webViewLink: [video.webViewLink || ''],
+        active: [true]
+      }));
+
+      // Fecha o modal após adicionar o vídeo
+      this.videoModal.show = false;
+      this.notificationService.success('Vídeo adicionado com sucesso!');
+    } else {
+      this.notificationService.error('Este vídeo já está no módulo!');
     }
-
-    // Limpa o array atual
-    while (videosArray.length !== 0) {
-      videosArray.removeAt(0);
-    }
-
-    // Adiciona os novos vídeos selecionados
-    videos.forEach(video => {
-      if (video.id) {
-        videosArray.push(this.fb.group({
-          videoId: [video.id],
-          name: [video.name || ''],
-          duration: [video.duration || 0],
-          webViewLink: [video.webViewLink || ''],
-          active: [true]
-        }));
-      }
-    });
-
-    // Fecha o modal após a seleção
-    this.videoModal.show = false;
   }
 
   removeVideo(moduleIndex: number, videoIndex: number) {
+    console.log('Removendo vídeo:', { moduleIndex, videoIndex });
     const moduleFormGroup = this.modulesArray.at(moduleIndex) as FormGroup;
-    const videosArray = moduleFormGroup.get('videos') as FormArray;
-    const videoToRemove = videosArray.at(videoIndex)?.value;
-    
-    if (videoToRemove?.videoId) {
-      // Desselecionar o vídeo no seletor
-      this.videoSelector?.deselectVideo(videoToRemove.videoId);
+    if (!moduleFormGroup) {
+      console.error('Módulo não encontrado:', moduleIndex);
+      return;
     }
-    
+
+    const videosArray = moduleFormGroup.get('videos') as FormArray;
+    if (!videosArray) {
+      console.error('Array de vídeos não encontrado no módulo:', moduleIndex);
+      return;
+    }
+
+
+
+
+    console.log('Removendo vídeo no índice real:', videoIndex);
     videosArray.removeAt(videoIndex);
+    this.notificationService.success('Vídeo removido com sucesso!');
   }
 
   removeAllVideos(moduleIndex: number) {
-    const videosArray = this.getVideosArray(moduleIndex);
-    const videoIds = videosArray.controls
-      .map(control => control.get('videoId')?.value)
-      .filter(id => id) as string[];
-
-    // Desselecionar todos os vídeos no seletor
-    if (videoIds.length > 0) {
-      this.videoSelector?.deselectVideos(videoIds);
-    }
-
-    // Limpar o array de vídeos
+    const moduleFormGroup = this.modulesArray.at(moduleIndex) as FormGroup;
+    const videosArray = moduleFormGroup.get('videos') as FormArray;
     while (videosArray.length !== 0) {
       videosArray.removeAt(0);
     }
@@ -540,3 +531,5 @@ export class CourseFormComponent implements OnInit {
     return this.modulesArray.controls.indexOf(moduleControl);
   }
 }
+
+

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, signal, computed, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, signal, OnInit, Output, EventEmitter } from '@angular/core';
 import { SearchBarComponent } from '../../../../shared/components/search-bar/search-bar.component';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { map, Observable, switchMap } from 'rxjs';
@@ -16,13 +16,9 @@ import { GoogleAuthService } from '../../../../core/services/google-auth.service
 })
 export class VideoSelectorComponent implements OnInit {
   allVideos = signal<Video[]>([]);
-  selectedVideoIds = signal<Set<string>>(new Set());
-  selectedVideos = computed(() =>
-    this.allVideos().filter(video => this.selectedVideoIds().has(video.id))
-  );
   isLoading = signal<boolean>(false);
 
-  @Output() videosSelected = new EventEmitter<Video[]>();
+  @Output() videoSelected = new EventEmitter<Video>();
 
   constructor(
     private httpClient: HttpClient,
@@ -34,45 +30,12 @@ export class VideoSelectorComponent implements OnInit {
     this.fetchDriveVideos();
   }
 
-  onCheckboxChange(videoId: string, event: Event): void {
-    const checkbox = event.target as HTMLInputElement;
-    const currentSelected = new Set(this.selectedVideoIds());
-
-    if (checkbox.checked) {
-      currentSelected.add(videoId);
-    } else {
-      currentSelected.delete(videoId);
-    }
-    this.selectedVideoIds.set(currentSelected);
-    this.videosSelected.emit(this.selectedVideos());
-  }
-
-  removeVideo(videoId: string) {
-    const currentSelected = new Set(this.selectedVideoIds());
-    currentSelected.delete(videoId);
-    this.selectedVideoIds.set(currentSelected);
-    this.videosSelected.emit(this.selectedVideos());
-  }
-
-  deselectVideo(videoId: string) {
-    this.selectedVideoIds.set(new Set([...this.selectedVideoIds()].filter(id => id !== videoId)));
-  }
-
-  // Novo método para desselecionar vídeos
-  deselectVideos(videoIds: string[]) {
-    const currentSelected = new Set(this.selectedVideoIds());
-    videoIds.forEach(id => currentSelected.delete(id));
-    this.selectedVideoIds.set(currentSelected);
-    this.videosSelected.emit(this.selectedVideos());
-  }
-
-  // Novo método para limpar todas as seleções
-  clearSelection() {
-    this.selectedVideoIds.set(new Set());
-    this.videosSelected.emit([]);
+  selectVideo(video: Video): void {
+    this.videoSelected.emit(video);
   }
 
   fetchDriveVideos() {
+    this.isLoading.set(true);
     this.googleAuthService.getAccessToken().pipe(
       switchMap(token => {
         if (!token) {
@@ -104,11 +67,19 @@ export class VideoSelectorComponent implements OnInit {
           description: '',
           thumbnail: '',
         })));
+        this.isLoading.set(false);
       },
       error: (error) => {
-        this.notificationService.error('Erro ao buscar vídeos do Google Drive: ' + error.message, 5000);
+        this.notificationService.error('Erro ao buscar vídeos do Google Drive: ' + error.message);
+        this.isLoading.set(false);
       }
     });
+  }
+
+  private listFiles(endpoint: string, headers: HttpHeaders, params: any): Observable<any[]> {
+    return this.httpClient.get(endpoint, { headers, params }).pipe(
+      map((response: any) => response.files || [])
+    );
   }
 
   private formatVideoLink(webViewLink: string): string {
@@ -120,11 +91,5 @@ export class VideoSelectorComponent implements OnInit {
       }
     }
     return webViewLink;
-  }
-
-  private listFiles(endpoint: string, headers: HttpHeaders, params: any): Observable<any[]> {
-    return this.httpClient.get(endpoint, { headers, params }).pipe(
-      map((response: any) => response.files || [])
-    );
   }
 }

@@ -3,6 +3,7 @@
   flex-direction: column;
   height: 100%;
   max-height: calc(90vh - 2rem);
+  padding: 1rem;
 
   .video-list-container {
     margin-top: 1rem;
@@ -34,6 +35,23 @@
     animation: spin 1s linear infinite;
   }
 
+  .search-bar {
+    margin-bottom: 1rem;
+  }
+
+  .loading, .no-videos {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    color: var(--text-color-secondary);
+
+    i {
+      margin-right: 0.5rem;
+      font-size: 1.2rem;
+    }
+  }
+
   .video-list {
     display: grid;
     gap: 0.5rem;
@@ -57,6 +75,67 @@
 
       &:hover {
         background: #a8a8a8;
+      }
+    }
+  }
+
+  .videos-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 400px;
+    overflow-y: auto;
+
+    .video-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem;
+      background-color: var(--surface-card);
+      border-radius: 6px;
+      border: 1px solid var(--surface-border);
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:hover {
+        background-color: var(--surface-hover);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+        .btn-primary {
+          opacity: 1;
+        }
+      }
+
+      .video-info {
+        flex: 1;
+        min-width: 0;
+
+        h4 {
+          margin: 0;
+          font-size: 0.9rem;
+          color: var(--text-color);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .duration {
+          font-size: 0.8rem;
+          color: var(--text-color-secondary);
+          margin-top: 0.25rem;
+        }
+      }
+
+      .btn-primary {
+        opacity: 0.8;
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+
+        i {
+          margin-right: 0.5rem;
+        }
       }
     }
   }
