@@ -1,133 +1,42 @@
-import { Component, OnInit, ViewChild, ElementRef, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { CourseService } from '../../services/course.service';
-import { Course, CourseModule, CourseVideo } from '../../../../core/models/course.model';
-import { Exam } from '../../../../core/models/exam.model';
-import { ExamService } from '../../../../core/services/exam.service';
-import { from, Observable } from 'rxjs';
+import { Component, ElementRef, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { SafePipe } from '../../../../shared/pipes/safe.pipe';
-import { ModalComponent } from "../../../../shared/components/modal/modal.component";
-import { ExamTakeComponent } from '../../../exam/components/exam-take/exam-take.component';
+import { ActivatedRoute } from '@angular/router';
+import { Course, CourseModule, CourseVideo } from '../../../../core/models/course.model';
+import { CourseService } from '../../services/course.service';
 import { StudentService } from '../../../student/services/student.service';
+import { Exam, StudentExam } from '../../../../core/models/exam.model';
+import { SafePipe } from '../../../../shared/pipes/safe.pipe';
 import { AuthService } from '../../../../core/services/auth.service';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { DomSanitizer } from '@angular/platform-browser';
+import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { ExamTakeComponent } from '../../../exam/components/exam-take/exam-take.component';
+import { firstValueFrom } from 'rxjs';
+import { ExamService } from '../../../../core/services/exam.service';
 
 @Component({
   selector: 'app-course-player',
   standalone: true,
-  imports: [CommonModule, SafePipe, ModalComponent, ExamTakeComponent],
-  template: `
-    <div class="course-player">
-      @if (isLoading()) {
-        <div class="loading">
-          <i class="fas fa-spinner fa-spin"></i>
-          <p>Carregando curso...</p>
-        </div>
-      } @else if (!course()) {
-        <div class="error-message">
-          <p>Curso não encontrado ou sem conteúdo disponível.</p>
-        </div>
-      } @else {
-        <div class="player-container">
-          <!-- Seção do Player -->
-          <div class="player-section">
-            <h2>{{ course()?.name }}</h2>
-            @if (currentVideo()) {
-              <div class="video-player">
-                <iframe
-                  #videoPlayer
-                  [src]="getEmbedUrl(currentVideo()!.webViewLink) | safe:'resourceUrl'"
-                  frameborder="0"
-                  allowfullscreen
-                  (load)="onVideoLoad()"
-                ></iframe>
-              </div>
-              <div class="current-video-info">
-                <h3>{{ currentVideo()?.name }}</h3>
-                <span class="duration">
-                  <i class="fas fa-clock"></i>
-                  {{ currentVideo()?.duration }} minutos
-                </span>
-              </div>
-            } @else {
-              <div class="no-video-message">
-                <p>Selecione um vídeo para começar.</p>
-              </div>
-            }
-          </div>
-
-          <!-- Seção da Lista -->
-          <div class="content-section">
-            <div class="modules-list">
-              <h3>Módulos do Curso</h3>
-              @if (course()?.modules?.length) {
-                @for (module of course()?.modules; track module.name) {
-                  <div class="module-item">
-                    <div class="module-header" (click)="toggleModule(module)">
-                      <i class="fas" [class.fa-chevron-down]="expandedModules().has(module.name)" 
-                         [class.fa-chevron-right]="!expandedModules().has(module.name)"></i>
-                      <h4>{{ module.name }}</h4>
-                    </div>
-                    @if (expandedModules().has(module.name) && module.videos?.length) {
-                      <div class="video-list">
-                        @for (video of module.videos; track video.videoId) {
-                          @if (video.active) {
-                            <div class="video-item" 
-                                 [class.active]="currentVideo()?.videoId === video.videoId"
-                                 [class.watched]="watchedVideos().has(video.videoId)"
-                                 (click)="playVideo(video)">
-                              <i class="fas" [class.fa-play]="currentVideo()?.videoId !== video.videoId" 
-                                 [class.fa-pause]="currentVideo()?.videoId === video.videoId"></i>
-                              <span class="video-title">{{ video.name }}</span>
-                              <span class="video-duration">{{ video.duration }} min</span>
-                              @if (watchedVideos().has(video.videoId)) {
-                                <i class="fas fa-check"></i>
-                              }
-                            </div>
-                          }
-                        }
-                      </div>
-                    }
-                  </div>
-                }
-              } @else {
-                <p class="no-modules">Nenhum módulo disponível neste curso.</p>
-              }
-            </div>
-
-            @if (exams()?.length) {
-              <div class="exams">
-                <h3>Provas Disponíveis</h3>
-                <ul>
-                  @for (exam of exams(); track exam.id) {
-                    <li>
-                      {{ exam.title }}
-                      <button (click)="examModal.toggle()">Iniciar Prova</button>
-                      <app-modal #examModal>
-                        <app-exam-take [examId]="exam.id"></app-exam-take>
-                      </app-modal>
-                    </li>
-                  }
-                </ul>
-              </div>
-            }
-          </div>
-        </div>
-      }
-    </div>
-  `,
+  imports: [
+    CommonModule,
+    SafePipe,
+    ModalComponent,
+    ExamTakeComponent
+  ],
+  templateUrl: './course-player.component.html',
   styleUrls: ['./course-player.component.scss']
 })
-export class CoursePlayerComponent implements OnInit {
+export class CoursePlayerComponent implements OnInit, OnDestroy {
   @ViewChild('videoPlayer') videoPlayer!: ElementRef;
-
+  @ViewChild('examModal') examModal!: ModalComponent;
   private courseService = inject(CourseService);
   private examService = inject(ExamService);
   private route = inject(ActivatedRoute);
   private studentService = inject(StudentService);
   private authService = inject(AuthService);
   private notificationService = inject(NotificationService);
+  private videoTimer: any;
+  private readonly WATCH_TIME_THRESHOLD = 10; // 10 segundos
 
   course = signal<Course | null>(null);
   currentVideo = signal<CourseVideo | null>(null);
@@ -135,6 +44,8 @@ export class CoursePlayerComponent implements OnInit {
   watchedVideos = signal<Set<string>>(new Set());
   expandedModules = signal<Set<string>>(new Set());
   exams = signal<Exam[]>([]);
+  examResults = signal<{[key: string]: StudentExam}>({});
+  currentExamId = signal<string | null>(null);
 
   async ngOnInit() {
     const courseId = this.route.snapshot.paramMap.get('id');
@@ -146,9 +57,10 @@ export class CoursePlayerComponent implements OnInit {
     await this.loadCourse(courseId);
     await this.loadExams(courseId);
     await this.loadWatchedVideos(courseId);
+    await this.loadExamResults();
   }
 
-  private async loadCourse(courseId: string) {
+  async loadCourse(courseId: string) {
     try {
       const course = await this.courseService.getById(courseId);
       // Validar se o curso tem dados válidos
@@ -188,7 +100,7 @@ export class CoursePlayerComponent implements OnInit {
     }
   }
 
-  private async loadExams(courseId: string) {
+  async loadExams(courseId: string) {
     try {
       const examsObservable = this.examService.getExamsByCourse(courseId);
       examsObservable.subscribe(exams => {
@@ -199,59 +111,215 @@ export class CoursePlayerComponent implements OnInit {
     }
   }
 
-  private async loadWatchedVideos(courseId: string) {
+  async loadWatchedVideos(courseId: string) {
     const userId = this.authService.getCurrentUserId();
-    if (!userId) return;
+    if (!userId) {
+      this.notificationService.error('Usuário não autenticado');
+      return;
+    }
 
     try {
-      const watched = await this.studentService.getWatchedVideos(userId, courseId);
-      this.watchedVideos.set(new Set(watched));
+      const watchedVideoIds = await this.studentService.getWatchedVideos(userId, courseId);
+      const watchedSet = new Set<string>(watchedVideoIds);
+      this.watchedVideos.set(watchedSet);
     } catch (error) {
       console.error('Erro ao carregar vídeos assistidos:', error);
+      this.notificationService.error('Erro ao carregar progresso do curso');
     }
   }
 
-  toggleModule(module: CourseModule) {
-    this.expandedModules.update(set => {
-      if (set.has(module.name)) {
-        set.delete(module.name);
-      } else {
-        set.add(module.name);
-      }
-      return set;
-    });
-  }
-
-  async playVideo(video: CourseVideo) {
-    this.currentVideo.set(video);
-    
-    // Marca o vídeo como assistido
+  async loadExamResults() {
     const userId = this.authService.getCurrentUserId();
-    const courseId = this.course()?.id;
-    
-    if (userId && courseId && video.videoId) {
+    if (userId) {
       try {
-        await this.studentService.saveVideoProgress(userId, courseId, video.videoId);
-        this.watchedVideos.update(set => {
-          set.add(video.videoId);
-          return set;
-        });
+        const results = await firstValueFrom(this.examService.getStudentExams(userId));
+        this.examResults.set(results.reduce((acc, result) => {
+          acc[result.examId] = {
+            id: result.id,
+            examId: result.examId,
+            studentId: result.studentId,
+            answers: result.answers,
+            score: result.score,
+            submittedAt: result.submittedAt
+          };
+          return acc;
+        }, {} as {[key: string]: StudentExam}));
       } catch (error) {
-        console.error('Erro ao marcar vídeo como assistido:', error);
+        console.error('Erro ao carregar resultados dos exames:', error);
+        this.notificationService.error('Erro ao carregar resultados dos exames');
       }
     }
   }
 
-  getEmbedUrl(url: string): string {
-    // Verifica se é uma URL do Google Drive
-    const driveMatch = url.match(/\/d\/([^/]+)/);
-    if (driveMatch) {
-      return `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
+  toggleModule(moduleName: string) {
+    const expanded = this.expandedModules();
+    if (expanded.has(moduleName)) {
+      expanded.delete(moduleName);
+    } else {
+      expanded.add(moduleName);
     }
-    return url;
+    this.expandedModules.set(expanded);
+  }
+
+  selectVideo(video: CourseVideo) {
+    this.currentVideo.set(video);
+    this.startVideoTimer(video);
   }
 
   onVideoLoad() {
-    // Implementar lógica adicional quando o vídeo carregar
+    // Verifica se o elemento do vídeo existe antes de iniciar o timer
+    if (this.videoPlayer?.nativeElement) {
+      const video = this.currentVideo();
+      if (video) {
+        this.startVideoTimer(video);
+      }
+    }
+  }
+
+  startVideoTimer(video: CourseVideo) {
+    if (this.videoTimer) {
+      clearTimeout(this.videoTimer);
+    }
+
+    this.videoTimer = setTimeout(async () => {
+      const userId = this.authService.getCurrentUserId();
+      if (!userId) {
+        this.notificationService.error('Usuário não autenticado');
+        return;
+      }
+
+      try {
+        await this.studentService.saveVideoProgress(
+          userId,
+          this.course()!.id,
+          video.videoId
+        );
+
+        const watched = this.watchedVideos();
+        watched.add(video.videoId);
+        this.watchedVideos.set(watched);
+      } catch (error) {
+        console.error('Erro ao marcar vídeo como assistido:', error);
+        this.notificationService.error('Erro ao salvar progresso do vídeo');
+      }
+    }, this.WATCH_TIME_THRESHOLD * 1000);
+  }
+
+  getTotalVideos(): number {
+    let total = 0;
+    this.course()?.modules?.forEach(module => {
+      total += module.videos?.length || 0;
+    });
+    return total;
+  }
+
+  getProgressPercentage(): number {
+    const total = this.getTotalVideos();
+    if (!total) return 0;
+    return (this.watchedVideos().size / total) * 100;
+  }
+
+  getModuleProgress(module: CourseModule): string {
+    if (!module.videos?.length) return '0/0';
+    const watched = module.videos.filter(v => this.watchedVideos().has(v.videoId)).length;
+    return `${watched}/${module.videos.length}`;
+  }
+
+  getCurrentModuleExams(): Exam[] {
+    if (!this.course() || !this.exams().length || !this.currentVideo()) return [];
+    
+    const currentModule = this.course()?.modules.find(
+      m => m.videos.some(v => v.videoId === this.currentVideo()?.videoId)
+    );
+
+    if (!currentModule) return [];
+
+    return this.exams().filter(e => e.moduleId === currentModule.name);
+  }
+
+  canTakeModuleExams(): boolean {
+    if (!this.currentVideo()) return false;
+    
+    const currentModule = this.course()?.modules.find(
+      m => m.videos.some(v => v.videoId === this.currentVideo()?.videoId)
+    );
+
+    if (!currentModule) return false;
+
+    // Verifica se todos os vídeos do módulo foram assistidos
+    return currentModule.videos.every(v => 
+      !v.active || this.watchedVideos().has(v.videoId)
+    );
+  }
+
+  hasModuleExams(): boolean {
+    return this.getCurrentModuleExams().length > 0;
+  }
+
+  getExamStatusClass(examId: string): string {
+    const status = this.getExamStatus(examId);
+    return status.status;
+  }
+
+  getExamStatusText(examId: string): string {
+    const status = this.getExamStatus(examId);
+    switch (status.status) {
+      case 'not-taken': return 'Não realizado';
+      case 'passed': return `Aprovado (${status.score}%)`;
+      case 'failed': return `Reprovado (${status.score}%)`;
+      default: return 'Pendente';
+    }
+  }
+
+  getExamStatus(examId: string): { status: 'not-taken' | 'passed' | 'failed', score?: number } {
+    const result = this.examResults()[examId];
+    if (!result) {
+      return { status: 'not-taken' };
+    }
+    return {
+      status: result.score >= 70 ? 'passed' : 'failed',
+      score: result.score
+    };
+  }
+
+  async startExam(examId: string) {
+    if (!this.canTakeModuleExams()) {
+      this.notificationService.error('Complete todos os vídeos do módulo antes de fazer a avaliação');
+      return;
+    }
+
+    const exam = this.getCurrentModuleExams().find(e => e.id === examId);
+    if (!exam) {
+      this.notificationService.error('Avaliação não encontrada');
+      return;
+    }
+
+    this.currentExamId.set(examId);
+    this.examModal.show = true;
+  }
+
+  async onExamComplete() {
+    try {
+      // Atualiza os resultados dos exames
+      await this.loadExamResults();
+      this.notificationService.success('Avaliação concluída com sucesso!');
+      this.examModal.show = false;
+      this.currentExamId.set(null);
+    } catch (error) {
+      console.error('Erro ao finalizar exame:', error);
+      this.notificationService.error('Erro ao finalizar exame');
+    }
+  }
+
+  onExamCancel() {
+    this.examModal.show = false;
+    this.currentExamId.set(null);
+  }
+
+  ngOnDestroy() {
+    // Limpa o timer quando o componente é destruído
+    if (this.videoTimer) {
+      clearTimeout(this.videoTimer);
+    }
   }
 }

@@ -1,43 +1,140 @@
-<div class="course-player">
-  <div *ngIf="isLoading" class="loading-overlay">
-    <div class="loading-spinner"></div>
+@if (isLoading()) {
+  <div class="loading">
+    <i class="fas fa-circle-notch fa-spin"></i>
+    <p>Carregando conteúdo...</p>
   </div>
-
-  <ng-container *ngIf="!isLoading">
-    <h2>{{ course.name }}</h2>
-
-    <div class="video-player">
-      <iframe
-        [src]="currentVideo.webViewLink | safe: 'resourceUrl'"
-        width="640"
-        height="360"
-        frameborder="0"
-        allowfullscreen
-      ></iframe>
+} @else {
+  <div class="course-player">
+    <div class="video-section">
+      @if (currentVideo()) {
+        <div class="video-player">
+          @if (currentVideo()?.webViewLink) {
+            <iframe
+              #videoPlayer
+              [src]="currentVideo()!.webViewLink | safe:'resourceUrl'"
+              frameborder="0"
+              allowfullscreen
+              allow="autoplay"
+              sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-presentation"
+            ></iframe>
+          } @else {
+            <div class="no-video">
+              <i class="fas fa-film"></i>
+              <p>{{ currentVideo() ? 'Carregando vídeo...' : 'Nenhum vídeo selecionado' }}</p>
+            </div>
+          }
+        </div>
+        <div class="video-info">
+          <h2>{{ currentVideo()!.name }}</h2>
+          <div class="meta">
+            <span><i class="far fa-clock"></i> {{ currentVideo()!.duration }}min</span>
+            @if (watchedVideos().has(currentVideo()!.videoId)) {
+              <span class="watched"><i class="far fa-check-circle"></i> Visualizado</span>
+            }
+          </div>
+        </div>
+      }
     </div>
 
-    <div class="video-list">
-      <h3>Vídeos do Curso</h3>
-      <ul>
-        <li *ngFor="let video of course?.videos"
-            [class.watched]="watchedVideos.has(video.id)"
-            (click)="playVideo(video)">
-          {{ video.name }} - {{ video.duration }}
-        </li>
-      </ul>
-    </div>
+    <div class="modules-section">
+      <div class="modules-header">
+        <h3>Módulos do Curso</h3>
+        <div class="progress">
+          <span class="progress-text">
+            {{ watchedVideos().size }} / {{ getTotalVideos() }} vídeos concluídos
+          </span>
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="getProgressPercentage()"></div>
+          </div>
+        </div>
+      </div>
 
-    <div class="exams">
-      <h3>Provas Disponíveis</h3>
-      <ul>
-        <li *ngFor="let exam of exams$ | async">
-          {{ exam.name }}
-          <button (click)="examModal.toggle()">Iniciar Prova</button>
-          <app-modal #examModal>
-            <app-exam-take [examId]="exam.id"></app-exam-take>
-          </app-modal>
-        </li>
-      </ul>
+      <div class="modules-list">
+        @if (course()?.modules?.length) {
+          @for (module of course()!.modules; track module.name) {
+            <div class="module-item">
+              <div class="module-header" (click)="toggleModule(module.name)">
+                <i class="fas" 
+                   [class.fa-chevron-right]="!expandedModules().has(module.name)" 
+                   [class.fa-chevron-down]="expandedModules().has(module.name)"></i>
+                <h4>{{ module.name }}</h4>
+                <span class="module-progress">
+                  {{ getModuleProgress(module) }}
+                </span>
+              </div>
+
+              @if (expandedModules().has(module.name)) {
+                <div class="videos-list">
+                  @for (video of module.videos; track video.videoId) {
+                    <div 
+                      class="video-item" 
+                      [class.active]="video.videoId === currentVideo()?.videoId"
+                      [class.watched]="watchedVideos().has(video.videoId)"
+                      (click)="selectVideo(video)"
+                    >
+                      <i class="fas" 
+                         [class.fa-play]="!watchedVideos().has(video.videoId)" 
+                         [class.fa-check]="watchedVideos().has(video.videoId)"></i>
+                      <span class="video-title">{{ video.name }}</span>
+                      <span class="video-duration">{{ video.duration }}min</span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        } @else {
+          <p class="no-modules">Nenhum módulo disponível neste curso.</p>
+        }
+      </div>
+
+      @if (hasModuleExams()) {
+        <div class="exam-section">
+          <div class="exam-header">
+            <h3>Avaliações do Módulo</h3>
+          </div>
+          
+          @if (canTakeModuleExams()) {
+            <div class="exams-list">
+              @for (exam of getCurrentModuleExams(); track exam.id) {
+                <div class="exam-item">
+                  <div class="exam-info">
+                    <h4>{{ exam.title }}</h4>
+                    <span class="exam-status" [class]="getExamStatusClass(exam.id)">
+                      <i class="fas" 
+                         [class.fa-clock]="getExamStatus(exam.id).status === 'not-taken'"
+                         [class.fa-check]="getExamStatus(exam.id).status === 'passed'"
+                         [class.fa-times]="getExamStatus(exam.id).status === 'failed'"></i>
+                      {{ getExamStatusText(exam.id) }}
+                    </span>
+                  </div>
+                  <button class="exam-button" (click)="startExam(exam.id)">
+                    <i class="fas fa-file-alt"></i>
+                    {{ getExamStatus(exam.id).status === 'not-taken' ? 'Iniciar Avaliação' : 'Ver Resultado' }}
+                  </button>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="exam-locked">
+              <i class="fas fa-lock"></i>
+              <p>Complete todos os vídeos do módulo para desbloquear as avaliações</p>
+            </div>
+          }
+        </div>
+      }
     </div>
-  </ng-container>
-</div>
+  </div>
+}
+
+<app-modal #examModal [showCancelButton]="true">
+  <div class="exam-modal-content">
+    @if (currentExamId()) {
+      <app-exam-take
+        [examId]="currentExamId()!"
+        (submitExam)="onExamComplete()"
+        (cancel)="onExamCancel()"
+      ></app-exam-take>
+    }
+  </div>
+</app-modal>

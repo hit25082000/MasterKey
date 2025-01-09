@@ -1,5 +1,132 @@
-$color-primary: #384A87;
-$color-secondary: #ee3c48;
+// Variáveis de Cores Personalizadas
+:root {
+  --primary: #384A87;
+  --primary-light: #5C6EA1;
+  --primary-dark: #2A3A6D;
+  --primary-darker: #1C2A53;
+  --primary-lighter: #8A98C0;
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+  --background: #f8f9fa;
+  --surface: #ffffff;
+  --surface-alt: #ffffff;
+  --surface-hover: #f6f9fc;
+  --surface-light: #f8f9fa;
+  --border: #dfe7ef;
+  --hover: #f6f9fc;
+
+  --text: #495057;
+  --text-light: #6c757d;
+  --text-white: #ffffff;
+
+  --success: #22c55e;
+  --success-light: #a8dabc;
+  --success-bg: #f2f8f4;
+
+  --danger: #f56565;
+  --danger-light: #feb2b2;
+  --danger-bg: #fff5f5;
+
+  --info: #4299e1;
+  --info-light: #bee3f8;
+  --info-bg: #ebf8ff;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+// Reset e Estilos Base
+html, body { 
+  height: 100%; 
+  margin: 0; 
+  background-color: var(--background);
+  color: var(--text);
+  font-family: "Roboto", "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// Classes Utilitárias
+.text-success {
+  color: var(--success) !important;
+}
+
+.text-danger {
+  color: var(--danger) !important;
+}
+
+.text-primary {
+  color: var(--primary) !important;
+}
+
+// Animações
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { transform: translateY(-10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+// Estilos de Componentes Base
+.card {
+  background: var(--surface);
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  box-shadow: var(--shadow);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  gap: 0.5rem;
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: var(--text-white);
+
+  &:hover:not(:disabled) {
+    background-color: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+}
+
+// Scrollbar personalizada
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary-lighter);
+  border-radius: 4px;
+  
+  &:hover {
+    background: var(--primary-light);
+  }
+}

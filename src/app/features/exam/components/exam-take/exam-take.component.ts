@@ -5,11 +5,12 @@ import { Answer, Exam, Options, Question, StudentExam } from '../../../../core/m
 import { ExamService } from '../../../../core/services/exam.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { Observable, switchMap, tap, catchError, of, map } from 'rxjs';
+import { TimestampPipe } from '../../../../shared/pipes/timestamp.pipe';
 
 @Component({
   selector: 'app-exam-take',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TimestampPipe],
   templateUrl: './exam-take.component.html',
   styleUrls: ['./exam-take.component.scss']
 })
