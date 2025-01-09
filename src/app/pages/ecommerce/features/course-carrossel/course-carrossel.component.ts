@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, ElementRef, ViewChild, AfterViewInit, HostListener } from '@angular/core';
 
 @Component({
   selector: 'app-course-carrossel',
@@ -11,6 +11,13 @@ export class CourseCarrosselComponent implements AfterViewInit {
   @ViewChild('carouselContent') carouselContent!: ElementRef;
   currentIndex = 0;
   totalItems = 0;
+  isMobile = window.innerWidth <= 1200;
+
+  @HostListener('window:resize')
+  onResize() {
+    this.isMobile = window.innerWidth <= 1200;
+    this.updateCarousel();
+  }
 
   ngAfterViewInit() {
     this.totalItems = this.carouselContent.nativeElement.children.length;
@@ -29,28 +36,42 @@ export class CourseCarrosselComponent implements AfterViewInit {
 
   private updateCarousel() {
     const items = Array.from(this.carouselContent.nativeElement.children);
-    const centerOffset = window.innerWidth / 2;
-    const cardWidth = 320; // Largura do card + margem
+    const cardWidth = this.isMobile ? 280 : 320; // Ajusta a largura do card baseado no dispositivo
 
     items.forEach((item: any, index: number) => {
       let distance = (index - this.currentIndex + this.totalItems) % this.totalItems;
       if (distance > this.totalItems / 2) distance -= this.totalItems;
+      // Ajusta o posicionamento e escala baseado no dispositivo
+      
+      var translateX = this.isMobile
+      ? '-50%' // Reduz o espaçamento em mobile
+      : `calc(-50% - ${distance * cardWidth}px)`;
+      var translateY = '-50%';
+      
+      if (distance === 0) {
+        translateX = '-50%';
+      }
+      
+      const scale = this.isMobile
+      ? distance === 0 ? 1.2 : 1
+      : distance === 0 ? 1.2 : 1;
 
-      // Calcula a posição X considerando o loop
-      const translateX = distance * cardWidth;
-
+      const translateZ = this.isMobile
+      ? distance === 0 ? '50px' : '0'
+      : distance === 0 ? '50px' : '0';
+      
+      console.log(translateX, translateY);
       // Aplica as transformações
       item.style.transform = `
-        translateX(${translateX}px)
-        scale(${distance === 0 ? 1.1 : 0.8})
-        translateZ(${distance === 0 ? '50px' : '0'})
+        translateX(${translateX})
+        translateY(${translateY})
+        scale(${scale})
+        translateZ(${translateZ})
       `;
 
       // Ajusta visibilidade e blur
       item.style.filter = distance === 0 ? 'blur(0)' : 'blur(2px)';
       item.style.opacity = Math.abs(distance) <= 1 ? '1' : '0.3';
-      item.style.zIndex = distance === 0 ? '1' : '0';
-      item.style.transition = 'all 0.5s ease';
     });
   }
 }

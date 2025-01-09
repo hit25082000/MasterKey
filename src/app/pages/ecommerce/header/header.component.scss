@@ -1,53 +1,170 @@
+$color-primary: #384A87;
+$color-secondary: #ee3c48;
+
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0 4rem;
   height: 80px;
-  background-color: #fff;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   background:
-  linear-gradient(90deg, rgba(238, 60, 72, 0.2) 0%, rgba(56, 74, 135, 0.2) 100%), #000000;
+    linear-gradient(90deg, rgba(238, 60, 72, 0.2) 0%, rgba(56, 74, 135, 0.2) 100%), #000000;
+  position: relative;
+  z-index: 1000;
+
+  @media (max-width: 1200px) {
+    padding: 0 2rem;
+  }
 }
 
 .header-logo .logo {
   height: 40px;
 }
 
-.header-nav {
-  display: flex;
-  gap: 1rem;
-}
-
-.header-nav button {
-  padding: 0.5rem 1rem;
-  border: none;
+.hamburger-btn {
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 30px;
+  height: 20px;
   background: none;
-  color: white;
+  border: none;
   cursor: pointer;
-  position: relative;
+  padding: 0;
+  z-index: 1001;
+
+  @media (max-width: 1200px) {
+    display: flex;
+    order: 1;
+  }
+
+  span {
+    display: block;
+    width: 30px;
+    height: 3px;
+    margin: 2px 0;
+    background-color: white;
+    transition: all 0.3s ease;
+    border-radius: 3px;
+  }
 
   &.active {
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: -5px;
-      left: 0;
-      width: 100%;
-      height: 2px;
-      background-color: #EE3C48;
-      border-radius: 2px;
+    span {
+      &:first-child {
+        transform: translateY(7px) rotate(45deg);
+      }
+
+      &:nth-child(2) {
+        opacity: 0;
+      }
+
+      &:last-child {
+        transform: translateY(-7px) rotate(-45deg);
+      }
     }
   }
 }
 
-.header-profile .profile-btn {
+.header-nav {
   display: flex;
+  gap: 1rem;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border: none;
-  color: white;
-  background: none;
-  cursor: pointer;
+
+  @media (max-width: 1200px) {
+    display: none;
+    
+    &.open {
+      display: flex;
+      position: fixed;
+      top: 80px;
+      left: 0;
+      right: 0;
+      width: 100%;
+      height: calc(100vh - 80px);
+      flex-direction: column;
+      background: linear-gradient(90deg, rgba(238, 60, 72, 0.95) 0%, rgba(56, 74, 135, 0.95) 100%);
+      padding: 2rem;
+      backdrop-filter: blur(10px);
+    }
+  }
+
+  button {
+    padding: 0.5rem 1rem;
+    border: none;
+    background: none;
+    color: white;
+    cursor: pointer;
+    position: relative;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+
+    @media (max-width: 1200px) {
+      width: 100%;
+      text-align: center;
+      padding: 1rem;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+    }
+
+    &.active {
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background-color: #EE3C48;
+        border-radius: 2px;
+
+        @media (max-width: 1200px) {
+          display: none;
+        }
+      }
+
+      @media (max-width: 1200px) {
+        background: rgba(255, 255, 255, 0.1);
+      }
+    }
+  }
+}
+
+.header-profile {
+  .profile-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: none;
+    color: white;
+    background: none;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+
+    &:hover {
+      color: #EE3C48;
+    }
+
+    @media (max-width: 1200px) {
+      display: none;
+    }
+  }
+}
+
+// Classes de visibilidade responsiva
+.desktop-only {
+  @media (max-width: 1200px) {
+    display: none !important;
+  }
+}
+
+.mobile-only {
+  display: none !important;
+
+  @media (max-width: 1200px) {
+    display: flex !important;
+  }
 }

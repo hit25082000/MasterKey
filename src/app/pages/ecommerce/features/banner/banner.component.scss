@@ -20,7 +20,11 @@ $color-secondary: #ee3c48;
   .banner-content{
     display: flex;
     gap: 200px;
-
+    
+  @media (max-width: 1200px) {
+    flex-direction: column;
+    gap: 100px;
+  }
     .banner-text {
       margin: 3rem 0rem 3rem 3rem ;
     .banner-h1 {

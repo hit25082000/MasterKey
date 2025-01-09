@@ -3,10 +3,14 @@ $color-secondary: #ee3c48;
 
 .courses {
   min-height: calc(100vh - 80px);
-
-  padding: 2rem 0;
+  padding: 4rem 0;
   background:
-  linear-gradient(90deg, rgba(238, 60, 72, 0.2) 0%, rgba(56, 74, 135, 0.2) 100%), #000000;
+    linear-gradient(90deg, rgba(238, 60, 72, 0.2) 0%, rgba(56, 74, 135, 0.2) 100%), #000000;
+
+  @media (max-width: 768px) {
+    padding: 2rem 0;
+    min-height: auto;
+  }
 
   .courses-container {
     max-width: 1200px;
@@ -14,11 +18,26 @@ $color-secondary: #ee3c48;
     padding: 0 1rem;
     text-align: center;
 
+    @media (max-width: 768px) {
+      padding: 0 0.5rem;
+    }
+
     h2 {
       font-size: 2.5rem;
       margin-bottom: 4rem;
       color: #fff;
       transform: translateY(-2rem);
+
+      @media (max-width: 1200px) {
+        font-size: 2rem;
+        margin-bottom: 3rem;
+      }
+
+      @media (max-width: 768px) {
+        font-size: 1.75rem;
+        margin-bottom: 2rem;
+        transform: translateY(-1rem);
+      }
 
       .highlight {
         color: $color-primary;
@@ -31,6 +50,11 @@ $color-secondary: #ee3c48;
       perspective: 1000px;
       transform-style: preserve-3d;
 
+      @media (max-width: 768px) {
+        height: 400px;
+        perspective: 800px;
+      }
+
       .carousel-content {
         position: relative;
         height: 100%;
@@ -38,7 +62,8 @@ $color-secondary: #ee3c48;
 
         .course-card {
           position: absolute;
-          left: 35%;
+          left: 50%;
+          top: 50%;
           transform: translate(-50%, -50%);
           width: 300px;
           background: rgba(255, 255, 255, 0.1);
@@ -47,6 +72,14 @@ $color-secondary: #ee3c48;
           padding: 1.5rem;
           transition: all 0.5s ease;
           cursor: pointer;
+
+          @media (max-width: 1200px) {
+            transform: translate(-50%, -50%);
+            &:hover {
+              transform: translate(-10%, -10%) scale(1.05);
+            }
+  
+          }
 
           &:hover {
             transform: translate(-50%, -50%) scale(1.05);
@@ -57,6 +90,10 @@ $color-secondary: #ee3c48;
             height: 200px;
             object-fit: cover;
             border-radius: 0.5rem;
+
+            @media (max-width: 768px) {
+              height: 160px;
+            }
           }
 
           h3 {
@@ -77,8 +114,7 @@ $color-secondary: #ee3c48;
             .price {
               font-size: 1.5rem;
               font-weight: bold;
-              margin: 0.5rem 0;
-            }
+              margin: 0.5rem 0;            }
 
             .cash-price {
               font-size: 0.9rem;
@@ -104,19 +140,43 @@ $color-secondary: #ee3c48;
         cursor: pointer;
         transition: all 0.3s ease;
 
+        @media (max-width: 768px) {
+          width: 40px;
+          height: 40px;
+        }
+
         &:hover {
           background: rgba(255, 255, 255, 0.3);
           transform: translateY(-50%) scale(1.1);
+
+          @media (max-width: 768px) {
+            transform: translateY(-50%) scale(1.05);
+          }
         }
 
         svg {
           width: 24px;
           height: 24px;
           fill: white;
+
+          @media (max-width: 768px) {
+            width: 20px;
+            height: 20px;
+          }
         }
 
-        &.prev { left: 20px; }
-        &.next { right: 20px; }
+        &.prev { 
+          left: 20px; 
+          @media (max-width: 768px) {
+            left: 10px;
+          }
+        }
+        &.next { 
+          right: 20px; 
+          @media (max-width: 768px) {
+            right: 10px;
+          }
+        }
       }
     }
 
@@ -130,6 +190,12 @@ $color-secondary: #ee3c48;
       font-size: 1rem;
       cursor: pointer;
       transition: all 0.3s ease;
+
+      @media (max-width: 768px) {
+        margin-top: 1.5rem;
+        padding: 0.5rem 1.5rem;
+        font-size: 0.9rem;
+      }
 
       &:hover {
         background: rgba(255, 255, 255, 0.2);

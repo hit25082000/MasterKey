@@ -4,12 +4,18 @@
     <img src="assets/logo.png" alt="Logo" class="logo">
   </div>
 
+  <button class="hamburger-btn" (click)="toggleMenu()" [class.active]="isMenuOpen()">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+
   <!-- Grupo 2: Botões de Navegação -->
-  <nav class="header-nav">
-    <button routerLink="/home" routerLinkActive="active">Início</button>
-    <button routerLink="/products" routerLinkActive="active">Nossos cursos</button>
-    <button routerLink="/about" routerLinkActive="active">Quem Somos</button>
-    <button routerLink="/contact" routerLinkActive="active">Contato</button>
+  <nav class="header-nav" [class.open]="isMenuOpen()">
+    <button routerLink="/home" routerLinkActive="active" (click)="isMenuOpen.set(false)">Início</button>
+    <button routerLink="/products" routerLinkActive="active" (click)="isMenuOpen.set(false)">Nossos cursos</button>
+    <button routerLink="/about" routerLinkActive="active" (click)="isMenuOpen.set(false)">Quem Somos</button>
+    <button routerLink="/contact" routerLinkActive="active" (click)="isMenuOpen.set(false)">Contato</button>
   </nav>
 
   <!-- Grupo 3: Ícone de Perfil -->
