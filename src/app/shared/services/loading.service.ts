@@ -1,17 +1,20 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 
 @Injectable({
   providedIn: 'root'
 })
 export class LoadingService {
-  private loadingStack = signal<number>(0);
-  public isLoading = computed(() => this.loadingStack() > 0);
+  private loading = signal(false);
 
-  show(): void {
-    this.loadingStack.update(count => count + 1);
+  isLoading() {
+    return this.loading();
   }
 
-  hide(): void {
-    this.loadingStack.update(count => Math.max(0, count - 1));
+  show() {
+    queueMicrotask(() => this.loading.set(true));
+  }
+
+  hide() {
+    queueMicrotask(() => this.loading.set(false));
   }
 }

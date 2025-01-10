@@ -13,6 +13,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ClassManagementService } from '../../services/class-management.service';
 import { StudentService } from '../../../student/services/student.service';
 import { NotificationService } from '../../../../shared/services/notification.service';
+import { LoadingService } from '../../../../shared/services/loading.service';
 import { Class } from '../../../../core/models/class.model';
 import { Student } from '../../../../core/models/student.model';
 import { Attendance } from '../../../../core/models/attendance.model';
@@ -49,33 +50,33 @@ import { provideNativeDateAdapter } from '@angular/material/core';
         </mat-form-field>
       </div>
 
-      <div class="students-list">
-        @for (student of studentsList(); track student.id) {
-          <div class="student-card" [class.present]="isStudentPresent(student.id)">
-            <div class="student-info">
-              <span class="student-name">{{ student.name }}</span>
+        <div class="students-list">
+          @for (student of studentsList(); track student.id) {
+            <div class="student-card" [class.present]="isStudentPresent(student.id)">
+              <div class="student-info">
+                <span class="student-name">{{ student.name }}</span>
+              </div>
+              <button mat-icon-button 
+                      [color]="isStudentPresent(student.id) ? 'primary' : ''" 
+                      (click)="toggleAttendance(student.id)">
+                <mat-icon>{{ isStudentPresent(student.id) ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+              </button>
             </div>
-            <button mat-icon-button 
-                    [color]="isStudentPresent(student.id) ? 'primary' : ''" 
-                    (click)="toggleAttendance(student.id)">
-              <mat-icon>{{ isStudentPresent(student.id) ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
-            </button>
-          </div>
-        }
+          }
 
-        @if (studentsList().length === 0) {
-          <div class="no-students">
-            <mat-icon>warning</mat-icon>
-            <p>Nenhum aluno encontrado nesta turma</p>
-          </div>
-        }
-      </div>
+          @if (studentsList().length === 0) {
+            <div class="no-students">
+              <mat-icon>warning</mat-icon>
+              <p>Nenhum aluno encontrado nesta turma</p>
+            </div>
+          }
+        </div>
 
-      <div class="summary">
-        <p>Total de Alunos: {{ studentsList().length }}</p>
-        <p>Presentes: {{ presentCount() }}</p>
-        <p>Ausentes: {{ studentsList().length - presentCount() }}</p>
-      </div>
+        <div class="summary">
+          <p>Total de Alunos: {{ studentsList().length }}</p>
+          <p>Presentes: {{ presentCount() }}</p>
+          <p>Ausentes: {{ studentsList().length - presentCount() }}</p>
+        </div>      
     </div>
   `,
   styles: [`
@@ -173,6 +174,7 @@ export class ClassAttendanceComponent implements OnInit {
   private classService = inject(ClassManagementService);
   private studentService = inject(StudentService);
   private notificationService = inject(NotificationService);
+  public loadingService = inject(LoadingService);
 
   currentClass = signal<Class | null>(null);
   attendanceData = signal<Attendance[]>([]);
@@ -210,15 +212,17 @@ export class ClassAttendanceComponent implements OnInit {
 
   constructor() {
     effect(() => {
-      if (this.currentClass()) {
+      const currentClassValue = this.currentClass();
+      if (currentClassValue) {
         this.loadAttendanceData();
       }
     });
 
     // Efeito para recarregar dados quando a data mudar
     effect(() => {
-      this.selectedDate(); // Dependência explícita
-      if (this.currentClass()) {
+      const currentDate = this.selectedDate(); // Dependência explícita
+      const currentClassValue = this.currentClass();
+      if (currentClassValue) {
         this.loadAttendanceData();
       }
     });
@@ -232,6 +236,7 @@ export class ClassAttendanceComponent implements OnInit {
   }
 
   private loadClassData(classId: string) {
+    this.loadingService.show();
     this.classService.getClass(classId).subscribe({
       next: (classData) => {
         if (classData) {
@@ -239,10 +244,12 @@ export class ClassAttendanceComponent implements OnInit {
         } else {
           this.notificationService.error('Turma não encontrada');
         }
+        this.loadingService.hide();
       },
       error: (error) => {
         console.error('Erro ao carregar turma:', error);
         this.notificationService.error('Erro ao carregar dados da turma');
+        this.loadingService.hide();
       }
     });
   }
@@ -261,6 +268,7 @@ export class ClassAttendanceComponent implements OnInit {
     const endDate = new Date(this.selectedDate());
     endDate.setUTCHours(23, 59, 59, 999);
 
+    this.loadingService.show();
     this.classService.getClassAttendance(
       this.currentClass()!.id!,
       startDate,
@@ -287,10 +295,12 @@ export class ClassAttendanceComponent implements OnInit {
 
           this.attendanceData.set(Object.values(uniqueAttendance));
         }
+        this.loadingService.hide();
       },
       error: (error) => {
         console.error('Erro ao carregar presenças:', error);
         this.notificationService.error('Erro ao carregar presenças');
+        this.loadingService.hide();
       }
     });
   }
@@ -347,6 +357,7 @@ export class ClassAttendanceComponent implements OnInit {
       updatedAt: new Date()
     };
 
+    this.loadingService.show();
     try {
       await firstValueFrom(this.classService.updateAttendance(newAttendance));
       
@@ -366,6 +377,8 @@ export class ClassAttendanceComponent implements OnInit {
     } catch (error) {
       console.error('Erro ao atualizar presença:', error);
       this.notificationService.error('Erro ao atualizar presença');
+    } finally {
+      this.loadingService.hide();
     }
   }
 }
