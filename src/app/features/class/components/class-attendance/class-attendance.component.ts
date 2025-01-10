@@ -43,40 +43,53 @@ import { provideNativeDateAdapter } from '@angular/material/core';
 
       <div class="date-filters">
         <mat-form-field>
-          <mat-label>Data</mat-label>
+          <mat-label>Mês</mat-label>
           <input matInput [matDatepicker]="picker" [(ngModel)]="selectedDate" (dateChange)="onDateChange($event)">
           <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-          <mat-datepicker #picker></mat-datepicker>
+          <mat-datepicker #picker 
+                         startView="year" 
+                         [startAt]="selectedDate()"
+                         (monthSelected)="onMonthSelected($event)"
+                         >
+          </mat-datepicker>
         </mat-form-field>
       </div>
 
-        <div class="students-list">
-          @for (student of studentsList(); track student.id) {
-            <div class="student-card" [class.present]="isStudentPresent(student.id)">
-              <div class="student-info">
-                <span class="student-name">{{ student.name }}</span>
-              </div>
-              <button mat-icon-button 
-                      [color]="isStudentPresent(student.id) ? 'primary' : ''" 
-                      (click)="toggleAttendance(student.id)">
-                <mat-icon>{{ isStudentPresent(student.id) ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
-              </button>
-            </div>
-          }
-
-          @if (studentsList().length === 0) {
-            <div class="no-students">
-              <mat-icon>warning</mat-icon>
-              <p>Nenhum aluno encontrado nesta turma</p>
-            </div>
+      <div class="attendance-table">
+        <div class="header-row">
+          <div class="student-name-header">Nome</div>
+          @for (day of daysInMonth(); track day) {
+            <div class="day-header" [class.week-start]="isWeekStart(day)">{{ day }}</div>
           }
         </div>
 
-        <div class="summary">
-          <p>Total de Alunos: {{ studentsList().length }}</p>
-          <p>Presentes: {{ presentCount() }}</p>
-          <p>Ausentes: {{ studentsList().length - presentCount() }}</p>
-        </div>      
+        @for (student of studentsList(); track student.id) {
+          <div class="student-row">
+            <div class="student-name">{{ student.name }}</div>
+            @for (day of daysInMonth(); track day) {
+              <div class="day-cell" [class.week-start]="isWeekStart(day)">
+                <button mat-icon-button 
+                        [color]="isStudentPresentOnDay(student.id, day) ? 'primary' : ''" 
+                        (click)="toggleAttendance(student.id, day)">
+                  <mat-icon>{{ isStudentPresentOnDay(student.id, day) ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+                </button>
+              </div>
+            }
+          </div>
+        }
+
+        @if (studentsList().length === 0) {
+          <div class="no-students">
+            <mat-icon>warning</mat-icon>
+            <p>Nenhum aluno encontrado nesta turma</p>
+          </div>
+        }
+      </div>
+
+      <div class="summary">
+        <p>Total de Alunos: {{ studentsList().length }}</p>
+        <p>Média de Presenças: {{ averageMonthlyPresence() }}</p>
+      </div>
     </div>
   `,
   styles: [`
@@ -97,41 +110,65 @@ import { provideNativeDateAdapter } from '@angular/material/core';
       }
     }
 
-    .students-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
+    .attendance-table {
+      position: relative;
+      display: block;
+      overflow-x: auto;
+      white-space: nowrap;
       margin-bottom: 2rem;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
-    .student-card {
+    .header-row, .student-row {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
+      min-width: max-content;
+    }
+
+    .student-name-header, .day-header,
+    .student-name, .day-cell {
+      flex: 0 0 auto;
       padding: 1rem;
-      background-color: #f5f5f5;
-      border-radius: 8px;
-      transition: all 0.3s ease;
+      text-align: center;
+      vertical-align: middle;
+      border-bottom: 1px solid #eee;
+    }
 
-      &.present {
-        background-color: #e8f5e9;
-        border-left: 4px solid #4caf50;
+    .student-name-header, .student-name {
+      position: sticky;
+      left: 0;
+      background: white;
+      z-index: 1;
+      width: 200px;
+      text-align: left;
+      border-right: 2px solid #e0e0e0;
+    }
+
+    .day-header, .day-cell {
+      width: 50px;
+    }
+
+    .header-row {
+      background: #f5f5f5;
+      font-weight: 500;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+
+      .student-name-header {
+        z-index: 3;
       }
+    }
 
-      .student-info {
-        .student-name {
-          font-size: 1rem;
-          font-weight: 500;
-        }
-      }
-
+    .day-cell {
       button {
-        transition: transform 0.2s ease;
-        
-        &:hover {
-          transform: scale(1.1);
-        }
+        transform: scale(0.8);
       }
+    }
+
+    .week-start {
+      border-left: 2px solid #e0e0e0;
     }
 
     .no-students {
@@ -139,8 +176,6 @@ import { provideNativeDateAdapter } from '@angular/material/core';
       flex-direction: column;
       align-items: center;
       padding: 2rem;
-      background-color: #f5f5f5;
-      border-radius: 8px;
       
       mat-icon {
         font-size: 48px;
@@ -204,11 +239,17 @@ export class ClassAttendanceComponent implements OnInit {
     return Object.values(this.students());
   });
 
-  presentCount = computed(() => {
-    return this.attendanceData()
-      .filter(a => this.isSameDay(new Date(a.date), this.selectedDate()))
-      .filter(a => a.present).length;
+  daysInMonth = computed(() => {
+    const date = this.selectedDate();
+    const totalDays = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+    return Array.from({ length: totalDays }, (_, i) => i + 1);
   });
+
+  isWeekStart(day: number): boolean {
+    const date = this.selectedDate();
+    const checkDate = new Date(date.getFullYear(), date.getMonth(), day);
+    return checkDate.getDay() === 0; // Domingo é início da semana
+  }
 
   constructor() {
     effect(() => {
@@ -254,19 +295,12 @@ export class ClassAttendanceComponent implements OnInit {
     });
   }
 
-  private isSameDay(date1: Date, date2: Date): boolean {
-    return date1.getFullYear() === date2.getFullYear() &&
-           date1.getMonth() === date2.getMonth() &&
-           date1.getDate() === date2.getDate();
-  }
-
   private loadAttendanceData() {
     if (!this.currentClass()) return;
 
-    const startDate = new Date(this.selectedDate());
-    startDate.setUTCHours(0, 0, 0, 0);
-    const endDate = new Date(this.selectedDate());
-    endDate.setUTCHours(23, 59, 59, 999);
+    const date = new Date(this.selectedDate());
+    const startDate = new Date(date.getFullYear(), date.getMonth(), 1);
+    const endDate = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
 
     this.loadingService.show();
     this.classService.getClassAttendance(
@@ -276,24 +310,7 @@ export class ClassAttendanceComponent implements OnInit {
     ).subscribe({
       next: (attendance) => {
         if (attendance) {
-          // Removendo duplicatas usando o ID do estudante como chave e a data específica
-          const uniqueAttendance = attendance.reduce((acc, curr) => {
-            if (curr.date) {
-              // Usando a data específica para a chave
-              const currDate = new Date(curr.date);
-              currDate.setUTCHours(0, 0, 0, 0);
-              const key = `${curr.studentId}_${currDate.toISOString()}`;
-              
-              const existingEntry = acc[key];
-              if (!existingEntry || (curr.createdAt && existingEntry.createdAt && 
-                  new Date(curr.createdAt) > new Date(existingEntry.createdAt))) {
-                acc[key] = curr;
-              }
-            }
-            return acc;
-          }, {} as Record<string, Attendance>);
-
-          this.attendanceData.set(Object.values(uniqueAttendance));
+          this.attendanceData.set(attendance);
         }
         this.loadingService.hide();
       },
@@ -305,53 +322,50 @@ export class ClassAttendanceComponent implements OnInit {
     });
   }
 
+  onMonthSelected(event: Date) {
+    this.selectedDate.set(event);
+  }
+
   onDateChange(event: any) {
     if (!event.value) return;
-    
     const newDate = new Date(event.value);
-    newDate.setUTCHours(12, 0, 0, 0);
     this.selectedDate.set(newDate);
   }
 
-  isStudentPresent(studentId: string): boolean {
-    const selectedDate = new Date(this.selectedDate());
-    selectedDate.setUTCHours(0, 0, 0, 0);
+  isStudentPresentOnDay(studentId: string, day: number): boolean {
+    const selectedDate = this.selectedDate();
+    const checkDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), day);
     
-    const attendances = this.attendanceData().filter(a => {
+    return this.attendanceData().some(a => {
       const attendanceDate = new Date(a.date);
-      attendanceDate.setUTCHours(0, 0, 0, 0);
       return a.studentId === studentId && 
-             attendanceDate.getTime() === selectedDate.getTime();
+             a.present &&
+             attendanceDate.getFullYear() === checkDate.getFullYear() &&
+             attendanceDate.getMonth() === checkDate.getMonth() &&
+             attendanceDate.getDate() === checkDate.getDate();
     });
-
-    if (attendances.length > 0) {
-      return attendances[attendances.length - 1].present;
-    }
-    
-    return false;
   }
 
-  async toggleAttendance(studentId: string) {
+  async toggleAttendance(studentId: string, day: number) {
     if (!this.currentClass()) return;
 
-    const selectedDate = new Date(this.selectedDate());
-    selectedDate.setUTCHours(12, 0, 0, 0);
+    const selectedDate = this.selectedDate();
+    const toggleDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), day, 12);
     
     const currentAttendance = this.attendanceData()
       .find(a => {
         const attendanceDate = new Date(a.date);
-        attendanceDate.setUTCHours(0, 0, 0, 0);
-        const compareDate = new Date(selectedDate);
-        compareDate.setUTCHours(0, 0, 0, 0);
         return a.studentId === studentId && 
-               attendanceDate.getTime() === compareDate.getTime();
+               attendanceDate.getFullYear() === toggleDate.getFullYear() &&
+               attendanceDate.getMonth() === toggleDate.getMonth() &&
+               attendanceDate.getDate() === toggleDate.getDate();
       });
 
     const newAttendance: Attendance = {
       id: currentAttendance?.id || crypto.randomUUID(),
       classId: this.currentClass()!.id!,
       studentId: studentId,
-      date: selectedDate,
+      date: toggleDate,
       present: !currentAttendance?.present,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -364,11 +378,10 @@ export class ClassAttendanceComponent implements OnInit {
       this.attendanceData.update(data => {
         const filtered = data.filter(a => {
           const attendanceDate = new Date(a.date);
-          attendanceDate.setUTCHours(0, 0, 0, 0);
-          const compareDate = new Date(selectedDate);
-          compareDate.setUTCHours(0, 0, 0, 0);
           return !(a.studentId === studentId && 
-                  attendanceDate.getTime() === compareDate.getTime());
+                  attendanceDate.getFullYear() === toggleDate.getFullYear() &&
+                  attendanceDate.getMonth() === toggleDate.getMonth() &&
+                  attendanceDate.getDate() === toggleDate.getDate());
         });
         return [...filtered, newAttendance];
       });
@@ -380,5 +393,29 @@ export class ClassAttendanceComponent implements OnInit {
     } finally {
       this.loadingService.hide();
     }
+  }
+
+  getMonthlyPresenceCount(studentId: string): number {
+    const selectedMonth = this.selectedDate().getMonth();
+    const selectedYear = this.selectedDate().getFullYear();
+    
+    return this.attendanceData()
+      .filter(a => {
+        const attendanceDate = new Date(a.date);
+        return a.studentId === studentId && 
+               a.present &&
+               attendanceDate.getMonth() === selectedMonth &&
+               attendanceDate.getFullYear() === selectedYear;
+      }).length;
+  }
+
+  averageMonthlyPresence(): string {
+    const totalStudents = this.studentsList().length;
+    if (totalStudents === 0) return '0';
+
+    const totalPresences = this.studentsList()
+      .reduce((sum, student) => sum + this.getMonthlyPresenceCount(student.id), 0);
+
+    return (totalPresences / totalStudents).toFixed(1);
   }
 }
