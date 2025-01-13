@@ -289,89 +289,205 @@ exports.deleteUserWithProfile = functions.https.onRequest((req, res) => {
 });
 
 // Função para criar preferência de pagamento
-exports.createPaymentPreference = functions.https.onRequest((req, res) => {
-  res.set({
-    'Access-Control-Allow-Origin': 'http://localhost:4200',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept',
-    'Access-Control-Allow-Credentials': 'true',
-    'Access-Control-Max-Age': '86400'
-  });
-
-  if (req.method === 'OPTIONS') {
-    res.status(204).send('');
-    return;
+// Configuração do Asaas
+const config = {
+  asaas: {
+    apiKey: process.env.ASAAS_API_KEY,
+    apiUrl: process.env.ASAAS_API_URL
   }
+};
 
+// Função para criar pagamento no Asaas
+exports.createAsaasPayment = functions.https.onRequest((req, res) => {
   cors(req, res, async () => {
     try {
-      const { title, price, quantity, courseId, description, picture_url, test_mode } = req.body;
+      await authenticateRequest(req, res, async () => {
+        const { 
+          amount, 
+          courseId, 
+          paymentMethod, 
+          creditCardInfo,
+          customer 
+        } = req.body;
 
-      if (!title || !price || !courseId) {
-        return res.status(400).json({
-          error: 'Dados incompletos para criar preferência de pagamento'
+        if (!amount || !courseId || !paymentMethod) {
+          return res.status(400).json({
+            error: 'Dados incompletos para criar pagamento'
+          });
+        }
+
+        // Criar cliente no Asaas se não existir
+        const customerResponse = await fetch(`${config.asaas.apiUrl}/customers`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'access_token': config.asaas.apiKey
+          },
+          body: JSON.stringify(customer)
         });
-      }
 
-      const preference = {
-        items: [
-          {
-            id: courseId,
-            title,
-            description: description || title,
-            picture_url: picture_url || '',
-            unit_price: Number(price),
-            quantity: Number(quantity) || 1,
-            currency_id: 'BRL'
-          }
-        ],
-        back_urls: {
-          success: `${config.frontend.url}/payment/success`,
-          failure: `${config.frontend.url}/payment/failure`,
-          pending: `${config.frontend.url}/payment/pending`
-        },
-        auto_return: 'approved',
-        external_reference: courseId,
-        notification_url: `${config.functions.url}/paymentWebhook`,
-        statement_descriptor: 'MASTERKEY',
-        payment_methods: {
-          excluded_payment_methods: [],
-          excluded_payment_types: [],
-          installments: 12
-        },
-        binary_mode: true, // Aceita apenas pagamentos aprovados ou rejeitados
-        expires: true,
-        expiration_date_to: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 horas
-        marketplace: 'MASTERKEY',
-        marketplace_fee: 0 // Sem taxa de marketplace
-      };
+        const customerData = await customerResponse.json();
 
-      try {
-        const preferenceClient = new Preference(client);
-        const response = await preferenceClient.create({ body: preference });
-        console.log('Preferência criada:', response);
+        // Preparar dados base do pagamento
+        const paymentData = {
+          customer: customerData.id,
+          billingType: paymentMethod,
+          value: amount,
+          dueDate: new Date().toISOString().split('T')[0],
+          description: `Pagamento do curso ${courseId}`,
+          externalReference: courseId
+        };
 
-        // Se estiver em modo de teste, use sandbox_init_point
-        const redirectUrl = test_mode ? response.sandbox_init_point : response.init_point;
+        // Adicionar dados do cartão se necessário
+        if (paymentMethod === 'CREDIT_CARD' && creditCardInfo) {
+          paymentData.creditCard = creditCardInfo.card;
+          paymentData.creditCardHolderInfo = creditCardInfo.holder;
+        }
 
-        res.status(200).json({
-          id: response.id,
-          init_point: response.init_point,
-          sandbox_init_point: response.sandbox_init_point,
-          redirect_url: redirectUrl
+        // Criar pagamento no Asaas
+        const paymentResponse = await fetch(`${config.asaas.apiUrl}/payments`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'access_token': config.asaas.apiKey
+          },
+          body: JSON.stringify(paymentData)
         });
-      } catch (mpError) {
-        console.error('Erro Mercado Pago:', mpError);
-        res.status(500).json({
-          error: 'Erro ao criar preferência de pagamento',
-          details: mpError.message
+
+        const payment = await paymentResponse.json();
+
+        // Salvar transação no Firestore
+        await admin.firestore().collection('transactions').add({
+          userId: req.user.uid,
+          courseId: courseId,
+          paymentId: payment.id,
+          amount: amount,
+          status: payment.status,
+          paymentMethod: paymentMethod,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          paymentDetails: payment
         });
-      }
+
+        // Se pagamento confirmado, liberar acesso ao curso
+        if (payment.status === 'CONFIRMED') {
+          await admin.firestore().collection('userCourses').add({
+            userId: req.user.uid,
+            courseId: courseId,
+            purchaseDate: admin.firestore.FieldValue.serverTimestamp(),
+            paymentId: payment.id
+          });
+        }
+
+        res.status(200).json(payment);
+      });
     } catch (error) {
-      console.error('Erro geral:', error);
+      console.error('Erro ao criar pagamento:', error);
       res.status(500).json({
-        error: 'Erro interno do servidor',
+        error: 'Erro ao criar pagamento',
         details: error.message
+      });
+    }
+  });
+});
+
+// Webhook para receber notificações do Asaas
+exports.asaasWebhook = functions.https.onRequest((req, res) => {
+  cors(req, res, async () => {
+    try {
+      const { event, payment } = req.body;
+
+      // Verificar assinatura do webhook (recomendado adicionar)
+      // const signature = req.headers['asaas-signature'];
+      // if (!verifyWebhookSignature(signature, req.body)) {
+      //   return res.status(401).send('Assinatura inválida');
+      // }
+
+      // Buscar transação no Firestore
+      const transactionQuery = await admin.firestore()
+        .collection('transactions')
+        .where('paymentId', '==', payment.id)
+        .limit(1)
+        .get();
+
+      if (!transactionQuery.empty) {
+        const transactionDoc = transactionQuery.docs[0];
+        const transaction = transactionDoc.data();
+
+        // Atualizar status da transação
+        await transactionDoc.ref.update({
+          status: payment.status,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          paymentDetails: payment
+        });
+
+        // Se pagamento confirmado, liberar acesso ao curso
+        if (payment.status === 'CONFIRMED' && !transaction.courseAccess) {
+          await admin.firestore().collection('userCourses').add({
+            userId: transaction.userId,
+            courseId: transaction.courseId,
+            purchaseDate: admin.firestore.FieldValue.serverTimestamp(),
+            paymentId: payment.id
+          });
+
+          await transactionDoc.ref.update({
+            courseAccess: true
+          });
+        }
+      }
+
+      res.status(200).send('OK');
+    } catch (error) {
+      console.error('Erro no webhook:', error);
+      res.status(500).json({ error: 'Erro ao processar webhook' });
+    }
+  });
+});
+
+// Função para verificar status do pagamento
+exports.checkAsaasPaymentStatus = functions.https.onRequest((req, res) => {
+  cors(req, res, async () => {
+    try {
+      await authenticateRequest(req, res, async () => {
+        const { paymentId } = req.query;
+
+        if (!paymentId) {
+          return res.status(400).json({
+            error: 'ID do pagamento não fornecido'
+          });
+        }
+
+        // Buscar status no Asaas
+        const paymentResponse = await fetch(`${config.asaas.apiUrl}/payments/${paymentId}`, {
+          headers: {
+            'access_token': config.asaas.apiKey
+          }
+        });
+
+        const payment = await paymentResponse.json();
+
+        // Verificar permissão do usuário
+        const transactionQuery = await admin.firestore()
+          .collection('transactions')
+          .where('paymentId', '==', paymentId)
+          .limit(1)
+          .get();
+
+        if (!transactionQuery.empty) {
+          const transaction = transactionQuery.docs[0].data();
+          if (transaction.userId !== req.user.uid) {
+            return res.status(403).json({
+              error: 'Não autorizado'
+            });
+          }
+        }
+
+        res.status(200).json(payment);
+      });
+    } catch (error) {
+      console.error('Erro ao verificar status:', error);
+      res.status(500).json({
+        error: 'Erro ao verificar status do pagamento'
       });
     }
   });

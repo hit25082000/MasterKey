@@ -1,61 +1,312 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { CourseService } from '../course/services/course.service';
-import { StudentService } from '../student/services/student.service';
-import { EmployeeService } from '../employees/services/employee.service';
-import { SystemLogService } from '../../core/services/system-log.service';
-import { PaymentService } from '../../core/services/payment.service';
+import { LoadingService } from '../../shared/services/loading.service';
+import { NotificationService } from '../../shared/services/notification.service';
+import { AuthService } from '../../core/services/auth.service';
+import { FirestoreService } from '../../core/services/firestore.service';
+import { Course } from '../../core/models/course.model';
 import { firstValueFrom } from 'rxjs';
+import { StudentService } from '../student/services/student.service';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
 
-interface StudentActivity {
-  studentId: string;
-  lastLoginDate: Date;
+interface Transaction {
+  id: string;
+  status: 'CONFIRMED' | 'PENDING' | 'OVERDUE';
+  amount: number;
+  courseId: string;
+  courseName: string;
+  createdAt: number;
+  date: Date;
+}
+
+interface DashboardStats {
+  totalStudents: number;
+  totalCourses: number;
+  totalRevenue: number;
+  recentTransactions: Transaction[];
+  salesByMonth: { [key: string]: number };
+  salesByCourse: { [key: string]: { count: number; revenue: number } };
 }
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, BaseChartDirective],
-  templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.scss']
+  imports: [CommonModule, RouterModule, BaseChartDirective],
+  template: `
+    <div class="dashboard-container">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon students">
+            <i class="fas fa-users"></i>
+          </div>
+          <div class="stat-info">
+            <h3>Total de Alunos</h3>
+            <p class="stat-value">{{ stats().totalStudents }}</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon courses">
+            <i class="fas fa-book"></i>
+          </div>
+          <div class="stat-info">
+            <h3>Total de Cursos</h3>
+            <p class="stat-value">{{ stats().totalCourses }}</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon revenue">
+            <i class="fas fa-dollar-sign"></i>
+          </div>
+          <div class="stat-info">
+            <h3>Receita Total</h3>
+            <p class="stat-value">R$ {{ stats().totalRevenue | number:'1.2-2' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="chart-card">
+          <h3>Alunos Ativos/Inativos</h3>
+          <div class="chart-container">
+            <canvas baseChart
+              [type]="'pie'"
+              [data]="studentsChartData"
+              [options]="chartOptions">
+            </canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h3>Cursos Ativos/Inativos</h3>
+          <div class="chart-container">
+            <canvas baseChart
+              [type]="'pie'"
+              [data]="coursesChartData"
+              [options]="chartOptions">
+            </canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h3>Vendas por Mês</h3>
+          <div class="chart-container">
+            <canvas baseChart
+              [type]="'line'"
+              [data]="monthlyChartData"
+              [options]="lineChartOptions">
+            </canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h3>Vendas por Curso</h3>
+          <div class="chart-container">
+            <canvas baseChart
+              [type]="'pie'"
+              [data]="coursesSalesChartData"
+              [options]="pieChartOptions">
+            </canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="transactions-card">
+        <h3>Transações Recentes</h3>
+        <div class="transactions-list">
+          @for (transaction of stats().recentTransactions; track transaction.id) {
+            <div class="transaction-item">
+              <div class="transaction-info">
+                <p class="transaction-course">{{ transaction.courseName }}</p>
+                <p class="transaction-date">{{ transaction.date | date:'dd/MM/yyyy HH:mm' }}</p>
+              </div>
+              <div class="transaction-status" [class]="transaction.status">
+                {{ getStatusLabel(transaction.status) }}
+              </div>
+              <div class="transaction-amount">
+                R$ {{ transaction.amount | number:'1.2-2' }}
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  `,
+  styles: [`
+    .dashboard-container {
+      padding: 2rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+
+      .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+
+        &.students { background: #384A87; }
+        &.courses { background: #32BCAD; }
+        &.revenue { background: #6C757D; }
+      }
+
+      .stat-info {
+        h3 {
+          margin: 0;
+          color: #666;
+          font-size: 1rem;
+        }
+
+        .stat-value {
+          margin: 0;
+          font-size: 1.5rem;
+          font-weight: bold;
+          color: #333;
+        }
+      }
+    }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .chart-card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+      h3 {
+        margin: 0 0 1.5rem;
+        color: #333;
+      }
+
+      .chart-container {
+        height: 300px;
+        position: relative;
+      }
+    }
+
+    .transactions-card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+      h3 {
+        margin: 0 0 1.5rem;
+        color: #333;
+      }
+
+      .transactions-list {
+        .transaction-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 1rem 0;
+          border-bottom: 1px solid #eee;
+
+          &:last-child {
+            border-bottom: none;
+          }
+
+          .transaction-info {
+            .transaction-course {
+              margin: 0;
+              color: #333;
+              font-weight: 500;
+            }
+
+            .transaction-date {
+              margin: 0.25rem 0 0;
+              color: #666;
+              font-size: 0.9rem;
+            }
+          }
+
+          .transaction-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.9rem;
+
+            &.CONFIRMED {
+              background: #d4edda;
+              color: #155724;
+            }
+
+            &.PENDING {
+              background: #fff3cd;
+              color: #856404;
+            }
+
+            &.OVERDUE {
+              background: #f8d7da;
+              color: #721c24;
+            }
+          }
+
+          .transaction-amount {
+            font-weight: bold;
+            color: #384A87;
+          }
+        }
+      }
+    }
+
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  `]
 })
 export class DashboardComponent implements OnInit {
-  private studentService = inject(StudentService);
   private courseService = inject(CourseService);
-  private employeeService = inject(EmployeeService);
-  private systemLogService = inject(SystemLogService);
-  private paymentService = inject(PaymentService);
+  private loadingService = inject(LoadingService);
+  private notificationService = inject(NotificationService);
+  private studentService = inject(StudentService);
+  private authService = inject(AuthService);
+  private firestoreService = inject(FirestoreService);
 
-  isLoading = signal<boolean>(true);
-  chartsReady = signal<boolean>(false);
-
-  // Signals para armazenar dados de atividade
-  private studentActivityMap = signal<Map<string, Date>>(new Map());
-
-  // Dados dos estudantes
-  studentsData = computed(() => {
-    const students = this.studentService.students();
-    return {
-      total: students.length,
-      active: this.activeStudentsCount(),
-      inactive: this.inactiveStudentsCount()
-    };
+  stats = signal<DashboardStats>({
+    totalStudents: 0,
+    totalCourses: 0,
+    totalRevenue: 0,
+    recentTransactions: [],
+    salesByMonth: {},
+    salesByCourse: {}
   });
-
-  // Contadores computados
-  activeStudentsCount = computed(() => {
-    return this.getActiveStudentsCount();
-  });
-
-  inactiveStudentsCount = computed(() => {
-    return this.studentService.students().length - this.activeStudentsCount();
-  });
-
-  // Dados dos cursos
-  coursesCount = signal<{ total: number; active: number }>({ total: 0, active: 0 });
-  teachersCount = signal<number>(0);
 
   // Configurações dos gráficos
   studentsChartData: ChartData = {
@@ -83,19 +334,6 @@ export class DashboardComponent implements OnInit {
     }
   };
 
-  salesData = signal<{
-    totalSales: number;
-    monthlyData: number[];
-    courseData: { name: string; sales: number }[];
-    totalRevenue: number;
-  }>({
-    totalSales: 0,
-    monthlyData: [],
-    courseData: [],
-    totalRevenue: 0
-  });
-
-  // Configurações dos gráficos
   monthlyChartData: ChartData = {
     labels: [],
     datasets: [{
@@ -150,154 +388,149 @@ export class DashboardComponent implements OnInit {
     }
   };
 
-  async ngOnInit(): Promise<void> {
-    this.isLoading.set(true);
-    await this.loadDashboardData();
-    
-    // Aguarda o próximo ciclo de renderização antes de atualizar os gráficos
-    setTimeout(() => {
-      this.updateCharts();
-      this.chartsReady.set(true);
-      this.isLoading.set(false);
-    }, 0);
-  }
+  async ngOnInit() {
+    this.loadingService.show();
 
-  async loadDashboardData(): Promise<void> {
     try {
-      await Promise.all([
-        this.loadStudentActivity(),
-        this.loadCourseData(),
-        this.loadTeacherData(),
-        this.loadSalesData()
+      const [transactions, courses] = await Promise.all([
+        this.firestoreService.getCollection('transactions') as Promise<Transaction[]>,
+        this.courseService.getAll()
       ]);
-    } catch (error) {
-      console.error('Erro ao carregar dados do dashboard:', error);
-    }
-  }
 
-  private async loadStudentActivity(): Promise<void> {
-    try {
-      const loginLogs = await firstValueFrom(this.systemLogService.getStudentLoginLogs());
-      const activityMap = new Map<string, Date>();
+      const stats: DashboardStats = {
+        totalStudents: await this.getTotalStudents(),
+        totalCourses: courses.length,
+        totalRevenue: 0,
+        recentTransactions: [],
+        salesByMonth: {},
+        salesByCourse: {}
+      };
 
-      // Processa os logs para encontrar o último login de cada estudante
-      loginLogs.forEach(log => {
-        const studentId = log.details.studentId;
-        const loginDate = new Date(log.timestamp);
+      // Processar transações
+      transactions.forEach((transaction: Transaction) => {
+        // Calcular receita total
+        if (transaction.status === 'CONFIRMED') {
+          stats.totalRevenue += transaction.amount;
 
-        const currentLastLogin = activityMap.get(studentId);
-        if (!currentLastLogin || loginDate > currentLastLogin) {
-          activityMap.set(studentId, loginDate);
+          // Vendas por mês
+          const date = new Date(transaction.createdAt);
+          const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+          stats.salesByMonth[monthKey] = (stats.salesByMonth[monthKey] || 0) + 1;
+
+          // Vendas por curso
+          if (!stats.salesByCourse[transaction.courseId]) {
+            stats.salesByCourse[transaction.courseId] = { count: 0, revenue: 0 };
+          }
+          stats.salesByCourse[transaction.courseId].count += 1;
+          stats.salesByCourse[transaction.courseId].revenue += transaction.amount;
         }
       });
 
-      this.studentActivityMap.set(activityMap);
+      // Últimas 10 transações
+      stats.recentTransactions = transactions
+        .sort((a: Transaction, b: Transaction) => b.createdAt - a.createdAt)
+        .slice(0, 10)
+        .map(t => ({
+          ...t,
+          date: new Date(t.createdAt)
+        }));
+
+      this.stats.set(stats);
+      this.updateCharts(courses);
     } catch (error) {
-      console.error('Erro ao carregar atividade dos estudantes:', error);
-      // Em caso de erro, mantém o mapa vazio
-      this.studentActivityMap.set(new Map());
+      console.error('Erro ao carregar dashboard:', error);
+      this.notificationService.error('Erro ao carregar dados do dashboard');
+    } finally {
+      this.loadingService.hide();
     }
   }
 
-  private getActiveStudentsCount(): number {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const activityMap = this.studentActivityMap();
-
-    return this.studentService.students().filter(student => {
-      const lastLogin = activityMap.get(student.id);
-      return lastLogin && lastLogin > thirtyDaysAgo;
-    }).length;
-  }
-
-  private async loadCourseData(): Promise<void> {
-    try {
-      const courses = await this.courseService.getAll();
-      this.coursesCount.set({
-        total: courses.length,
-        active: courses.filter(course => course.active).length
-      });
-    } catch (error) {
-      console.error('Erro ao carregar dados dos cursos:', error);
-      this.coursesCount.set({ total: 0, active: 0 });
-    }
-  }
-
-  private async loadTeacherData(): Promise<void> {
-    try {
-      const teachers = await this.employeeService.getAllTeachers();
-      this.teachersCount.set(teachers.length);
-    } catch (error) {
-      console.error('Erro ao carregar dados dos professores:', error);
-      this.teachersCount.set(0);
-    }
-  }
-
-  private async loadSalesData(): Promise<void> {
-    try {
-      const summary = await this.paymentService.getSalesSummary();
-      const courseNames = await this.getCourseNames(Object.keys(summary.salesByCourse));
-
-      const courseData = Object.entries(summary.salesByCourse).map(([courseId, sales]) => ({
-        name: courseNames[courseId] || 'Curso Desconhecido',
-        sales
-      }));
-
-      this.salesData.set({
-        totalSales: summary.totalSales,
-        monthlyData: Object.values(summary.salesByMonth),
-        courseData,
-        totalRevenue: summary.totalRevenue
-      });
-
-      this.updateSalesCharts();
-    } catch (error) {
-      console.error('Erro ao carregar dados de vendas:', error);
-    }
-  }
-
-  private async getCourseNames(courseIds: string[]): Promise<{ [key: string]: string }> {
-    const courseNames: { [key: string]: string } = {};
-    for (const id of courseIds) {
-      try {
-        const course = await this.courseService.getById(id);
-        courseNames[id] = course.name;
-      } catch (error) {
-        console.error(`Erro ao buscar nome do curso ${id}:`, error);
-      }
-    }
-    return courseNames;
-  }
-
-  private updateSalesCharts(): void {
-    const salesData = this.salesData();
-
+  private updateCharts(courses: Course[]) {
+    const stats = this.stats();
+    
     // Atualiza gráfico de vendas mensais
-    this.monthlyChartData.labels = Object.keys(salesData.monthlyData);
-    this.monthlyChartData.datasets[0].data = salesData.monthlyData;
+    const months = Object.keys(stats.salesByMonth).sort();
+    this.monthlyChartData = {
+      labels: months.map(this.formatMonth),
+      datasets: [{
+        data: months.map(m => stats.salesByMonth[m]),
+        label: 'Vendas Mensais',
+        backgroundColor: '#4CAF50',
+        borderColor: '#2E7D32',
+        fill: true,
+      }]
+    };
 
     // Atualiza gráfico de vendas por curso
-    this.coursesSalesChartData.labels = salesData.courseData.map(d => d.name);
-    this.coursesSalesChartData.datasets[0].data = salesData.courseData.map(d => d.sales);
+    const courseSales = this.getCourseSales(courses);
+    this.coursesSalesChartData = {
+      labels: courseSales.map(c => c.name),
+      datasets: [{
+        data: courseSales.map(c => c.count),
+        backgroundColor: [
+          '#FF6384',
+          '#36A2EB',
+          '#FFCE56',
+          '#4BC0C0',
+          '#9966FF'
+        ]
+      }]
+    };
+
+    // Atualiza gráfico de alunos ativos/inativos
+    const students = this.studentService.students();
+    const activeStudents = students.filter(user => user.active === true).length;
+    const inactiveStudents = students.length - activeStudents;
+    this.studentsChartData = {
+      labels: ['Ativos', 'Inativos'],
+      datasets: [{
+        data: [activeStudents, inactiveStudents],
+        backgroundColor: ['#4CAF50', '#FF5252']
+      }]
+    };
+
+    // Atualiza gráfico de cursos ativos/inativos
+    const activeCourses = courses.filter(course => course.active === true).length;
+    const inactiveCourses = courses.length - activeCourses;
+    this.coursesChartData = {
+      labels: ['Ativos', 'Inativos'],
+      datasets: [{
+        data: [activeCourses, inactiveCourses],
+        backgroundColor: ['#2196F3', '#FF9800']
+      }]
+    };
   }
 
-  private updateCharts(): void {
-    // Atualiza gráfico de estudantes
-    this.studentsChartData = {
-      ...this.studentsChartData,
-      datasets: [{
-        ...this.studentsChartData.datasets[0],
-        data: [this.studentsData().active, this.studentsData().inactive]
-      }]
-    };
+  private async getTotalStudents(): Promise<number> {
+    const students = this.studentService.students;
+    return students().filter(user => user.role === 'student').length;
+  }
 
-    // Atualiza gráfico de cursos
-    this.coursesChartData = {
-      ...this.coursesChartData,
-      datasets: [{
-        ...this.coursesChartData.datasets[0],
-        data: [this.coursesCount().active, this.coursesCount().total - this.coursesCount().active]
-      }]
+  getMonths(): string[] {
+    return Object.keys(this.stats().salesByMonth).sort();
+  }
+
+  formatMonth(monthKey: string): string {
+    const [year, month] = monthKey.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1);
+    return date.toLocaleDateString('pt-BR', { month: 'short' });
+  }
+
+  getCourseSales(courses: Course[]) {
+    return Object.entries(this.stats().salesByCourse).map(([id, data]) => ({
+      id,
+      name: courses.find(course => course.id === id)?.name || id, // Idealmente, buscar o nome do curso
+      count: data.count,
+      revenue: data.revenue
+    }));
+  }
+
+  getStatusLabel(status: string): string {
+    const labels = {
+      'CONFIRMED': 'Confirmado',
+      'PENDING': 'Pendente',
+      'OVERDUE': 'Atrasado'
     };
+    return labels[status as keyof typeof labels] || status;
   }
 }

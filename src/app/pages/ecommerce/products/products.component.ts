@@ -9,9 +9,6 @@ import { Course } from '../../../core/models/course.model';
 import { FormsModule } from '@angular/forms';
 import { CategoryService } from '../../../features/category/services/category.service';
 import { Router } from '@angular/router';
-import { PaymentService } from '../../../core/services/payment.service';
-import { firstValueFrom } from 'rxjs';
-import { environment } from '../../../../environments/environment';
 import { LoadingService } from '../../../shared/services/loading.service';
 import { NotificationService, NotificationType } from '../../../shared/services/notification.service';
 
@@ -34,7 +31,6 @@ export class ProductsComponent implements OnInit {
   courseService = inject(CourseService);
   categoryService = inject(CategoryService);
   private readonly loadingService = inject(LoadingService);
-  private readonly paymentService = inject(PaymentService);
   private readonly notificationService = inject(NotificationService);
   courses = signal<Course[]>([]);
   categories = signal<string[]>(['Todos']);
@@ -110,33 +106,16 @@ export class ProductsComponent implements OnInit {
   }
 
   async buyCourse(course: Course) {
-    try {
-      const preference = await firstValueFrom(this.paymentService.createPayment(course));
-
-      if (preference?.init_point) {
-        // Salvar informações da compra no localStorage para recuperar depois
-        localStorage.setItem('currentPurchase', JSON.stringify({
-          courseId: course.id,
-          timestamp: new Date().getTime()
-        }));
-
-        // Redirecionar para o Mercado Pago
-        window.location.href = environment.production
-          ? preference.init_point
-          : preference.sandbox_init_point;
-      } else {
-        this.notificationService.show(
-          'Não foi possível processar o pagamento. Por favor, tente novamente mais tarde.',
-          NotificationType.ERROR
-        );
-      }
-    } catch (error) {
-      console.error('Erro ao processar pagamento:', error);
+    if (!course.id) {
       this.notificationService.show(
-        'Serviço temporariamente indisponível. Por favor, tente novamente mais tarde.',
+        'Erro ao identificar o curso. Por favor, tente novamente.',
         NotificationType.ERROR
       );
+      return;
     }
+
+    // Redireciona para a página de checkout com o ID do curso
+    this.router.navigate(['/checkout', course.id]);
   }
 
 }
