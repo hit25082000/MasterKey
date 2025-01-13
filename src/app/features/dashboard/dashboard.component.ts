@@ -11,22 +11,14 @@ import { firstValueFrom } from 'rxjs';
 import { StudentService } from '../student/services/student.service';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
-
-interface Transaction {
-  id: string;
-  status: 'CONFIRMED' | 'PENDING' | 'OVERDUE';
-  amount: number;
-  courseId: string;
-  courseName: string;
-  createdAt: number;
-  date: Date;
-}
+import { AsaasService } from '../../shared/services/asaas.service';
+import { AsaasPaymentResponse } from '../../shared/models/asaas.model';
 
 interface DashboardStats {
   totalStudents: number;
   totalCourses: number;
   totalRevenue: number;
-  recentTransactions: Transaction[];
+  recentTransactions: AsaasPaymentResponse[];
   salesByMonth: { [key: string]: number };
   salesByCourse: { [key: string]: { count: number; revenue: number } };
 }
@@ -121,14 +113,14 @@ interface DashboardStats {
           @for (transaction of stats().recentTransactions; track transaction.id) {
             <div class="transaction-item">
               <div class="transaction-info">
-                <p class="transaction-course">{{ transaction.courseName }}</p>
-                <p class="transaction-date">{{ transaction.date | date:'dd/MM/yyyy HH:mm' }}</p>
+                <p class="transaction-course">{{ transaction.description }}</p>
+                <p class="transaction-date">{{ transaction.dateCreated | date:'dd/MM/yyyy HH:mm' }}</p>
               </div>
               <div class="transaction-status" [class]="transaction.status">
                 {{ getStatusLabel(transaction.status) }}
               </div>
               <div class="transaction-amount">
-                R$ {{ transaction.amount | number:'1.2-2' }}
+                R$ {{ transaction.value | number:'1.2-2' }}
               </div>
             </div>
           }
@@ -270,6 +262,11 @@ interface DashboardStats {
               background: #f8d7da;
               color: #721c24;
             }
+
+            &.REFUNDED {
+              background: #cce5ff;
+              color: #004085;
+            }
           }
 
           .transaction-amount {
@@ -297,7 +294,7 @@ export class DashboardComponent implements OnInit {
   private notificationService = inject(NotificationService);
   private studentService = inject(StudentService);
   private authService = inject(AuthService);
-  private firestoreService = inject(FirestoreService);
+  private asaasService = inject(AsaasService);
 
   stats = signal<DashboardStats>({
     totalStudents: 0,
@@ -392,13 +389,16 @@ export class DashboardComponent implements OnInit {
     this.loadingService.show();
 
     try {
-      const [transactions, courses] = await Promise.all([
-        this.firestoreService.getCollection('transactions') as Promise<Transaction[]>,
-        this.courseService.getAll()
+      const [courses, students] = await Promise.all([
+        this.courseService.getAll(),
+        this.studentService.students
       ]);
 
+      // Buscar todos os pagamentos
+      const payments = await firstValueFrom(this.asaasService.getAllPayments());
+
       const stats: DashboardStats = {
-        totalStudents: await this.getTotalStudents(),
+        totalStudents: students().length,
         totalCourses: courses.length,
         totalRevenue: 0,
         recentTransactions: [],
@@ -406,34 +406,33 @@ export class DashboardComponent implements OnInit {
         salesByCourse: {}
       };
 
-      // Processar transações
-      transactions.forEach((transaction: Transaction) => {
+      // Processar pagamentos
+      payments.forEach((payment) => {
         // Calcular receita total
-        if (transaction.status === 'CONFIRMED') {
-          stats.totalRevenue += transaction.amount;
+        if (payment.status === 'CONFIRMED' || payment.status === 'RECEIVED') {
+          stats.totalRevenue += payment.value;
 
           // Vendas por mês
-          const date = new Date(transaction.createdAt);
+          const date = new Date(payment.dateCreated);
           const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
           stats.salesByMonth[monthKey] = (stats.salesByMonth[monthKey] || 0) + 1;
 
           // Vendas por curso
-          if (!stats.salesByCourse[transaction.courseId]) {
-            stats.salesByCourse[transaction.courseId] = { count: 0, revenue: 0 };
+          const courseId = payment.externalReference;
+          if (courseId) {
+            if (!stats.salesByCourse[courseId]) {
+              stats.salesByCourse[courseId] = { count: 0, revenue: 0 };
+            }
+            stats.salesByCourse[courseId].count += 1;
+            stats.salesByCourse[courseId].revenue += payment.value;
           }
-          stats.salesByCourse[transaction.courseId].count += 1;
-          stats.salesByCourse[transaction.courseId].revenue += transaction.amount;
         }
       });
 
       // Últimas 10 transações
-      stats.recentTransactions = transactions
-        .sort((a: Transaction, b: Transaction) => b.createdAt - a.createdAt)
-        .slice(0, 10)
-        .map(t => ({
-          ...t,
-          date: new Date(t.createdAt)
-        }));
+      stats.recentTransactions = payments
+        .sort((a, b) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime())
+        .slice(0, 10);
 
       this.stats.set(stats);
       this.updateCharts(courses);
@@ -501,11 +500,6 @@ export class DashboardComponent implements OnInit {
     };
   }
 
-  private async getTotalStudents(): Promise<number> {
-    const students = this.studentService.students;
-    return students().filter(user => user.role === 'student').length;
-  }
-
   getMonths(): string[] {
     return Object.keys(this.stats().salesByMonth).sort();
   }
@@ -519,7 +513,7 @@ export class DashboardComponent implements OnInit {
   getCourseSales(courses: Course[]) {
     return Object.entries(this.stats().salesByCourse).map(([id, data]) => ({
       id,
-      name: courses.find(course => course.id === id)?.name || id, // Idealmente, buscar o nome do curso
+      name: courses.find(course => course.id === id)?.name || id,
       count: data.count,
       revenue: data.revenue
     }));
@@ -529,7 +523,10 @@ export class DashboardComponent implements OnInit {
     const labels = {
       'CONFIRMED': 'Confirmado',
       'PENDING': 'Pendente',
-      'OVERDUE': 'Atrasado'
+      'OVERDUE': 'Atrasado',
+      'RECEIVED': 'Recebido',
+      'REFUNDED': 'Reembolsado',
+      'RECEIVED_IN_CASH': 'Recebido em Dinheiro'
     };
     return labels[status as keyof typeof labels] || status;
   }

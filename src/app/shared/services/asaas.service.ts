@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { AsaasCustomer, AsaasPayment, AsaasPaymentResponse } from '../models/asaas.model';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -39,6 +40,24 @@ export class AsaasService {
     return this.http.get<AsaasPaymentResponse>(
       `${this.apiUrl}/payments/${paymentId}`,
       { headers: this.getHeaders() }
+    );
+  }
+
+  getCustomerPayments(customerId: string): Observable<AsaasPaymentResponse[]> {
+    return this.http.get<{ data: AsaasPaymentResponse[] }>(
+      `${this.apiUrl}/payments?customer=${customerId}`,
+      { headers: this.getHeaders() }
+    ).pipe(
+      map(response => response.data)
+    );
+  }
+
+  getAllPayments(): Observable<AsaasPaymentResponse[]> {
+    return this.http.get<{ data: AsaasPaymentResponse[] }>(
+      `${this.apiUrl}/payments`,
+      { headers: this.getHeaders() }
+    ).pipe(
+      map(response => response.data)
     );
   }
 
