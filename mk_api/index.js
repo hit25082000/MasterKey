@@ -1,8 +1,18 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const cors = require('cors')({
-  origin: ['http://localhost:4200', 'https://master-key-a3c69.web.app'],
-  credentials: true
+  origin: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'access_token', 
+    'Access-Control-Allow-Origin',
+    'Access-Control-Allow-Methods',
+    'Access-Control-Allow-Headers'
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200
 });
 const { Storage } = require('@google-cloud/storage');
 const fetch = require('node-fetch');
@@ -295,6 +305,11 @@ exports.deleteUserWithProfile = functions.https.onRequest((req, res) => {
 // Função para criar pagamento no Asaas
 exports.createAsaasPayment = functions.https.onRequest((req, res) => {
   cors(req, res, async () => {
+    if (req.method === 'OPTIONS') {
+      res.status(200).send();
+      return;
+    }
+
     try {
       const { 
         amount, 
@@ -556,6 +571,11 @@ exports.asaasWebhook = functions.https.onRequest((req, res) => {
 // Função para verificar status do pagamento
 exports.checkAsaasPaymentStatus = functions.https.onRequest((req, res) => {
   cors(req, res, async () => {
+    if (req.method === 'OPTIONS') {
+      res.status(200).send();
+      return;
+    }
+
     try {
       const { paymentId } = req.query;
 
@@ -627,6 +647,163 @@ exports.checkAsaasPaymentStatus = functions.https.onRequest((req, res) => {
       console.error('Erro ao processar requisição:', error);
       res.status(500).json({
         error: 'Erro ao processar requisição',
+        details: error.message
+      });
+    }
+  });
+});
+
+// Função para criar link de pagamento com parcelamento
+async function createPaymentLink(courseId, courseName, coursePrice, portionCount) {
+  try {
+    // Criar link de pagamento no Asaas
+    const linkResponse = await fetch(`${config.asaas.apiUrl}/paymentLinks`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'access_token': config.asaas.apiKey
+      },
+      body: JSON.stringify({
+        name: courseName,
+        description: `Pagamento do curso: ${courseName}`,
+        value: coursePrice,
+        billingType: 'CREDIT_CARD',
+        chargeType: 'INSTALLMENT',
+        maxInstallmentCount: portionCount || 12,
+        dueDateLimitDays: 10,
+        subscriptionCycle: null,
+        active: true,
+        allowInstallment: true,
+        showDescription: true,
+        showNumericalInstallments: true,
+        fine: {
+          value: 1,
+          type: 'PERCENTAGE'
+        },
+        interest: {
+          value: 2,
+          type: 'PERCENTAGE'
+        }
+      })
+    });
+
+    const responseText = await linkResponse.text();
+    console.log('Resposta da criação do link:', responseText);
+
+    if (!linkResponse.ok) {
+      throw new Error(`Erro ao criar link de pagamento: ${responseText}`);
+    }
+
+    const linkData = JSON.parse(responseText);
+    return linkData;
+  } catch (error) {
+    console.error('Erro ao criar link de pagamento:', error);
+    throw error;
+  }
+}
+
+// Endpoint para criar link de pagamento
+exports.createPaymentLink = functions.https.onRequest((req, res) => {
+  cors(req, res, async () => {
+    if (req.method === 'OPTIONS') {
+      res.status(200).send();
+      return;
+    }
+
+    try {
+      const { courseId } = req.query;
+
+      if (!courseId) {
+        return res.status(400).json({
+          error: 'ID do curso não fornecido'
+        });
+      }
+
+      // Buscar dados do curso no Firestore
+      const courseDoc = await admin.firestore()
+        .collection('courses')
+        .doc(courseId)
+        .get();
+
+      if (!courseDoc.exists) {
+        throw new Error('Curso não encontrado');
+      }
+
+      const courseData = courseDoc.data();
+
+      // Criar ou recuperar link de pagamento
+      const linkData = await createPaymentLink(
+        courseId,
+        courseData.name,
+        courseData.price,
+        courseData.portionCount
+      );
+
+      // Salvar link no Firestore
+      await admin.firestore().collection('payment_links').add({
+        courseId,
+        courseName: courseData.name,
+        coursePrice: courseData.price,
+        url: linkData.url,
+        asaasId: linkData.id,
+        createdAt: new Date().toISOString(),
+        active: true
+      });
+
+      res.status(200).json(linkData);
+    } catch (error) {
+      console.error('Erro ao processar link de pagamento:', error);
+      res.status(500).json({
+        error: 'Erro ao processar link de pagamento',
+        details: error.message
+      });
+    }
+  });
+});
+
+// Endpoint para salvar dados do cliente
+exports.saveCustomerData = functions.https.onRequest((req, res) => {
+  cors(req, res, async () => {
+    if (req.method === 'OPTIONS') {
+      res.status(200).send();
+      return;
+    }
+
+    try {
+      const { name, email, cpfCnpj, phone, courseId } = req.body;
+
+      // Validar campos obrigatórios
+      if (!name || !email || !cpfCnpj || !phone || !courseId) {
+        return res.status(400).json({
+          error: 'Dados incompletos. Todos os campos são obrigatórios.'
+        });
+      }
+
+      // Salvar no Firestore
+      const customerData = {
+        name,
+        email,
+        cpfCnpj,
+        phone,
+        courseId,
+        status: 'PENDING',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      const docRef = await admin.firestore()
+        .collection('customer_data')
+        .add(customerData);
+
+      res.status(200).json({
+        message: 'Dados do cliente salvos com sucesso',
+        id: docRef.id
+      });
+
+    } catch (error) {
+      console.error('Erro ao salvar dados do cliente:', error);
+      res.status(500).json({
+        error: 'Erro ao salvar dados do cliente',
         details: error.message
       });
     }

@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
+import { environment } from '../../../environments/environment.development';
 import { AsaasPaymentResponse } from '../models/asaas.model';
 
 export interface CustomerData {
@@ -9,6 +9,7 @@ export interface CustomerData {
   email: string;
   cpfCnpj: string;
   phone: string;
+  courseId: string;
 }
 
 export interface PaymentRequest {
@@ -36,6 +37,13 @@ export class PaymentService {
   checkPaymentStatus(paymentId: string): Observable<AsaasPaymentResponse> {
     return this.http.get<AsaasPaymentResponse>(
       `${this.apiUrl}/checkAsaasPaymentStatus?paymentId=${paymentId}`
+    );
+  }
+
+  saveCustomerData(data: CustomerData): Observable<any> {
+    return this.http.post(
+      `${this.apiUrl}/saveCustomerData`,
+      data
     );
   }
 } 

@@ -9,6 +9,8 @@ import { Subscription, interval } from 'rxjs';
 import { switchMap, takeWhile } from 'rxjs/operators';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseService } from '../../../course/services/course.service';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../../environments/environment.development';
 
 @Component({
   selector: 'app-course-checkout',
@@ -250,7 +252,8 @@ export class CourseCheckoutComponent implements OnInit, OnDestroy {
     private loadingService: LoadingService,
     private route: ActivatedRoute,
     private router: Router,
-    private courseService: CourseService
+    private courseService: CourseService,
+    private http: HttpClient
   ) {
     this.customerForm = this.fb.group({
       name: ['', [Validators.required]],
@@ -298,6 +301,36 @@ export class CourseCheckoutComponent implements OnInit, OnDestroy {
         throw new Error('Dados do curso não disponíveis');
       }
 
+      if (paymentMethod === 'CREDIT_CARD') {
+        try {
+          // Salvar dados do cliente antes de redirecionar
+          await this.paymentService.saveCustomerData({
+            name: this.customerForm.get('name')?.value,
+            email: this.customerForm.get('email')?.value,
+            cpfCnpj: this.customerForm.get('cpf')?.value,
+            phone: this.customerForm.get('phone')?.value,
+            courseId: courseData.id
+          }).toPromise();
+
+          // Obter link de pagamento para cartão de crédito
+          const response = await this.http.get<{url: string}>(
+            `${environment.adminUrl}/createPaymentLink?courseId=${courseData.id}`
+          ).toPromise();
+          
+          if (response?.url) {
+            window.location.href = response.url;
+            return;
+          } else {
+            throw new Error('URL de pagamento não disponível');
+          }
+        } catch (error) {
+          console.error('Erro ao obter link de pagamento:', error);
+          this.notificationService.error('Erro ao gerar link de pagamento. Tente novamente.');
+          return;
+        }
+      }
+
+      // Processamento para outros métodos de pagamento
       const response = await this.paymentService.processPayment({
         amount: courseData.price,
         courseId: courseData.id,
@@ -306,7 +339,8 @@ export class CourseCheckoutComponent implements OnInit, OnDestroy {
           name: this.customerForm.get('name')?.value,
           email: this.customerForm.get('email')?.value,
           cpfCnpj: this.customerForm.get('cpf')?.value,
-          phone: this.customerForm.get('phone')?.value
+          phone: this.customerForm.get('phone')?.value,
+          courseId: courseData.id
         }
       }).toPromise();
 
@@ -314,13 +348,8 @@ export class CourseCheckoutComponent implements OnInit, OnDestroy {
         throw new Error('Resposta do pagamento inválida');
       }
 
-      // Redirecionar para a página de pagamento do Asaas
       if (response.invoiceUrl) {
-        if (paymentMethod === 'CREDIT_CARD') {
-          window.location.href = response.invoiceUrl;
-        } else {
-          window.open(response.invoiceUrl, '_blank');
-        }
+        window.open(response.invoiceUrl, '_blank');
         this.startPaymentCheck(response.id);
       } else {
         this.notificationService.error('URL de pagamento não disponível');
