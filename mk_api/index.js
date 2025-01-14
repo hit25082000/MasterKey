@@ -25,7 +25,7 @@ const bucket = storage.bucket('master-key-a3c69.appspot.com');
 // Configuração do Asaas
 const config = {
   asaas: {
-    apiKey: process.env.ASAAS_API_KEY || '$aact_MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjlhZTU3ZjAxLTEwOGYtNDA3Yy05NDIwLWMyOWVhMGRhZDZjZDo6JGFhY2hfOGM1NzlkMjItYjlmZC00Yjc1LWE0ZDUtNzJkMzY2ZTgyYmZm',
+    apiKey: process.env.ASAAS_API_KEY,
     apiUrl: 'https://sandbox.asaas.com/api/v3'
   }
 };
@@ -689,6 +689,7 @@ async function createPaymentLink(courseId, courseName, coursePrice, portionCount
 
     const responseText = await linkResponse.text();
     console.log('Resposta da criação do link:', responseText);
+    console.log('Resposta da criação do link:', linkResponse);
 
     if (!linkResponse.ok) {
       throw new Error(`Erro ao criar link de pagamento: ${responseText}`);
@@ -806,6 +807,294 @@ exports.saveCustomerData = functions.https.onRequest((req, res) => {
         error: 'Erro ao salvar dados do cliente',
         details: error.message
       });
+    }
+  });
+});
+
+// Função para criar assinatura
+async function createSubscription(customer, courseData, cycle = 'MONTHLY', paymentMethod = 'BOLETO') {
+  try { 
+    // Primeiro, tentar buscar cliente existente por CPF
+    const searchResponse = await fetch(
+      `${config.asaas.apiUrl}/customers?cpfCnpj=${encodeURIComponent(customer.cpfCnpj.replace(/\D/g, ''))}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'access_token': config.asaas.apiKey
+        }
+      }
+    );
+
+    const searchText = await searchResponse.text();
+    console.log('Resposta da busca de cliente:', searchText);
+
+    let customerData;
+    let searchResult;
+
+    try {
+      if (searchText) {
+        searchResult = JSON.parse(searchText);
+        console.log('Resultado da busca de cliente:', searchResult);
+      }
+    } catch (parseError) {
+      console.error('Erro ao processar resposta da busca:', parseError);
+    }
+
+    if (searchResult && searchResult.data && searchResult.data.length > 0) {
+      // Cliente já existe, usar o primeiro encontrado
+      customerData = searchResult.data[0];
+      console.log('Cliente existente encontrado:', customerData);
+    } else {
+      // Cliente não existe, criar novo
+      console.log('Criando novo cliente...');
+      const customerResponse = await fetch(`${config.asaas.apiUrl}/customers`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'access_token': config.asaas.apiKey
+        },
+        body: JSON.stringify({
+          name: customer.name,
+          email: customer.email,
+          cpfCnpj: customer.cpfCnpj.replace(/\D/g, ''),
+          phone: customer.phone.replace(/\D/g, ''),
+          mobilePhone: customer.phone.replace(/\D/g, ''),
+          notificationDisabled: false
+        })
+      });
+
+      const customerResponseText = await customerResponse.text();
+
+      if (!customerResponse.ok) {
+        throw new Error(`Erro ao criar cliente no Asaas: ${customerResponseText}`);
+      }
+
+      customerData = JSON.parse(customerResponseText);
+    }
+
+    if (!customerData || !customerData.id) {
+      throw new Error('Dados do cliente inválidos ou incompletos');
+    }
+
+    const subscriptionBody = {
+      customer: customerData.id,
+      billingType: paymentMethod,
+      nextDueDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      value: courseData.price / 12,
+      cycle: cycle,
+      description: `Assinatura do curso: ${courseData.name}`,
+      maxPayments: 12,
+      updatePendingPayments: true
+    };
+
+    const subscriptionResponse = await fetch(`${config.asaas.apiUrl}/subscriptions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'access_token': config.asaas.apiKey
+      },
+      body: JSON.stringify(subscriptionBody)
+    });
+
+    const subscriptionResponseText = await subscriptionResponse.text();
+    console.log('Resposta da criação da assinatura:', subscriptionResponseText);
+
+    if (!subscriptionResponse.ok) {
+      throw new Error(`Erro ao criar assinatura: ${subscriptionResponseText}`);
+    }
+
+    return JSON.parse(subscriptionResponseText);
+  } catch (error) {
+    console.error('Erro detalhado na criação de assinatura:', error);
+    throw error;
+  }
+}
+
+// Endpoint para criar assinatura
+exports.createSubscription = functions.https.onRequest((req, res) => {
+  cors(req, res, async () => {
+    if (req.method === 'OPTIONS') {
+      res.status(200).send();
+      return;
+    }
+
+    try {
+      const { courseId, customer, cycle, paymentMethod } = req.body;
+
+      if (!courseId || !customer || !customer.cpfCnpj || !paymentMethod) {
+        return res.status(400).json({
+          error: 'Dados incompletos para criar assinatura. CourseId, customer (com CPF) e paymentMethod são obrigatórios.'
+        });
+      }
+
+      // Validar método de pagamento
+      if (!['BOLETO', 'PIX'].includes(paymentMethod)) {
+        return res.status(400).json({
+          error: 'Método de pagamento inválido. Use BOLETO ou PIX.'
+        });
+      }
+
+      // Buscar dados do curso
+      const courseDoc = await admin.firestore()
+        .collection('courses')
+        .doc(courseId)
+        .get();
+
+      if (!courseDoc.exists) {
+        throw new Error('Curso não encontrado');
+      }
+
+      const courseData = courseDoc.data();
+
+      // Criar assinatura
+      const subscriptionData = await createSubscription(customer, courseData, cycle, paymentMethod);
+      console.log('Dados da assinatura criada:', subscriptionData);
+
+      // Buscar dados do primeiro pagamento da assinatura
+      const paymentsResponse = await fetch(`${config.asaas.apiUrl}/subscriptions/${subscriptionData.id}/payments`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'access_token': config.asaas.apiKey
+        }
+      });
+
+      if (!paymentsResponse.ok) {
+        throw new Error('Erro ao buscar pagamentos da assinatura');
+      }
+
+      const paymentsData = await paymentsResponse.json();
+      const firstPayment = paymentsData.data[0];
+      console.log("dados de primeiro pagamento", firstPayment)
+      // Buscar dados específicos do pagamento (boleto/pix)
+      const paymentResponse = await fetch(`${config.asaas.apiUrl}/payments/${firstPayment.id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'access_token': config.asaas.apiKey
+        }
+      });
+
+      
+      if (!paymentResponse.ok) {
+        throw new Error('Erro ao buscar dados do pagamento');
+      }
+      
+      const paymentData = await paymentResponse.json();
+      
+      console.log("resposta do pagamento", paymentData)
+      // Salvar assinatura no Firestore
+      await admin.firestore().collection('subscriptions').add({
+        courseId: courseId,
+        courseName: courseData.name,
+        customerId: subscriptionData.customer,
+        customerEmail: customer.email,
+        asaasSubscriptionId: subscriptionData.id,
+        value: courseData.price,
+        cycle: cycle || 'MONTHLY',
+        paymentMethod: paymentMethod,
+        status: subscriptionData.status,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+
+      // Retornar dados completos
+      res.status(200).json({
+        subscription: subscriptionData,
+        payment: {
+          id: paymentData.id,
+          value: paymentData.value,
+          dueDate: paymentData.dueDate,
+          status: paymentData.status,
+          invoiceUrl: paymentData.invoiceUrl,
+          bankSlipUrl: paymentData.bankSlipUrl,
+          pixQrCodeUrl: paymentData.pixQrCodeUrl,
+          pixCopiaECola: paymentData.pixCopiaECola
+        }
+      });
+
+    } catch (error) {
+      res.status(500).json({
+        error: 'Erro ao processar assinatura',
+        details: error.message
+      });
+    }
+  });
+});
+
+// Endpoint para testar conexão com Asaas
+exports.testAsaasConnection = functions.https.onRequest((req, res) => {
+  cors(req, res, async () => {
+    if (req.method === 'OPTIONS') {
+      res.status(200).send();
+      return;
+    }
+
+    try {
+      // Tentar fazer uma requisição simples para a API
+      const testResponse = await fetch(`${config.asaas.apiUrl}/customers`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'access_token': config.asaas.apiKey
+        }
+      });
+
+      const responseText = await testResponse.text();
+      console.log('Teste de conexão Asaas:', {
+        status: testResponse.status,
+        statusText: testResponse.statusText,
+        response: responseText
+      });
+
+      if (!testResponse.ok) {
+        throw new Error(`Erro na conexão com Asaas: ${responseText}`);
+      }
+
+      res.status(200).json({
+        message: 'Conexão com Asaas estabelecida com sucesso',
+        status: testResponse.status,
+        response: JSON.parse(responseText)
+      });
+
+    } catch (error) {
+      console.error('Erro ao testar conexão com Asaas:', error);
+      res.status(500).json({
+        error: 'Erro ao testar conexão com Asaas',
+        details: error.message
+      });
+    }
+  });
+});
+
+exports.getSubscriptionPayments = functions.https.onRequest(async (req, res) => {
+  cors(req, res, async () => {
+    try {
+      const subscriptionId = req.params.subscriptionId;
+      
+      if (!subscriptionId) {
+        return res.status(400).json({ error: 'ID da assinatura é obrigatório' });
+      }
+
+      const response = await fetch(
+        `${config.asaas.apiUrl}/subscriptions/${subscriptionId}/payments`,
+        {
+          headers: config.asaas.headers
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error('Erro ao buscar cobranças:', data);
+        return res.status(response.status).json(data);
+      }
+
+      return res.json(data.data);
+    } catch (error) {
+      console.error('Erro ao buscar cobranças:', error);
+      return res.status(500).json({ error: 'Erro ao buscar cobranças da assinatura' });
     }
   });
 });

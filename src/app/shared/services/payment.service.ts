@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment.development';
-import { AsaasPaymentResponse } from '../models/asaas.model';
+import { AsaasPaymentResponse, AsaasSubscriptionResponse, AsaasSubscriptionPayment } from '../models/asaas.model';
 
 export interface CustomerData {
   name: string;
@@ -17,6 +17,13 @@ export interface PaymentRequest {
   courseId: string;
   paymentMethod: string;
   customer: CustomerData;
+}
+
+export interface SubscriptionRequest {
+  customer: CustomerData;
+  courseId: string;
+  paymentMethod: string;
+  cycle: string;
 }
 
 @Injectable({
@@ -45,5 +52,13 @@ export class PaymentService {
       `${this.apiUrl}/saveCustomerData`,
       data
     );
+  }
+
+  createSubscription(data: SubscriptionRequest): Observable<AsaasSubscriptionResponse> {
+    return this.http.post<AsaasSubscriptionResponse>(`${this.apiUrl}/createSubscription`, data);
+  }
+
+  getSubscriptionPayments(subscriptionId: string): Observable<AsaasSubscriptionPayment[]> {
+    return this.http.get<AsaasSubscriptionPayment[]>(`${this.apiUrl}/getSubscriptionPayments/${subscriptionId}`);
   }
 } 

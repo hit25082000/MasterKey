@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { LoadingService } from '../../../../shared/services/loading.service';
-import { PaymentService } from '../../../../shared/services/payment.service';
+import { PaymentService, CustomerData, SubscriptionRequest } from '../../../../shared/services/payment.service';
 import { Course } from '../../../../core/models/course.model';
 import { Subscription, interval } from 'rxjs';
 import { switchMap, takeWhile } from 'rxjs/operators';
@@ -11,6 +11,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CourseService } from '../../../course/services/course.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment.development';
+import { firstValueFrom } from 'rxjs';
+import { AsaasSubscriptionPayment } from '../../../../shared/models/asaas.model';
 
 @Component({
   selector: 'app-course-checkout',
@@ -71,6 +73,10 @@ import { environment } from '../../../../../environments/environment.development
               <span>Boleto Bancário</span>
               <small>Vencimento em 3 dias</small>
             </div>
+          </button>
+          <button class="payment-button subscription" (click)="processSubscription()">
+            Assinar (Pagamento Mensal)
+            <small>12x de {{ (course()?.price || 0) / 12 | currency:'BRL' }}</small>
           </button>
         </div>
       </div>
@@ -232,6 +238,25 @@ import { environment } from '../../../../../environments/environment.development
           i { color: #384a87; }
         }
       }
+
+      .payment-button.subscription {
+        background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .payment-button.subscription small {
+        font-size: 0.8rem;
+        opacity: 0.9;
+        margin-top: 0.5rem;
+      }
+
+      .payment-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      }
     }
   `]
 })
@@ -244,6 +269,9 @@ export class CourseCheckoutComponent implements OnInit, OnDestroy {
   invoiceUrl = '';
   paymentId = '';
   private paymentCheckInterval?: Subscription;
+  subscriptionPayments: AsaasSubscriptionPayment[] = [];
+  showPayments = false;
+  selectedPaymentMethod: string = 'PIX';
 
   constructor(
     private fb: FormBuilder,
@@ -394,6 +422,87 @@ export class CourseCheckoutComponent implements OnInit, OnDestroy {
     document.execCommand('copy');
     document.body.removeChild(input);
     this.notificationService.success('Código PIX copiado!');
+  }
+
+  async processSubscription() {
+    const currentCourse = this.course();
+    if (!this.customerForm.valid || !currentCourse) {
+      this.notificationService.error('Por favor, preencha todos os dados corretamente.');
+      return;
+    }
+
+    this.loadingService.show();
+
+    try {
+      const customerData: CustomerData = {
+        name: this.customerForm.get('name')?.value,
+        email: this.customerForm.get('email')?.value,
+        cpfCnpj: this.customerForm.get('cpf')?.value,
+        phone: this.customerForm.get('phone')?.value,
+        courseId: currentCourse.id
+      };
+
+      await this.paymentService.saveCustomerData(customerData).toPromise();
+
+      const subscriptionRequest: SubscriptionRequest = {
+        courseId: currentCourse.id,
+        customer: customerData,
+        cycle: 'MONTHLY',
+        paymentMethod: 'BOLETO'
+      };
+
+      const response = await this.paymentService.createSubscription(subscriptionRequest).toPromise();
+
+      console.log("resposta ao criar assinatura", response)
+
+      if (response?.payment!.invoiceUrl) {
+        window.location.href = response?.payment!.invoiceUrl;
+      } else {
+        this.notificationService.error('Erro ao gerar link de assinatura. Tente novamente.');
+      }
+    } catch (error) {
+      console.error('Erro ao processar assinatura:', error);
+      this.notificationService.error('Erro ao processar assinatura. Tente novamente.');
+    } finally {
+      this.loadingService.hide();
+    }
+  }
+
+  async createSubscription() {
+    try {
+      const response = await firstValueFrom(this.paymentService.createSubscription({
+        courseId: this.course()?.id || '',
+        customer: {
+          name: this.customerForm.get('name')?.value,
+          email: this.customerForm.get('email')?.value,
+          cpfCnpj: this.customerForm.get('cpf')?.value,
+          phone: this.customerForm.get('phone')?.value,
+          courseId: this.course()?.id || ''
+        },
+        cycle: 'MONTHLY',
+        paymentMethod: this.selectedPaymentMethod
+      }));
+
+      console.log("resposta ao criar assinatura",response)
+
+      if (response?.subscription?.id) {
+        // Buscar cobranças da assinatura
+        this.paymentService.getSubscriptionPayments(response.subscription.id)
+          .subscribe(
+            payments => {
+              this.subscriptionPayments = payments;
+              this.showPayments = true;
+            },
+            error => {
+              console.error('Erro ao buscar cobranças:', error);
+            }
+          );
+      }
+
+      // ... resto do código existente ...
+    } catch (error) {
+      console.error('Erro ao criar assinatura:', error);
+    }
   }
 
   ngOnDestroy() {

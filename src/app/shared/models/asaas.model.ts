@@ -60,3 +60,35 @@ export interface AsaasError {
     description: string;
   }>;
 }
+
+export interface AsaasSubscriptionPayment {
+  id: string;
+  value: number;
+  dueDate: string;
+  status: 'PENDING' | 'RECEIVED' | 'CONFIRMED' | 'OVERDUE' | 'REFUNDED' | 'RECEIVED_IN_CASH' | 'FAILED' | 'CANCELLED';
+  invoiceUrl?: string;
+  bankSlipUrl?: string;
+  pixQrCodeUrl?: string;
+  pixCopiaECola?: string;
+  billingType: 'PIX' | 'CREDIT_CARD' | 'BOLETO';
+  invoiceNumber: string;
+  paymentDate?: string;
+}
+
+export interface AsaasSubscriptionResponse {
+  subscription: {
+    id: string;
+    url?: string;
+  };
+  url?: string;
+  payment?: {
+    id: string;
+    value: number;
+    dueDate: string;
+    status: 'PENDING' | 'RECEIVED' | 'CONFIRMED' | 'OVERDUE' | 'REFUNDED' | 'RECEIVED_IN_CASH' | 'FAILED' | 'CANCELLED';
+    invoiceUrl?: string;
+    bankSlipUrl?: string;
+    pixQrCodeUrl?: string;
+    pixCopiaECola?: string;
+  };
+}
