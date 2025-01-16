@@ -21,7 +21,7 @@ import { NotificationService } from '../../../../shared/services/notification.se
             <button class="back-button" (click)="backToList($event)">
               <i class="fas fa-arrow-left"></i>
             </button>
-            <span>{{ selectedConversation()?.userName }}</span>
+            <span>{{ getOtherUserName(selectedConversation()) }}</span>
           </div>
         } @else {
           <h3>Mensagens</h3>
@@ -38,43 +38,64 @@ import { NotificationService } from '../../../../shared/services/notification.se
         <div class="chat-content">
           @if (!selectedConversation()) {
             <div class="conversation-list">
-              @for (conversation of conversations(); track conversation.userId) {
-                <div
-                  class="conversation-item"
-                  [class.unread]="conversation.unreadCount! > 0"
-                  (click)="selectConversation(conversation)"
-                >
-                  <div class="user-avatar">
-                    <i class="fas fa-user"></i>
-                  </div>
-                  <div class="conversation-info">
-                    <div class="conversation-header">
-                      <span class="user-name">{{ conversation.userName }}</span>
-                      <span class="time">{{ formatTime(conversation.lastMessageTimestamp) }}</span>
+              @if (!showUserList()) {
+                @for (conversation of conversations(); track conversation) {
+                  <div
+                    class="conversation-item"
+                    [class.unread]="conversation.unreadCount! > 0"
+                    (click)="selectConversation(conversation)"
+                  >
+                    <div class="user-avatar">
+                      <i class="fas fa-user"></i>
                     </div>
-                    <div class="conversation-preview">
-                      <p class="last-message">
-                        @if (conversation.lastMessage) {
-                          <span class="sender-name" *ngIf="conversation.lastMessageSender !== currentUserId()">
-                            {{ conversation.lastMessageSenderName }}:
-                          </span>
-                          {{ conversation.lastMessage }}
-                        } @else {
-                          <span class="no-messages">Nenhuma mensagem ainda</span>
+                    <div class="conversation-info">
+                      <div class="conversation-header">
+                        <span class="user-name">{{ getOtherUserName(conversation) }}</span>
+                        <span class="time">{{ formatTime(conversation.lastMessageTimestamp) }}</span>
+                      </div>
+                      <div class="conversation-preview">
+                        <p class="last-message">
+                          @if (conversation.lastMessage) {
+                            @if (conversation.lastMessageSender !== currentUserId()) {
+                              <span class="sender-name">{{ conversation.lastMessageSenderName }}:</span>
+                            }
+                            {{ conversation.lastMessage }}
+                          } @else {
+                            <span class="no-messages">Nenhuma mensagem ainda</span>
+                          }
+                        </p>
+                        @if (conversation.unreadCount! > 0) {
+                          <span class="unread-badge">{{ conversation.unreadCount }}</span>
                         }
-                      </p>
-                      @if (conversation.unreadCount! > 0) {
-                        <span class="unread-badge">{{ conversation.unreadCount }}</span>
-                      }
+                      </div>
                     </div>
                   </div>
+                }
+
+                <button class="new-chat-btn" (click)="toggleUserList()">
+                  <i class="fas fa-plus"></i>
+                  Nova Conversa
+                </button>
+              } @else {
+                <div class="user-list">
+                  <div class="user-list-header">
+                    <button class="back-button" (click)="toggleUserList()">
+                      <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <h3>Selecione um usuário</h3>
+                  </div>
+                  @for (user of users(); track user.id) {
+                    <div class="user-item" (click)="startNewConversation(user)">
+                      <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                      </div>
+                      <div class="user-info">
+                        <span class="user-name">{{ user.name }}</span>
+                      </div>
+                    </div>
+                  }
                 </div>
               }
-
-              <button class="new-chat-btn" (click)="openNewConversationDialog()">
-                <i class="fas fa-plus"></i>
-                Nova Conversa
-              </button>
             </div>
           }
 
@@ -121,7 +142,6 @@ import { NotificationService } from '../../../../shared/services/notification.se
 export class ChatModalComponent implements OnInit {
   private chatService = inject(ChatService);
   private authService = inject(AuthService);
-  private dialog = inject(MatDialog);
   private notificationService = inject(NotificationService);
 
   // Signals
@@ -132,12 +152,13 @@ export class ChatModalComponent implements OnInit {
   conversations = signal<Conversation[]>([]);
   messages = signal<Message[]>([]);
   unreadCount = computed(() => this.chatService.unreadMessages());
+  showUserList = signal(false);
+  users = signal<any[]>([]);
 
   // Estado local
   newMessage = '';
 
   constructor() {
-    // Efeito para atualizar mensagens quando a conversa muda
     effect(() => {
       if (this.selectedConversation()) {
         this.loadMessages();
@@ -151,14 +172,54 @@ export class ChatModalComponent implements OnInit {
         this.currentUserId.set(user.uid);
         this.currentUserName.set(user.displayName);
         this.loadConversations();
+        this.loadUsers();
         this.chatService.requestNotificationPermission();
       }
     });
   }
 
+  private async loadUsers() {
+    this.chatService.getUsers().subscribe(users => {
+      // Filtra o usuário atual da lista
+      this.users.set(users.filter(user => user.id !== this.currentUserId()));
+    });
+  }
+
+  toggleUserList() {
+    this.showUserList.set(!this.showUserList());
+  }
+
+  async startNewConversation(selectedUser: any) {
+    if (selectedUser.id === this.currentUserId()) {
+      this.notificationService.error('Não é possível iniciar conversa consigo mesmo');
+      return;
+    }
+
+    try {
+      await this.chatService.createConversation(
+        this.currentUserId()!,
+        selectedUser.id,
+        selectedUser.name,
+        this.currentUserName()!
+      );
+      await this.loadConversations();
+      const newConversation = this.conversations().find(c => 
+        c.participants.includes(selectedUser.id) && 
+        c.participants.includes(this.currentUserId()!)
+      );
+      if (newConversation) {
+        this.selectConversation(newConversation);
+        this.showUserList.set(false);
+      }
+    } catch (error) {
+      this.notificationService.error('Erro ao iniciar conversa');
+    }
+  }
+
   private async loadConversations() {
     if (this.currentUserId()) {
       const conversations = await this.chatService.getConversations(this.currentUserId()!);
+      console.log(conversations)
       this.conversations.set(conversations);
     }
   }
@@ -166,9 +227,13 @@ export class ChatModalComponent implements OnInit {
   private loadMessages() {
     if (!this.selectedConversation()) return;
 
+    const otherUserId = this.selectedConversation()!.participants.find(
+      id => id !== this.currentUserId()
+    )!;
+
     this.chatService.getMessages(
       this.currentUserId()!,
-      this.selectedConversation()!.userId
+      otherUserId
     ).subscribe(messages => {
       this.messages.set(messages);
       this.scrollToBottom();
@@ -190,19 +255,27 @@ export class ChatModalComponent implements OnInit {
   private markAsRead() {
     if (!this.selectedConversation()) return;
 
+    const otherUserId = this.selectedConversation()!.participants.find(
+      id => id !== this.currentUserId()
+    )!;
+
     this.chatService.markConversationAsRead(
       this.currentUserId()!,
-      this.selectedConversation()!.userId
+      otherUserId
     );
   }
 
   async sendMessage() {
     if (!this.newMessage.trim() || !this.selectedConversation()) return;
 
+    const otherUserId = this.selectedConversation()!.participants.find(
+      id => id !== this.currentUserId()
+    )!;
+
     try {
       await this.chatService.sendMessage(
         this.currentUserId()!,
-        this.selectedConversation()!.userId,
+        otherUserId,
         this.newMessage,
         this.currentUserName()!
       );
@@ -226,21 +299,6 @@ export class ChatModalComponent implements OnInit {
     });
   }
 
-  openNewConversationDialog() {
-    const dialogRef = this.dialog.open(UserSelectionDialogComponent, {
-      width: '300px',
-      data: { currentUserId: this.currentUserId() }
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result && result.id !== this.currentUserId()) {
-        this.startNewConversation(result);
-      } else if (result && result.id === this.currentUserId()) {
-        this.notificationService.error('Não é possível iniciar conversa consigo mesmo');
-      }
-    });
-  }
-
   formatTime(timestamp: any): string {
     if (!timestamp) return '';
 
@@ -256,20 +314,9 @@ export class ChatModalComponent implements OnInit {
     }
   }
 
-  private async startNewConversation(selectedUser: any) {
-    try {
-      await this.chatService.createConversation(
-        this.currentUserId()!,
-        selectedUser.id,
-        selectedUser.name
-      );
-      await this.loadConversations();
-      const newConversation = this.conversations().find(c => c.userId === selectedUser.id);
-      if (newConversation) {
-        this.selectConversation(newConversation);
-      }
-    } catch (error) {
-      this.notificationService.error('Erro ao iniciar conversa');
-    }
+  getOtherUserName(conversation: Conversation | null): string {
+    if (!conversation) return 'Usuário';
+    const otherUserId = conversation.participants.find(id => id !== this.currentUserId());
+    return otherUserId ? conversation.participantsInfo[otherUserId] : 'Usuário';
   }
 }

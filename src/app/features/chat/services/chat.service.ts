@@ -93,7 +93,8 @@ export class ChatService {
   async createConversation(
     currentUserId: string,
     selectedUserId: string,
-    selectedUserName: string
+    selectedUserName: string,
+    currentUserName: string
   ): Promise<void> {
     // Impede criação de conversa consigo mesmo
     if (currentUserId === selectedUserId) {
@@ -110,9 +111,11 @@ export class ChatService {
     const conversationId = [currentUserId, selectedUserId].sort().join('_');
 
     const conversation: Omit<ConversationWithParticipants, 'id' | 'active'> = {
-      userId: selectedUserId,
-      userName: selectedUserName,
       participants: [currentUserId, selectedUserId],
+      participantsInfo: {
+        [currentUserId]: currentUserName,
+        [selectedUserId]: selectedUserName
+      },
       lastMessage: '',
       lastMessageTimestamp: new Date(),
       unreadCount: 0,
@@ -191,14 +194,15 @@ export class ChatService {
     );
 
     if (conversation) {
+      // Só incrementa se a mensagem foi enviada para o outro usuário
       const newUnreadCount = (conversation.unreadCount || 0) + 1;
       await this.firestore.updateDocument('conversations', conversationId, {
         unreadCount: newUnreadCount,
       });
 
-      // Atualiza o contador local
+      // Atualiza o contador local apenas para o receptor
       const conversations = await this.getConversations(otherUserId);
-      this.updateUnreadCount(conversations);
+      this.updateUnreadCount(conversations.filter(conv => conv.lastMessageSender !== otherUserId));
     }
   }
 

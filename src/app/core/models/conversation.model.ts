@@ -1,12 +1,13 @@
 import { Entity } from './entity';
 
 export interface Conversation extends Entity {
-  userId: string;
-  userName: string;
+  participants: string[];
+  participantsInfo: {
+    [key: string]: string;  // key é o userId, value é o userName
+  };
   lastMessage: string;
   lastMessageTimestamp: Date;
   lastMessageSender: string;
   lastMessageSenderName: string;
-  participants: string[];
   unreadCount?: number;
 }
