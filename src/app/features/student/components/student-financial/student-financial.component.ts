@@ -6,11 +6,13 @@ import { ConfirmationService } from '../../../../shared/services/confirmation.se
 import { AuthService } from '../../../../core/services/auth.service';
 import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { forkJoin, map } from 'rxjs';
+import { forkJoin, map, firstValueFrom } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ConfirmationDialogComponent } from '../../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { CourseService } from '../../../course/services/course.service';
 import { Course } from '../../../../core/models/course.model';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-student-financial',
@@ -27,6 +29,7 @@ export class StudentFinancialComponent implements OnInit {
   private notificationService = inject(NotificationService);
   private confirmationService = inject(ConfirmationService);
   private destroyRef = inject(DestroyRef);
+  private http = inject(HttpClient);
 
   // Signals
   readonly payments = this.paymentService.payments;
@@ -34,20 +37,42 @@ export class StudentFinancialComponent implements OnInit {
   readonly subscription = this.paymentService.subscription;
   readonly courses = signal<Map<string, Course>>(new Map());
 
-  // Computed Signals para Pagamentos Únicos
+  // Computed Signal para filtrar pagamentos únicos
+  readonly filteredPayments = computed(() => {
+    const payments = this.payments();
+    const latestPendingPaymentsByCourse = new Map();
+
+    payments.forEach(payment => {
+      if (payment.paymentDetails.status === 'PENDING') {
+        const existingPayment = latestPendingPaymentsByCourse.get(payment.courseId);
+        if (!existingPayment || new Date(payment.paymentDetails.dateCreated) > new Date(existingPayment.paymentDetails.dateCreated)) {
+          latestPendingPaymentsByCourse.set(payment.courseId, payment);
+        }
+      }
+    });
+
+    // Combina os últimos pagamentos pendentes com os pagamentos não pendentes
+    const nonPendingPayments = payments.filter(p => p.paymentDetails.status !== 'PENDING');
+    return [...latestPendingPaymentsByCourse.values(), ...nonPendingPayments];
+  });
+
+  // Atualiza os computed signals para usar filteredPayments
   readonly pendingUniquePayments = computed(() => 
-    this.payments().filter(p => p.paymentDetails.status === 'PENDING').length
+    this.filteredPayments().filter(p => p.paymentDetails.status === 'PENDING').length
   );
+
   readonly paidUniquePayments = computed(() => 
-    this.payments().filter(p => p.paymentDetails.status === 'CONFIRMED' || p.paymentDetails.status === 'RECEIVED').length
+    this.filteredPayments().filter(p => p.paymentDetails.status === 'CONFIRMED' || p.paymentDetails.status === 'RECEIVED').length
   );
+
   readonly totalPendingUnique = computed(() => 
-    this.payments()
+    this.filteredPayments()
       .filter(p => p.paymentDetails.status === 'PENDING')
       .reduce((total, p) => total + p.paymentDetails.value, 0)
   );
+
   readonly totalPaidUnique = computed(() => 
-    this.payments()
+    this.filteredPayments()
       .filter(p => p.paymentDetails.status === 'CONFIRMED' || p.paymentDetails.status === 'RECEIVED')
       .reduce((total, p) => total + p.paymentDetails.value, 0)
   );
@@ -145,6 +170,10 @@ export class StudentFinancialComponent implements OnInit {
     });
   }
 
+  openPaymentUrl(url: string) {
+    window.open(url, '_blank');
+  }
+
   cancelSubscription(subscriptionId: string) {
     this.confirmationService.confirm({
       header: 'Cancelar Assinatura',
@@ -153,12 +182,12 @@ export class StudentFinancialComponent implements OnInit {
       accept: () => {
         this.loadingService.show();
         this.paymentService.cancelSubscription(subscriptionId).subscribe({
-          next: () => {
+          next: async () => {
             this.notificationService.success('Assinatura cancelada com sucesso!');
-            // Recarregar dados do usuário atual
-            const userEmail = this.auth.getCurrentUser().email;
-            if (userEmail) {
-              this.loadFinancialData(userEmail);
+            // Recarregar dados usando userInfo
+            const user = await firstValueFrom(this.auth.userInfo);
+            if (user?.email) {
+              await this.loadFinancialData(user.email);
             }
           },
           error: (error) => {
@@ -169,5 +198,76 @@ export class StudentFinancialComponent implements OnInit {
         });
       }
     });
+  }
+
+  async processPayment(payment: any, paymentMethod: string) {
+    try {
+      this.loadingService.show();
+      const user = await firstValueFrom(this.auth.userInfo);
+      
+      if (!user) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      // Dados do cliente
+      const customerData = {
+        name: user.name,
+        email: user.email,
+        cpfCnpj: user.cpf,
+        phone: user.phone1,
+        courseId: payment.courseId
+      };
+      console.log(user)
+      if (paymentMethod === 'CREDIT_CARD') {
+        try {
+          // Salvar dados do cliente
+          await firstValueFrom(this.paymentService.saveCustomerData(customerData));
+
+          // Criar link de pagamento
+          const response = await firstValueFrom(
+            this.http.get<{url: string}>(
+              `${environment.apiUrl}/createPaymentLink?courseId=${payment.courseId}`
+            )
+          );
+          
+          if (response?.url) {
+            window.location.href = response.url;
+            return;
+          }
+          throw new Error('URL de pagamento não disponível');
+        } catch (error) {
+          console.error('Erro ao obter link de pagamento:', error);
+          this.notificationService.error('Erro ao gerar link de pagamento. Tente novamente.');
+        }
+      } else {
+        // Processamento para PIX e Boleto
+        const response = await firstValueFrom(this.paymentService.processPayment({
+          amount: payment.paymentDetails.value,
+          courseId: payment.courseId,
+          paymentMethod,
+          customer: customerData
+        }));
+
+        if (!response) {
+          throw new Error('Resposta do pagamento inválida');
+        }
+
+        if (paymentMethod === 'BOLETO' && response.bankSlipUrl) {
+          window.open(response.bankSlipUrl, '_blank');
+        } else if (paymentMethod === 'PIX' && response.invoiceUrl) {
+          window.open(response.invoiceUrl, '_blank');
+        } else {
+          this.notificationService.error('URL de pagamento não disponível');
+        }
+
+        // Recarregar dados após processar pagamento
+        await this.loadFinancialData(user.email);
+      }
+    } catch (error) {
+      console.error('Erro ao processar pagamento:', error);
+      this.notificationService.error('Erro ao processar pagamento. Por favor, tente novamente.');
+    } finally {
+      this.loadingService.hide();
+    }
   }
 } 
