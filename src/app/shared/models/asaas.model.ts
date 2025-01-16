@@ -52,6 +52,9 @@ export interface AsaasPaymentResponse {
     creditCardBrand: string;
     creditCardToken: string;
   };
+  invoiceNumber?: string;
+  confirmedDate?: string;
+  refundedDate?: string;
 }
 
 export interface AsaasError {
@@ -91,4 +94,23 @@ export interface AsaasSubscriptionResponse {
     pixQrCodeUrl?: string;
     pixCopiaECola?: string;
   };
+}
+
+export interface FirestorePayment {
+  id: string;
+  customerEmail: string;
+  courseId: string;
+  type: 'PAYMENT' | 'SUBSCRIPTION';
+  subscriptionId?: string;
+  paymentDetails: AsaasPaymentResponse;
+}
+
+export interface FirestoreSubscription {
+  id: string;
+  customerEmail: string;
+  courseId: string;
+  status: 'ACTIVE' | 'CANCELLED';
+  value: number;
+  nextDueDate: string;
+  subscriptionDetails: AsaasSubscriptionResponse;
 }

@@ -3,10 +3,11 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseService } from '../../../features/course/services/course.service';
 import { Course } from '../../../core/models/course.model';
-import { PaymentService } from '../../../core/services/payment.service';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { LoadingService } from '../../../shared/services/loading.service';
 import { firstValueFrom } from 'rxjs';
+import { CustomerData, PaymentRequest, PaymentService } from '../../../shared/services/payment.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-course-preview',
@@ -182,6 +183,7 @@ import { firstValueFrom } from 'rxjs';
 export class CoursePreviewComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private auth = inject(AuthService)
   private courseService = inject(CourseService);
   private paymentService = inject(PaymentService);
   private notificationService = inject(NotificationService);
@@ -215,10 +217,12 @@ export class CoursePreviewComponent implements OnInit {
     this.loadingService.show();
 
     try {
+      var user = this.auth.getCurrentUser()
+
+      var customer : CustomerData = {name: user.name,email: user.email,cpfCnpj: user.cpfCnpj, phone: user.phoneNumber, courseId:this.course()?.id!  }
+      var PaymentRequest : PaymentRequest = {customer: customer,paymentMethod: paymentMethod, courseId: this.course()?.id!,amount: this.course()?.price! }
       const response = await firstValueFrom(this.paymentService.processPayment(
-        this.course()!.price,
-        this.course()!.id!,
-        paymentMethod
+        PaymentRequest
       ));
 
       if (response.status === 'CONFIRMED') {

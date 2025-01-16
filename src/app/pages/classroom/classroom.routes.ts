@@ -6,9 +6,9 @@ import { ExamDetailsComponent } from '../../features/student/components/exam-det
 import { StudentDashboardComponent } from '../../features/student/components/student-dashboard/student-dashboard.component';
 import { StudentJobVacancyListComponent } from '../../features/student/components/student-job-vacancy-list/student-job-vacancy-list.component';
 import { StudentIdCardComponent } from '../../features/student/components/student-id-card/student-id-card.component';
-import { StudentFinancialComponent } from '../../features/student/components/student-financial/student-financial.component';
 import { PackageCatalogComponent } from '../../features/package/components/package-catalog/package-catalog.component';
 import { CourseCatalogComponent } from '../../features/course/components/course-catalog/course-catalog.component';
+import { StudentFinancialComponent } from '../../features/student/components/student-financial/student-financial.component';
 // import { JobVacancyDetailsComponent } from '../../features/student/components/job-vacancy-details/job-vacancy-details.component';
 
 export const CLASSROOM_ROUTES: Routes = [

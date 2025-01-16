@@ -3,11 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FirestoreService } from '../../../../core/services/firestore.service';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
-import { environment } from '../../../../../environments/environment';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { delay, from, of, tap } from 'rxjs';
 import { concatMap } from 'rxjs/operators';
 import { WhatsAppStatusService } from '../../services/whats-app-status.service';
+import { environment } from '../../../../../environments/environment.development';
 
 interface WhatsAppResponse {
   success: boolean;

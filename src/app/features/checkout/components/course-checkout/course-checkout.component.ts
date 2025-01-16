@@ -342,7 +342,7 @@ export class CourseCheckoutComponent implements OnInit, OnDestroy {
 
           // Obter link de pagamento para cartão de crédito
           const response = await this.http.get<{url: string}>(
-            `${environment.adminUrl}/createPaymentLink?courseId=${courseData.id}`
+            `${environment.apiUrl}/createPaymentLink?courseId=${courseData.id}`
           ).toPromise();
           
           if (response?.url) {
@@ -378,7 +378,6 @@ export class CourseCheckoutComponent implements OnInit, OnDestroy {
 
       if (response.invoiceUrl) {
         window.open(response.invoiceUrl, '_blank');
-        this.startPaymentCheck(response.id);
       } else {
         this.notificationService.error('URL de pagamento não disponível');
       }
@@ -388,30 +387,6 @@ export class CourseCheckoutComponent implements OnInit, OnDestroy {
     } finally {
       this.loadingService.hide();
     }
-  }
-
-  startPaymentCheck(paymentId: string) {
-    this.paymentCheckInterval?.unsubscribe();
-    
-    this.paymentCheckInterval = interval(5000)
-      .pipe(
-        switchMap(() => this.paymentService.checkPaymentStatus(paymentId)),
-        takeWhile(status => !['RECEIVED', 'CONFIRMED', 'FAILED', 'CANCELLED'].includes(status.status), true)
-      )
-      .subscribe({
-        next: (status) => {
-          if (status.status === 'RECEIVED' || status.status === 'CONFIRMED') {
-            this.notificationService.success('Pagamento confirmado! Em breve entraremos em contato.');
-            this.router.navigate(['/courses']);
-          } else if (status.status === 'FAILED' || status.status === 'CANCELLED') {
-            this.notificationService.error('Pagamento não aprovado');
-          }
-        },
-        error: (error) => {
-          console.error('Erro ao verificar status:', error);
-          this.notificationService.error('Erro ao verificar status do pagamento');
-        }
-      });
   }
 
   copyPixCode() {
@@ -465,43 +440,6 @@ export class CourseCheckoutComponent implements OnInit, OnDestroy {
       this.notificationService.error('Erro ao processar assinatura. Tente novamente.');
     } finally {
       this.loadingService.hide();
-    }
-  }
-
-  async createSubscription() {
-    try {
-      const response = await firstValueFrom(this.paymentService.createSubscription({
-        courseId: this.course()?.id || '',
-        customer: {
-          name: this.customerForm.get('name')?.value,
-          email: this.customerForm.get('email')?.value,
-          cpfCnpj: this.customerForm.get('cpf')?.value,
-          phone: this.customerForm.get('phone')?.value,
-          courseId: this.course()?.id || ''
-        },
-        cycle: 'MONTHLY',
-        paymentMethod: this.selectedPaymentMethod
-      }));
-
-      console.log("resposta ao criar assinatura",response)
-
-      if (response?.subscription?.id) {
-        // Buscar cobranças da assinatura
-        this.paymentService.getSubscriptionPayments(response.subscription.id)
-          .subscribe(
-            payments => {
-              this.subscriptionPayments = payments;
-              this.showPayments = true;
-            },
-            error => {
-              console.error('Erro ao buscar cobranças:', error);
-            }
-          );
-      }
-
-      // ... resto do código existente ...
-    } catch (error) {
-      console.error('Erro ao criar assinatura:', error);
     }
   }
 

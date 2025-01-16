@@ -4,13 +4,13 @@ import { Observable, from, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import BaseUser from '../models/base-user.model';
 import { AuthService } from './auth.service';
-import { environment } from '../../../environments/environment';
+import { environment } from '../../../environments/environment.development';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AdminService {
-  private apiUrl = environment.adminUrl;
+  private apiUrl = environment.apiUrl;
 
   constructor(private http: HttpClient, private authService: AuthService) {}
 

@@ -37,7 +37,6 @@ export class AuthService {
         const userDoc = await this.getUserFromFirestore(aUser.uid);
         const id = aUser.uid;
         this.userInfo.next({ ...userDoc, id });
-        this.getCurrentUser();
       } else {
         this.userInfo.next(null);
       }

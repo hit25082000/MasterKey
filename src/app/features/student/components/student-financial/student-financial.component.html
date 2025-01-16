@@ -1,72 +1,189 @@
+
 <div class="financial-container">
-  <header>
-    <h2>Financeiro</h2>
-  </header>
-
-  @if (loading()) {
-    <div class="loading-container">
-      <i class="fas fa-spinner fa-spin"></i>
-      <p>Carregando informações financeiras...</p>
-    </div>
-  } @else {
-    <div class="payments-list">
-      <div class="payment-summary">
-        <div class="summary-card pending">
-          <i class="fas fa-clock"></i>
-          <div class="summary-info">
-            <span class="label">Pendentes</span>
-            <span class="value">{{ pendingCount() }}</span>
-          </div>
+  <!-- Seção de Pagamentos Únicos -->
+  <div class="section">
+    <div class="summary-card">
+      <div class="summary-title">Resumo de Pagamentos Únicos</div>
+      <div class="summary-content">
+        <div>
+          <div class="summary-value">{{ totalPaidUnique() | currency:'BRL' }}</div>
+          <div class="summary-label">Total Pago</div>
         </div>
-        <div class="summary-card paid">
-          <i class="fas fa-check-circle"></i>
-          <div class="summary-info">
-            <span class="label">Pagos</span>
-            <span class="value">{{ paidCount() }}</span>
-          </div>
+        <div>
+          <div class="summary-value">{{ totalPendingUnique() | currency:'BRL' }}</div>
+          <div class="summary-label">Total Pendente</div>
         </div>
       </div>
+    </div>
 
-      <div class="payments-table">
-        <table>
-          <thead>
-            <tr>
-              <th>Descrição</th>
-              <th>Vencimento</th>
-              <th>Valor</th>
-              <th>Status</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (payment of payments(); track payment.id) {
-              <tr [class]="getStatusClass(payment.status)">
-                <td>{{ payment.description }}</td>
-                <td>{{ formatDate(payment.dueDate) }}</td>
-                <td class="amount">{{ formatCurrency(payment.amount) }}</td>
-                <td>
-                  <span class="status-badge" [class]="getStatusClass(payment.status)">
-                    {{ getStatusLabel(payment.status) }}
-                  </span>
-                </td>
-                <td>
-                  @if (payment.status === 'pending' && payment.paymentUrl) {
-                    <button class="btn-pay" (click)="openPaymentLink(payment.paymentUrl)">
-                      <i class="fas fa-money-bill-wave"></i>
-                      Pagar
-                    </button>
-                  } @else if (payment.status === 'approved') {
-                    <span class="paid-date">
-                      <i class="fas fa-calendar-check"></i>
-                      Pago em {{ formatDate(payment.paidAt!) }}
-                    </span>
-                  }
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
+    <h2>Pagamentos de Cursos</h2>
+    
+    <div class="payment-card" 
+         *ngFor="let payment of payments()"
+         [ngClass]="payment.paymentDetails.status.toLowerCase()"
+         [attr.data-status]="payment.paymentDetails.status === 'REFUNDED' ? 'Reembolsado' : ''">
+      <div class="payment-header">
+        <div class="course-info">
+          <ng-container *ngIf="getCourse(payment.courseId) as course">
+            <div class="course-image">
+              <img [src]="course.image" [alt]="course.name">
+            </div>
+            <div class="course-details">
+              <div class="course-title">{{ course.name }}</div>
+              <div class="course-description">{{ course.description }}</div>
+            </div>
+          </ng-container>
+          <div class="payment-type">Pagamento único</div>
+        </div>
+        <div class="payment-value">
+          {{ payment.paymentDetails.value | currency:'BRL' }}
+          <span class="refunded-value" *ngIf="payment.paymentDetails.status === 'REFUNDED'">
+            Reembolsado
+          </span>
+        </div>
+      </div>
+      
+      <div class="payment-info">
+        <div class="payment-date">
+          <i class="fas fa-calendar"></i>
+          <span>{{ payment.paymentDetails.dueDate | date:'dd/MM/yyyy' }}</span>
+          <ng-container *ngIf="payment.paymentDetails.status === 'REFUNDED'">
+            <span class="refund-date">
+              <i class="fas fa-undo"></i>
+              Reembolsado em {{ payment.paymentDetails.refundedDate | date:'dd/MM/yyyy' }}
+            </span>
+          </ng-container>
+        </div>
+        <span class="status-badge" [ngClass]="payment.paymentDetails.status.toLowerCase()">
+          <i class="fas" [ngClass]="{
+            'fa-clock': payment.paymentDetails.status === 'PENDING',
+            'fa-check-circle': payment.paymentDetails.status === 'CONFIRMED' || payment.paymentDetails.status === 'RECEIVED',
+            'fa-undo': payment.paymentDetails.status === 'REFUNDED',
+            'fa-exclamation-circle': payment.paymentDetails.status === 'OVERDUE'
+          }"></i>
+          {{ payment.paymentDetails.status }}
+        </span>
+      </div>
+
+      <div class="payment-actions" *ngIf="payment.paymentDetails.status === 'PENDING'">
+        <a *ngIf="payment.paymentDetails.bankSlipUrl" 
+           [href]="payment.paymentDetails.bankSlipUrl" 
+           target="_blank" 
+           class="btn btn-primary">
+          <i class="fas fa-file-invoice"></i>
+          Visualizar Boleto
+        </a>
+        <button *ngIf="payment.paymentDetails.pixCopiaECola" 
+                class="btn btn-outline"
+                (click)="copyPixCode(payment.paymentDetails.pixCopiaECola)">
+          <i class="fas fa-qrcode"></i>
+          Copiar Código PIX
+        </button>
+        <a *ngIf="payment.paymentDetails.invoiceUrl" 
+           [href]="payment.paymentDetails.invoiceUrl" 
+           target="_blank" 
+           class="btn btn-primary">
+          <i class="fas fa-credit-card"></i>
+          Pagar com Cartão
+        </a>
       </div>
     </div>
-  }
+  </div>
+
+  <!-- Seção de Assinaturas -->
+  <div class="section">
+    <div class="summary-card">
+      <div class="summary-title">Resumo de Assinaturas</div>
+      <div class="summary-content">
+        <div>
+          <div class="summary-value">{{ totalPaidSubscription() | currency:'BRL' }}</div>
+          <div class="summary-label">Total Pago</div>
+        </div>
+        <div>
+          <div class="summary-value">{{ totalPendingSubscription() | currency:'BRL' }}</div>
+          <div class="summary-label">Total Pendente</div>
+        </div>
+      </div>
+    </div>
+
+    <h2>Assinaturas</h2>
+    
+    <div class="payment-card" 
+         *ngFor="let payment of subscriptionPayments()"
+         [ngClass]="{'inactive': subscription()?.status === 'CANCELLED'}"
+         [attr.data-status]="subscription()?.status === 'CANCELLED' ? 'Inativa' : ''">
+      <div class="payment-header">
+        <div class="course-info">
+          <ng-container *ngIf="getCourse(payment.courseId) as course">
+            <div class="course-image">
+              <img [src]="course.image" [alt]="course.name">
+            </div>
+            <div class="course-details">
+              <div class="course-title">{{ course.name }}</div>
+              <div class="course-description">{{ course.description }}</div>
+            </div>
+          </ng-container>
+          <div class="payment-type">
+            <span>Assinatura mensal</span>
+            <div class="subscription-status" [ngClass]="subscription()?.status!.toLowerCase()">
+              <i class="fas" [ngClass]="{
+                'fa-check-circle': subscription()?.status === 'ACTIVE',
+                'fa-times-circle': subscription()?.status === 'CANCELLED'
+              }"></i>
+              {{ subscription()?.status === 'ACTIVE' ? 'Ativa' : 'Inativa' }}
+            </div>
+            <ng-container *ngIf="subscription()?.status === 'ACTIVE'">
+              <span class="next-payment">
+                <i class="fas fa-calendar-alt"></i>
+                Próximo pagamento: {{ subscription()?.nextDueDate | date:'dd/MM/yyyy' }}
+              </span>
+            </ng-container>
+          </div>
+        </div>
+        <div class="payment-value">{{ payment.paymentDetails.value | currency:'BRL' }}</div>
+      </div>
+      
+      <div class="payment-info">
+        <div class="payment-date">
+          <i class="fas fa-calendar"></i>
+          <span>{{ payment.paymentDetails.dueDate | date:'dd/MM/yyyy' }}</span>
+        </div>
+        <span class="status-badge" [ngClass]="payment.paymentDetails.status.toLowerCase()">
+          <i class="fas" [ngClass]="{
+            'fa-clock': payment.paymentDetails.status === 'PENDING',
+            'fa-check-circle': payment.paymentDetails.status === 'CONFIRMED' || payment.paymentDetails.status === 'RECEIVED',
+            'fa-exclamation-circle': payment.paymentDetails.status === 'OVERDUE'
+          }"></i>
+          {{ payment.paymentDetails.status }}
+        </span>
+      </div>
+
+      <div class="payment-actions">
+        <ng-container *ngIf="payment.paymentDetails.status === 'PENDING'">
+          <a *ngIf="payment.paymentDetails.bankSlipUrl" 
+             [href]="payment.paymentDetails.bankSlipUrl" 
+             target="_blank" 
+             class="btn btn-primary">
+            <i class="fas fa-file-invoice"></i>
+            Visualizar Boleto
+          </a>
+          <button *ngIf="payment.paymentDetails.pixCopiaECola" 
+                  class="btn btn-outline"
+                  (click)="copyPixCode(payment.paymentDetails.pixCopiaECola)">
+            <i class="fas fa-qrcode"></i>
+            Copiar Código PIX
+          </button>
+        </ng-container>
+        
+        <button *ngIf="subscription()?.status === 'ACTIVE'"
+                class="btn btn-danger"
+                (click)="cancelSubscription(subscription()?.id || '')">
+          <i class="fas fa-times-circle"></i>
+          Cancelar Assinatura
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
+
+<app-confirmation-dialog></app-confirmation-dialog>

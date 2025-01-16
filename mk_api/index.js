@@ -1,18 +1,16 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const cors = require('cors')({
-  origin: true,
+  origin: ['http://localhost:4200', 'https://master-key-a3c69.web.app'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: [
     'Content-Type', 
     'Authorization', 
-    'access_token', 
-    'Access-Control-Allow-Origin',
-    'Access-Control-Allow-Methods',
-    'Access-Control-Allow-Headers'
+    'access_token'
   ],
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 204,
+  preflightContinue: false
 });
 const { Storage } = require('@google-cloud/storage');
 const fetch = require('node-fetch');
@@ -457,6 +455,7 @@ exports.createAsaasPayment = functions.https.onRequest((req, res) => {
           amount: amount,
           status: payment.status,
           paymentMethod: paymentMethod,
+          type: 'PAYMENT',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           paymentDetails: {
@@ -465,11 +464,7 @@ exports.createAsaasPayment = functions.https.onRequest((req, res) => {
             pixCopiaECola: paymentWithUrls.pixCopiaECola || null,
             invoiceUrl: paymentWithUrls.invoiceUrl || null,
             bankSlipUrl: paymentWithUrls.bankSlipUrl || null
-          },
-          invoiceUrl: paymentDetails.invoiceUrl || null,
-          bankSlipUrl: paymentDetails.bankSlipUrl || null,
-          pixQrCodeUrl: paymentDetails.pixQrCodeUrl || null,
-          pixCopiaECola: paymentDetails.pixCopiaECola || null
+          }
         });
 
         // Se pagamento confirmado, criar registro de acesso ao curso
@@ -524,38 +519,76 @@ exports.asaasWebhook = functions.https.onRequest((req, res) => {
         }
       }
 
-      // Buscar transação no Firestore
-      const transactionQuery = await admin.firestore()
-        .collection('transactions')
+      // Atualizar ou criar transação no Firestore
+      const transactionsRef = admin.firestore().collection('transactions');
+      
+      // Buscar transação existente pelo paymentId
+      const existingTransactions = await transactionsRef
         .where('paymentId', '==', payment.id)
-        .limit(1)
         .get();
 
-      if (!transactionQuery.empty) {
-        const transactionDoc = transactionQuery.docs[0];
-        const transaction = transactionDoc.data();
+      // Determinar o tipo de pagamento e buscar dados da assinatura se necessário
+      let paymentType = 'PAYMENT';
+      let subscriptionId = null;
 
-        // Atualizar status da transação
+      if (payment.subscription) {
+        paymentType = 'SUBSCRIPTION';
+        subscriptionId = payment.subscription;
+      }
+
+      if (!existingTransactions.empty) {
+        // Atualizar transação existente
+        const transactionDoc = existingTransactions.docs[0];
         await transactionDoc.ref.update({
           status: payment.status,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: new Date().toISOString(),
+          paymentDetails: payment,
+          type: paymentType,
+          subscriptionId: subscriptionId
+        });
+      } else {
+        // Buscar cliente para obter o email
+        const customerResponse = await fetch(
+          `${config.asaas.apiUrl}/customers/${payment.customer}`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'access_token': config.asaas.apiKey
+            }
+          }
+        );
+
+        if (!customerResponse.ok) {
+          throw new Error('Erro ao buscar cliente');
+        }
+
+        const customer = await customerResponse.json();
+
+        // Criar nova transação
+        await transactionsRef.add({
+          customerId: payment.customer,
+          customerEmail: customer.email,
+          paymentId: payment.id,
+          status: payment.status,
+          type: paymentType,
+          subscriptionId: subscriptionId,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
           paymentDetails: payment
         });
+      }
 
-        // Se pagamento confirmado, liberar acesso ao curso
-        if ((payment.status === 'CONFIRMED' || payment.status === 'RECEIVED') && !transaction.courseAccess) {
+      // Se pagamento confirmado, atualizar acesso ao curso
+      if (payment.status === 'CONFIRMED' || payment.status === 'RECEIVED') {
+        const courseId = payment.externalReference;
+        if (courseId) {
           await admin.firestore().collection('student_courses').add({
-            customerId: transaction.customerId,
-            customerEmail: transaction.customerEmail,
-            courseId: transaction.courseId,
-            purchaseDate: admin.firestore.FieldValue.serverTimestamp(),
+            customerId: payment.customer,
+            courseId: courseId,
+            purchaseDate: new Date().toISOString(),
             paymentId: payment.id,
-            transactionId: transactionDoc.id,
             active: true
-          });
-
-          await transactionDoc.ref.update({
-            courseAccess: true
           });
         }
       }
@@ -564,91 +597,6 @@ exports.asaasWebhook = functions.https.onRequest((req, res) => {
     } catch (error) {
       console.error('Erro no webhook:', error);
       res.status(500).json({ error: 'Erro ao processar webhook' });
-    }
-  });
-});
-
-// Função para verificar status do pagamento
-exports.checkAsaasPaymentStatus = functions.https.onRequest((req, res) => {
-  cors(req, res, async () => {
-    if (req.method === 'OPTIONS') {
-      res.status(200).send();
-      return;
-    }
-
-    try {
-      const { paymentId } = req.query;
-
-      if (!paymentId) {
-        return res.status(400).json({
-          error: 'ID do pagamento não fornecido'
-        });
-      }
-
-      try {
-        // Buscar status no Asaas
-        const paymentResponse = await fetch(`${config.asaas.apiUrl}/payments/${paymentId}`, {
-          headers: {
-            'access_token': config.asaas.apiKey
-          }
-        });
-
-        if (!paymentResponse.ok) {
-          throw new Error('Erro ao buscar pagamento no Asaas');
-        }
-
-        const payment = await paymentResponse.json();
-
-        // Buscar e atualizar transação
-        const transactionQuery = await admin.firestore()
-          .collection('transactions')
-          .where('paymentId', '==', paymentId)
-          .limit(1)
-          .get();
-
-        if (!transactionQuery.empty) {
-          const transactionDoc = transactionQuery.docs[0];
-          const transaction = transactionDoc.data();
-
-          // Atualizar status no Firestore
-          await transactionDoc.ref.update({
-            status: payment.status,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-            paymentDetails: payment
-          });
-
-          // Se confirmado e ainda não liberado, liberar acesso
-          if ((payment.status === 'CONFIRMED' || payment.status === 'RECEIVED') && !transaction.courseAccess) {
-            await admin.firestore().collection('student_courses').add({
-              customerId: transaction.customerId,
-              customerEmail: transaction.customerEmail,
-              courseId: transaction.courseId,
-              purchaseDate: admin.firestore.FieldValue.serverTimestamp(),
-              paymentId: payment.id,
-              transactionId: transactionDoc.id,
-              active: true
-            });
-
-            await transactionDoc.ref.update({
-              courseAccess: true
-            });
-          }
-        }
-
-        res.status(200).json(payment);
-      } catch (error) {
-        console.error('Erro ao verificar status:', error);
-        res.status(500).json({
-          error: 'Erro ao verificar status do pagamento',
-          details: error.message
-        });
-      }
-    } catch (error) {
-      console.error('Erro ao processar requisição:', error);
-      res.status(500).json({
-        error: 'Erro ao processar requisição',
-        details: error.message
-      });
     }
   });
 });
@@ -985,7 +933,7 @@ exports.createSubscription = functions.https.onRequest((req, res) => {
       
       console.log("resposta do pagamento", paymentData)
       // Salvar assinatura no Firestore
-      await admin.firestore().collection('subscriptions').add({
+      const subscriptionRef = await admin.firestore().collection('subscriptions').add({
         courseId: courseId,
         courseName: courseData.name,
         customerId: subscriptionData.customer,
@@ -996,7 +944,24 @@ exports.createSubscription = functions.https.onRequest((req, res) => {
         paymentMethod: paymentMethod,
         status: subscriptionData.status,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        subscriptionDetails: subscriptionData
+      });
+
+      // Salvar o primeiro pagamento da assinatura
+      await admin.firestore().collection('transactions').add({
+        customerId: subscriptionData.customer,
+        customerEmail: customer.email,
+        courseId: courseId,
+        paymentId: paymentData.id,
+        amount: paymentData.value,
+        status: paymentData.status,
+        paymentMethod: paymentMethod,
+        type: 'SUBSCRIPTION',
+        subscriptionId: subscriptionData.id,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        paymentDetails: paymentData
       });
 
       // Retornar dados completos
@@ -1019,82 +984,6 @@ exports.createSubscription = functions.https.onRequest((req, res) => {
         error: 'Erro ao processar assinatura',
         details: error.message
       });
-    }
-  });
-});
-
-// Endpoint para testar conexão com Asaas
-exports.testAsaasConnection = functions.https.onRequest((req, res) => {
-  cors(req, res, async () => {
-    if (req.method === 'OPTIONS') {
-      res.status(200).send();
-      return;
-    }
-
-    try {
-      // Tentar fazer uma requisição simples para a API
-      const testResponse = await fetch(`${config.asaas.apiUrl}/customers`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'access_token': config.asaas.apiKey
-        }
-      });
-
-      const responseText = await testResponse.text();
-      console.log('Teste de conexão Asaas:', {
-        status: testResponse.status,
-        statusText: testResponse.statusText,
-        response: responseText
-      });
-
-      if (!testResponse.ok) {
-        throw new Error(`Erro na conexão com Asaas: ${responseText}`);
-      }
-
-      res.status(200).json({
-        message: 'Conexão com Asaas estabelecida com sucesso',
-        status: testResponse.status,
-        response: JSON.parse(responseText)
-      });
-
-    } catch (error) {
-      console.error('Erro ao testar conexão com Asaas:', error);
-      res.status(500).json({
-        error: 'Erro ao testar conexão com Asaas',
-        details: error.message
-      });
-    }
-  });
-});
-
-exports.getSubscriptionPayments = functions.https.onRequest(async (req, res) => {
-  cors(req, res, async () => {
-    try {
-      const subscriptionId = req.params.subscriptionId;
-      
-      if (!subscriptionId) {
-        return res.status(400).json({ error: 'ID da assinatura é obrigatório' });
-      }
-
-      const response = await fetch(
-        `${config.asaas.apiUrl}/subscriptions/${subscriptionId}/payments`,
-        {
-          headers: config.asaas.headers
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        console.error('Erro ao buscar cobranças:', data);
-        return res.status(response.status).json(data);
-      }
-
-      return res.json(data.data);
-    } catch (error) {
-      console.error('Erro ao buscar cobranças:', error);
-      return res.status(500).json({ error: 'Erro ao buscar cobranças da assinatura' });
     }
   });
 });
