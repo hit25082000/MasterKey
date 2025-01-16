@@ -124,6 +124,55 @@
         </div>
       }
     </div>
+
+    <div class="course-materials">
+      <div class="materials-section">
+        <h2>
+          <i class="fas fa-book"></i>
+          Livros do Curso
+        </h2>
+        <div class="materials-grid">
+          @for (book of books(); track book.id) {
+            <div class="material-card">
+              <img [src]="book.imageUrl" [alt]="book.name" class="material-image">
+              <div class="material-info">
+                <h3>{{book.name}}</h3>
+                <p>{{book.author}}</p>
+                <a [href]="book.pdfUrl" target="_blank" class="material-link">
+                  <i class="fas fa-file-pdf"></i>
+                  Abrir PDF
+                </a>
+              </div>
+            </div>
+          } @empty {
+            <p class="no-materials">Nenhum livro disponível</p>
+          }
+        </div>
+      </div>
+
+      <div class="materials-section">
+        <h2>
+          <i class="fas fa-file-alt"></i>
+          Apostilas do Curso
+        </h2>
+        <div class="materials-grid">
+          @for (handout of handouts(); track handout.id) {
+            <div class="material-card">
+              <img [src]="handout.image" [alt]="handout.name" class="material-image">
+              <div class="material-info">
+                <h3>{{handout.name}}</h3>
+                <a [href]="handout.url" target="_blank" class="material-link">
+                  <i class="fas fa-download"></i>
+                  Baixar Apostila
+                </a>
+              </div>
+            </div>
+          } @empty {
+            <p class="no-materials">Nenhuma apostila disponível</p>
+          }
+        </div>
+      </div>
+    </div>
   </div>
 }
 

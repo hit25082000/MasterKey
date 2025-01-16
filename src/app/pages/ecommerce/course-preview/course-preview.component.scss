@@ -179,6 +179,7 @@
         .price-info {
           .price-container {
             margin-bottom: 1.5rem;
+            text-align: center;
 
             .original-price {
               font-size: 1.2rem;
@@ -187,65 +188,46 @@
               margin-right: 1rem;
             }
 
-            .current-price {
+            .promo-price {
               font-size: 2rem;
               color: #4CAF50;
               font-weight: bold;
             }
-
-            .installments {
-              display: block;
-              margin-top: 0.5rem;
-              color: #e0e0e0;
-              font-size: 0.9rem;
-            }
           }
 
-          .buy-button {
-            display: inline-flex;
+          .portion-info {
+            display: block;
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #e0e0e0;
+            font-size: 0.9rem;
+          }
+
+          .checkout-button {
+            display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
             width: 100%;
-            padding: 1rem 2rem;
-            margin-top: 1.5rem;
+            padding: 1.2rem;
             background: linear-gradient(45deg, #ee3c48 0%, #384a87 100%);
             color: white;
-            text-align: center;
-            text-decoration: none;
+            border: none;
             border-radius: 8px;
             font-size: 1.2rem;
             font-weight: 600;
-            border: none;
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(238, 60, 72, 0.3);
             transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(238, 60, 72, 0.3);
 
             i {
               font-size: 1.3rem;
             }
 
-            &::before {
-              content: '';
-              position: absolute;
-              top: 0;
-              left: 0;
-              width: 100%;
-              height: 100%;
-              background: linear-gradient(45deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
-              transform: translateX(-100%);
-              transition: transform 0.5s ease;
-            }
-
             &:hover {
               transform: translateY(-2px);
               box-shadow: 0 8px 20px rgba(238, 60, 72, 0.4);
-              
-              &::before {
-                transform: translateX(100%);
-              }
+              background: linear-gradient(45deg, #ff4d5a 0%, #4a5eab 100%);
             }
 
             &:active {
@@ -259,55 +241,103 @@
   }
 
   .course-content {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+
     h2 {
       font-size: 1.8rem;
       margin-bottom: 2rem;
-      color: #fff;
+      color: #ffffff;
     }
 
-    .video-list {
-      display: grid;
-      gap: 1rem;
+    .module-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
 
-      .video-item {
-        display: flex;
-        align-items: center;
-        gap: 1.5rem;
+      .module-item {
         background: rgba(255, 255, 255, 0.05);
-        padding: 1.5rem;
         border-radius: 15px;
-        transition: transform 0.3s ease;
+        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
 
-        &:hover {
-          transform: translateY(-5px);
-        }
-
-        .video-number {
-          width: 40px;
-          height: 40px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: rgba(238, 60, 72, 0.2);
-          border-radius: 50%;
-          font-weight: 500;
-          color: #ee3c48;
-        }
-
-        .video-info {
-          flex: 1;
+        .module-header {
+          margin-bottom: 1.5rem;
 
           h3 {
-            font-size: 1.1rem;
+            font-size: 1.4rem;
             margin-bottom: 0.5rem;
-            color: #fff;
+            color: #ffffff;
           }
 
-          .duration {
+          p {
+            color: #e0e0e0;
             font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.7);
+          }
+        }
+
+        .video-list {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+
+          .video-item {
             display: flex;
             align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            transition: background 0.3s ease;
+
+            &:hover {
+              background: rgba(255, 255, 255, 0.1);
+            }
+
+            .video-number {
+              width: 30px;
+              height: 30px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              background: rgba(255, 255, 255, 0.1);
+              border-radius: 50%;
+              font-size: 0.9rem;
+              font-weight: 600;
+            }
+
+            .video-info {
+              flex: 1;
+
+              h4 {
+                font-size: 1rem;
+                margin-bottom: 0.25rem;
+                color: #ffffff;
+              }
+
+              .duration {
+                display: flex;
+                align-items: center;
+                font-size: 0.8rem;
+                color: #e0e0e0;
+              }
+            }
+
+            .preview-badge {
+              padding: 0.25rem 0.75rem;
+              background: linear-gradient(45deg, #ee3c48 0%, #384a87 100%);
+              border-radius: 20px;
+              font-size: 0.8rem;
+              font-weight: 600;
+            }
+
+            .lock-icon {
+              color: #666;
+              font-size: 1.2rem;
+            }
           }
         }
       }

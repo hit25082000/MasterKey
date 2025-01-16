@@ -1,0 +1,66 @@
+<div class="checkout-page">
+  <div class="checkout-container" *ngIf="course()">
+    <div class="course-details">
+        <img class="price-info" [src]="course()?.image">
+      <h2>{{ course()?.name }}</h2>
+      <p class="description">{{ course()?.description }}</p>
+      <div class="price-info">
+        <h3>Valor do Curso</h3>
+        <p class="price">R$ {{ course()?.price | number:'1.2-2' }}</p>
+        <p class="installments">ou até {{ course()?.portionCount }}x de R$ {{ (course()?.price || 0) / (course()?.portionCount || 1) | number:'1.2-2' }}</p>
+      </div>
+    </div>
+    
+    <form [formGroup]="customerForm" class="contact-form">
+      <h3>Informações para Contato</h3>
+      <div class="form-group">
+        <label for="name">Nome Completo</label>
+        <input type="text" id="name" formControlName="name" placeholder="Seu nome completo">
+      </div>
+      <div class="form-group">
+        <label for="cpf">CPF</label>
+        <input type="text" id="cpf" formControlName="cpf" placeholder="Seu CPF" maxlength="11">
+      </div>
+      <div class="form-group">
+        <label for="email">E-mail</label>
+        <input type="email" id="email" formControlName="email" placeholder="Seu e-mail">
+      </div>
+      <div class="form-group">
+        <label for="phone">Telefone</label>
+        <input type="tel" id="phone" formControlName="phone" placeholder="Seu telefone">
+      </div>
+    </form>
+
+    <div class="payment-methods" *ngIf="customerForm.valid">
+      <h3>Escolha a forma de pagamento</h3>
+      <button class="payment-button pix" (click)="processPayment('PIX')">
+        <div class="button-content">
+          <i class="fas fa-qrcode"></i>
+          <span>Pagar com PIX</span>
+          <small>Aprovação instantânea</small>
+        </div>
+      </button>
+      <button class="payment-button credit-card" (click)="processPayment('CREDIT_CARD')">
+        <div class="button-content">
+          <i class="fas fa-credit-card"></i>
+          <span>Cartão de Crédito</span>
+          <small>Até {{ course()?.portionCount }}x sem juros</small>
+        </div>
+      </button>
+      <button class="payment-button boleto" (click)="processPayment('BOLETO')">
+        <div class="button-content">
+          <i class="fas fa-barcode"></i>
+          <span>Boleto Bancário</span>
+          <small>Vencimento em 3 dias</small>
+        </div>
+      </button>
+      <button class="payment-button subscription" (click)="processSubscription()">
+        <div class="button-content">
+          <i class="fas fa-sync"></i>
+          <span>Assinar (Pagamento Mensal)</span>
+          <small>12x de {{ (course()?.price || 0) / 12 | currency:'BRL' }}</small>
+        </div>
+      </button>
+    </div>
+  </div>
+</div> 

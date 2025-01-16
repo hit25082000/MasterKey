@@ -1,24 +1,24 @@
-<div class="course-preview" *ngIf="course">
+<div class="course-preview" *ngIf="course()">
   <div class="course-header">
     <div class="course-main-info">
-      <img [src]="course.image" class="course-img" [alt]="course.name">
+      <img [src]="course()!.image" class="course-img" [alt]="course()!.name">
       <div class="course-details">
         <h1>
           <img src="assets/icons/interrogacao.png" alt="ícone de interrogação" class="icon">
-          Sobre nosso curso de {{course.name}}
+          Sobre nosso curso de {{course()!.name}}
         </h1>
         <p class="description">
           <img src="assets/icons/livro.png" alt="ícone de livro" class="icon">
-          {{course.description}}
+          {{course()!.description}}
         </p>
         <div class="course-meta">
           <span>
             <img src="assets/icons/relogio.png" alt="ícone de relógio" class="icon">
-            {{course.workHours}} hora(s)
+            {{course()!.workHours}} hora(s)
           </span>
           <span>
             <img src="assets/icons/tag.png" alt="ícone de tag" class="icon">
-            {{course.category}}
+            {{course()!.category}}
           </span>
         </div>
       </div>
@@ -46,16 +46,16 @@
     <div class="course-info">
       <div class="info-card">
         <h3>Informações do Curso</h3>
-        <div class="price-info" >
-          <div class="price-container" *ngIf="!course.hidePrice">
-            <span class="original-price" *ngIf="course.promoPrice">R$ {{course.price}}</span>
-            <span class="promo-price">R$ {{course.promoPrice || course.price}}</span>
+        <div class="price-info">
+          <div class="price-container" *ngIf="!course()!.hidePrice">
+            <span class="original-price" *ngIf="course()!.promoPrice">R$ {{course()!.price}}</span>
+            <span class="promo-price">R$ {{course()!.promoPrice || course()!.price}}</span>
           </div>
-          <span class="portion-info" *ngIf="course.portionCount && !course.hidePrice">
-            ou {{course.portionCount}}x de R$ {{(course.promoPrice || course.price) / course.portionCount | number:'1.2-2'}}
+          <span class="portion-info" *ngIf="course()!.portionCount && !course()!.hidePrice">
+            ou {{course()!.portionCount}}x de R$ {{(course()!.promoPrice || course()!.price) / course()!.portionCount | number:'1.2-2'}}
           </span>
-          <button class="buy-button" (click)="buyCourse()">
-            <i class="fas fa-graduation-cap"></i>
+          <button class="checkout-button" (click)="goToCheckout()">
+            <i class="fas fa-shopping-cart"></i>
             Matricule-se Agora
           </button>
         </div>
@@ -65,17 +65,36 @@
 
   <div class="course-content">
     <h2>Cronograma do Curso</h2>
-    <div class="video-list">
-      <div class="video-item" *ngFor="let video of course.modules[0].videos; let i = index">
-        <span class="video-number">{{i + 1}}</span>
-        <div class="video-info">
-          <h3>{{video.name}}</h3>
-          <span class="duration">
-            <img src="assets/icons/relogio.png" alt="ícone de duração" class="icon-small">
-            {{video.duration | number:'1.0-0'}} minutos
-          </span>
+    <div class="module-list">
+      @for (module of course()!.modules; track module.name) {
+        <div class="module-item">
+          <div class="module-header">
+            <h3>{{module.name}}</h3>
+            <p>{{module.description}}</p>
+          </div>
+          <div class="video-list">
+            @for (video of module.videos; track video.name; let i = $index) {
+              <div class="video-item">
+                <span class="video-number">{{i + 1}}</span>
+                <div class="video-info">
+                  <h4>{{video.name}}</h4>
+                  <span class="duration">
+                    <img src="assets/icons/relogio.png" alt="ícone de duração" class="icon-small">
+                    {{video.duration | number:'1.0-0'}} minutos
+                  </span>
+                </div>
+                @if (i === 0) {
+                  <span class="preview-badge">Preview</span>
+                } @else {
+                  <span class="lock-icon">
+                    <i class="fas fa-lock"></i>
+                  </span>
+                }
+              </div>
+            }
+          </div>
         </div>
-      </div>
+      }
     </div>
   </div>
 </div>

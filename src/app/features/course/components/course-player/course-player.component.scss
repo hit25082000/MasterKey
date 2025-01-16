@@ -424,3 +424,111 @@
 .exam-modal-content {
   z-index: 100000;
 }
+
+.course-materials {
+  margin-top: 2rem;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  .materials-section {
+    margin-bottom: 3rem;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    h2 {
+      font-size: 1.8rem;
+      margin-bottom: 1.5rem;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+
+      i {
+        color: #ee3c48;
+      }
+    }
+
+    .materials-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+
+      .material-card {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 15px;
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+
+        &:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .material-image {
+          width: 100%;
+          height: 200px;
+          object-fit: cover;
+        }
+
+        .material-info {
+          padding: 1.5rem;
+
+          h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: #ffffff;
+          }
+
+          p {
+            color: #e0e0e0;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+          }
+
+          .material-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(45deg, #ee3c48 0%, #384a87 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+
+            i {
+              font-size: 1.1rem;
+            }
+
+            &:hover {
+              background: linear-gradient(45deg, #ff4d5a 0%, #4a5eab 100%);
+              transform: translateY(-2px);
+            }
+
+            &:active {
+              transform: translateY(1px);
+            }
+          }
+        }
+      }
+
+      .no-materials {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 2rem;
+        color: #e0e0e0;
+        font-size: 1.1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+      }
+    }
+  }
+}

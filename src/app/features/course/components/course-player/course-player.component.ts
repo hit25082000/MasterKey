@@ -13,6 +13,10 @@ import { ModalComponent } from '../../../../shared/components/modal/modal.compon
 import { ExamTakeComponent } from '../../../exam/components/exam-take/exam-take.component';
 import { firstValueFrom } from 'rxjs';
 import { ExamService } from '../../../../core/services/exam.service';
+import { HandoutService } from '../../../ecommerce/services/handout.service';
+import { BookService } from '../../../library/services/book.service';
+import { Book } from '../../../../core/models/book.model';
+import { Handout } from '../../../../core/models/handout.model';
 
 @Component({
   selector: 'app-course-player',
@@ -35,6 +39,8 @@ export class CoursePlayerComponent implements OnInit, OnDestroy {
   private studentService = inject(StudentService);
   private authService = inject(AuthService);
   private notificationService = inject(NotificationService);
+  private handoutService = inject(HandoutService);
+  private bookService = inject(BookService);
   private videoTimer: any;
   private readonly WATCH_TIME_THRESHOLD = 10; // 10 segundos
 
@@ -46,6 +52,8 @@ export class CoursePlayerComponent implements OnInit, OnDestroy {
   exams = signal<Exam[]>([]);
   examResults = signal<{[key: string]: StudentExam}>({});
   currentExamId = signal<string | null>(null);
+  books = signal<Book[]>([]);
+  handouts = signal<Handout[]>([]);
 
   async ngOnInit() {
     const courseId = this.route.snapshot.paramMap.get('id');
@@ -58,6 +66,8 @@ export class CoursePlayerComponent implements OnInit, OnDestroy {
     await this.loadExams(courseId);
     await this.loadWatchedVideos(courseId);
     await this.loadExamResults();
+    await this.loadBooks(courseId);
+    await this.loadHandouts(courseId);
   }
 
   async loadCourse(courseId: string) {
@@ -320,6 +330,28 @@ export class CoursePlayerComponent implements OnInit, OnDestroy {
     // Limpa o timer quando o componente é destruído
     if (this.videoTimer) {
       clearTimeout(this.videoTimer);
+    }
+  }
+
+  async loadBooks(courseId: string) {
+    try {
+      const courseBooks = await this.bookService.getBooksByCourseId(courseId);
+      this.books.set(courseBooks);
+    } catch (error) {
+      console.error('Erro ao carregar livros:', error);
+      this.notificationService.error('Erro ao carregar livros do curso');
+    }
+  }
+
+  async loadHandouts(courseId: string) {
+    try {
+      const handoutIds = await this.courseService.getHandouts(courseId);
+      const handoutPromises = handoutIds.map(id => this.handoutService.getById(id));
+      const handouts = await Promise.all(handoutPromises);
+      this.handouts.set(handouts);
+    } catch (error) {
+      console.error('Erro ao carregar apostilas:', error);
+      this.notificationService.error('Erro ao carregar apostilas do curso');
     }
   }
 }

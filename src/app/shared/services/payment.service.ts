@@ -29,8 +29,8 @@ export interface PaymentRequest {
 export interface SubscriptionRequest {
   customer: CustomerData;
   courseId: string;
-  paymentMethod: string;
-  cycle: string;
+  cycle: 'MONTHLY';
+  value: number;
 }
 
 @Injectable({
