@@ -4,6 +4,16 @@
     <p>Carregando conteúdo...</p>
   </div>
 } @else {
+  <div class="course-header">
+    <h1>{{ course()?.name }}</h1>
+    <div class="course-meta">
+      <span class="duration">
+        <i class="far fa-clock"></i>
+        {{ course()?.workHours }} horas
+      </span>
+    </div>
+  </div>
+
   <div class="course-player">
     <div class="video-section">
       @if (currentVideo()) {
@@ -127,48 +137,34 @@
 
     <div class="course-materials">
       <div class="materials-section">
-        <h2>
+        <h3>
           <i class="fas fa-book"></i>
-          Livros do Curso
-        </h2>
-        <div class="materials-grid">
-          @for (book of books(); track book.id) {
-            <div class="material-card">
-              <img [src]="book.imageUrl" [alt]="book.name" class="material-image">
-              <div class="material-info">
-                <h3>{{book.name}}</h3>
-                <p>{{book.author}}</p>
-                <a [href]="book.pdfUrl" target="_blank" class="material-link">
+          Material de Apoio
+        </h3>
+        <div class="materials-list">
+          @if (books()?.length || handouts()?.length) {
+            @for (book of books(); track book.id) {
+              <div class="material-item">
+                <i class="fas fa-book"></i>
+                <span class="material-name">{{book.name}}</span>
+                <a [href]="book.pdfUrl" target="_blank" class="material-action">
                   <i class="fas fa-file-pdf"></i>
-                  Abrir PDF
+                  Abrir
                 </a>
               </div>
-            </div>
-          } @empty {
-            <p class="no-materials">Nenhum livro disponível</p>
-          }
-        </div>
-      </div>
-
-      <div class="materials-section">
-        <h2>
-          <i class="fas fa-file-alt"></i>
-          Apostilas do Curso
-        </h2>
-        <div class="materials-grid">
-          @for (handout of handouts(); track handout.id) {
-            <div class="material-card">
-              <img [src]="handout.image" [alt]="handout.name" class="material-image">
-              <div class="material-info">
-                <h3>{{handout.name}}</h3>
-                <a [href]="handout.url" target="_blank" class="material-link">
+            }
+            @for (handout of handouts(); track handout.id) {
+              <div class="material-item">
+                <i class="fas fa-file-alt"></i>
+                <span class="material-name">{{handout.name}}</span>
+                <a [href]="handout.url" target="_blank" class="material-action">
                   <i class="fas fa-download"></i>
-                  Baixar Apostila
+                  Baixar
                 </a>
               </div>
-            </div>
-          } @empty {
-            <p class="no-materials">Nenhuma apostila disponível</p>
+            }
+          } @else {
+            <p class="no-materials">Nenhum material disponível</p>
           }
         </div>
       </div>
