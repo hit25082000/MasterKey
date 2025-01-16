@@ -1,110 +1,57 @@
-<div class="dashboard">
-  <div class="dashboard-header">
-    <h2>Dashboard</h2>
-  </div>
-
+<div class="dashboard-container">
   <div class="stats-grid">
-    <!-- Cards de Estatísticas -->
-    <div class="stat-card students">
-      <div class="stat-icon">👥</div>
+    <div class="stat-card">
+      <div class="stat-icon students">
+        <i class="fas fa-users"></i>
+      </div>
       <div class="stat-info">
-        <h3>Estudantes</h3>
-        <div class="stat-numbers">
-          <p>Total: {{ studentsData().total }}</p>
-          <p>Ativos: {{ studentsData().active }}</p>
-          <p>Inativos: {{ studentsData().inactive }}</p>
-        </div>
+        <h3>Total de Alunos</h3>
+        <p class="stat-value">{{ totalStudents() }}</p>
       </div>
     </div>
 
-    <div class="stat-card courses">
-      <div class="stat-icon">📚</div>
+    <div class="stat-card">
+      <div class="stat-icon courses">
+        <i class="fas fa-book"></i>
+      </div>
       <div class="stat-info">
-        <h3>Cursos</h3>
-        <div class="stat-numbers">
-          <p>Total: {{ coursesCount().total }}</p>
-          <p>Ativos: {{ coursesCount().active }}</p>
-        </div>
+        <h3>Total de Cursos</h3>
+        <p class="stat-value">{{ totalCourses() }}</p>
       </div>
     </div>
 
-    <div class="stat-card sales">
-      <div class="stat-icon">💰</div>
-      <div class="stat-info">
-        <h3>Vendas</h3>
-        <div class="stat-numbers">
-          <p>Total: {{ salesData().totalSales }}</p>
-          <p>Receita: R$ {{ salesData().totalRevenue | number:'1.2-2' }}</p>
-        </div>
+    <div class="stat-card">
+      <div class="stat-icon revenue">
+        <i class="fas fa-dollar-sign"></i>
       </div>
-    </div>
-
-    <div class="stat-card teachers">
-      <div class="stat-icon">👨‍🏫</div>
       <div class="stat-info">
-        <h3>Professores</h3>
-        <div class="stat-numbers">
-          <p>Total: {{ teachersCount() }}</p>
-        </div>
+        <h3>Receita Total</h3>
+        <p class="stat-value">{{ totalRevenue() | currency:'BRL' }}</p>
       </div>
     </div>
   </div>
 
-  <div class="charts-grid">
-    <ng-container *ngIf="isLoading(); else charts">
-      <div class="loading-spinner">
-        <div class="spinner"></div>
-        <p>Carregando dados...</p>
-      </div>
-    </ng-container>
-    <ng-template #charts>
-      <!-- Gráfico de Pizza - Estudantes -->
-      <div class="chart-card">
-        <h3>Distribuição de Estudantes</h3>
-        <ng-container *ngIf="chartsReady()">
-          <canvas baseChart
-            [type]="'pie'"
-            [data]="studentsChartData"
-            [options]="pieChartOptions">
-          </canvas>
-        </ng-container>
-      </div>
-
-      <!-- Gráfico de Pizza - Cursos -->
-      <div class="chart-card">
-        <h3>Status dos Cursos</h3>
-        <ng-container *ngIf="chartsReady()">
-          <canvas baseChart
-            [type]="'pie'"
-            [data]="coursesChartData"
-            [options]="pieChartOptions">
-          </canvas>
-        </ng-container>
-      </div>
-
-      <!-- Gráfico de Linha - Vendas Mensais -->
-      <div class="chart-card full-width">
-        <h3>Vendas Mensais</h3>
-        <ng-container *ngIf="chartsReady()">
-          <canvas baseChart
-            [type]="'line'"
-            [data]="monthlyChartData"
-            [options]="lineChartOptions">
-          </canvas>
-        </ng-container>
-      </div>
-
-      <!-- Gráfico de Pizza - Vendas por Curso -->
-      <div class="chart-card">
-        <h3>Vendas por Curso</h3>
-        <ng-container *ngIf="chartsReady()">
-          <canvas baseChart
-            [type]="'pie'"
-            [data]="coursesSalesChartData"
-            [options]="pieChartOptions">
-          </canvas>
-        </ng-container>
-      </div>
-    </ng-template>
+  <div class="transactions-card">
+    <h3>Transações Recentes</h3>
+    <div class="transactions-list">
+      @for (transaction of recentTransactions(); track transaction.id) {
+        <div class="transaction-item">
+          <div class="transaction-info">
+            <div class="transaction-course">
+              {{ transaction.paymentDetails.description }}
+            </div>
+            <div class="transaction-date">
+              {{ transaction.paymentDetails.dateCreated | date:'dd/MM/yyyy' }}
+            </div>
+          </div>
+          <div class="transaction-status" [ngClass]="transaction.paymentDetails.status.toLowerCase()">
+            {{ transaction.paymentDetails.status }}
+          </div>
+          <div class="transaction-amount">
+            {{ transaction.paymentDetails.value | currency:'BRL' }}
+          </div>
+        </div>
+      }
+    </div>
   </div>
 </div>

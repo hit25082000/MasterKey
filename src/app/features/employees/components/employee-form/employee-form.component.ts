@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, inject, Inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormFieldConfig } from '../../../../shared/models/form-field-config';
 import { EmployeeManagementService } from '../../services/employee-management.service';
@@ -11,15 +11,14 @@ import { ValidatorCpf } from '../../../../shared/Validators/cpf.validator';
 import { Employee } from '../../../../core/models/employee.model';
 import { RoleService } from '../../../role/service/role.service';
 import { Role } from '../../../../core/models/role.model';
+import { LoadingService } from '../../../../shared/services/loading.service';
 
 @Component({
   selector: 'app-employee-form',
   standalone: true,
   imports: [CommonModule, GenericFormComponent],
   template: `
-    @if (loading()) {
-      <div class="loading">Carregando...</div>
-    } @else {
+    @if (!loadingService.isLoading()) {      
       <div class="employee-form-container">
         <!-- Formulário -->
         <div class="form-container">
@@ -165,10 +164,11 @@ import { Role } from '../../../../core/models/role.model';
 export class EmployeeFormComponent implements OnInit {
   formConfig = signal<FormFieldConfig[]>([]);
   currentImage = signal<string>('');
-  loading = signal(true);
   selectedFile: File | null = null;
   employeeId = signal<string | null>(null);
   roles = signal<Role[]>([]);
+  loadingService = inject(LoadingService)
+  isLoading = this.loadingService.isLoading;
 
   constructor(
     private employeeManagementService: EmployeeManagementService,
@@ -181,6 +181,7 @@ export class EmployeeFormComponent implements OnInit {
 
   async ngOnInit() {
     try {
+      this.loadingService.show();
       const allRoles = await this.roleService.getAll();
       const filteredRoles = allRoles.filter(role => role.name.toLowerCase() !== 'student');
       this.roles.set(filteredRoles);
@@ -194,7 +195,11 @@ export class EmployeeFormComponent implements OnInit {
         this.initNewEmployee();
       }
     } catch (error) {
+      this.loadingService.hide();
+
       this.notificationService.error('Erro ao carregar dados');
+    }finally{
+      this.loadingService.hide();
     }
   }
 
@@ -208,9 +213,7 @@ export class EmployeeFormComponent implements OnInit {
     } catch (error) {
       this.notificationService.error('Erro ao carregar funcionário');
       console.error(error);
-    } finally {
-      this.loading.set(false);
-    }
+    } 
   }
 
   private initFormConfig(employee?: Employee) {
@@ -412,7 +415,6 @@ export class EmployeeFormComponent implements OnInit {
 
   private initNewEmployee() {
     this.initFormConfig();
-    this.loading.set(false);
   }
 
   onFileChange(event: Event) {
@@ -430,7 +432,9 @@ export class EmployeeFormComponent implements OnInit {
 
   async onSubmit(formData: any) {
     try {
+      this.loadingService.show();
       if (this.isEditMode()) {
+
         await this.employeeManagementService.update({
           ...formData,
           id: this.employeeId()
@@ -438,9 +442,11 @@ export class EmployeeFormComponent implements OnInit {
         this.notificationService.success('Funcionário atualizado com sucesso');
       } else {
         await this.employeeManagementService.create(formData, this.selectedFile);
+        
         this.notificationService.success('Funcionário criado com sucesso');
       }
-
+      
+      this.loadingService.hide();
       this.router.navigate(['/admin/employee-list']);
     } catch (error) {
       this.notificationService.error(
@@ -449,6 +455,9 @@ export class EmployeeFormComponent implements OnInit {
           : 'Erro ao criar funcionário'
       );
       console.error(error);
+      this.loadingService.hide();
+    }finally{
+      this.loadingService.hide();
     }
   }
 
