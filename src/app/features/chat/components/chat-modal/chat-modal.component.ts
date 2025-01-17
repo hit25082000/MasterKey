@@ -22,7 +22,7 @@ import { NotificationService } from '../../../../shared/services/notification.se
               <i class="fas fa-arrow-left"></i>
             </button>
             <div class="user-info">
-              <span class="name">{{ getOtherUserName(selectedConversation()) }}</span>
+              <span class="name">{{ getOtherUserName(selectedConversation()) }}</span> 
               <span class="role" [class]="getOtherUserRole(selectedConversation())">
                 {{ formatRole(getOtherUserRole(selectedConversation())) }}
               </span>
@@ -56,8 +56,8 @@ import { NotificationService } from '../../../../shared/services/notification.se
                     <div class="conversation-info">
                       <div class="conversation-header">
                         <div class="user-info">
-                          <span class="user-name">{{ getOtherUserName(conversation) }}</span>
-                          <span class="role" [class]="getOtherUserRole(conversation)">
+                          <span class="user-name">{{ getOtherUserName(conversation) }}</span> 
+                          <span class="role" [class]="getOtherUserRole(conversation)"> 
                             {{ formatRole(getOtherUserRole(conversation)) }}
                           </span>
                         </div>
@@ -100,7 +100,7 @@ import { NotificationService } from '../../../../shared/services/notification.se
                         <i class="fas fa-user"></i>
                       </div>
                       <div class="user-info">
-                        <span class="user-name">{{ user.name }}</span>
+                        <span class="user-name">{{ user.name }} </span> 
                         <span class="role" [class]="user.role">{{ formatRole(user.role) }}</span>
                       </div>
                     </div>
@@ -345,11 +345,11 @@ export class ChatModalComponent implements OnInit {
   formatRole(role: string): string {
     switch (role.toLowerCase()) {
       case 'admin':
-        return ' Administrador';
+        return 'Administrador';
       case 'teacher':
-        return ' Professor';
+        return 'Professor';
       case 'student':
-        return ' Aluno';
+        return 'Aluno';
       default:
         return role;
     }
