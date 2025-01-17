@@ -247,6 +247,7 @@ export class ChatModalComponent implements OnInit {
   }
 
   backToList(event: Event) {
+    this.loadConversations();
     event.stopPropagation();
     this.selectedConversation.set(null);
     this.messages.set([]);

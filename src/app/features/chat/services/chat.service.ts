@@ -2,9 +2,13 @@ import { Injectable, inject, signal } from '@angular/core';
 import { Observable, from, tap } from 'rxjs';
 import { Message } from '../../../core/models/message.model';
 import { FirestoreService } from '../../../core/services/firestore.service';
-import { orderBy, where } from '@angular/fire/firestore';
+import { orderBy, where, collection, collectionData, CollectionReference, Firestore } from '@angular/fire/firestore';
 import { Conversation } from '../../../core/models/conversation.model';
 import { NotificationService } from '../../../shared/services/notification.service';
+
+const MESSAGES_PATH = 'messages';
+const CONVERSATIONS_PATH = 'conversations';
+const USERS_PATH = 'users';
 
 type ConversationWithParticipants = Conversation & { participants: string[] };
 
@@ -12,24 +16,55 @@ type ConversationWithParticipants = Conversation & { participants: string[] };
   providedIn: 'root',
 })
 export class ChatService {
-  private firestore = inject(FirestoreService);
+  private firestore = inject(Firestore);
+  private firestoreService = inject(FirestoreService);
   private notificationService = inject(NotificationService);
+
+  // Collections
+  private conversationsCollection = collection(
+    this.firestore,
+    CONVERSATIONS_PATH
+  ) as CollectionReference<Conversation>;
+
+  private messagesCollection = collection(
+    this.firestore,
+    MESSAGES_PATH
+  ) as CollectionReference<Message>;
+
+  private usersCollection = collection(
+    this.firestore,
+    USERS_PATH
+  ) as CollectionReference<any>;
 
   // Signals
   unreadMessages = signal<number>(0);
   activeConversations = signal<Conversation[]>([]);
   currentMessages = signal<Message[]>([]);
 
+  constructor() {
+    // Sincroniza as conversas em tempo real
+    collectionData(this.conversationsCollection, { idField: 'id' }).subscribe(
+      (conversations) => {
+        this.activeConversations.set(conversations);
+        this.updateUnreadCount(conversations);
+      }
+    );
+  }
+
   getUsers(): Observable<any[]> {
-    return from(this.firestore.getCollection<any>('users'));
+    return collectionData(this.usersCollection, { idField: 'id' });
   }
 
   getMessages(currentUserId: string, selectedUserId: string): Observable<Message[]> {
-    return this.firestore.getCollectionWithQuery<Message>('messages', [
-      where('participants', '==', [currentUserId, selectedUserId].sort().join('_')),
-      orderBy('timestamp', 'asc'),
-    ]).pipe(
+    const messagesQuery = this.firestoreService.getCollectionWithQuery<Message>(
+      MESSAGES_PATH,
+      [
+        where('participants', '==', [currentUserId, selectedUserId].sort().join('_')),
+        orderBy('timestamp', 'asc'),
+      ]
+    ).pipe(
       tap(messages => {
+        this.currentMessages.set(messages);
         // Marca as mensagens recebidas como lidas
         messages.forEach(message => {
           if (message.receiverId === currentUserId && !message.isRead) {
@@ -38,6 +73,8 @@ export class ChatService {
         });
       })
     );
+
+    return messagesQuery;
   }
 
   async sendMessage(
@@ -62,7 +99,7 @@ export class ChatService {
       isRead: false
     };
 
-    const messageId = await this.firestore.addToCollection('messages', message);
+    const messageId = await this.firestoreService.addToCollection('messages', message);
 
     // Atualiza a última mensagem na conversa
     await this.updateConversation(currentUserId, selectedUserId, content, userName);
@@ -87,7 +124,7 @@ export class ChatService {
       lastMessageSenderName: senderName
     };
 
-    await this.firestore.updateDocument('conversations', conversationId, conversationUpdate);
+    await this.firestoreService.updateDocument('conversations', conversationId, conversationUpdate);
   }
 
   async createConversation(
@@ -123,7 +160,7 @@ export class ChatService {
       lastMessageSenderName: ''
     };
 
-    await this.firestore.addToCollectionWithId('conversations', conversationId, conversation);
+    await this.firestoreService.addToCollectionWithId('conversations', conversationId, conversation);
   }
 
   private notifyUser(userId: string, senderName: string, content: string) {
@@ -138,8 +175,8 @@ export class ChatService {
   }
 
   async getConversations(userId: string): Promise<Conversation[]> {
-    const conversations = await this.firestore.getDocumentsByQuery<Conversation>(
-      'conversations',
+    const conversations = await this.firestoreService.getDocumentsByQuery<Conversation>(
+      CONVERSATIONS_PATH,
       where('participants', 'array-contains', userId),
       orderBy('lastMessageTimestamp', 'desc')
     );
@@ -159,13 +196,13 @@ export class ChatService {
 
   private async findExistingConversation(userId1: string, userId2: string): Promise<boolean> {
     const conversationId = [userId1, userId2].sort().join('_');
-    const conversation = await this.firestore.getDocument('conversations', conversationId);
+    const conversation = await this.firestoreService.getDocument('conversations', conversationId);
     return !!conversation;
   }
 
   async markConversationAsRead(currentUserId: string, otherUserId: string): Promise<void> {
     const conversationId = [currentUserId, otherUserId].sort().join('_');
-    await this.firestore.updateDocument('conversations', conversationId, {
+    await this.firestoreService.updateDocument('conversations', conversationId, {
       unreadCount: 0,
     });
 
@@ -180,7 +217,7 @@ export class ChatService {
     lastMessage: string
   ): Promise<void> {
     const conversationId = [currentUserId, otherUserId].sort().join('_');
-    await this.firestore.updateDocument('conversations', conversationId, {
+    await this.firestoreService.updateDocument('conversations', conversationId, {
       lastMessage,
       lastMessageTimestamp: new Date(),
     });
@@ -188,7 +225,7 @@ export class ChatService {
 
   async incrementUnreadCount(currentUserId: string, otherUserId: string): Promise<void> {
     const conversationId = [currentUserId, otherUserId].sort().join('_');
-    const conversation = await this.firestore.getDocument<ConversationWithParticipants>(
+    const conversation = await this.firestoreService.getDocument<ConversationWithParticipants>(
       'conversations',
       conversationId
     );
@@ -196,7 +233,7 @@ export class ChatService {
     if (conversation) {
       // Só incrementa se a mensagem foi enviada para o outro usuário
       const newUnreadCount = (conversation.unreadCount || 0) + 1;
-      await this.firestore.updateDocument('conversations', conversationId, {
+      await this.firestoreService.updateDocument('conversations', conversationId, {
         unreadCount: newUnreadCount,
       });
 
@@ -219,6 +256,6 @@ export class ChatService {
       ...message,
       isRead: true
     };
-    await this.firestore.updateDocument('messages', messageId, updatedMessage);
+    await this.firestoreService.updateDocument('messages', messageId, updatedMessage);
   }
 }
