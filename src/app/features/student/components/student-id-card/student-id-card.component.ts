@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, signal } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StudentService } from '../../services/student.service';
 import { LoadingService } from '../../../../shared/services/loading.service';
@@ -9,11 +9,12 @@ import { Student } from '../../../../core/models/student.model';
 import { AuthService } from '../../../../core/services/auth.service';
 
 const positions = {
-  studentName: { x: 150, y: 400 },
-  studentId: { x: 150, y: 350 },
-  course: { x: 150, y: 300 },
-  validUntil: { x: 150, y: 250 },
-  photo: { x: 50, y: 300, width: 80, height: 100 }
+  name: { x: 343, y: 287 },
+  course: { x: 343, y: 323 },
+  ra: { x: 343, y: 359 },
+  unit: { x: 468, y: 390 },
+  validity: { x: 361, y: 422 },
+  photo: { x: 71, y: 149, width: 171, height: 290 }
 };
 
 @Component({
@@ -59,7 +60,7 @@ const positions = {
 export class StudentIdCardComponent {
   private studentService = inject(StudentService);
   private loadingService = inject(LoadingService);
-    private authService = inject(AuthService);
+  private authService = inject(AuthService);
   private notificationService = inject(NotificationService);
 
   loading = signal<boolean>(false);
@@ -89,7 +90,10 @@ export class StudentIdCardComponent {
 
   getValidityDate(): string {
     const today = new Date();
-    const validUntil = new Date(today.getFullYear() + 1, today.getMonth(), today.getDate());
+    // Se o estudante tiver data de término do curso, use-a, caso contrário use o final do ano atual
+    const validUntil = this.student()?.courseEndDate 
+      ? new Date(this.student()!.courseEndDate)
+      : new Date(today.getFullYear(), 11, 31); // 31 de dezembro do ano atual
     return validUntil.toLocaleDateString('pt-BR');
   }
 
@@ -100,41 +104,84 @@ export class StudentIdCardComponent {
     try {
       const pdfDoc = await PDFDocument.create();
       pdfDoc.registerFontkit(fontkit);
-      
-      const page = pdfDoc.addPage([350, 500]);
-      const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-      const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-      // Adicionar título
-      page.drawText('CARTEIRA DE ESTUDANTE', {
-        x: 100,
-        y: 450,
-        size: 16,
-        font: boldFont,
-        color: rgb(0, 0, 0)
+      // Carregar as imagens da carteirinha
+      const frontResponse = await fetch('assets/images/carteirinha frente.png');
+      const backResponse = await fetch('assets/images/carteirinha verso.png');
+      const frontBytes = await frontResponse.arrayBuffer();
+      const backBytes = await backResponse.arrayBuffer();
+
+      // Converter as imagens para o formato do PDF
+      const frontImage = await pdfDoc.embedPng(frontBytes);
+      const backImage = await pdfDoc.embedPng(backBytes);
+
+      // Dimensões das páginas baseadas nas imagens
+      const pageWidth = frontImage.width;
+      const pageHeight = frontImage.height;
+
+      // Criar páginas com o tamanho das imagens
+      const frontPage = pdfDoc.addPage([pageWidth, pageHeight]);
+      const backPage = pdfDoc.addPage([pageWidth, pageHeight]);
+
+      // Adicionar imagens de fundo
+      frontPage.drawImage(frontImage, {
+        x: 0,
+        y: 0,
+        width: pageWidth,
+        height: pageHeight,
       });
+      backPage.drawImage(backImage, {
+        x: 0,
+        y: 0,
+        width: pageWidth,
+        height: pageHeight,
+      });
+
+      // Configurar fonte
+      const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+      const fontSize = 20;
+      const textColor = rgb(0, 0.05, 0.2); // Azul escuro
 
       // Adicionar dados do estudante
       const studentData = this.student()!;
-      page.drawText(`Nome: ${studentData.name}`, {
-        x: positions.studentName.x,
-        y: positions.studentName.y,
-        size: 12,
-        font
+      frontPage.drawText(studentData.name.toUpperCase(), {
+        x: positions.name.x,
+        y: positions.name.y,
+        size: fontSize,
+        font,
+        color: textColor
       });
 
-      page.drawText(`Matrícula: ${studentData.id}`, {
-        x: positions.studentId.x,
-        y: positions.studentId.y,
-        size: 12,
-        font
+      frontPage.drawText(studentData.course.toUpperCase(), {
+        x: positions.course.x,
+        y: positions.course.y,
+        size: fontSize,
+        font,
+        color: textColor
       });
 
-      page.drawText(`Válido até: ${this.getValidityDate()}`, {
-        x: positions.validUntil.x,
-        y: positions.validUntil.y,
-        size: 12,
-        font
+      frontPage.drawText(studentData.id, {
+        x: positions.ra.x,
+        y: positions.ra.y,
+        size: fontSize,
+        font,
+        color: textColor
+      });
+
+      frontPage.drawText('CAMPO GRANDE', {
+        x: positions.unit.x,
+        y: positions.unit.y,
+        size: fontSize,
+        font,
+        color: textColor
+      });
+
+      frontPage.drawText(this.getValidityDate(), {
+        x: positions.validity.x,
+        y: positions.validity.y,
+        size: fontSize,
+        font,
+        color: textColor
       });
 
       // Se houver foto, adicionar ao PDF
@@ -144,7 +191,7 @@ export class StudentIdCardComponent {
           const imageBytes = await imageResponse.arrayBuffer();
           const image = await pdfDoc.embedJpg(imageBytes);
           
-          page.drawImage(image, {
+          frontPage.drawImage(image, {
             x: positions.photo.x,
             y: positions.photo.y,
             width: positions.photo.width,
