@@ -1,9 +1,14 @@
 import { Entity } from './entity';
 
+interface ParticipantInfo {
+  name: string;
+  role: string;
+}
+
 export interface Conversation extends Entity {
   participants: string[];
   participantsInfo: {
-    [key: string]: string;  // key é o userId, value é o userName
+    [key: string]: ParticipantInfo;
   };
   lastMessage: string;
   lastMessageTimestamp: Date;

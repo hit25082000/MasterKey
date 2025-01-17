@@ -21,7 +21,12 @@ import { NotificationService } from '../../../../shared/services/notification.se
             <button class="back-button" (click)="backToList($event)">
               <i class="fas fa-arrow-left"></i>
             </button>
-            <span>{{ getOtherUserName(selectedConversation()) }}</span>
+            <div class="user-info">
+              <span class="name">{{ getOtherUserName(selectedConversation()) }}</span>
+              <span class="role" [class]="getOtherUserRole(selectedConversation())">
+                {{ formatRole(getOtherUserRole(selectedConversation())) }}
+              </span>
+            </div>
           </div>
         } @else {
           <h3>Mensagens</h3>
@@ -42,7 +47,7 @@ import { NotificationService } from '../../../../shared/services/notification.se
                 @for (conversation of conversations(); track conversation) {
                   <div
                     class="conversation-item"
-                    [class.unread]="conversation.unreadCount! > 0"
+                    [class.unread]="shouldShowUnread(conversation)"
                     (click)="selectConversation(conversation)"
                   >
                     <div class="user-avatar">
@@ -50,7 +55,12 @@ import { NotificationService } from '../../../../shared/services/notification.se
                     </div>
                     <div class="conversation-info">
                       <div class="conversation-header">
-                        <span class="user-name">{{ getOtherUserName(conversation) }}</span>
+                        <div class="user-info">
+                          <span class="user-name">{{ getOtherUserName(conversation) }}</span>
+                          <span class="role" [class]="getOtherUserRole(conversation)">
+                            {{ formatRole(getOtherUserRole(conversation)) }}
+                          </span>
+                        </div>
                         <span class="time">{{ formatTime(conversation.lastMessageTimestamp) }}</span>
                       </div>
                       <div class="conversation-preview">
@@ -64,7 +74,7 @@ import { NotificationService } from '../../../../shared/services/notification.se
                             <span class="no-messages">Nenhuma mensagem ainda</span>
                           }
                         </p>
-                        @if (conversation.unreadCount! > 0) {
+                        @if (shouldShowUnread(conversation)) {
                           <span class="unread-badge">{{ conversation.unreadCount }}</span>
                         }
                       </div>
@@ -91,6 +101,7 @@ import { NotificationService } from '../../../../shared/services/notification.se
                       </div>
                       <div class="user-info">
                         <span class="user-name">{{ user.name }}</span>
+                        <span class="role" [class]="user.role">{{ formatRole(user.role) }}</span>
                       </div>
                     </div>
                   }
@@ -148,6 +159,7 @@ export class ChatModalComponent implements OnInit {
   isMinimized = signal(true);
   currentUserId = signal<string | null>(null);
   currentUserName = signal<string | null>(null);
+  currentUserRole = signal<string | null>(null);
   selectedConversation = signal<Conversation | null>(null);
   conversations = signal<Conversation[]>([]);
   messages = signal<Message[]>([]);
@@ -167,10 +179,11 @@ export class ChatModalComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.authService.user$.subscribe(user => {
+    this.authService.userInfo.subscribe(user => {
       if (user) {
-        this.currentUserId.set(user.uid);
-        this.currentUserName.set(user.displayName);
+        this.currentUserId.set(user.id);
+        this.currentUserName.set(user.name);
+        this.currentUserRole.set(user.role);
         this.loadConversations();
         this.loadUsers();
         this.chatService.requestNotificationPermission();
@@ -200,7 +213,9 @@ export class ChatModalComponent implements OnInit {
         this.currentUserId()!,
         selectedUser.id,
         selectedUser.name,
-        this.currentUserName()!
+        this.currentUserName()!,
+        selectedUser.role,
+        this.currentUserRole() || 'student'
       );
       await this.loadConversations();
       const newConversation = this.conversations().find(c => 
@@ -318,6 +333,29 @@ export class ChatModalComponent implements OnInit {
   getOtherUserName(conversation: Conversation | null): string {
     if (!conversation) return 'Usuário';
     const otherUserId = conversation.participants.find(id => id !== this.currentUserId());
-    return otherUserId ? conversation.participantsInfo[otherUserId] : 'Usuário';
+    return otherUserId ? conversation.participantsInfo[otherUserId].name : 'Usuário';
+  }
+
+  getOtherUserRole(conversation: Conversation | null): string {
+    if (!conversation) return '';
+    const otherUserId = conversation.participants.find(id => id !== this.currentUserId());
+    return otherUserId ? conversation.participantsInfo[otherUserId].role : '';
+  }
+
+  formatRole(role: string): string {
+    switch (role.toLowerCase()) {
+      case 'admin':
+        return ' Administrador';
+      case 'teacher':
+        return ' Professor';
+      case 'student':
+        return ' Aluno';
+      default:
+        return role;
+    }
+  }
+
+  shouldShowUnread(conversation: Conversation): boolean {
+    return conversation.unreadCount! > 0 && conversation.lastMessageSender !== this.currentUserId();
   }
 }

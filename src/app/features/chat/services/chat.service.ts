@@ -65,10 +65,11 @@ export class ChatService {
     ).pipe(
       tap(messages => {
         this.currentMessages.set(messages);
-        // Marca as mensagens recebidas como lidas
+        // Marca as mensagens recebidas como lidas apenas se o usuário atual for o receptor
         messages.forEach(message => {
           if (message.receiverId === currentUserId && !message.isRead) {
             this.markMessageAsRead(message.id, message);
+            this.markConversationAsRead(currentUserId, selectedUserId);
           }
         });
       })
@@ -131,7 +132,9 @@ export class ChatService {
     currentUserId: string,
     selectedUserId: string,
     selectedUserName: string,
-    currentUserName: string
+    currentUserName: string,
+    selectedUserRole: string,
+    currentUserRole: string
   ): Promise<void> {
     // Impede criação de conversa consigo mesmo
     if (currentUserId === selectedUserId) {
@@ -150,8 +153,8 @@ export class ChatService {
     const conversation: Omit<ConversationWithParticipants, 'id' | 'active'> = {
       participants: [currentUserId, selectedUserId],
       participantsInfo: {
-        [currentUserId]: currentUserName,
-        [selectedUserId]: selectedUserName
+        [currentUserId]: { name: currentUserName, role: currentUserRole },
+        [selectedUserId]: { name: selectedUserName, role: selectedUserRole }
       },
       lastMessage: '',
       lastMessageTimestamp: new Date(),
@@ -187,11 +190,23 @@ export class ChatService {
   }
 
   private updateUnreadCount(conversations: Conversation[]) {
-    const total = conversations.reduce(
-      (count, conv) => count + (conv.unreadCount || 0),
-      0
-    );
+    // Filtra apenas as conversas onde o usuário atual é o receptor das mensagens não lidas
+    const currentUserId = this.getCurrentUserId();
+    if (!currentUserId) return;
+
+    const total = conversations.reduce((count, conv) => {
+      const isReceiver = conv.lastMessageSender !== currentUserId;
+      return count + (isReceiver ? (conv.unreadCount || 0) : 0);
+    }, 0);
+    
     this.unreadMessages.set(total);
+  }
+
+  private getCurrentUserId(): string | null {
+    // Aqui você deve implementar a lógica para obter o ID do usuário atual
+    // Por exemplo, através de um serviço de autenticação
+    const user = localStorage.getItem('user');
+    return user ? JSON.parse(user).uid : null;
   }
 
   private async findExistingConversation(userId1: string, userId2: string): Promise<boolean> {
@@ -202,13 +217,21 @@ export class ChatService {
 
   async markConversationAsRead(currentUserId: string, otherUserId: string): Promise<void> {
     const conversationId = [currentUserId, otherUserId].sort().join('_');
-    await this.firestoreService.updateDocument('conversations', conversationId, {
-      unreadCount: 0,
-    });
+    const conversation = await this.firestoreService.getDocument<ConversationWithParticipants>(
+      'conversations',
+      conversationId
+    );
 
-    // Atualiza o contador de mensagens não lidas
-    const conversations = await this.getConversations(currentUserId);
-    this.updateUnreadCount(conversations);
+    // Só marca como lida se o usuário atual for o receptor
+    if (conversation && conversation.lastMessageSender !== currentUserId) {
+      await this.firestoreService.updateDocument('conversations', conversationId, {
+        unreadCount: 0,
+      });
+
+      // Atualiza o contador de mensagens não lidas
+      const conversations = await this.getConversations(currentUserId);
+      this.updateUnreadCount(conversations);
+    }
   }
 
   async updateLastMessage(
@@ -231,15 +254,17 @@ export class ChatService {
     );
 
     if (conversation) {
-      // Só incrementa se a mensagem foi enviada para o outro usuário
+      // Incrementa apenas para o receptor
       const newUnreadCount = (conversation.unreadCount || 0) + 1;
       await this.firestoreService.updateDocument('conversations', conversationId, {
         unreadCount: newUnreadCount,
       });
 
       // Atualiza o contador local apenas para o receptor
-      const conversations = await this.getConversations(otherUserId);
-      this.updateUnreadCount(conversations.filter(conv => conv.lastMessageSender !== otherUserId));
+      if (otherUserId === this.getCurrentUserId()) {
+        const conversations = await this.getConversations(otherUserId);
+        this.updateUnreadCount(conversations);
+      }
     }
   }
 
@@ -252,10 +277,13 @@ export class ChatService {
 
   // Adicionar método para marcar mensagem como lida
   async markMessageAsRead(messageId: string, message: Message): Promise<void> {
-    const updatedMessage: Partial<Message> = {
-      ...message,
-      isRead: true
-    };
-    await this.firestoreService.updateDocument('messages', messageId, updatedMessage);
+    // Só marca como lida se o usuário atual for o receptor
+    if (message.receiverId === this.getCurrentUserId()) {
+      const updatedMessage: Partial<Message> = {
+        ...message,
+        isRead: true
+      };
+      await this.firestoreService.updateDocument('messages', messageId, updatedMessage);
+    }
   }
 }
