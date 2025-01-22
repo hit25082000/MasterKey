@@ -9,11 +9,11 @@ import { Student } from '../../../../core/models/student.model';
 import { AuthService } from '../../../../core/services/auth.service';
 
 const positions = {
-  studentName: { x: 150, y: 400 },
-  studentId: { x: 150, y: 350 },
-  course: { x: 150, y: 300 },
-  validUntil: { x: 150, y: 250 },
-  photo: { x: 50, y: 300, width: 80, height: 100 }
+  studentName: { x: 240, y: 645 },
+  courses: { x: 243, y: 623 },
+  RA: {x: 208, y: 600},
+  validUntil: { x: 255, y: 557 },
+  photo: { x: 70, y: 648, width: 150, height: 180 }
 };
 
 @Component({
@@ -101,43 +101,44 @@ export class StudentIdCardComponent {
       const pdfDoc = await PDFDocument.create();
       pdfDoc.registerFontkit(fontkit);
 
-      const page = pdfDoc.addPage([350, 500]);
+      // Criar página A4 em modo retrato
+      const page = pdfDoc.addPage([595, 842]);
       const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
       const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-      // Adicionar título
-      page.drawText('CARTEIRA DE ESTUDANTE', {
-        x: 100,
-        y: 450,
-        size: 16,
-        font: boldFont,
-        color: rgb(0, 0, 0)
+      // Carregar imagens de fundo
+      const frontResponse = await fetch('assets/carteirinha frente.png');
+      const backResponse = await fetch('assets/carteirinha verso.png');
+      const frontBytes = await frontResponse.arrayBuffer();
+      const backBytes = await backResponse.arrayBuffer();
+      
+      const frontImage = await pdfDoc.embedPng(frontBytes);
+      const backImage = await pdfDoc.embedPng(backBytes);
+
+      // Dimensões para as imagens de fundo
+      const pageWidth = page.getWidth();
+      const pageHeight = page.getHeight();
+      const cardHeight = pageHeight / 2; // Divide a página em duas partes
+
+      // Desenhar frente da carteirinha
+      page.drawImage(frontImage, {
+        x: 0,
+        y: cardHeight,
+        width: pageWidth,
+        height: cardHeight
       });
 
-      // Adicionar dados do estudante
+      // Desenhar verso da carteirinha
+      page.drawImage(backImage, {
+        x: 0,
+        y: 0,
+        width: pageWidth,
+        height: cardHeight
+      });
+
       const studentData = this.student()!;
-      page.drawText(`Nome: ${studentData.name}`, {
-        x: positions.studentName.x,
-        y: positions.studentName.y,
-        size: 12,
-        font
-      });
 
-      page.drawText(`Matrícula: ${studentData.id}`, {
-        x: positions.studentId.x,
-        y: positions.studentId.y,
-        size: 12,
-        font
-      });
-
-      page.drawText(`Válido até: ${this.getValidityDate()}`, {
-        x: positions.validUntil.x,
-        y: positions.validUntil.y,
-        size: 12,
-        font
-      });
-
-      // Se houver foto, adicionar ao PDF
+      // Adicionar foto do estudante se disponível
       if (studentData.profilePic) {
         try {
           const imageResponse = await fetch(studentData.profilePic);
@@ -154,6 +155,45 @@ export class StudentIdCardComponent {
           console.error('Erro ao adicionar foto ao PDF:', error);
         }
       }
+
+      // Adicionar informações do estudante com fonte ajustada
+      page.drawText(studentData.name.toUpperCase(), {
+        x: positions.studentName.x,
+        y: positions.studentName.y,
+        size: 20,
+        font: font,
+        color: rgb(1, 1, 1),
+        maxWidth: 300,
+        lineHeight: 22
+      });
+
+      page.drawText(studentData.id, {
+        x: positions.RA.x,
+        y: positions.RA.y,
+        size: 20,
+        font: font,
+        color: rgb(1, 1, 1),
+        maxWidth: 300
+      });
+
+      page.drawText(studentData.courses?.[0].toUpperCase() || 'CURSO NÃO INFORMADO', {
+        x: positions.courses.x,
+        y: positions.courses.y,
+        size: 20,
+        font: font,
+        color: rgb(1, 1, 1),
+        maxWidth: 300,
+        lineHeight: 18
+      });
+
+      page.drawText(`${this.getValidityDate()}`, {
+        x: positions.validUntil.x,
+        y: positions.validUntil.y,
+        size: 20,
+        font: font,
+        color: rgb(1, 1, 1),
+        maxWidth: 300
+      });
 
       const pdfBytes = await pdfDoc.save();
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
