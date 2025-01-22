@@ -3,16 +3,16 @@
     <h1>Contato</h1>
 
     <div class="social-links">
-      <a href="tel:+5500000000000" target="_blank" class="social-link">
+      <a href="tel:+{{contactInfo.tel.trim()}}" target="_blank" class="social-link">
         <img src="assets/icons/telvermelho.png" alt="telefone">
       </a>
-      <a href="https://wa.me/5500000000000" target="_blank" class="social-link">
+      <a href="https://wa.me/{{contactInfo.tel.trim()}}" target="_blank" class="social-link">
         <img src="assets/icons/whatsappverde.png" alt="whatsApp">
       </a>
-      <a href="https://facebook.com/sua-pagina" target="_blank" class="social-link">
+      <a href="{{contactInfo.facebook}}" target="_blank" class="social-link">
         <img src="assets/icons/facebookazul.png" alt="facebook">
       </a>
-      <a href="https://instagram.com/seu-perfil" target="_blank" class="social-link">
+      <a href="{{contactInfo.instagram}}" target="_blank" class="social-link">
         <img src="assets/icons/instaamarelo.png" alt="Instagram">
       </a>
     </div>

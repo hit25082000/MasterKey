@@ -6,6 +6,7 @@ import { WhatsAppMessageComponent } from '../../features/chat/components/whats-a
 import { ModalComponent } from '../../shared/components/modal/modal.component';
 import { ChatModalComponent } from '../../features/chat/components/chat-modal/chat-modal.component';
 import { AdminHeaderComponent } from '../../shared/components/admin-header/admin-header.component';
+import { WhatsAppStatusWidgetComponent } from '../../features/chat/components/whats-app-status-widget/whats-app-status-widget.component';
 
 @Component({
   selector: 'app-admin',
@@ -17,7 +18,8 @@ import { AdminHeaderComponent } from '../../shared/components/admin-header/admin
     ChatModalComponent,
     WhatsAppMessageComponent,
     ModalComponent,
-    AdminHeaderComponent
+    AdminHeaderComponent,
+    WhatsAppStatusWidgetComponent
   ],
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.scss',

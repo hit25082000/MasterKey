@@ -6,11 +6,21 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { FaqComponent } from '../features/faq/faq.component';
+import { environment } from '../../../../environments/environment.development';
 
 interface ContatoForm {
   nome: string;
   email: string;
   mensagem: string;
+}
+
+interface ContactInformation{
+  email: string,
+  tel: string,
+  loc: string,
+  city: string,
+  facebook: string,
+  instagram: string
 }
 
 @Component({
@@ -29,6 +39,14 @@ interface ContatoForm {
   styleUrl: './contact.component.scss'
 })
 export class ContactComponent {
+  contactInfo : ContactInformation = {
+    email: environment.email,
+    tel: environment.tel,
+    loc: environment.loc,
+    city: environment.city,
+    facebook: environment.facebook,
+    instagram: environment.instagram
+  } 
   private fb = inject(FormBuilder);
 
   contatoForm = this.fb.group({
@@ -40,7 +58,7 @@ export class ContactComponent {
   onSubmit(): void {
     if (this.contatoForm.valid) {
       console.log(this.contatoForm.value);
-      // Aqui você implementaria a lógica para enviar o formulário
+
       this.contatoForm.reset();
     }
   }

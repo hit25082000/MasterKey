@@ -11,8 +11,7 @@ import { WhatsAppStatusWidgetComponent } from './features/chat/components/whats-
   imports: [
     RouterOutlet,
     LoadingOverlayComponent,
-    NotificationsComponent,
-    WhatsAppStatusWidgetComponent
+    NotificationsComponent    
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
