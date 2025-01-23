@@ -31,6 +31,17 @@ export class AdminService {
     );
   }
 
+  downloadImage(studentId: string): Observable<ArrayBuffer> {
+    return this.getHeaders().pipe(
+      switchMap((headers) =>
+        this.http.get(`${this.apiUrl}/downloadImage?studentId=${encodeURIComponent(studentId)}`, {
+          headers,
+          responseType: 'arraybuffer'
+        })
+      )
+    );
+  }
+
   createUser(user: BaseUser, icon: string | null): Observable<any> {
     const body = {
       email: user.email,

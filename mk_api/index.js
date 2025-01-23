@@ -964,7 +964,6 @@ exports.createSubscription = functions.https.onRequest((req, res) => {
         paymentDetails: paymentData
       });
 
-      // Retornar dados completos
       res.status(200).json({
         subscription: subscriptionData,
         payment: {
@@ -984,6 +983,55 @@ exports.createSubscription = functions.https.onRequest((req, res) => {
         error: 'Erro ao processar assinatura',
         details: error.message
       });
+    }
+  });
+});
+
+// Função para download de imagem
+exports.downloadImage = functions.https.onRequest((req, res) => {
+  cors(req, res, async () => {
+    try {
+      await authenticateRequest(req, res, async () => {
+        const { studentId } = req.query;
+
+        if (!studentId) {
+          return res.status(400).json({ error: 'ID do estudante não fornecido' });
+        }
+
+        try {
+          // Construir o caminho do arquivo no Storage
+          const fileName = `${studentId}_profile.jpg`;
+          
+          // Obter referência do arquivo
+          const file = bucket.file(fileName);
+          
+          // Verificar se o arquivo existe
+          const [exists] = await file.exists();
+          if (!exists) {
+            return res.status(404).json({ error: 'Imagem não encontrada' });
+          }
+
+          // Fazer download do arquivo
+          const [fileBuffer] = await file.download();
+
+          // Configurar headers da resposta
+          res.set('Content-Type', 'application/octet-stream');
+          res.set('Content-Disposition', 'attachment; filename=image');
+          
+          // Enviar o buffer da imagem
+          res.send(fileBuffer);
+
+        } catch (error) {
+          console.error('Erro ao fazer download da imagem:', error);
+          res.status(500).json({ 
+            error: 'Erro ao fazer download da imagem',
+            details: error.message 
+          });
+        }
+      });
+    } catch (error) {
+      console.error('Erro na autenticação:', error);
+      res.status(401).json({ error: 'Erro de autenticação' });
     }
   });
 });

@@ -1,4 +1,4 @@
-import { Component, effect, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StudentService } from '../../services/student.service';
 import { LoadingService } from '../../../../shared/services/loading.service';
@@ -7,13 +7,14 @@ import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import { Student } from '../../../../core/models/student.model';
 import { AuthService } from '../../../../core/services/auth.service';
+import { AdminService } from '../../../../core/services/admin.service';
 
 const positions = {
   studentName: { x: 240, y: 645 },
   courses: { x: 243, y: 623 },
   RA: {x: 208, y: 600},
   validUntil: { x: 255, y: 557 },
-  photo: { x: 70, y: 648, width: 150, height: 180 }
+  photo: { x: 45, y: 553, width: 114, height: 195 }
 };
 
 @Component({
@@ -34,7 +35,7 @@ const positions = {
         <div class="student-info">
           <div class="photo-container">
             @if (student()?.profilePic) {
-              <img [src]="student()?.profilePic" alt="Foto do estudante" />
+              <img #studentPhoto [src]="student()?.profilePic" alt="Foto do estudante" />
             } @else {
               <div class="no-photo">
                 <i class="fas fa-user"></i>
@@ -57,10 +58,13 @@ const positions = {
   styleUrls: ['./student-id-card.component.scss']
 })
 export class StudentIdCardComponent {
+  @ViewChild('studentPhoto') studentPhoto?: ElementRef<HTMLImageElement>;
+  
   private studentService = inject(StudentService);
   private loadingService = inject(LoadingService);
   private authService = inject(AuthService);
   private notificationService = inject(NotificationService);
+  private adminService = inject(AdminService);
 
   loading = signal<boolean>(false);
   student = signal<Student | null>(null);
@@ -93,6 +97,30 @@ export class StudentIdCardComponent {
     return validUntil.toLocaleDateString('pt-BR');
   }
 
+  private async waitForImageLoad(img: HTMLImageElement): Promise<void> {
+    if (img.complete) return;
+    
+    return new Promise((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error('Erro ao carregar imagem'));
+    });
+  }
+
+  private async imageToBytes(img: HTMLImageElement): Promise<Uint8Array> {
+    const canvas = document.createElement('canvas');
+    canvas.width = positions.photo.width;
+    canvas.height = positions.photo.height;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Não foi possível obter contexto 2d do canvas');
+    
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    const imageData = canvas.toDataURL('image/jpeg', 0.95);
+    const base64Data = imageData.split(',')[1];
+    
+    return Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+  }
+
   async generateIdCard() {
     if (!this.student()) return;
 
@@ -118,7 +146,7 @@ export class StudentIdCardComponent {
       // Dimensões para as imagens de fundo
       const pageWidth = page.getWidth();
       const pageHeight = page.getHeight();
-      const cardHeight = pageHeight / 2; // Divide a página em duas partes
+      const cardHeight = pageHeight / 2;
 
       // Desenhar frente da carteirinha
       page.drawImage(frontImage, {
@@ -139,20 +167,33 @@ export class StudentIdCardComponent {
       const studentData = this.student()!;
 
       // Adicionar foto do estudante se disponível
-      if (studentData.profilePic) {
+      if (studentData.id) {
         try {
-          const imageResponse = await fetch(studentData.profilePic);
-          const imageBytes = await imageResponse.arrayBuffer();
+          // Fazer download da imagem através do AdminService
+          const imageBytes = await new Promise<Uint8Array>((resolve, reject) => {
+            this.adminService.downloadImage(studentData.id).subscribe({
+              next: (arrayBuffer) => {
+                resolve(new Uint8Array(arrayBuffer));
+              },
+              error: (error) => {
+                console.error('Erro ao baixar imagem:', error);
+                reject(error);
+              }
+            });
+          });
+          
+          // Incorporar a imagem no PDF
           const image = await pdfDoc.embedJpg(imageBytes);
           
           page.drawImage(image, {
             x: positions.photo.x,
             y: positions.photo.y,
             width: positions.photo.width,
-            height: positions.photo.height
+            height: positions.photo.height,
           });
         } catch (error) {
-          console.error('Erro ao adicionar foto ao PDF:', error);
+          console.error('Erro ao processar foto do estudante:', error);
+          this.notificationService.error('Não foi possível incluir a foto na carteirinha');
         }
       }
 

@@ -27,6 +27,8 @@ import {
   ref,
   Storage,
   uploadBytesResumable,
+  getDownloadURL,
+  getBytes,
 } from '@angular/fire/storage';
 import { FirebaseApp } from '@angular/fire/app';
 import { arrayUnion } from '@angular/fire/firestore';
@@ -226,6 +228,38 @@ export class FirestoreService {
     return updateDoc(docRef, {
       [field]: arrayUnion(value)
     });
+  }
+
+  async downloadImageAsBytes(imageUrl: string): Promise<Uint8Array> {
+    try {
+      // Extrair o caminho do storage da URL completa
+      const storageRef = ref(this.storage, this.getStoragePathFromUrl(imageUrl));
+      
+      // Fazer download dos bytes da imagem
+      const arrayBuffer = await getBytes(storageRef);
+      return new Uint8Array(arrayBuffer);
+    } catch (error) {
+      console.error('Erro ao fazer download da imagem:', error);
+      throw error;
+    }
+  }
+
+  private getStoragePathFromUrl(url: string): string {
+    try {
+      // Remove a parte inicial da URL do Firebase Storage
+      const baseUrl = 'https://firebasestorage.googleapis.com/v0/b/';
+      if (url.startsWith(baseUrl)) {
+        const pathStart = url.indexOf('/o/') + 3;
+        const pathEnd = url.indexOf('?');
+        let path = url.substring(pathStart, pathEnd !== -1 ? pathEnd : undefined);
+        // Decodifica o caminho da URL
+        return decodeURIComponent(path);
+      }
+      return url;
+    } catch (error) {
+      console.error('Erro ao extrair caminho do storage:', error);
+      return url;
+    }
   }
 
 }
