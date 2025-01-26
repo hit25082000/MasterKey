@@ -44,7 +44,6 @@ export interface Course extends Entity {
   active: boolean;
   category: string;
   highlight: boolean;
-  checkoutUrl: string;
   workHours: number;
   previewVideoUrl?: string;
   modules: CourseModule[];

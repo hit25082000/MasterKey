@@ -19,6 +19,7 @@ import { Student } from '../../../../core/models/student.model';
 import { Attendance } from '../../../../core/models/attendance.model';
 import { firstValueFrom } from 'rxjs';
 import { provideNativeDateAdapter } from '@angular/material/core';
+import { ClassService } from '../../services/class.service';
 
 @Component({
   selector: 'app-class-attendance',
@@ -206,26 +207,28 @@ import { provideNativeDateAdapter } from '@angular/material/core';
 })
 export class ClassAttendanceComponent implements OnInit {
   private route = inject(ActivatedRoute);
-  private classService = inject(ClassManagementService);
+  private classService = inject(ClassService);
+  private classManagementService = inject(ClassManagementService);
   private studentService = inject(StudentService);
   private notificationService = inject(NotificationService);
   public loadingService = inject(LoadingService);
 
   currentClass = signal<Class | null>(null);
+  classStudents = signal<string[]>([]);
   attendanceData = signal<Attendance[]>([]);
   selectedDate = signal(new Date());
 
   // Computed signal para mapear os estudantes
   students = computed(() => {
-    const currentClassValue = this.currentClass();
     const allStudents = this.studentService.students();
+    const classStudentsIds = this.classStudents();
     
-    if (!currentClassValue?.studentIds?.length || !allStudents.length) {
+    if (!classStudentsIds?.length || !allStudents.length) {
       return {};
     }
 
     const studentsMap: Record<string, Student> = {};
-    currentClassValue.studentIds.forEach(studentId => {
+    classStudentsIds.forEach(studentId => {
       const student = allStudents.find(s => s.id === studentId);
       if (student) {
         studentsMap[student.id] = student;
@@ -276,9 +279,9 @@ export class ClassAttendanceComponent implements OnInit {
     }
   }
 
-  private loadClassData(classId: string) {
+  private async loadClassData(classId: string) {
     this.loadingService.show();
-    this.classService.getClass(classId).subscribe({
+    this.classManagementService.getClass(classId).subscribe({
       next: (classData) => {
         if (classData) {
           this.currentClass.set(classData);
@@ -293,6 +296,8 @@ export class ClassAttendanceComponent implements OnInit {
         this.loadingService.hide();
       }
     });
+
+    this.classStudents.set(await this.classService.getClassStudents(classId))
   }
 
   private loadAttendanceData() {
@@ -303,7 +308,7 @@ export class ClassAttendanceComponent implements OnInit {
     const endDate = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
 
     this.loadingService.show();
-    this.classService.getClassAttendance(
+    this.classManagementService.getClassAttendance(
       this.currentClass()!.id!,
       startDate,
       endDate
@@ -373,7 +378,7 @@ export class ClassAttendanceComponent implements OnInit {
 
     this.loadingService.show();
     try {
-      await firstValueFrom(this.classService.updateAttendance(newAttendance));
+      await firstValueFrom(this.classManagementService.updateAttendance(newAttendance));
       
       this.attendanceData.update(data => {
         const filtered = data.filter(a => {

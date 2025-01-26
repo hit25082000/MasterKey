@@ -77,7 +77,10 @@ import { NotificationService } from '../../shared/services/notification.service'
                 Entrar
               }
             </button>
+            <a               class="login-button"
+            href="https://masterkeycursos.com.br/metodo/login.php">Alunos de 2024</a>
           </form>
+
         </div>
       </div>
     </div>
