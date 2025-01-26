@@ -40,7 +40,13 @@ import { ClassService } from '../../services/class.service';
   providers: [provideNativeDateAdapter()],
   template: `
     <div class="attendance-container">
-      <h2>Lista de Presença - {{ currentClass()?.name }}</h2>
+      <div class="header-actions">
+        <h2>Lista de Presença - {{ currentClass()?.name }}</h2>
+        <button mat-raised-button color="primary" (click)="printAttendanceReport()">
+          <mat-icon>print</mat-icon>
+          Imprimir Relatório
+        </button>
+      </div>
 
       <div class="date-filters">
         <mat-form-field>
@@ -202,6 +208,13 @@ import { ClassService } from '../../services/class.service';
         margin: 0;
         font-weight: 500;
       }
+    }
+
+    .header-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
     }
   `]
 })
@@ -422,5 +435,94 @@ export class ClassAttendanceComponent implements OnInit {
       .reduce((sum, student) => sum + this.getMonthlyPresenceCount(student.id), 0);
 
     return (totalPresences / totalStudents).toFixed(1);
+  }
+
+  printAttendanceReport() {
+    const selectedMonth = this.selectedDate();
+    const monthName = selectedMonth.toLocaleString('pt-BR', { month: 'long' });
+    const year = selectedMonth.getFullYear();
+    const days = this.daysInMonth();
+
+    // Criar o conteúdo do relatório
+    let reportContent = `
+      <html>
+        <head>
+          <title>Relatório de Presenças - ${monthName} ${year}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+            th { background-color: #f5f5f5; }
+            .header { margin-bottom: 20px; }
+            .presence-count { margin-top: 20px; }
+            .day-cell { width: 30px; }
+            .name-cell { text-align: left; min-width: 200px; }
+            .present { color: green; font-weight: bold; }
+            .absent { color: red; font-weight: bold; }
+            @media print {
+              button { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h2>Relatório de Presenças - ${this.currentClass()?.name}</h2>
+            <p>Mês: ${monthName} ${year}</p>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th class="name-cell">Aluno</th>
+                ${days.map(day => `<th class="day-cell">${day}</th>`).join('')}
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+    `;
+
+    // Adicionar dados de cada aluno
+    this.studentsList().forEach(student => {
+      const presenceCount = this.getMonthlyPresenceCount(student.id);
+      
+      reportContent += `
+        <tr>
+          <td class="name-cell">${student.name}</td>
+          ${days.map(day => {
+            const isPresent = this.isStudentPresentOnDay(student.id, day);
+            return `<td class="day-cell ${isPresent ? 'present' : 'absent'}">${isPresent ? 'P' : 'F'}</td>`;
+          }).join('')}
+          <td>${presenceCount}</td>
+        </tr>
+      `;
+    });
+
+    // Adicionar resumo
+    reportContent += `
+            </tbody>
+          </table>
+
+          <div class="presence-count">
+            <p>Total de Alunos: ${this.studentsList().length}</p>
+            <p>Média de Presenças: ${this.averageMonthlyPresence()}</p>
+            <p>Legenda: P = Presente, F = Falta</p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    // Criar uma nova janela para impressão
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(reportContent);
+      printWindow.document.close();
+
+      // Aguardar o carregamento do conteúdo e imprimir
+      printWindow.onload = () => {
+        printWindow.print();
+      };
+    } else {
+      this.notificationService.error('Não foi possível abrir a janela de impressão. Verifique se o bloqueador de pop-ups está ativado.');
+    }
   }
 }
