@@ -17,6 +17,8 @@ import { catchError, switchMap } from 'rxjs/operators';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { ChatService } from '../../../chat/services/chat.service';
 import { GoogleAuthButtonComponent } from '../../../../shared/components/google-auth-button/google-auth-button.component';
+import { AuthService } from '../../../../core/services/auth.service';
+import { ClassService } from '../../../class/services/class.service';
 
 @Component({
   selector: 'app-meeting',
@@ -29,11 +31,13 @@ export class MeetComponent implements OnInit, OnDestroy {
   private googleAuthService = inject(GoogleAuthService);
   private notificationService = inject(NotificationService);
   private firestoreService = inject(FirestoreService);
+  private classService = inject(ClassService)
   private chatService = inject(ChatService);
   private httpClient = inject(HttpClient);
   private route = inject(ActivatedRoute);
   private systemLogService = inject(SystemLogService);
   private fb = inject(FormBuilder);
+  private auth = inject(AuthService);
 
   private subscriptions = new Subscription();
 
@@ -119,7 +123,7 @@ export class MeetComponent implements OnInit, OnDestroy {
         const endDateTime = new Date(`${formData.startDate}T${formData.endTime}`);
 
         // Carregar emails dos alunos
-        await this.loadStudentEmails(formData.selectedClass!);
+        const studentsIds = await this.classService.getClassStudents(formData.selectedClass!);
 
         const meetingData = {
           title: formData.title!,
@@ -130,13 +134,13 @@ export class MeetComponent implements OnInit, OnDestroy {
 
         // Criar reunião no Google Meet
         const meetLink = await this.createGoogleMeet(meetingData);
+        await this.notifyStudents(meetingData, meetLink,studentsIds);
         
         if (meetLink) {
           // Salvar informações da reunião
           await this.saveMeetingInfo(meetingData, meetLink, formData.selectedClass!);
           
           // Notificar alunos
-          await this.notifyStudents(meetingData, meetLink);
 
           // Registrar log
           await this.systemLogService.logAction(
@@ -252,40 +256,31 @@ export class MeetComponent implements OnInit, OnDestroy {
     });
   }
 
-  async notifyStudents(meetingData: any, meetLink: string) {
+  async notifyStudents(meetingData: any, meetLink: string,students : string[]) {
     const message = `Nova reunião agendada: ${meetingData.title}
-Link do Meet: ${meetLink}
-Data: ${new Date(meetingData.startDateTime).toLocaleDateString()}
-Horário: ${new Date(meetingData.startDateTime).toLocaleTimeString()}`;
-
-    for (const email of this.selectedClassEmails()) {
-      try {
-        const users = await this.firestoreService.getDocumentsByAttribute(
-          'users',
-          'email',
-          email
-        );
-
-        if (users?.[0]) {
-          await this.chatService.sendMessage(
-            'SYSTEM',
-            users[0].id,
-            message,
-            'Sistema'
-          );
+    Link do Meet: ${meetLink}
+    Data: ${new Date(meetingData.startDateTime).toLocaleDateString()}
+    Horário: ${new Date(meetingData.startDateTime).toLocaleTimeString()}`;
+    for (const student of students) {
+      try {     
+            this.chatService.sendMessage(
+              this.auth.getCurrentUserId(),
+              student,
+              message,
+              this.auth.getCurrentUser().name
+            ); 
 
           await this.systemLogService.logAction(
             LogCategory.NOTIFICATION,
             'Notificação de reunião enviada',
             {
-              studentId: users[0].id,
+              studentId: student,
               meetingTitle: meetingData.title,
               meetLink
             }
-          ).toPromise();
-        }
+          ).toPromise();               
       } catch (error) {
-        console.error(`Erro ao notificar aluno ${email}:`, error);
+        console.error(`Erro ao notificar aluno ${student}:`, error);
       }
     }
   }

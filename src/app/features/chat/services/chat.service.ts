@@ -89,7 +89,7 @@ export class ChatService {
       this.notificationService.error('Não é possível enviar mensagem para si mesmo');
       return;
     }
-
+    console.log(currentUserId,selectedUserId,content,userName)
     const message: Omit<Message, 'id' | 'active'> = {
       senderId: currentUserId,
       receiverId: selectedUserId,
