@@ -60,10 +60,13 @@
       </div>
 
       <div class="actions">
-        <button class="btn-primary">WhatsApp</button>
-        <Span>
-          Dúvidas? <a href="#" class="link-duvidas">Clique aqui</a>
-        </Span>
+        <button class="btn-primary" (click)="openWhatsApp()">
+          <i class="fab fa-whatsapp"></i>
+          WhatsApp
+        </button>
+        <span>
+          Dúvidas? <a href="#faq" class="link-duvidas" (click)="scrollToFaq($event)">Clique aqui</a>
+        </span>
       </div>
     </div>
   </div>
