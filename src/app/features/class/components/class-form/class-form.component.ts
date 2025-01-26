@@ -130,14 +130,13 @@ export class ClassFormComponent implements OnInit {
 
       // Carrega alunos
       const classStudents = await this.classService.getClassStudents(this.classId()!);
-      if (classStudents?.students) {
-        this.selectedStudents.set(classStudents.students);
+      if (classStudents) {
+        this.selectedStudents.set(classStudents);
       }
 
       this.initFormConfig(classData);
     } catch (error) {
       this.notificationService.error('Erro ao carregar turma');
-      console.error(error);
     } finally {
       this.loading.set(false);
     }
@@ -301,7 +300,6 @@ export class ClassFormComponent implements OnInit {
       };
 
       if (this.isEditMode()) {
-        console.log(this.selectedStudents())
         await this.classManagementService.updateClass(
           this.classId()!,
           classData,
@@ -310,8 +308,10 @@ export class ClassFormComponent implements OnInit {
 
         this.notificationService.success('Turma atualizada com sucesso');
       } else {
-
-        await this.classManagementService.createClass(classData, this.selectedStudents())
+        await this.classManagementService.createClass(
+          classData,
+          this.selectedStudents()
+        );
 
         this.notificationService.success('Turma criada com sucesso');
       }
@@ -323,7 +323,6 @@ export class ClassFormComponent implements OnInit {
           ? 'Erro ao atualizar turma'
           : 'Erro ao criar turma'
       );
-      console.error(error);
     }
   }
 

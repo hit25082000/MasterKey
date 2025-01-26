@@ -1,11 +1,12 @@
 import { inject, Injectable, signal, WritableSignal } from '@angular/core';
-import { Firestore, collection, collectionData, CollectionReference, doc, getDoc, query, where } from '@angular/fire/firestore';
+import { Firestore, collection, collectionData, CollectionReference, doc, getDoc, query, where, DocumentReference } from '@angular/fire/firestore';
 import { Class } from '../../../core/models/class.model';
 import { EmployeeService } from '../../employees/services/employee.service';
-import { switchMap } from 'rxjs/operators';
+import { Observable, from, map } from 'rxjs';
 
 const CLASSES_PATH = 'classes';
 const CLASS_STUDENTS_PATH = 'class_students';
+const STUDENT_CLASSES_PATH = 'student_classes';
 
 @Injectable({
   providedIn: 'root'
@@ -59,12 +60,6 @@ export class ClassService {
     return classItem;
   }
 
-  async getClassStudents(classId: string): Promise<any> {
-    const docRef = doc(this.firestore, CLASS_STUDENTS_PATH, classId);
-    const docSnap = await getDoc(docRef);
-    return docSnap.exists() ? docSnap.data() : { students: [] };
-  }
-
   async getTeacherName(teacherId: string): Promise<string> {
     try {
       const teacher = await this.employeeService.getById(teacherId);
@@ -75,32 +70,33 @@ export class ClassService {
     }
   }
 
-  async getStudentClasses(studentId: string): Promise<Class[]> {
-    const studentClasses = await this.getClassStudents(studentId);
-    return this.classes().filter(c =>
-      studentClasses.students?.includes(studentId)
-    );
+  // Métodos para relacionamento many-to-many
+  async getClassStudents(classId: string): Promise<string[]> {
+    try {
+      const classStudentsRef = doc(this.firestore, CLASS_STUDENTS_PATH, classId) as DocumentReference<{ students: string[] }>;
+      const docSnap = await getDoc(classStudentsRef);
+      return docSnap.exists() ? docSnap.data().students : [];
+    } catch (error) {
+      console.error('Erro ao buscar alunos da turma:', error);
+      return [];
+    }
   }
 
-  getClassesByStudentId(studentId: string) {
-    return collectionData(
-      query(
-        collection(this.firestore, CLASS_STUDENTS_PATH),
-        where('studentId', '==', studentId)
-      )
-    ).pipe(
-      switchMap(async (classStudents) => {
-        const classIds = classStudents.map(cs => cs['classId']);
-        const classes: Class[] = [];
-        
-        for (const classId of classIds) {
-          const classDoc = await getDoc(doc(this.classesCollection, classId));
-          if (classDoc.exists()) {
-            classes.push({ id: classDoc.id, ...classDoc.data() });
-          }
-        }
-        
-        return classes;
+  async getStudentClasses(studentId: string): Promise<string[]> {
+    try {
+      const studentClassesRef = doc(this.firestore, STUDENT_CLASSES_PATH, studentId) as DocumentReference<{ classes: string[] }>;
+      const docSnap = await getDoc(studentClassesRef);
+      return docSnap.exists() ? docSnap.data().classes : [];
+    } catch (error) {
+      console.error('Erro ao buscar turmas do aluno:', error);
+      return [];
+    }
+  }
+
+  getClassesByStudentId(studentId: string): Observable<Class[]> {
+    return from(this.getStudentClasses(studentId)).pipe(
+      map(classIds => {
+        return this.classes().filter(c => classIds.includes(c.id!));
       })
     );
   }

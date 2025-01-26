@@ -1,11 +1,15 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, from, map, switchMap, catchError, throwError } from 'rxjs';
+import { Observable, from, map, switchMap, catchError, throwError, forkJoin } from 'rxjs';
 import { Class } from '../../../core/models/class.model';
 import { Student } from '../../../core/models/student.model';
 import { FirestoreService } from '../../../core/services/firestore.service';
 import { LogCategory, SystemLogService } from '../../../core/services/system-log.service';
 import { Attendance } from '../../../core/models/attendance.model';
-import { where } from '@angular/fire/firestore';
+import { where, doc, getDoc, setDoc, Firestore, DocumentReference } from '@angular/fire/firestore';
+
+const CLASSES_PATH = 'classes';
+const CLASS_STUDENTS_PATH = 'class_students';
+const STUDENT_CLASSES_PATH = 'student_classes';
 
 @Injectable({
   providedIn: 'root'
@@ -13,12 +17,11 @@ import { where } from '@angular/fire/firestore';
 export class ClassManagementService {
   private firestoreService = inject(FirestoreService);
   private systemLogService = inject(SystemLogService);
-  private readonly classCollection = 'classes';
-  private readonly studentCollection = 'students';
+  private firestore = inject(Firestore);
 
   loadClasses(): Observable<Class[]> {
     return from(
-      this.firestoreService.getCollection<Class>(this.classCollection)
+      this.firestoreService.getCollection<Class>(CLASSES_PATH)
     ).pipe(
       catchError(error => {
         console.error('Erro ao carregar turmas:', error);
@@ -29,7 +32,7 @@ export class ClassManagementService {
 
   getClass(id: string): Observable<Class | null> {
     return from(
-      this.firestoreService.getDocument<Class>(this.classCollection, id)
+      this.firestoreService.getDocument<Class>(CLASSES_PATH, id)
     ).pipe(
       catchError(error => {
         console.error('Erro ao buscar turma:', error);
@@ -46,8 +49,8 @@ export class ClassManagementService {
         }
         return from(
           this.firestoreService.getDocumentsByQuery<Student>(
-            this.studentCollection,
-            where('id', 'in', classData.studentIds)
+            STUDENT_CLASSES_PATH,
+            where('classId', 'in', classData.studentIds)
           )
         );
       }),
@@ -63,8 +66,8 @@ export class ClassManagementService {
 
     return from(
       this.firestoreService.getDocumentsByQuery<Student>(
-        this.studentCollection,
-        where('id', 'in', studentIds)
+        STUDENT_CLASSES_PATH,
+        where('studentId', 'in', studentIds)
       )
     ).pipe(
       catchError(error => {
@@ -101,47 +104,113 @@ export class ClassManagementService {
     );
   }
 
-  createClass(classData: Class, studentIds?: string[]): Observable<void> {
-    const newClass: Class = {
-      ...classData,
-      studentIds: studentIds || []
-    };
+  private async updateClassStudentsRelation(classId: string, studentIds: string[]): Promise<void> {
+    const classStudentsRef = doc(this.firestore, CLASS_STUDENTS_PATH, classId) as DocumentReference<{ students: string[] }>;
+    await setDoc(classStudentsRef, { students: studentIds });
+    console.log('x')
+    const promises = studentIds.map(async (studentId) => {
+      const studentClassesRef = doc(this.firestore, STUDENT_CLASSES_PATH, studentId) as DocumentReference<{ classes: string[] }>;
+      const docSnap = await getDoc(studentClassesRef);
+      const currentClasses = docSnap.exists() ? docSnap.data().classes : [];
+      
+      if (!currentClasses.includes(classId)) {
+        await setDoc(studentClassesRef, {
+          classes: [...currentClasses, classId]
+        });
+      }
+    });
 
-    return from(
-      this.firestoreService.addToCollection(this.classCollection, newClass)
-    ).pipe(
-      switchMap(id => {
-        return this.systemLogService.logAction(
-          LogCategory.SYSTEM_ACTION,
-          'create_class',
-          { classId: id, ...newClass }
-        );
-      }),
-      catchError(error => {
-        console.error('Erro ao criar turma:', error);
-        return throwError(() => error);
-      })
-    );
+    await Promise.all(promises);
   }
 
-  updateClass(id: string, classData: Partial<Class>, classStudents?: string[]): Observable<void> {
-    const updateData: Partial<Class> = {
-      ...classData,
-      studentIds: classStudents || []
-    };
+  private async removeStudentFromClass(classId: string, studentId: string): Promise<void> {
+    // Remove o aluno da lista de alunos da turma
+    const classStudentsRef = doc(this.firestore, CLASS_STUDENTS_PATH, classId) as DocumentReference<{ students: string[] }>;
+    const classDocSnap = await getDoc(classStudentsRef);
+    const currentStudents = classDocSnap.exists() ? classDocSnap.data().students : [];
+    await setDoc(classStudentsRef, {
+      students: currentStudents.filter(id => id !== studentId)
+    });
 
+    // Remove a turma da lista de turmas do aluno
+    const studentClassesRef = doc(this.firestore, STUDENT_CLASSES_PATH, studentId) as DocumentReference<{ classes: string[] }>;
+    const studentDocSnap = await getDoc(studentClassesRef);
+    const currentClasses = studentDocSnap.exists() ? studentDocSnap.data().classes : [];
+    await setDoc(studentClassesRef, {
+      classes: currentClasses.filter(id => id !== classId)
+    });
+  }
+
+  async createClass(classData: Class, studentIds?: string[]): Promise<void> {
+    try {
+      // Cria a turma
+      const docRef = await this.firestoreService.addToCollection(CLASSES_PATH, classData);
+      const classId = docRef.id;
+
+      // Atualiza relações se houver studentIds
+      if (studentIds?.length) {
+        await this.updateClassStudentsRelation(classId, studentIds);
+      }
+
+      // Log da ação
+      await this.systemLogService.logAction(
+        LogCategory.SYSTEM_ACTION,
+        'create_class',
+        { classId, ...classData }
+      ).toPromise();
+
+    } catch (error) {
+      console.error('Erro ao criar turma:', error);
+      throw error;
+    }
+  }
+
+  async updateClass(id: string, classData: Partial<Class>, studentIds?: string[]): Promise<void> {
+    try {
+      // Atualiza os dados da turma
+      await this.firestoreService.updateDocument(CLASSES_PATH, id, classData);
+
+      // Atualiza relações se studentIds foi fornecido
+      if (studentIds !== undefined) {
+        await this.updateClassStudentsRelation(id, studentIds);
+      }
+
+      // Log da ação
+      await this.systemLogService.logAction(
+        LogCategory.SYSTEM_ACTION,
+        'update_class',
+        { classId: id, ...classData }
+      ).toPromise();
+
+    } catch (error) {
+      console.error('Erro ao atualizar turma:', error);
+      throw error;
+    }
+  }
+
+  delete(id: string): Observable<void> {
     return from(
-      this.firestoreService.updateDocument(this.classCollection, id, updateData)
+      this.firestoreService.deleteDocument(CLASSES_PATH, id)
     ).pipe(
-      switchMap(() => {
-        return this.systemLogService.logAction(
+      switchMap(async () => {
+        // Remove todas as relações com alunos
+        const classStudentsRef = doc(this.firestore, CLASS_STUDENTS_PATH, id) as DocumentReference<{ students: string[] }>;
+        const docSnap = await getDoc(classStudentsRef);
+        const currentStudents = docSnap.exists() ? docSnap.data().students : [];
+        
+        const promises = currentStudents.map(studentId => 
+          this.removeStudentFromClass(id, studentId)
+        );
+        await Promise.all(promises);
+
+        await this.systemLogService.logAction(
           LogCategory.SYSTEM_ACTION,
-          'update_class',
-          { classId: id, ...updateData }
+          'delete_class',
+          { classId: id }
         );
       }),
       catchError(error => {
-        console.error('Erro ao atualizar turma:', error);
+        console.error('Erro ao excluir turma:', error);
         return throwError(() => error);
       })
     );
@@ -162,24 +231,6 @@ export class ClassManagementService {
     ).pipe(
       catchError(error => {
         console.error('Erro ao atualizar presença:', error);
-        return throwError(() => error);
-      })
-    );
-  }
-
-  delete(id: string): Observable<void> {
-    return from(
-      this.firestoreService.deleteDocument(this.classCollection, id)
-    ).pipe(
-      switchMap(() => {
-        return this.systemLogService.logAction(
-          LogCategory.SYSTEM_ACTION,
-          'delete_class',
-          { classId: id }
-        );
-      }),
-      catchError(error => {
-        console.error('Erro ao excluir turma:', error);
         return throwError(() => error);
       })
     );

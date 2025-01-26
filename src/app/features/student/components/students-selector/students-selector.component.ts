@@ -61,9 +61,8 @@ export class StudentsSelectorComponent implements OnInit, ControlValueAccessor {
   }
 
   private async loadSelectedStudents() {
-    const classStudents = await this.classService.getClassStudents(this.classId());
-    const studentIds = (classStudents as any).students || [];
-    this.selectedStudentsIds.set(new Set(studentIds));
+    const classStudentsIds = await this.classService.getClassStudents(this.classId());
+    this.selectedStudentsIds.set(new Set(classStudentsIds));
     this.onChange(Array.from(this.selectedStudentsIds()));
   }
 

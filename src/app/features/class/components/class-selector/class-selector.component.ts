@@ -115,15 +115,15 @@ export class ClassSelectorComponent {
   async updateStudentClasses() {
     if (!this.studentId) return;
 
-    try {
-      await firstValueFrom(
+    try {      
         this.classManagementService.updateClass(
           this.studentId,
           {},
           this.selectedClasses().map(c => c.id!)
-        )
-      );
-      this.notificationService.success('Turmas atualizadas com sucesso');
+        ).then(()=>{
+          this.notificationService.success('Turmas atualizadas com sucesso');
+        })
+      
     } catch (error) {
       console.error('Erro ao atualizar turmas:', error);
       this.notificationService.error('Erro ao atualizar turmas');
