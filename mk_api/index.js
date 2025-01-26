@@ -999,15 +999,20 @@ exports.downloadImage = functions.https.onRequest((req, res) => {
         }
 
         try {
-          // Construir o caminho do arquivo no Storage
-          const fileName = `${studentId}_profile.jpg`;
-          
-          // Obter referência do arquivo
-          const file = bucket.file(fileName);
-          
-          // Verificar se o arquivo existe
-          const [exists] = await file.exists();
-          if (!exists) {
+          // Tentar diferentes extensões de arquivo
+          const extensions = ['jpg', 'jpeg', 'png', 'webp'];
+          let file;
+          let exists = false;
+
+          // Procurar por arquivo com diferentes extensões
+          for (const ext of extensions) {
+            const fileName = `${studentId}_profile.${ext}`;
+            file = bucket.file(fileName);
+            [exists] = await file.exists();
+            if (exists) break;
+          }
+
+          if (!exists || !file) {
             return res.status(404).json({ error: 'Imagem não encontrada' });
           }
 

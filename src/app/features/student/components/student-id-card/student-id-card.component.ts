@@ -44,7 +44,7 @@ const positions = {
           </div>
           <div class="info-details">
             <h3>{{ student()?.name }}</h3>
-            <p>Matrícula: {{ student()?.id }}</p>
+            <p>RA: {{ student()?.ra }}</p>
             <p>Validade: {{ getValidityDate() }}</p>
           </div>
           <button class="btn-generate" (click)="generateIdCard()">
@@ -208,7 +208,7 @@ export class StudentIdCardComponent {
         lineHeight: 22
       });
 
-      page.drawText(studentData.id, {
+      page.drawText(studentData.ra || studentData.id, {
         x: positions.RA.x,
         y: positions.RA.y,
         size: 20,

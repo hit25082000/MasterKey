@@ -6,4 +6,5 @@ export interface Student extends BaseUser {
   cpfResponsible?: string;
   courses?: string[];
   packages?: string[];
+  ra?: string;
 }

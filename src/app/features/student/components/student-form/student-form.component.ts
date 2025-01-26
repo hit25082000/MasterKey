@@ -350,11 +350,22 @@ export class StudentFormComponent implements OnInit {
     this.loadingService.hide();
   }
 
+  private generateRA(): string {
+    const year = new Date().getFullYear();
+    const randomNumbers = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+    return `${year}${randomNumbers}`;
+  }
+
   onSubmit(formData: any) {
     this.loadingService.show();
     const studentData: Student = formData;
     studentData.id = this.studentId() || '';
     studentData.role = 'student';
+    
+    // Gerar RA apenas para novos estudantes
+    if (!this.isEditMode()) {
+      studentData.ra = this.generateRA();
+    }
 
     const operation = this.isEditMode()
       ? this.studentManagement.update(studentData, this.selectedFile())
