@@ -1,4 +1,4 @@
-import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, input, OnInit, signal } from '@angular/core';
 import { PaymentService } from '../../../../shared/services/payment.service';
 import { LoadingService } from '../../../../shared/services/loading.service';
 import { NotificationService } from '../../../../shared/services/notification.service';
@@ -13,6 +13,8 @@ import { CourseService } from '../../../course/services/course.service';
 import { Course } from '../../../../core/models/course.model';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
+import { StudentService } from '../../services/student.service';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-student-financial',
@@ -30,6 +32,9 @@ export class StudentFinancialComponent implements OnInit {
   private confirmationService = inject(ConfirmationService);
   private destroyRef = inject(DestroyRef);
   private http = inject(HttpClient);
+  private studentService = inject(StudentService)
+  route = inject(ActivatedRoute)
+  studentId = signal<string | null>(null);
 
   // Signals
   readonly payments = this.paymentService.payments;
@@ -96,13 +101,29 @@ export class StudentFinancialComponent implements OnInit {
   );
 
   constructor() {
-    this.auth.userInfo
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(user => {
-        if (user?.email) {
-          this.loadFinancialData(user.email);
-        }
-      });
+    this.studentId.set(this.route.snapshot.paramMap.get('id'));
+
+    console.log(this.studentId())
+
+    if (!this.studentId()) {
+      console.log("certo")
+      this.auth.userInfo
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(user => {
+          if (user?.email) {
+            this.loadFinancialData(user.email);
+          }
+        });
+    } else {
+
+      this.studentService.selectStudent(this.studentId()!)
+        .then(studentSignal => {
+          const student = studentSignal();
+          if (student?.email) {
+            this.loadFinancialData(student.email);
+          }
+        });
+    }
   }
 
   ngOnInit() {}
@@ -145,7 +166,6 @@ export class StudentFinancialComponent implements OnInit {
         },
         complete: () => this.loadingService.hide()
       });
-
     } catch (error) {
       console.error('Erro ao carregar dados financeiros:', error);
       this.notificationService.error('Erro ao carregar dados financeiros. Por favor, tente novamente mais tarde.');
@@ -178,7 +198,7 @@ export class StudentFinancialComponent implements OnInit {
     this.confirmationService.confirm({
       header: 'Cancelar Assinatura',
       message: 'Tem certeza que deseja cancelar esta assinatura? Esta ação não pode ser desfeita.',
-      icon: 'fas fa-exclamation-triangle',
+      icon: 'pi pi-exclamation-triangle',
       accept: () => {
         this.loadingService.show();
         this.paymentService.cancelSubscription(subscriptionId).subscribe({
@@ -260,7 +280,6 @@ export class StudentFinancialComponent implements OnInit {
           this.notificationService.error('URL de pagamento não disponível');
         }
 
-        // Recarregar dados após processar pagamento
         await this.loadFinancialData(user.email);
       }
     } catch (error) {

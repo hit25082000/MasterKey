@@ -103,4 +103,8 @@ export class StudentListComponent implements OnInit {
     if (!cpf) return '';
     return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
   }
+
+  viewFinancial(id: string) {
+    this.router.navigate(['/admin/student-financial', id]);
+  }
 }

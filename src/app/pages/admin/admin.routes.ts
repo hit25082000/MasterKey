@@ -28,6 +28,7 @@ import { ExamFormComponent } from '../../features/exam/components/exam-form/exam
 import { MeetComponent } from '../../features/meet/components/meet/meet.component';
 import { ClassAttendanceComponent } from '../../features/class/components/class-attendance/class-attendance.component';
 import { ClassAttendanceListComponent } from '../../features/class/components/class-attendance-list/class-attendance-list.component';
+import { StudentFinancialComponent } from '../../features/student/components/student-financial/student-financial.component';
 
 export const ADMIN_ROUTES: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
@@ -37,7 +38,6 @@ export const ADMIN_ROUTES: Routes = [
         canActivate: [RoleGuard],
         data: { permission: RoutePermission.ADMIN }
       },
-      // Rotas de Estudantes
       {
         path: 'student-list',
         component: StudentListComponent,
@@ -49,6 +49,12 @@ export const ADMIN_ROUTES: Routes = [
         component: StudentFormComponent,
         canActivate: [RoleGuard],
         data: { permission: RoutePermission.CREATE_STUDENT }
+      },
+      {
+        path: 'student-financial/:id',
+        component: StudentFinancialComponent,
+        canActivate: [RoleGuard],
+        data: { permission: RoutePermission.VIEW_STUDENT_FINANCIAL }
       },
       {
         path: 'student-register/:id',

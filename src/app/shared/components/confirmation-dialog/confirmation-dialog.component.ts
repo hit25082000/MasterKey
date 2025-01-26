@@ -42,7 +42,7 @@ import { ConfirmationService } from '../../services/confirmation.service';
     }
 
     .confirmation-dialog {
-      background: var(--surface-card);
+      background-color: white;
       border-radius: 8px;
       padding: 1.5rem;
       width: 100%;
