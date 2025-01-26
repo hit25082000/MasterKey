@@ -17,6 +17,8 @@ import { GenericFormComponent } from '../../../../shared/components/generic-form
 import { FormFieldConfig } from '../../../../shared/models/form-field-config';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { LoadingOverlayComponent } from "../../../../shared/components/loading-overlay/loading-overlay.component";
+import { ClassManagementService } from '../../../class/services/class-management.service';
+import { ClassService } from '../../../class/services/class.service';
 
 @Component({
   selector: 'app-student-register',
@@ -40,6 +42,8 @@ export class StudentFormComponent implements OnInit {
   loadingService = inject(LoadingService)
   router = inject(Router)
   route = inject(ActivatedRoute)
+  classManagementService = inject(ClassManagementService)
+  classService = inject(ClassService)
 
   isLoading = this.loadingService.isLoading;
   studentId = signal<string | null>(null);
@@ -404,5 +408,43 @@ export class StudentFormComponent implements OnInit {
 
     // Para outras URLs
     return `${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}`;
+  }
+
+  async updateStudentClasses(selectedClassIds: string[]) {
+    try {
+      // Busca todas as turmas atuais do estudante
+      const currentClasses = await this.classService.getStudentClasses(this.studentId()!);
+      
+      // Classes para adicionar (estão em selectedClassIds mas não em currentClasses)
+      const classesToAdd = selectedClassIds.filter(id => !currentClasses.includes(id));
+      
+      // Classes para remover (estão em currentClasses mas não em selectedClassIds)
+      const classesToRemove = currentClasses.filter(id => !selectedClassIds.includes(id));
+
+      // Adiciona o estudante nas novas turmas
+      for (const classId of classesToAdd) {
+        const classStudents = await this.classService.getClassStudents(classId);
+        await this.classManagementService.updateClass(
+          classId,
+          {},
+          [...classStudents, this.studentId()!]
+        );
+      }
+
+      // Remove o estudante das turmas não selecionadas
+      for (const classId of classesToRemove) {
+        const classStudents = await this.classService.getClassStudents(classId);
+        await this.classManagementService.updateClass(
+          classId,
+          {},
+          classStudents.filter(id => id !== this.studentId()!)
+        );
+      }
+
+      this.notificationService.success('Turmas atualizadas com sucesso');
+    } catch (error) {
+      console.error('Erro ao atualizar turmas:', error);
+      this.notificationService.error('Erro ao atualizar turmas');
+    }
   }
 }

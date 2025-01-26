@@ -107,7 +107,6 @@ export class ClassManagementService {
   private async updateClassStudentsRelation(classId: string, studentIds: string[]): Promise<void> {
     const classStudentsRef = doc(this.firestore, CLASS_STUDENTS_PATH, classId) as DocumentReference<{ students: string[] }>;
     await setDoc(classStudentsRef, { students: studentIds });
-    console.log('x')
     const promises = studentIds.map(async (studentId) => {
       const studentClassesRef = doc(this.firestore, STUDENT_CLASSES_PATH, studentId) as DocumentReference<{ classes: string[] }>;
       const docSnap = await getDoc(studentClassesRef);

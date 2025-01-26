@@ -48,7 +48,10 @@
   <app-modal #classModal>
     <div class="modal-container">
       <h4>Turmas do Estudante</h4>
-      <app-class-selector [studentId]="studentId()!" #classSelector></app-class-selector>
+      <app-class-selector
+        [studentId]="studentId()!"
+        (classesSelected)="updateStudentClasses($event)"
+      ></app-class-selector>
     </div>
   </app-modal>
 
