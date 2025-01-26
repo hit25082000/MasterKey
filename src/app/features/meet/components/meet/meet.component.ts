@@ -16,11 +16,12 @@ import { Subscription } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { ChatService } from '../../../chat/services/chat.service';
+import { GoogleAuthButtonComponent } from '../../../../shared/components/google-auth-button/google-auth-button.component';
 
 @Component({
   selector: 'app-meeting',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, GoogleAuthButtonComponent],
   templateUrl: './meet.component.html',
   styleUrls: ['./meet.component.scss'],
 })

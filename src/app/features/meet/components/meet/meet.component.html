@@ -2,6 +2,7 @@
   <div *ngIf="!isGoogleConnected()" class="google-auth-warning">
     <i class="fas fa-exclamation-triangle"></i>
     <p>Por favor, conecte sua conta Google para criar reuniões.</p>
+    <app-google-auth-button></app-google-auth-button>
   </div>
 
   <div class="form-group">

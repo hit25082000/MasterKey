@@ -987,3 +987,26 @@
     }
   }
 }
+
+.google-auth-warning {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background-color: #fff3cd;
+  border: 1px solid #ffeeba;
+  border-radius: 4px;
+  text-align: center;
+
+  i {
+    color: #856404;
+    font-size: 1.5rem;
+  }
+
+  p {
+    color: #856404;
+    margin: 0;
+  }
+}

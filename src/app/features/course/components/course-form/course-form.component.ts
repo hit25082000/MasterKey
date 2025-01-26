@@ -18,6 +18,7 @@ import { CategorySelectorComponent } from '../../../category/components/category
 import { BookSelectorComponent } from '../../../library/components/book-selector/book-selector.component';
 import { HandoutSelectorComponent } from '../../../ecommerce/components/handout-selector/handout-selector.component';
 import { CourseReviewComponent } from '../course-review/course-review.component';
+import { GoogleAuthButtonComponent } from '../../../../shared/components/google-auth-button/google-auth-button.component';
 
 @Component({
   selector: 'app-course-form',
@@ -32,7 +33,8 @@ import { CourseReviewComponent } from '../course-review/course-review.component'
     HandoutSelectorComponent,
     BookSelectorComponent,
     RouterLink,
-    CourseReviewComponent
+    CourseReviewComponent,
+    GoogleAuthButtonComponent
   ],
   templateUrl: './course-form.component.html',
   styleUrls: ['./course-form.component.scss']

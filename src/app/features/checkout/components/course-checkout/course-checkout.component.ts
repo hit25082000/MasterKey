@@ -140,9 +140,9 @@ export class CourseCheckoutComponent implements OnInit {
         }
 
         if (paymentMethod === 'BOLETO' && response.bankSlipUrl) {
-          window.open(response.bankSlipUrl, '_blank');
+          window.location.href = response.bankSlipUrl;
         } else if (paymentMethod === 'PIX' && response.invoiceUrl) {
-          window.open(response.invoiceUrl, '_blank');
+          window.location.href = response.invoiceUrl;
         } else {
           throw new Error('URL de pagamento não disponível');
         }

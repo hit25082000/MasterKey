@@ -1,3 +1,9 @@
+
+  <div *ngIf="!isAuthenticated()" class="google-auth-warning">
+    <i class="fas fa-exclamation-triangle"></i>
+    <p>Por favor, conecte sua conta Google para gerenciar os vídeos do curso.</p>
+    <app-google-auth-button></app-google-auth-button>
+  </div>
 <form [formGroup]="courseForm()" class="course-form">
     <!-- Formulário Genérico para campos comuns -->
     <app-generic-form #genericForm
