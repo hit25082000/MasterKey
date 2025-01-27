@@ -4,8 +4,7 @@ $color-secondary: #ee3c48;
 .courses {
   min-height: calc(100vh - 80px);
   padding: 4rem 0;
-  background:
-    linear-gradient(90deg, rgba(238, 60, 72, 0.2) 0%, rgba(56, 74, 135, 0.2) 100%), #000000;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(238, 60, 72, 0.5) 40%, rgba(238, 60, 72, 0.5) 45%, rgba(56, 74, 135, 0.5) 55%, rgba(56, 74, 135, 0.5) 60%, rgba(0, 0, 0, 0) 100%), linear-gradient(90deg, rgba(238, 60, 72, 0.2) 0%, rgba(56, 74, 135, 0.2) 100%), #000000;
 
   @media (max-width: 768px) {
     padding: 2rem 0;
