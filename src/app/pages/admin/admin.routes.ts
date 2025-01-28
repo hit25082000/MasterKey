@@ -68,7 +68,6 @@ export const ADMIN_ROUTES: Routes = [
         canActivate: [RoleGuard],
         data: { permission: RoutePermission.VIEW_STUDENT_LOGIN }
       },
-      // Rotas de Cursos
       {
         path: 'course-list',
         component: CourseListComponent,

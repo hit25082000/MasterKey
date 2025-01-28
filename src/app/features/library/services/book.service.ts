@@ -86,17 +86,37 @@ export class BookService {
   }
 
   async deleteBook(bookId: string): Promise<void> {
-    // try {
-    //   await this.storage.deleteBookFiles(bookId);
+    try {
+      // Primeiro, obtém o livro para ter acesso às URLs dos arquivos
+      const book = await this.firestore.getDocument<Book>('books', bookId);
+      if (!book) {
+        throw new Error('Livro não encontrado');
+      }
 
-    //   await this.firestore.deleteDocument('books', bookId);
+      // Deleta a imagem e o PDF do Storage
+      if (book.imageUrl) {
+        try {
+          await this.storage.deleteFile(`book-images/${bookId}`);
+        } catch (error) {
+          console.warn('Erro ao deletar imagem do livro:', error);
+        }
+      }
 
-    //   this.notificationService.success('Livro excluído com sucesso');
-    // } catch (error) {
-    //   console.error('Erro ao excluir livro:', error);
-    //   this.notificationService.error('Erro ao excluir livro');
-    //   throw error;
-    // }
+      if (book.pdfUrl) {
+        try {
+          await this.storage.deleteFile(`book-pdfs/${bookId}`);
+        } catch (error) {
+          console.warn('Erro ao deletar PDF do livro:', error);
+        }
+      }
+
+      // Por fim, deleta o documento do livro
+      await this.firestore.deleteDocument('books', bookId);
+    } catch (error) {
+      console.error('Erro ao excluir livro:', error);
+      this.notificationService.error('Erro ao excluir livro');
+      throw error;
+    }
   }
 
   async getBooksByCourseId(courseId: string): Promise<Book[]> {

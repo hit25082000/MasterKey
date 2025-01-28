@@ -7,9 +7,10 @@ import { EmployeeService } from './employee.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { SystemLogService } from '../../../core/services/system-log.service';
 import { HttpClient } from '@angular/common/http';
-import { firstValueFrom, Observable } from 'rxjs';
+import { firstValueFrom, Observable, from, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Employee } from '../../../core/models/employee.model';
+import { map, catchError, switchMap } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root',
@@ -63,18 +64,20 @@ export class EmployeeManagementService {
     }
   }
 
-  async delete(userId: string): Promise<any> {
-    try {
-      const employee = await this.employeeService.getById(userId);
-
-      this.adminService.deleteUser(userId).subscribe(() => {
-        this.logSuccessfulDelete(employee);
-
-        return 'Funcionario deletado com sucesso!';
-      });
-    } catch (error) {
-      throw this.handleError(error);
-    }
+  delete(userId: string): Observable<void> {
+    return from(this.employeeService.getById(userId)).pipe(
+      switchMap((employee) => {
+        if (!employee) {
+          return throwError(() => new Error('Funcionário não encontrado'));
+        }
+        return from(this.adminService.deleteUser(userId)).pipe(
+          map(() => {
+            this.logSuccessfulDelete(employee);
+          })
+        );
+      }),
+      catchError((error) => throwError(() => this.handleError(error)))
+    );
   }
 
   getDifferences<T>(oldEmp: T, newEmp: T) {

@@ -83,6 +83,30 @@ export class CategoryManagementService {
     }
   }
 
+  async delete(id: string): Promise<void> {
+    try {
+      const category = await this.firestore.getDocument('categorys', id) as Category;
+      
+      if (!category) {
+        throw new Error('Categoria não encontrada');
+      }
+
+      // Se houver uma imagem, deleta ela primeiro
+      if (category.image) {
+        try {
+          await this.storage.deleteIcon(category.image);
+        } catch (error) {
+          console.warn('Erro ao deletar imagem da categoria:', error);
+        }
+      }
+
+      // Deleta o documento da categoria
+      await this.firestore.deleteDocument('categorys', id);
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
   private handleError(error: unknown): Error {
     if (error instanceof Error || error instanceof HttpErrorResponse) {
       return new Error(error.message);

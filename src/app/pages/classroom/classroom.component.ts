@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { StudentNavComponent } from "../../shared/components/student-nav/student-nav.component";
 import { ChatModalComponent } from '../../features/chat/components/chat-modal/chat-modal.component';
+import { StudentNavComponent } from './student-nav/student-nav.component';
 
 @Component({
   selector: 'app-classroom',

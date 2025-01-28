@@ -8,7 +8,6 @@ import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { forkJoin, map, firstValueFrom } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ConfirmationDialogComponent } from '../../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { CourseService } from '../../../course/services/course.service';
 import { Course } from '../../../../core/models/course.model';
 import { HttpClient } from '@angular/common/http';
@@ -20,7 +19,7 @@ import { ActivatedRoute } from '@angular/router';
   selector: 'app-student-financial',
   templateUrl: './student-financial.component.html',
   styleUrls: ['./student-financial.component.scss'],
-  imports: [CommonModule, MatProgressSpinnerModule, ConfirmationDialogComponent],
+  imports: [CommonModule, MatProgressSpinnerModule],
   standalone: true
 })
 export class StudentFinancialComponent implements OnInit {
@@ -49,19 +48,29 @@ export class StudentFinancialComponent implements OnInit {
 
     payments.forEach(payment => {
       if (payment.paymentDetails.status === 'PENDING') {
-        const existingPayment = latestPendingPaymentsByCourse.get(payment.courseId);
-        if (!existingPayment || new Date(payment.paymentDetails.dateCreated) > new Date(existingPayment.paymentDetails.dateCreated)) {
-          latestPendingPaymentsByCourse.set(payment.courseId, payment);
+        // Verifica se o pagamento está vencido
+        const dueDate = new Date(payment.paymentDetails.dueDate);
+        const today = new Date();
+        
+        // Só adiciona o pagamento se não estiver vencido
+        if (dueDate >= today) {
+          const existingPayment = latestPendingPaymentsByCourse.get(payment.courseId);
+          if (!existingPayment || new Date(payment.paymentDetails.dateCreated) > new Date(existingPayment.paymentDetails.dateCreated)) {
+            latestPendingPaymentsByCourse.set(payment.courseId, payment);
+          }
         }
       }
     });
 
     // Combina os últimos pagamentos pendentes com os pagamentos não pendentes
-    const nonPendingPayments = payments.filter(p => p.paymentDetails.status !== 'PENDING');
+    const nonPendingPayments = payments.filter(p => 
+      p.paymentDetails.status !== 'PENDING' || 
+      (p.paymentDetails.status === 'PENDING' && new Date(p.paymentDetails.dueDate) >= new Date())
+    );
     return [...latestPendingPaymentsByCourse.values(), ...nonPendingPayments];
   });
 
-  // Atualiza os computed signals para usar filteredPayments
+  // Atualiza os computed signals para pagamentos únicos (sem verificação de vencimento)
   readonly pendingUniquePayments = computed(() => 
     this.filteredPayments().filter(p => p.paymentDetails.status === 'PENDING').length
   );
@@ -84,16 +93,43 @@ export class StudentFinancialComponent implements OnInit {
 
   // Computed Signals para Assinaturas
   readonly pendingSubscriptionPayments = computed(() => 
-    this.subscriptionPayments().filter(p => p.paymentDetails.status === 'PENDING').length
+    this.subscriptionPayments()
+      .filter(p => p.paymentDetails.status === 'PENDING' || p.paymentDetails.status === 'OVERDUE')
+      .map(payment => {
+        // Verifica se o pagamento está vencido
+        const dueDate = new Date(payment.paymentDetails.dueDate);
+        const today = new Date();
+        
+        // Se a data de vencimento for anterior à data atual, marca como vencido
+        if (dueDate < today && payment.paymentDetails.status === 'PENDING') {
+          payment.paymentDetails.status = 'OVERDUE';
+        }
+        return payment;
+      })
+      .length
   );
+
   readonly paidSubscriptionPayments = computed(() => 
     this.subscriptionPayments().filter(p => p.paymentDetails.status === 'CONFIRMED' || p.paymentDetails.status === 'RECEIVED').length
   );
+
   readonly totalPendingSubscription = computed(() => 
     this.subscriptionPayments()
-      .filter(p => p.paymentDetails.status === 'PENDING')
+      .filter(p => p.paymentDetails.status === 'PENDING' || p.paymentDetails.status === 'OVERDUE')
+      .map(payment => {
+        // Verifica se o pagamento está vencido
+        const dueDate = new Date(payment.paymentDetails.dueDate);
+        const today = new Date();
+        
+        // Se a data de vencimento for anterior à data atual, marca como vencido
+        if (dueDate < today && payment.paymentDetails.status === 'PENDING') {
+          payment.paymentDetails.status = 'OVERDUE';
+        }
+        return payment;
+      })
       .reduce((total, p) => total + p.paymentDetails.value, 0)
   );
+
   readonly totalPaidSubscription = computed(() => 
     this.subscriptionPayments()
       .filter(p => p.paymentDetails.status === 'CONFIRMED' || p.paymentDetails.status === 'RECEIVED')

@@ -37,4 +37,18 @@ export class PackageManagementService {
       catchError((error) => throwError(() => error))
     );
   }
+
+  delete(id: string): Observable<void> {
+    return from(this.firestore.getDocument('packages', id)).pipe(
+      switchMap((packageToDelete) => {
+        if (packageToDelete) {
+          return from(this.firestore.deleteDocument('packages', id));
+        } else {
+          return throwError(() => new Error('Pacote não encontrado.'));
+        }
+      }),
+      map(() => void 0),
+      catchError((error) => throwError(() => error))
+    );
+  }
 }

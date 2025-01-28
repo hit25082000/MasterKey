@@ -6,11 +6,14 @@ import { Router, Routes } from '@angular/router';
 import { EmployeeService } from '../../services/employee.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { CommonModule } from '@angular/common';
+import { NotificationService } from '../../../../shared/services/notification.service';
+import { ConfirmationService } from '../../../../shared/services/confirmation.service';
+import { ConfirmationDialogComponent } from '../../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 
 @Component({
   selector: 'app-employee-list',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ConfirmationDialogComponent],
   template: `
     <div class="employee-list-container">
       <div class="list-header">
@@ -78,28 +81,40 @@ import { CommonModule } from '@angular/common';
 })
 export class EmployeeListComponent implements OnInit {
   employees: Employee[] = [];
-  router = inject(Router)
+  router = inject(Router);
+  private employeeManagementService = inject(EmployeeManagementService);
+  private notificationService = inject(NotificationService);
+  private confirmationService = inject(ConfirmationService);
+  private employeeService = inject(EmployeeService)    
 
-  constructor(
-    private employeeService: EmployeeService,
-  ) {
-    this.router.routeReuseStrategy.shouldReuseRoute = () => {
-      return false;
-    };
-  }
+  constructor() {}
 
   async ngOnInit(): Promise<void> {
     try {
       this.employees = await this.employeeService.getAll();
-      console.log(this.employees);
     } catch (err) {
-      console.error(err);
     } finally {
     }
   }
 
   deleteEmployees(id: string) {
-    this.router.navigateByUrl('/admin/employee-list');
+    this.confirmationService.confirm({
+      header: 'Confirmar Exclusão',
+      message: 'Tem certeza que deseja excluir este funcionário?',
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        this.employeeManagementService.delete(id).subscribe({
+          next: () => {
+            this.employees = this.employees.filter(emp => emp.id !== id);
+            this.notificationService.success('Funcionário excluído com sucesso');
+          },
+          error: (error: Error) => {
+            console.error('Erro ao deletar funcionário:', error);
+            this.notificationService.error('Erro ao excluir funcionário: ' + error.message);
+          }
+        });
+      }
+    });
   }
 
   editEmployees(id: string) {

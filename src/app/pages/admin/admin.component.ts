@@ -7,6 +7,7 @@ import { ModalComponent } from '../../shared/components/modal/modal.component';
 import { ChatModalComponent } from '../../features/chat/components/chat-modal/chat-modal.component';
 import { AdminHeaderComponent } from '../../shared/components/admin-header/admin-header.component';
 import { WhatsAppStatusWidgetComponent } from '../../features/chat/components/whats-app-status-widget/whats-app-status-widget.component';
+import { ConfirmationDialogComponent } from '../../shared/components/confirmation-dialog/confirmation-dialog.component';
 
 @Component({
   selector: 'app-admin',
@@ -16,10 +17,9 @@ import { WhatsAppStatusWidgetComponent } from '../../features/chat/components/wh
     RouterOutlet,
     NgClass,
     ChatModalComponent,
-    WhatsAppMessageComponent,
-    ModalComponent,
     AdminHeaderComponent,
-    WhatsAppStatusWidgetComponent
+    WhatsAppStatusWidgetComponent,
+    ConfirmationDialogComponent
   ],
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.scss',

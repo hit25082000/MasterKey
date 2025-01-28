@@ -4,12 +4,18 @@ import { Student } from '../../../core/models/student.model';
 import { AdminService } from '../../../core/services/admin.service';
 import { StorageService } from '../../../core/services/storage.service';
 import { Category } from '../../../core/models/category.model';
+import { Observable, from, throwError } from 'rxjs';
+import { map, catchError, switchMap } from 'rxjs/operators';
+import { CategoryManagementService } from './category-management.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class CategoryService {
-  constructor(private firestore: FirestoreService) {}
+  constructor(
+    private firestore: FirestoreService,
+    private categoryManagementService: CategoryManagementService
+  ) {}
 
   getAll(): Promise<Category[]> {
     return this.firestore.getCollection<Category>('categorys');
@@ -39,5 +45,9 @@ export class CategoryService {
     return this.firestore.updateDocument('categorys', categoryId, {
       courses: [...courses, courseId],
     });
+  }
+
+  delete(id: string): Observable<void> {
+    return from(this.categoryManagementService.delete(id));
   }
 }

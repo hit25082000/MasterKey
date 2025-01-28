@@ -80,4 +80,10 @@ export class StorageService {
     const snapshot = await uploadBytes(storageRef, file);
     return await getDownloadURL(snapshot.ref);
   }
+
+  async deleteFile(path: string): Promise<void> {
+    const storage = getStorage();
+    const fileRef = ref(storage, path);
+    return deleteObject(fileRef);
+  }
 }

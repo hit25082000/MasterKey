@@ -10,11 +10,18 @@ import { ClassManagementService } from '../../services/class-management.service'
 import { firstValueFrom } from 'rxjs';
 import { computed } from '@angular/core';
 import { WeekdayTranslatorPipe } from '../../pipes/weekday-translator.pipe';
+import { ConfirmationService } from '../../../../shared/services/confirmation.service';
 
 @Component({
   selector: 'app-class-list',
   standalone: true,
-  imports: [CommonModule, MatTableModule, MatButtonModule, MatIconModule, WeekdayTranslatorPipe],
+  imports: [
+    CommonModule, 
+    MatTableModule, 
+    MatButtonModule, 
+    MatIconModule, 
+    WeekdayTranslatorPipe
+  ],
   templateUrl: './class-list.component.html',
   styles: [`
     .class-list-container {
@@ -118,6 +125,7 @@ export class ClassListComponent {
   private classService = inject(ClassService);
   private classManagementService = inject(ClassManagementService);
   private notificationService = inject(NotificationService);
+  private confirmationService = inject(ConfirmationService);
   private router = inject(Router);
 
   classes = computed(() => this.classService.classes());
@@ -136,11 +144,18 @@ export class ClassListComponent {
   }
 
   async delete(id: string) {
-    try {
-      await firstValueFrom(this.classManagementService.delete(id));
-      this.notificationService.success('Turma excluída com sucesso');
-    } catch (error) {
-      this.notificationService.error('Erro ao excluir turma');
-    }
+    this.confirmationService.confirm({
+      header: 'Confirmar Exclusão',
+      message: 'Tem certeza que deseja excluir esta turma?',
+      icon: 'pi pi-exclamation-triangle',
+      accept: async () => {
+        try {
+          await firstValueFrom(this.classManagementService.delete(id));
+          this.notificationService.success('Turma excluída com sucesso');
+        } catch (error) {
+          this.notificationService.error('Erro ao excluir turma');
+        }
+      }
+    });
   }
 }

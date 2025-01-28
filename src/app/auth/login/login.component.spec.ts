@@ -2,9 +2,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { RouterTestingModule } from '@angular/router/testing';
 import { LoginComponent } from './login.component';
-import { AuthService } from '../services/auth.service';
 import { Router } from '@angular/router';
 import { UserCredential } from 'firebase/auth';
+import { AuthService } from '../../core/services/auth.service';
 
 describe('LoginComponent', () => {
   let component: LoginComponent;
