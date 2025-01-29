@@ -26,7 +26,7 @@ import { provideNgxMask } from 'ngx-mask';
     MatProgressSpinnerModule,
     MatSnackBarModule
   ],
-  providers: [provideNgxMask()],
+  providers: [],
   templateUrl: './payment.component.html',
   styleUrls: ['./payment.component.scss']
 })

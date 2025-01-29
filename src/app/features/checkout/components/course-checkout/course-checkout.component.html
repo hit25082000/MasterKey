@@ -10,8 +10,15 @@
         <p class="installments">ou até {{ course()?.portionCount }}x de R$ {{ (course()?.price || 0) / (course()?.portionCount || 1) | number:'1.2-2' }}</p>
       </div>
     </div>
+
+    <app-payment 
+  [courseId]="course()?.id!"
+  [courseValue]="course()?.price!"
+  [isRecurring]="true">
+</app-payment>
+
     
-    <form [formGroup]="customerForm" class="contact-form">
+    <!-- <form [formGroup]="customerForm" class="contact-form">
       <h3>Informações para Contato</h3>
       <div class="form-group">
         <label for="name">Nome Completo</label>
@@ -29,7 +36,7 @@
         <label for="phone">Telefone</label>
         <input type="tel" id="phone" formControlName="phone" placeholder="Seu telefone">
       </div>
-    </form>
+    </form> -->
 
     <div class="payment-methods" *ngIf="customerForm.valid">
       <h3>Escolha a forma de pagamento</h3>
@@ -65,9 +72,4 @@
   </div>
 </div> 
 
-<app-payment 
-  [courseId]="course()?.id!"
-  [courseValue]="course()?.price!"
-  [isRecurring]="true">
-</app-payment>
 

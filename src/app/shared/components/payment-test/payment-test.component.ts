@@ -16,6 +16,9 @@ import { AngularFirestore, AngularFirestoreCollection } from '@angular/fire/comp
 import { BehaviorSubject, Observable, interval, Subscription } from 'rxjs';
 import { switchMap, take, tap } from 'rxjs/operators';
 import { PaymentTransaction } from '../../../core/interfaces/payment.interface';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../environments/environment';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-payment-test',
@@ -87,6 +90,48 @@ import { PaymentTransaction } from '../../../core/interfaces/payment.interface';
           <div class="history-section">
             <h3>Histórico de Pagamentos</h3>
             <app-payment-history></app-payment-history>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <div class="test-section">
+            <h3>1. Teste de Webhook</h3>
+            <div class="test-item">
+              <button mat-raised-button color="primary" 
+                      [disabled]="testingWebhook"
+                      (click)="testWebhook()">
+                <mat-icon>send</mat-icon>
+                Testar Webhook
+              </button>
+              <mat-progress-bar *ngIf="testingWebhook" mode="indeterminate"></mat-progress-bar>
+              <div class="test-result" *ngIf="webhookResult">
+                <mat-icon [color]="webhookResult.success ? 'primary' : 'warn'">
+                  {{webhookResult.success ? 'check_circle' : 'error'}}
+                </mat-icon>
+                <span>{{webhookResult.message}}</span>
+              </div>
+            </div>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <div class="test-section">
+            <h3>2. Teste de Pagamento</h3>
+            <div class="test-item">
+              <button mat-raised-button color="primary" 
+                      [disabled]="testingPayment"
+                      (click)="testPayment()">
+                <mat-icon>payment</mat-icon>
+                Testar Pagamento
+              </button>
+              <mat-progress-bar *ngIf="testingPayment" mode="indeterminate"></mat-progress-bar>
+              <div class="test-result" *ngIf="paymentResult">
+                <mat-icon [color]="paymentResult.success ? 'primary' : 'warn'">
+                  {{paymentResult.success ? 'check_circle' : 'error'}}
+                </mat-icon>
+                <span>{{paymentResult.message}}</span>
+              </div>
+            </div>
           </div>
         </mat-card-content>
 
@@ -184,6 +229,44 @@ import { PaymentTransaction } from '../../../core/interfaces/payment.interface';
     .payment-section, .history-section {
       margin: 20px 0;
     }
+
+    .test-section {
+      margin: 20px 0;
+
+      h3 {
+        margin-bottom: 15px;
+        color: #333;
+      }
+    }
+
+    .test-item {
+      padding: 15px;
+      background: #f5f5f5;
+      border-radius: 4px;
+      margin-bottom: 15px;
+
+      button {
+        margin-bottom: 10px;
+      }
+
+      .mat-icon {
+        margin-right: 8px;
+      }
+    }
+
+    .test-result {
+      display: flex;
+      align-items: center;
+      margin-top: 10px;
+      padding: 10px;
+      background: white;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+      .mat-icon {
+        margin-right: 8px;
+      }
+    }
   `]
 })
 export class PaymentTestComponent implements OnInit, OnDestroy {
@@ -202,13 +285,19 @@ export class PaymentTestComponent implements OnInit, OnDestroy {
   monthlyRecurringRevenue$ = this.paymentState.getMonthlyRecurringRevenue();
   paymentStateError$ = this.paymentState.error$;
 
+  testingWebhook = false;
+  testingPayment = false;
+  webhookResult: any = null;
+  paymentResult: any = null;
+
   constructor(
     private asaasService: AsaasService,
     private paymentService: PaymentService,
     private paymentState: PaymentStateService,
     private webhookService: WebhookService,
     private firestore: AngularFirestore,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private http: HttpClient
   ) {}
 
   ngOnInit() {
@@ -399,6 +488,87 @@ export class PaymentTestComponent implements OnInit, OnDestroy {
       case 'CLEANUP': return 'cleaning_services';
       case 'ERROR': return 'error';
       default: return 'info';
+    }
+  }
+
+  async testWebhook() {
+    this.testingWebhook = true;
+    this.webhookResult = null;
+
+    try {
+      // Simular um evento de pagamento do Asaas
+      const mockWebhookEvent = {
+        event: 'PAYMENT_RECEIVED',
+        payment: {
+          id: 'pay_test_' + Date.now(),
+          customer: 'cus_test_123',
+          value: 99.90,
+          netValue: 96.90,
+          billingType: 'PIX',
+          status: 'RECEIVED',
+          dueDate: new Date().toISOString().split('T')[0],
+          paymentDate: new Date().toISOString(),
+          invoiceUrl: 'https://sandbox.asaas.com/i/123456',
+          bankSlipUrl: null
+        }
+      };
+
+      // Enviar evento para o endpoint do webhook
+      const response = await firstValueFrom(
+        this.http.post(`${environment.apiUrl}/asaasWebhook`, mockWebhookEvent)
+      );
+
+      this.webhookResult = {
+        success: true,
+        message: 'Webhook processado com sucesso!'
+      };
+
+    } catch (error: any) {
+      console.error('Erro no teste do webhook:', error);
+      this.webhookResult = {
+        success: false,
+        message: `Erro no webhook: ${error.message || 'Erro desconhecido'}`
+      };
+    } finally {
+      this.testingWebhook = false;
+    }
+  }
+
+  async testPayment() {
+    this.testingPayment = true;
+    this.paymentResult = null;
+
+    try {
+      // Dados de teste para criar um pagamento
+      const paymentData = {
+        amount: 99.90,
+        courseId: 'TEST_COURSE',
+        paymentMethod: 'PIX',
+        customer: {
+          name: 'Usuário Teste',
+          email: 'teste@teste.com',
+          cpfCnpj: '12345678909',
+          phone: '67999999999'
+        }
+      };
+
+      const response = await firstValueFrom(
+        this.http.post(`${environment.apiUrl}/createAsaasPayment`, paymentData)
+      );
+
+      this.paymentResult = {
+        success: true,
+        message: 'Pagamento criado com sucesso!'
+      };
+
+    } catch (error: any) {
+      console.error('Erro no teste de pagamento:', error);
+      this.paymentResult = {
+        success: false,
+        message: `Erro no pagamento: ${error.message || 'Erro desconhecido'}`
+      };
+    } finally {
+      this.testingPayment = false;
     }
   }
 

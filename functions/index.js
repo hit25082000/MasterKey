@@ -231,7 +231,34 @@ exports.createCustomer = functions.https.onRequest((req, res) => {
         });
       }
 
-      // 1. Criar cliente no Asaas
+      const db = admin.firestore();
+
+      // Buscar cliente existente por email ou CPF
+      const emailQuery = await db.collection('customers')
+        .where('email', '==', customerData.email)
+        .get();
+
+      const cpfQuery = await db.collection('customers')
+        .where('cpfCnpj', '==', customerData.cpfCnpj)
+        .get();
+
+      // Se encontrar cliente existente, retornar os dados
+      if (!emailQuery.empty || !cpfQuery.empty) {
+        const existingCustomer = !emailQuery.empty 
+          ? emailQuery.docs[0].data()
+          : cpfQuery.docs[0].data();
+
+        console.log('Cliente existente encontrado:', existingCustomer);
+
+        return res.status(200).json({
+          customerId: existingCustomer.asaasId,
+          firestoreId: !emailQuery.empty ? emailQuery.docs[0].id : cpfQuery.docs[0].id,
+          ...existingCustomer,
+          message: 'Cliente já cadastrado'
+        });
+      }
+
+      // Se não encontrar, criar novo cliente no Asaas
       const customerResponse = await fetch(`${config.asaas.apiUrl}/customers`, {
         method: 'POST',
         headers: {
@@ -257,8 +284,7 @@ exports.createCustomer = functions.https.onRequest((req, res) => {
 
       const asaasCustomer = await customerResponse.json();
 
-      // 2. Salvar no Firestore
-      const db = admin.firestore();
+      // Salvar novo cliente no Firestore
       const customerRef = db.collection('customers').doc();
       
       await customerRef.set({
@@ -273,17 +299,18 @@ exports.createCustomer = functions.https.onRequest((req, res) => {
         updatedAt: FieldValue.serverTimestamp()
       });
 
-      // 3. Retornar resposta
-      res.status(200).json({
+      // Retornar resposta do novo cliente
+      res.status(201).json({
         customerId: asaasCustomer.id,
         firestoreId: customerRef.id,
-        ...asaasCustomer
+        ...asaasCustomer,
+        message: 'Novo cliente criado com sucesso'
       });
 
     } catch (error) {
-      console.error('Erro ao criar cliente:', error);
+      console.error('Erro ao processar cliente:', error);
       res.status(500).json({
-        error: 'Erro ao criar cliente',
+        error: 'Erro ao processar cliente',
         details: error.message
       });
     }
