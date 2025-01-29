@@ -743,7 +743,6 @@ exports.createAsaasPayment = functions.https.onRequest((req, res) => {
       //   // };
       // }
 
-      console.log(paymentData)
       const paymentResponse = await fetch(`${config.asaas.apiUrl}/payments`, {
         method: 'POST',
         headers: {
@@ -753,7 +752,7 @@ exports.createAsaasPayment = functions.https.onRequest((req, res) => {
         },
         body: JSON.stringify(paymentData)
       });
-
+      
       if (!paymentResponse.ok) {
         const errorText = await paymentResponse.text();
         throw new Error(`Erro ao criar pagamento no Asaas: ${errorText}`);
@@ -764,16 +763,16 @@ exports.createAsaasPayment = functions.https.onRequest((req, res) => {
       // Salvar transação no Firestore
       const db = admin.firestore();
       const transactionRef = db.collection('transactions').doc(asaasPayment.id);
-      
+
       await transactionRef.set({
         asaasId: asaasPayment.id,
-        customerId: customer.firestoreId,
+        customerId: asaasPayment.customer,
         courseId: courseId,
         amount: amount,
         status: asaasPayment.status,
         paymentMethod: paymentMethod,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: Date.now(),
+        updatedAt:  Date.now(),
         dueDate: asaasPayment.dueDate,
         invoiceUrl: asaasPayment.invoiceUrl,
         bankSlipUrl: asaasPayment.bankSlipUrl

@@ -3,6 +3,7 @@ const admin = require('firebase-admin');
 const cors = require('cors');
 const fetch = require('node-fetch');
 const config = require('./config');
+const { FieldValue } = require('firebase-admin/firestore');
 
 // Inicializar o Firebase Admin
 admin.initializeApp();
@@ -45,7 +46,7 @@ exports.asaasWebhook = functions.https.onRequest(async (request, response) => {
     
     await eventRef.set({
       ...event,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
       processedAt: null,
       status: 'PENDING',
       error: null,
@@ -70,7 +71,7 @@ exports.asaasWebhook = functions.https.onRequest(async (request, response) => {
         console.log(`Evento não processado: ${event.event}`);
         await eventRef.update({
           status: 'SKIPPED',
-          processedAt: admin.firestore.FieldValue.serverTimestamp()
+          processedAt: FieldValue.serverTimestamp()
         });
     }
 
@@ -92,7 +93,7 @@ exports.asaasWebhook = functions.https.onRequest(async (request, response) => {
     try {
       const db = admin.firestore();
       await db.collection('webhook_errors').add({
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        timestamp: FieldValue.serverTimestamp(),
         error: errorMessage,
         request: {
           method: request.method,
@@ -126,7 +127,7 @@ async function processPaymentEvent(event, eventRef) {
     const paymentRef = db.collection('transactions').doc(payment.id);
     await paymentRef.set({
       status: payment.status,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
       paymentDate: payment.paymentDate || null,
       netValue: payment.netValue,
       lastEvent: event.event
@@ -142,7 +143,7 @@ async function processPaymentEvent(event, eventRef) {
           courseId: data['courseId'],
           customerId: data['customerId'],
           status: 'ACTIVE',
-          createdAt: admin.firestore.FieldValue.serverTimestamp()
+          createdAt: FieldValue.serverTimestamp()
         });
       }
     }
@@ -150,14 +151,14 @@ async function processPaymentEvent(event, eventRef) {
     // 3. Marcar evento como processado
     await eventRef.update({
       status: 'PROCESSED',
-      processedAt: admin.firestore.FieldValue.serverTimestamp()
+      processedAt: FieldValue.serverTimestamp()
     });
 
   } catch (error) {
     // Registrar falha no processamento
     await eventRef.update({
       status: 'FAILED',
-      processedAt: admin.firestore.FieldValue.serverTimestamp(),
+      processedAt: FieldValue.serverTimestamp(),
       error: error instanceof Error ? error.message : 'Erro desconhecido'
     });
     throw error;
@@ -177,7 +178,7 @@ async function processSubscriptionEvent(event, eventRef) {
     const subscriptionRef = db.collection('subscriptions').doc(subscription.id);
     await subscriptionRef.set({
       status: subscription.status,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
       nextDueDate: subscription.nextDueDate,
       lastEvent: event.event
     }, { merge: true });
@@ -190,7 +191,7 @@ async function processSubscriptionEvent(event, eventRef) {
       if (data && data['customerId']) {
         await db.collection('customers').doc(data['customerId']).update({
           subscriptionStatus: 'ACTIVE',
-          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          updatedAt: FieldValue.serverTimestamp()
         });
       }
     }
@@ -198,14 +199,14 @@ async function processSubscriptionEvent(event, eventRef) {
     // 3. Marcar evento como processado
     await eventRef.update({
       status: 'PROCESSED',
-      processedAt: admin.firestore.FieldValue.serverTimestamp()
+      processedAt: FieldValue.serverTimestamp()
     });
 
   } catch (error) {
     // Registrar falha no processamento
     await eventRef.update({
       status: 'FAILED',
-      processedAt: admin.firestore.FieldValue.serverTimestamp(),
+      processedAt: FieldValue.serverTimestamp(),
       error: error instanceof Error ? error.message : 'Erro desconhecido'
     });
     throw error;
@@ -268,8 +269,8 @@ exports.createCustomer = functions.https.onRequest((req, res) => {
         phone: customerData.phone,
         postalCode: customerData.postalCode,
         addressNumber: customerData.addressNumber,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp()
       });
 
       // 3. Retornar resposta
@@ -364,8 +365,8 @@ exports.createAsaasPayment = functions.https.onRequest((req, res) => {
         amount: amount,
         status: asaasPayment.status,
         paymentMethod: paymentMethod,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
         dueDate: asaasPayment.dueDate,
         invoiceUrl: asaasPayment.invoiceUrl,
         bankSlipUrl: asaasPayment.bankSlipUrl
