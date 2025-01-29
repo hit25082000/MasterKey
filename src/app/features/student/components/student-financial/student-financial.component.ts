@@ -14,12 +14,14 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
 import { StudentService } from '../../services/student.service';
 import { ActivatedRoute } from '@angular/router';
+import { PaymentHistoryComponent } from "../../../../shared/components/payment-history/payment-history.component";
+import { PaymentTestComponent } from "../../../../shared/components/payment-test/payment-test.component";
 
 @Component({
   selector: 'app-student-financial',
   templateUrl: './student-financial.component.html',
   styleUrls: ['./student-financial.component.scss'],
-  imports: [CommonModule, MatProgressSpinnerModule],
+  imports: [CommonModule, MatProgressSpinnerModule, PaymentHistoryComponent, PaymentTestComponent],
   standalone: true
 })
 export class StudentFinancialComponent implements OnInit {

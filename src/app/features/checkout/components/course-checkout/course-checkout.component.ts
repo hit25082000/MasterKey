@@ -16,11 +16,13 @@ import { AsaasSubscriptionPayment, FirestoreSubscription } from '../../../../sha
 import { StudentService } from '../../../student/services/student.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import BaseUser from '../../../../core/models/base-user.model';
+import { PaymentComponent } from '../../../../shared/components/payment/payment.component';
+import { PaymentHistoryComponent } from "../../../../shared/components/payment-history/payment-history.component";
 
 @Component({
   selector: 'app-course-checkout',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, PaymentComponent, PaymentHistoryComponent],
   templateUrl: './course-checkout.component.html',
   styleUrls: ['./course-checkout.component.scss']
 })

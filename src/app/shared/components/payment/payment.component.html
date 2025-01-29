@@ -1,0 +1,115 @@
+<div class="payment-container">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Pagamento do Curso</mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Seleção do tipo de pagamento -->
+      <div class="payment-type-selection">
+        <mat-button-toggle-group [value]="selectedPaymentType" (change)="onPaymentTypeChange($event.value)">
+          <mat-button-toggle value="PIX">PIX</mat-button-toggle>
+          <mat-button-toggle value="CREDIT_CARD">Cartão de Crédito</mat-button-toggle>
+          <mat-button-toggle value="BOLETO">Boleto</mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
+
+      <!-- Formulário do Cliente -->
+      <form [formGroup]="customerForm" class="form-section">
+        <h3>Dados do Cliente</h3>
+        
+        <mat-form-field appearance="outline">
+          <mat-label>Nome Completo</mat-label>
+          <input matInput formControlName="name" required>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Email</mat-label>
+          <input matInput formControlName="email" type="email" required>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>CPF/CNPJ</mat-label>
+          <input matInput formControlName="cpfCnpj" required>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Telefone</mat-label>
+          <input matInput formControlName="phone" required>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>CEP</mat-label>
+          <input matInput formControlName="postalCode" required 
+                 mask="00000-000" 
+                 placeholder="00000-000">
+          <mat-error *ngIf="customerForm.get('postalCode')?.errors?.['required']">
+            CEP é obrigatório
+          </mat-error>
+          <mat-error *ngIf="customerForm.get('postalCode')?.errors?.['pattern']">
+            CEP inválido
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Número</mat-label>
+          <input matInput formControlName="addressNumber" required>
+        </mat-form-field>
+      </form>
+
+      <!-- Formulário de Cartão de Crédito -->
+      <form *ngIf="selectedPaymentType === 'CREDIT_CARD'" [formGroup]="creditCardForm" class="form-section">
+        <h3>Dados do Cartão</h3>
+        
+        <mat-form-field appearance="outline">
+          <mat-label>Nome no Cartão</mat-label>
+          <input matInput formControlName="holderName" required>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Número do Cartão</mat-label>
+          <input matInput formControlName="number" required>
+        </mat-form-field>
+
+        <div class="card-details">
+          <mat-form-field appearance="outline">
+            <mat-label>Mês</mat-label>
+            <input matInput formControlName="expiryMonth" type="number" required>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Ano</mat-label>
+            <input matInput formControlName="expiryYear" type="number" required>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>CVV</mat-label>
+            <input matInput formControlName="ccv" type="number" required>
+          </mat-form-field>
+        </div>
+      </form>
+
+      <!-- Exibição do QR Code PIX -->
+      <div *ngIf="selectedPaymentType === 'PIX' && pixQRCode" class="pix-section">
+        <h3>QR Code PIX</h3>
+        <img [src]="pixQRCode" alt="QR Code PIX">
+      </div>
+
+      <!-- Informações do Pagamento -->
+      <div class="payment-info">
+        <h3>Resumo do Pagamento</h3>
+        <p>Valor: R$ {{ courseValue | number:'1.2-2' }}</p>
+        <p *ngIf="isRecurring">Tipo: Pagamento Recorrente (Mensal)</p>
+      </div>
+    </mat-card-content>
+
+    <mat-card-actions>
+      <button mat-raised-button color="primary" 
+              [disabled]="loading || !customerForm.valid || (selectedPaymentType === 'CREDIT_CARD' && !creditCardForm.valid)"
+              (click)="processPayment()">
+        <mat-spinner *ngIf="loading" diameter="20"></mat-spinner>
+        <span *ngIf="!loading">Finalizar Pagamento</span>
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div> 

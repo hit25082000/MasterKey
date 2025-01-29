@@ -13,9 +13,11 @@ import { environment } from '../environments/environment';
 import { WhatsAppStatusWidgetComponent } from './features/chat/components/whats-app-status-widget/whats-app-status-widget.component';
 import { withDefaultRegisterables } from 'ng2-charts';
 import { provideCharts } from 'ng2-charts';
+import { FIREBASE_OPTIONS } from '@angular/fire/compat';
 
 export const appConfig: ApplicationConfig = {
-  providers: [provideRouter(routes),
+  providers: [
+    provideRouter(routes),
     provideHttpClient(),
     provideFirebaseApp(() => initializeApp(environment.firebaseConfig)),
     provideAuth(() => getAuth()),
@@ -25,7 +27,8 @@ export const appConfig: ApplicationConfig = {
     provideStorage(() => getStorage()),
     provideAnimationsAsync(),
     provideCharts(withDefaultRegisterables()),
-    WhatsAppStatusWidgetComponent
+    WhatsAppStatusWidgetComponent,
+    { provide: FIREBASE_OPTIONS, useValue: environment.firebaseConfig }
   ]
 };
 

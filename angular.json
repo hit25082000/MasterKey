@@ -73,7 +73,8 @@
               "buildTarget": "master-key:build:production"
             },
             "development": {
-              "buildTarget": "master-key:build:development"
+              "buildTarget": "master-key:build:development",
+              "proxyConfig": "src/proxy.conf.json"
             }
           },
           "defaultConfiguration": "development",
