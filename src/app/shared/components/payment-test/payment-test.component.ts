@@ -19,6 +19,11 @@ import { PaymentTransaction } from '../../../core/interfaces/payment.interface';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { firstValueFrom } from 'rxjs';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatOptionModule } from '@angular/material/core';
 
 @Component({
   selector: 'app-payment-test',
@@ -32,7 +37,12 @@ import { firstValueFrom } from 'rxjs';
     MatProgressBarModule,
     MatSnackBarModule,
     PaymentComponent,
-    PaymentHistoryComponent
+    PaymentHistoryComponent,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatOptionModule
   ],
   template: `
     <div class="test-container">
@@ -130,6 +140,57 @@ import { firstValueFrom } from 'rxjs';
                   {{paymentResult.success ? 'check_circle' : 'error'}}
                 </mat-icon>
                 <span>{{paymentResult.message}}</span>
+              </div>
+            </div>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <div class="subscription-section">
+            <h3>Teste de Assinaturas</h3>
+            <form [formGroup]="subscriptionForm" (ngSubmit)="createSubscription()">
+              <mat-form-field>
+                <mat-label>ID da Assinatura</mat-label>
+                <input matInput formControlName="subscriptionId">
+              </mat-form-field>
+
+              <mat-form-field>
+                <mat-label>Valor</mat-label>
+                <input matInput type="number" formControlName="value">
+              </mat-form-field>
+
+              <mat-form-field>
+                <mat-label>Ciclo</mat-label>
+                <mat-select formControlName="cycle">
+                  <mat-option value="MONTHLY">Mensal</mat-option>
+                  <mat-option value="QUARTERLY">Trimestral</mat-option>
+                  <mat-option value="YEARLY">Anual</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <button mat-raised-button color="primary" type="submit" [disabled]="!subscriptionForm.valid || loading">
+                {{ loading ? 'Processando...' : 'Criar Assinatura' }}
+              </button>
+            </form>
+
+            <div class="actions" *ngIf="currentSubscriptionId">
+              <h3>Ações para Assinatura: {{currentSubscriptionId}}</h3>
+              
+              <button mat-raised-button color="accent" (click)="simulatePayment()" [disabled]="loading">
+                {{ loading ? 'Processando...' : 'Simular Pagamento' }}
+              </button>
+              
+              <button mat-raised-button color="warn" (click)="cancelSubscription()" [disabled]="loading">
+                {{ loading ? 'Processando...' : 'Cancelar Assinatura' }}
+              </button>
+            </div>
+
+            <div class="webhook-events" *ngIf="webhookEvents.length">
+              <h3>Eventos do Webhook</h3>
+              <div *ngFor="let event of webhookEvents" class="event-item">
+                <p><strong>Evento:</strong> {{event.event}}</p>
+                <p><strong>Status:</strong> {{event.status}}</p>
+                <p><strong>Data:</strong> {{event.createdAt | date:'short'}}</p>
               </div>
             </div>
           </div>
@@ -267,6 +328,38 @@ import { firstValueFrom } from 'rxjs';
         margin-right: 8px;
       }
     }
+
+    .subscription-section {
+      margin-top: 20px;
+    }
+
+    .actions {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid #eee;
+    }
+    
+    .actions button {
+      margin-right: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .webhook-events {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid #eee;
+    }
+    
+    .event-item {
+      padding: 12px;
+      margin-bottom: 12px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+    }
+    
+    .event-item p {
+      margin: 4px 0;
+    }
   `]
 })
 export class PaymentTestComponent implements OnInit, OnDestroy {
@@ -290,6 +383,11 @@ export class PaymentTestComponent implements OnInit, OnDestroy {
   webhookResult: any = null;
   paymentResult: any = null;
 
+  subscriptionForm: FormGroup;
+  currentSubscriptionId: string = '';
+  webhookEvents: any[] = [];
+  loading: boolean = false;
+
   constructor(
     private asaasService: AsaasService,
     private paymentService: PaymentService,
@@ -297,11 +395,19 @@ export class PaymentTestComponent implements OnInit, OnDestroy {
     private webhookService: WebhookService,
     private firestore: AngularFirestore,
     private snackBar: MatSnackBar,
-    private http: HttpClient
-  ) {}
+    private http: HttpClient,
+    private fb: FormBuilder
+  ) {
+    this.subscriptionForm = this.fb.group({
+      subscriptionId: ['', Validators.required],
+      value: [99.90, [Validators.required, Validators.min(1)]],
+      cycle: ['MONTHLY', Validators.required]
+    });
+  }
 
   ngOnInit() {
     this.checkSystemStatus();
+    this.loadWebhookEvents();
   }
 
   private async checkSystemStatus() {
@@ -392,37 +498,11 @@ export class PaymentTestComponent implements OnInit, OnDestroy {
 
       this.addEvent('PAYMENT', `Pagamento criado com ID: ${paymentResponse.id}`, 'success');
 
-      // 3. Monitorar status do pagamento
-      this.monitorPaymentStatus(paymentResponse.id);
-
     } catch (error: any) {
       const errorMessage = error?.message || 'Erro desconhecido no teste';
       this.addEvent('ERROR', `Erro no teste: ${errorMessage}`, 'error');
     }
-  }
-
-  private monitorPaymentStatus(paymentId: string) {
-    const subscription = interval(10000) // A cada 10 segundos
-      .pipe(
-        take(30), // 30 tentativas = 5 minutos
-        switchMap(() => this.paymentService.getPaymentStatus(paymentId))
-      )
-      .subscribe({
-        next: (status) => {
-          this.addEvent('STATUS', `Status do pagamento atualizado: ${status}`, 'success');
-          if (['RECEIVED', 'CONFIRMED', 'REFUNDED'].includes(status)) {
-            this.addEvent('COMPLETE', 'Processamento do pagamento finalizado', 'success');
-            subscription.unsubscribe();
-          }
-        },
-        error: (error: any) => {
-          const errorMessage = error?.message || 'Erro desconhecido ao monitorar pagamento';
-          this.addEvent('ERROR', `Erro ao monitorar pagamento: ${errorMessage}`, 'error');
-        }
-      });
-
-    this.subscriptions.push(subscription);
-  }
+  } 
 
   async clearTestData() {
     try {
@@ -547,8 +627,8 @@ export class PaymentTestComponent implements OnInit, OnDestroy {
         customer: {
           name: 'Usuário Teste',
           email: 'teste@teste.com',
-          cpfCnpj: '12345678909',
-          phone: '67999999999'
+          cpfCnpj: '02878420101',
+          phone: '67992745012'
         }
       };
 
@@ -569,6 +649,182 @@ export class PaymentTestComponent implements OnInit, OnDestroy {
       };
     } finally {
       this.testingPayment = false;
+    }
+  }
+
+  async createSubscription() {
+    if (!this.subscriptionForm.valid) {
+      this.snackBar.open('Por favor, preencha todos os campos', 'OK', { duration: 3000 });
+      return;
+    }
+
+    try {
+      this.loading = true;
+      const formData = this.subscriptionForm.value;
+      
+      // Criar cliente de teste
+      const customerData = {
+        name: 'Cliente Teste',
+        email: `teste_${new Date().getTime()}@teste.com`,
+        cpfCnpj: '02878420101',
+        phone: '6792745012',
+        mobilePhone: '6792745012',
+        postalCode: '79005160',
+        addressNumber: '123'
+      };
+      console.log(customerData)
+      // Primeiro, verificar se o cliente já existe
+      const customerResponse = await firstValueFrom(this.asaasService.createCustomer(customerData))
+        .catch(error => {
+          console.error('Erro ao criar cliente:', error);
+          if (error.status === 0) {
+            throw new Error('Erro de conexão com o servidor. Verifique se o backend está rodando e acessível.');
+          }
+          throw error;
+        });
+
+      if (!customerResponse || !customerResponse.customerId) {
+        throw new Error('Falha ao criar cliente de teste');
+      }
+
+      // Criar assinatura
+      const subscriptionData = {
+        customer: customerResponse.customerId,
+        billingType: 'BOLETO',
+        value: formData.value,
+        nextDueDate: new Date().toISOString().split('T')[0],
+        cycle: formData.cycle,
+        description: 'Assinatura de teste'
+      };
+      console.log(subscriptionData)
+      console.log(formData)
+      const subscriptionResponse = await firstValueFrom(
+        this.asaasService.createSubscription(subscriptionData, formData.subscriptionId)
+      ).catch(error => {
+        console.error('Erro ao criar assinatura:', error);
+        if (error.status === 0) {
+          throw new Error('Erro de conexão com o servidor. Verifique se o backend está rodando e acessível.');
+        } else if (error.status === 403) {
+          throw new Error('Erro de permissão. Verifique as configurações de CORS no backend.');
+        }
+        throw error;
+      });
+
+      if (subscriptionResponse) {
+        this.currentSubscriptionId = subscriptionResponse.id;
+        this.snackBar.open('Assinatura criada com sucesso!', 'OK', { duration: 3000 });
+        
+        // Adicionar evento de criação ao histórico
+        this.addWebhookEvent({
+          event: 'SUBSCRIPTION_CREATED',
+          subscription: {
+            id: subscriptionResponse.id,
+            status: 'ACTIVE',
+            value: formData.value,
+            cycle: formData.cycle
+          },
+          createdAt: new Date(),
+          status: 'PROCESSED'
+        });
+      }
+
+    } catch (error) {
+      console.error('Erro ao processar operação:', error);
+      this.snackBar.open(
+        error instanceof Error ? error.message : 'Erro ao criar assinatura. Verifique o console para mais detalhes.',
+        'OK',
+        { duration: 5000 }
+      );
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  async simulatePayment() {
+    if (!this.currentSubscriptionId) {
+      this.snackBar.open('Nenhuma assinatura selecionada', 'OK', { duration: 3000 });
+      return;
+    }
+
+    try {
+      // Simular evento de pagamento recebido
+      const webhookEvent = {
+        event: 'PAYMENT_RECEIVED',
+        payment: {
+          id: `pmt_${new Date().getTime()}`,
+          subscription: this.currentSubscriptionId,
+          status: 'RECEIVED',
+          value: this.subscriptionForm.get('value')?.value,
+          netValue: this.subscriptionForm.get('value')?.value,
+          billingType: 'BOLETO',
+          paymentDate: new Date().toISOString(),
+          invoiceUrl: 'https://example.com/invoice'
+        }
+      };
+
+      // Adicionar evento à lista
+      this.addWebhookEvent({
+        ...webhookEvent,
+        createdAt: new Date(),
+        status: 'PROCESSED'
+      });
+
+      this.snackBar.open('Pagamento simulado com sucesso!', 'OK', { duration: 3000 });
+
+    } catch (error) {
+      console.error('Erro ao simular pagamento:', error);
+      this.snackBar.open('Erro ao simular pagamento', 'OK', { duration: 5000 });
+    }
+  }
+
+  async cancelSubscription() {
+    if (!this.currentSubscriptionId) {
+      this.snackBar.open('Nenhuma assinatura selecionada', 'OK', { duration: 3000 });
+      return;
+    }
+
+    try {
+      // Simular evento de cancelamento
+      const webhookEvent = {
+        event: 'SUBSCRIPTION_DELETED',
+        subscription: {
+          id: this.currentSubscriptionId,
+          status: 'CANCELLED',
+          deletedAt: new Date().toISOString()
+        }
+      };
+
+      // Adicionar evento à lista
+      this.addWebhookEvent({
+        ...webhookEvent,
+        createdAt: new Date(),
+        status: 'PROCESSED'
+      });
+
+      this.currentSubscriptionId = '';
+      this.snackBar.open('Assinatura cancelada com sucesso!', 'OK', { duration: 3000 });
+
+    } catch (error) {
+      console.error('Erro ao cancelar assinatura:', error);
+      this.snackBar.open('Erro ao cancelar assinatura', 'OK', { duration: 5000 });
+    }
+  }
+
+  private addWebhookEvent(event: any) {
+    this.webhookEvents.unshift(event);
+    // Manter apenas os últimos 10 eventos
+    if (this.webhookEvents.length > 10) {
+      this.webhookEvents = this.webhookEvents.slice(0, 10);
+    }
+    // Salvar no localStorage
+    localStorage.setItem('webhookEvents', JSON.stringify(this.webhookEvents));
+  }
+
+  loadWebhookEvents() {
+    // Carregar eventos do localStorage se existirem
+    const savedEvents = localStorage.getItem('webhookEvents');
+    if (savedEvents) {
+      this.webhookEvents = JSON.parse(savedEvents);
     }
   }
 

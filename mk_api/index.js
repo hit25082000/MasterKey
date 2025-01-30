@@ -109,8 +109,8 @@ function validatePhone(phone) {
   
   // Formata o número conforme padrão Asaas
   return cleanPhone.length === 11 ? 
-    `+55${cleanPhone}` : 
-    `+55${cleanPhone}`;
+    `55${cleanPhone}` : 
+    `55${cleanPhone}`;
 }
 
 async function authenticateRequest(req, res, next) {
@@ -357,7 +357,7 @@ exports.deleteUserWithProfile = functions.https.onRequest((req, res) => {
           const originalEmail = userRecord.email;
           
           // Gerar um email temporário único
-          const tempEmail = `deleted_${uid}_${Date.now()}@deleted.com`;
+          const tempEmail = `deleted_${uid}_${new Date()}@deleted.com`;
           
           // Atualizar o email do usuário antes de excluí-lo
           await admin.auth().updateUser(uid, {
@@ -386,52 +386,58 @@ exports.deleteUserWithProfile = functions.https.onRequest((req, res) => {
 });
 
 // Função para criar pagamento no Asaas
-exports.asaasWebhook = functions.https.onRequest(async (request, response) => {
-  // Log para debug
-  console.log('Webhook recebido:', {
-    method: request.method,
-    headers: request.headers,
-    body: request.body
-  });
+exports.asaasWebhook = functions.https.onRequest(async (req, res) => {
+  // Configurar headers CORS
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  // Responder imediatamente para requisições OPTIONS
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+
+  // Verificar se é POST
+  if (req.method !== 'POST') {
+    res.status(405).send('Método não permitido');
+    return;
+  }
 
   try {
-    // 1. Validar método HTTP
-    if (request.method !== 'POST') {
-      console.warn('Método inválido:', request.method);
-      response.status(405).json({
-        error: 'Método não permitido',
-        details: 'Apenas POST é aceito'
-      });
-      return;
-    }
+    // Log para debug
+    console.log('Webhook recebido:', {
+      method: req.method,
+      headers: req.headers,
+      body: req.body
+    });
 
-    // 2. Validar corpo da requisição
-    if (!request.body || !request.body.event) {
-      console.warn('Corpo da requisição inválido:', request.body);
-      response.status(400).json({
+    // Validar corpo da requisição
+    if (!req.body || !req.body.event) {
+      console.warn('Corpo da requisição inválido:', req.body);
+      return res.status(400).json({
         error: 'Requisição inválida',
         details: 'Corpo da requisição ausente ou malformado'
       });
-      return;
     }
 
-    // 3. Validar evento
-    const event = request.body;
+    // Processar evento
+    const event = req.body;
     
-    // 4. Registrar evento no Firestore
+    // Registrar evento no Firestore
     const db = admin.firestore();
     const eventRef = db.collection('payment_events').doc();
     
     await eventRef.set({
       ...event,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: new Date(),
       processedAt: null,
       status: 'PENDING',
       error: null,
-      rawData: JSON.stringify(request.body)
+      rawData: JSON.stringify(req.body)
     });
 
-    // 5. Processar evento baseado no tipo
+    // Processar evento baseado no tipo
     switch (event.event) {
       case 'PAYMENT_RECEIVED':
       case 'PAYMENT_CONFIRMED':
@@ -449,16 +455,15 @@ exports.asaasWebhook = functions.https.onRequest(async (request, response) => {
         console.log(`Evento não processado: ${event.event}`);
         await eventRef.update({
           status: 'SKIPPED',
-          processedAt: admin.firestore.FieldValue.serverTimestamp()
+          processedAt: new Date()
         });
     }
 
-    // 6. Responder com sucesso
-    response.status(200).json({
+    // Responder com sucesso
+    res.status(200).json({
       message: 'Evento processado com sucesso',
       eventId: eventRef.id
     });
-    return;
 
   } catch (error) {
     // Log detalhado do erro
@@ -467,16 +472,16 @@ exports.asaasWebhook = functions.https.onRequest(async (request, response) => {
     // Tentar extrair mensagem de erro mais útil
     const errorMessage = error instanceof Error ? error.message : 'Erro interno desconhecido';
     
-    // Registrar erro no Firestore se possível
+    // Registrar erro no Firestore
     try {
       const db = admin.firestore();
       await db.collection('webhook_errors').add({
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        timestamp: new Date(),
         error: errorMessage,
         request: {
-          method: request.method,
-          headers: request.headers,
-          body: request.body
+          method: req.method,
+          headers: req.headers,
+          body: req.body
         }
       });
     } catch (logError) {
@@ -484,11 +489,10 @@ exports.asaasWebhook = functions.https.onRequest(async (request, response) => {
     }
 
     // Responder com erro
-    response.status(500).json({
+    res.status(500).json({
       error: 'Erro interno ao processar webhook',
       details: errorMessage
     });
-    return;
   }
 });
 
@@ -505,7 +509,7 @@ async function processPaymentEvent(event, eventRef) {
     const paymentRef = db.collection('transactions').doc(payment.id);
     await paymentRef.set({
       status: payment.status,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: new Date(),
       paymentDate: payment.paymentDate || null,
       netValue: payment.netValue,
       lastEvent: event.event
@@ -521,7 +525,7 @@ async function processPaymentEvent(event, eventRef) {
           courseId: data['courseId'],
           customerId: data['customerId'],
           status: 'ACTIVE',
-          createdAt: admin.firestore.FieldValue.serverTimestamp()
+          createdAt: new Date()
         });
       }
     }
@@ -529,14 +533,14 @@ async function processPaymentEvent(event, eventRef) {
     // 3. Marcar evento como processado
     await eventRef.update({
       status: 'PROCESSED',
-      processedAt: admin.firestore.FieldValue.serverTimestamp()
+      processedAt: new Date()
     });
 
   } catch (error) {
     // Registrar falha no processamento
     await eventRef.update({
       status: 'FAILED',
-      processedAt: admin.firestore.FieldValue.serverTimestamp(),
+      processedAt: new Date(),
       error: error instanceof Error ? error.message : 'Erro desconhecido'
     });
     throw error;
@@ -556,7 +560,7 @@ async function processSubscriptionEvent(event, eventRef) {
     const subscriptionRef = db.collection('subscriptions').doc(subscription.id);
     await subscriptionRef.set({
       status: subscription.status,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: new Date(),
       nextDueDate: subscription.nextDueDate,
       lastEvent: event.event
     }, { merge: true });
@@ -569,7 +573,7 @@ async function processSubscriptionEvent(event, eventRef) {
       if (data && data['customerId']) {
         await db.collection('customers').doc(data['customerId']).update({
           subscriptionStatus: 'ACTIVE',
-          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          updatedAt: new Date()
         });
       }
     }
@@ -577,14 +581,14 @@ async function processSubscriptionEvent(event, eventRef) {
     // 3. Marcar evento como processado
     await eventRef.update({
       status: 'PROCESSED',
-      processedAt: admin.firestore.FieldValue.serverTimestamp()
+      processedAt: new Date()
     });
 
   } catch (error) {
     // Registrar falha no processamento
     await eventRef.update({
       status: 'FAILED',
-      processedAt: admin.firestore.FieldValue.serverTimestamp(),
+      processedAt: new Date(),
       error: error instanceof Error ? error.message : 'Erro desconhecido'
     });
     throw error;
@@ -677,8 +681,8 @@ exports.createCustomer = functions.https.onRequest((req, res) => {
         phone: formattedPhone,
         postalCode: customerData.postalCode,
         addressNumber: customerData.addressNumber,
-        createdAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp()
+        createdAt: new Date(),
+        updatedAt: new Date()
       });
       // 3. Retornar resposta
       res.status(200).json({
@@ -724,7 +728,7 @@ exports.createAsaasPayment = functions.https.onRequest((req, res) => {
         customer: customer.asaasId, // Usar o ID do Asaas
         billingType: paymentMethod,
         value: amount,
-        dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        dueDate: new Date(new Date() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         description: `Pagamento do curso ${courseId}`,
         externalReference: courseId,
         //postalService: false
@@ -771,8 +775,8 @@ exports.createAsaasPayment = functions.https.onRequest((req, res) => {
         amount: amount,
         status: asaasPayment.status,
         paymentMethod: paymentMethod,
-        createdAt: Date.now(),
-        updatedAt:  Date.now(),
+        createdAt: new Date(),
+        updatedAt:  new Date(),
         dueDate: asaasPayment.dueDate,
         invoiceUrl: asaasPayment.invoiceUrl,
         bankSlipUrl: asaasPayment.bankSlipUrl
@@ -902,55 +906,6 @@ exports.createPaymentLink = functions.https.onRequest((req, res) => {
   });
 });
 
-// Endpoint para salvar dados do cliente
-exports.saveCustomerData = functions.https.onRequest((req, res) => {
-  cors(req, res, async () => {
-    if (req.method === 'OPTIONS') {
-      res.status(200).send();
-      return;
-    }
-
-    try {
-      const { name, email, cpfCnpj, phone, courseId } = req.body;
-
-      // Validar campos obrigatórios
-      if (!name || !email || !cpfCnpj || !phone || !courseId) {
-        return res.status(400).json({
-          error: 'Dados incompletos. Todos os campos são obrigatórios.'
-        });
-      }
-
-      // Salvar no Firestore
-      const customerData = {
-        name,
-        email,
-        cpfCnpj,
-        phone,
-        courseId,
-        status: 'PENDING',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-
-      const docRef = await admin.firestore()
-        .collection('customer_data')
-        .add(customerData);
-
-      res.status(200).json({
-        message: 'Dados do cliente salvos com sucesso',
-        id: docRef.id
-      });
-
-    } catch (error) {
-      console.error('Erro ao salvar dados do cliente:', error);
-      res.status(500).json({
-        error: 'Erro ao salvar dados do cliente',
-        details: error.message
-      });
-    }
-  });
-});
-
 // Função para criar assinatura
 async function createSubscription(customer, courseData, cycle = 'MONTHLY', paymentMethod = 'BOLETO') {
   try { 
@@ -983,7 +938,7 @@ async function createSubscription(customer, courseData, cycle = 'MONTHLY', payme
     const subscriptionBody = {
       customer: customerData.id,
       billingType: paymentMethod,
-      nextDueDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      nextDueDate: new Date(new Date() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       value: courseData.price,
       cycle: cycle,
       description: `Assinatura do curso: ${courseData.name}`,
@@ -1251,6 +1206,104 @@ exports.downloadImage = functions.https.onRequest((req, res) => {
     } catch (error) {
       console.error('Erro na autenticação:', error);
       res.status(401).json({ error: 'Erro de autenticação' });
+    }
+  });
+});
+
+// Endpoint para criar assinatura no Asaas
+exports.createAsaasSubscription = functions.https.onRequest((req, res) => {
+  // Configurar headers CORS
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  // Responder imediatamente para requisições OPTIONS
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+
+  // Verificar se é POST
+  if (req.method !== 'POST') {
+    res.status(405).send('Método não permitido');
+    return;
+  }
+
+  cors(req, res, async () => {
+    try {
+      const { 
+        customer,
+        billingType,
+        value,
+        nextDueDate,
+        cycle,
+        description,
+        courseId 
+      } = req.body;
+
+      if (!customer || !value || !courseId) {
+        return res.status(400).json({
+          error: 'Dados incompletos para criar assinatura'
+        });
+      }
+
+      // Preparar dados da assinatura
+      const subscriptionData = {
+        customer: customer, // ID do cliente no Asaas
+        billingType: billingType || 'BOLETO',
+        value: value,
+        nextDueDate: nextDueDate || new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        cycle: cycle || 'MONTHLY',
+        description: description || `Assinatura do curso ${courseId}`,
+        externalReference: courseId
+      };
+
+      // Fazer requisição para o Asaas
+      const subscriptionResponse = await fetch(`${config.asaas.apiUrl}/subscriptions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'access_token': config.asaas.apiKey
+        },
+        body: JSON.stringify(subscriptionData)
+      });
+
+      if (!subscriptionResponse.ok) {
+        const errorText = await subscriptionResponse.text();
+        throw new Error(`Erro ao criar assinatura no Asaas: ${errorText}`);
+      }
+
+      const asaasSubscription = await subscriptionResponse.json();
+
+      // Salvar assinatura no Firestore
+      const db = admin.firestore();
+      const subscriptionRef = db.collection('subscriptions').doc(asaasSubscription.id);
+
+      await subscriptionRef.set({
+        asaasId: asaasSubscription.id,
+        customerId: customer,
+        courseId: courseId,
+        value: value,
+        status: asaasSubscription.status,
+        cycle: cycle || 'MONTHLY',
+        nextDueDate: asaasSubscription.nextDueDate,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      // Retornar resposta
+      res.status(200).json({
+        id: asaasSubscription.id,
+        status: asaasSubscription.status,
+        message: 'Assinatura criada com sucesso'
+      });
+
+    } catch (error) {
+      console.error('Erro ao criar assinatura:', error);
+      res.status(500).json({
+        error: 'Erro ao criar assinatura',
+        details: error.message
+      });
     }
   });
 });

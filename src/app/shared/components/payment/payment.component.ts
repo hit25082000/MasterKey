@@ -11,6 +11,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { provideNgxMask } from 'ngx-mask';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-payment',
@@ -81,7 +82,6 @@ export class PaymentComponent implements OnInit {
   }
 
   private formatPostalCode(postalCode: string): string {
-    // Remove todos os caracteres não numéricos
     return postalCode.replace(/\D/g, '');
   }
 
@@ -94,19 +94,22 @@ export class PaymentComponent implements OnInit {
     this.loading = true;
 
     try {
-      // Primeiro, salvar dados do cliente
+      // Primeiro, criar cliente
       const customerData = {
         ...this.customerForm.value,
-        postalCode: this.formatPostalCode(this.customerForm.value.postalCode),
-        courseId: this.courseId
+        postalCode: this.formatPostalCode(this.customerForm.value.postalCode)
       };
 
-      await this.asaasService.saveCustomerData(customerData).toPromise();
+      const customerResponse = await firstValueFrom(this.asaasService.createCustomer(customerData));
 
+      if (!customerResponse || !customerResponse.customerId) {
+        throw new Error('Falha ao criar cliente');
+      }
+      console.log(customerResponse)
       if (this.isRecurring) {
         // Criar assinatura
         const subscriptionData: AsaasSubscription = {
-          customer: '',  // Será preenchido pela Cloud Function
+          customer: customerResponse.customerId,
           billingType: this.selectedPaymentType,
           value: this.courseValue,
           nextDueDate: this.paymentForm.get('dueDate')?.value || new Date().toISOString().split('T')[0],
@@ -121,22 +124,24 @@ export class PaymentComponent implements OnInit {
             email: customerData.email,
             cpfCnpj: customerData.cpfCnpj,
             postalCode: customerData.postalCode,
-            addressNumber: customerData.addressNumber || '',
-            phone: customerData.phone || ''
+            addressNumber: customerData.addressNumber,
+            phone: customerData.phone
           };
         }
 
-        const response = await this.asaasService.createSubscription(subscriptionData, this.courseId).toPromise();
-        
-        if (response!.payment) {
-          this.handlePaymentResponse(response!.payment);
+        const subscriptionResponse = await firstValueFrom(
+          this.asaasService.createSubscription(subscriptionData, this.courseId)
+        );
+
+        if (subscriptionResponse?.payment) {
+          this.handlePaymentResponse(subscriptionResponse.payment);
         }
 
         this.handleSuccess('Assinatura criada com sucesso!');
       } else {
         // Criar pagamento único
         const paymentData: AsaasPayment = {
-          customer: '',  // Será preenchido pela Cloud Function
+          customer: customerResponse.customerId,
           billingType: this.selectedPaymentType,
           value: this.courseValue,
           dueDate: this.paymentForm.get('dueDate')?.value || new Date().toISOString().split('T')[0],
@@ -150,35 +155,43 @@ export class PaymentComponent implements OnInit {
             email: customerData.email,
             cpfCnpj: customerData.cpfCnpj,
             postalCode: customerData.postalCode,
-            addressNumber: customerData.addressNumber || '',
-            phone: customerData.phone || ''
+            addressNumber: customerData.addressNumber,
+            phone: customerData.phone
           };
         }
 
-        const response = await this.asaasService.createPayment(paymentData, this.courseId).toPromise();
-        this.handlePaymentResponse(response);
+        const paymentResponse = await firstValueFrom(
+          this.asaasService.createPayment(paymentData, this.courseId)
+        );
+
+        if (paymentResponse) {
+          this.handlePaymentResponse(paymentResponse);
+        }
+
         this.handleSuccess('Pagamento criado com sucesso!');
       }
-    } catch (error: any) {
-      this.snackBar.open('Erro ao processar pagamento: ' + (error.message || 'Erro desconhecido'), 'OK', { duration: 5000 });
-    } finally {
+    } catch (error) {
+      console.error('Erro ao processar pagamento:', error);
       this.loading = false;
+      this.snackBar.open(
+        error instanceof Error ? error.message : 'Erro ao processar pagamento',
+        'OK',
+        { duration: 5000 }
+      );
     }
   }
 
   private handlePaymentResponse(payment: any) {
-    if (this.selectedPaymentType === 'PIX') {
-      this.pixQRCode = payment.pixQrCodeUrl;
-    } else if (this.selectedPaymentType === 'BOLETO') {
+    if (this.selectedPaymentType === 'PIX' && payment.pixQrCode) {
+      this.pixQRCode = payment.pixQrCode;
+    } else if (this.selectedPaymentType === 'BOLETO' && payment.bankSlipUrl) {
       this.paymentUrl = payment.bankSlipUrl;
-      window.open(payment.bankSlipUrl, '_blank');
-    } else if (this.selectedPaymentType === 'CREDIT_CARD') {
-      this.paymentUrl = payment.invoiceUrl;
-      window.open(payment.invoiceUrl, '_blank');
+      window.open(this.paymentUrl, '_blank');
     }
   }
 
   private handleSuccess(message: string) {
+    this.loading = false;
     this.snackBar.open(message, 'OK', { duration: 3000 });
   }
 

@@ -51,7 +51,7 @@ export class AsaasService {
     const token = await auth.currentUser?.getIdToken();
     this.headers = new HttpHeaders()
       .set('Content-Type', 'application/json')
-      .set('Authorization', `Bearer ${token}`);
+      .set('Authorization', `Bearer ${token}`)
   }
 
   // Clientes
@@ -180,10 +180,8 @@ export class AsaasService {
 
   // Assinaturas
   createSubscription(subscriptionData: any, courseId: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/createAsaasSubscription`, {
-      ...subscriptionData,
-      courseId
-    }).pipe(
+    const data =  courseId ? { ...subscriptionData, courseId } : subscriptionData;
+    return this.http.post(`${this.apiUrl}/createAsaasSubscription`,data).pipe(
       catchError(error => {
         console.error('Erro ao criar assinatura:', error);
         return throwError(() => error);
@@ -211,29 +209,6 @@ export class AsaasService {
     return new Observable(observer => {
       this.updateHeaders().then(() => {
         this.http.get(`${this.apiUrl}/createPaymentLink?courseId=${courseId}`, 
-          { headers: this.headers }
-        ).subscribe({
-          next: (response) => {
-            observer.next(response);
-            observer.complete();
-          },
-          error: (error) => observer.error(error)
-        });
-      });
-    });
-  }
-
-  // Salvar dados do cliente
-  saveCustomerData(data: {
-    name: string;
-    email: string;
-    cpfCnpj: string;
-    phone: string;
-    courseId: string;
-  }): Observable<any> {
-    return new Observable(observer => {
-      this.updateHeaders().then(() => {
-        this.http.post(`${this.apiUrl}/saveCustomerData`, data, 
           { headers: this.headers }
         ).subscribe({
           next: (response) => {
