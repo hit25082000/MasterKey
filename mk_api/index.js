@@ -393,7 +393,7 @@ exports.asaasWebhook = functions.https.onRequest(async (req, res) => {
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   
   // Responder imediatamente para requisições OPTIONS
-  if (req.method === 'OPTIONS') {
+    if (req.method === 'OPTIONS') {
     res.status(204).send('');
     return;
   }
@@ -401,10 +401,10 @@ exports.asaasWebhook = functions.https.onRequest(async (req, res) => {
   // Verificar se é POST
   if (req.method !== 'POST') {
     res.status(405).send('Método não permitido');
-    return;
-  }
+      return;
+    }
 
-  try {
+    try {
     // Log para debug
     console.log('Webhook recebido:', {
       method: req.method,
@@ -415,7 +415,7 @@ exports.asaasWebhook = functions.https.onRequest(async (req, res) => {
     // Validar corpo da requisição
     if (!req.body || !req.body.event) {
       console.warn('Corpo da requisição inválido:', req.body);
-      return res.status(400).json({
+        return res.status(400).json({
         error: 'Requisição inválida',
         details: 'Corpo da requisição ausente ou malformado'
       });
@@ -749,10 +749,10 @@ exports.createAsaasPayment = functions.https.onRequest((req, res) => {
 
       const paymentResponse = await fetch(`${config.asaas.apiUrl}/payments`, {
         method: 'POST',
-        headers: {
+            headers: {
           accept: 'application/json',
-          'Content-Type': 'application/json',
-          'access_token': config.asaas.apiKey
+              'Content-Type': 'application/json',
+              'access_token': config.asaas.apiKey
         },
         body: JSON.stringify(paymentData)
       });
@@ -771,7 +771,7 @@ exports.createAsaasPayment = functions.https.onRequest((req, res) => {
       await transactionRef.set({
         asaasId: asaasPayment.id,
         customerId: asaasPayment.customer,
-        courseId: courseId,
+            courseId: courseId,
         amount: amount,
         status: asaasPayment.status,
         paymentMethod: paymentMethod,
@@ -795,7 +795,7 @@ exports.createAsaasPayment = functions.https.onRequest((req, res) => {
       });
     }
   });
-}); 
+});
 
 // Função para criar link de pagamento com parcelamento
 async function createPaymentLink(courseId, courseName, coursePrice, portionCount) {
@@ -910,27 +910,27 @@ exports.createPaymentLink = functions.https.onRequest((req, res) => {
 async function createSubscription(customer, courseData, cycle = 'MONTHLY', paymentMethod = 'BOLETO') {
   try { 
     // Criar cliente no Asaas
-    const customerResponse = await fetch(`${config.asaas.apiUrl}/customers`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'access_token': config.asaas.apiKey
-      },
-      body: JSON.stringify({
-        name: customer.name,
-        email: customer.email,
-        cpfCnpj: customer.cpfCnpj.replace(/\D/g, ''),
-        phone: customer.phone.replace(/\D/g, ''),
-        mobilePhone: customer.phone.replace(/\D/g, ''),
+      const customerResponse = await fetch(`${config.asaas.apiUrl}/customers`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'access_token': config.asaas.apiKey
+        },
+        body: JSON.stringify({
+          name: customer.name,
+          email: customer.email,
+          cpfCnpj: customer.cpfCnpj.replace(/\D/g, ''),
+          phone: customer.phone.replace(/\D/g, ''),
+          mobilePhone: customer.phone.replace(/\D/g, ''),
         postalCode: customer.postalCode,
         addressNumber: customer.addressNumber,
-        notificationDisabled: false
-      })
-    });
+          notificationDisabled: false
+        })
+      });
 
-    if (!customerResponse.ok) {
+      if (!customerResponse.ok) {
       throw new Error('Erro ao criar cliente no Asaas');
-    }
+      }
 
     const customerData = await customerResponse.json();
 

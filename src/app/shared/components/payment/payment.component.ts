@@ -1,7 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { AsaasService } from '../../../core/services/asaas.service';
-import { AsaasCustomer, AsaasPayment, AsaasSubscription } from '../../../core/interfaces/asaas.interface';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
@@ -10,8 +9,43 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { provideNgxMask } from 'ngx-mask';
+import { MatTabsModule } from '@angular/material/tabs';
 import { firstValueFrom } from 'rxjs';
+
+interface SubscriptionData {
+  customer: string;
+  billingType: 'BOLETO' | 'CREDIT_CARD' | 'PIX';
+  value: number;
+  nextDueDate: string;
+  cycle: 'MONTHLY' | 'QUARTERLY' | 'YEARLY';
+  description: string;
+  creditCard?: any;
+  creditCardHolderInfo?: {
+    name: string;
+    email: string;
+    cpfCnpj: string;
+    postalCode: string;
+    addressNumber: string;
+    phone: string;
+  };
+}
+
+interface PaymentData {
+  customer: string;
+  billingType: 'BOLETO' | 'CREDIT_CARD' | 'PIX';
+  value: number;
+  dueDate: string;
+  description: string;
+  creditCard?: any;
+  creditCardHolderInfo?: {
+    name: string;
+    email: string;
+    cpfCnpj: string;
+    postalCode: string;
+    addressNumber: string;
+    phone: string;
+  };
+}
 
 @Component({
   selector: 'app-payment',
@@ -19,28 +53,287 @@ import { firstValueFrom } from 'rxjs';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     MatCardModule,
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
     MatButtonToggleModule,
     MatProgressSpinnerModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatTabsModule
   ],
   providers: [],
-  templateUrl: './payment.component.html',
-  styleUrls: ['./payment.component.scss']
+  template: `
+    <div class="payment-container">
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Opções de Pagamento</mat-card-title>
+        </mat-card-header>
+        
+        <mat-card-content>
+          <mat-tab-group>
+            <!-- Tab de Pagamento Único -->
+            <mat-tab label="Pagamento Único">
+              <div class="tab-content">
+                <div class="payment-type-section">
+                  <mat-button-toggle-group [(ngModel)]="selectedPaymentType" (change)="onPaymentTypeChange($event.value)">
+                    <mat-button-toggle value="PIX">PIX</mat-button-toggle>
+                    <mat-button-toggle value="BOLETO">Boleto</mat-button-toggle>
+                    <mat-button-toggle value="CREDIT_CARD">Crédito</mat-button-toggle>
+                  </mat-button-toggle-group>
+                </div>
+
+                <div class="payment-info">
+                  <p class="total-amount">Valor Total: R$ {{ courseValue | number:'1.2-2' }}</p>
+                </div>
+
+                <!-- Formulários compartilhados -->
+                <ng-container *ngTemplateOutlet="sharedForms"></ng-container>
+
+                <button mat-raised-button color="primary" 
+                        (click)="processPayment(false)" 
+                        [disabled]="loading || !isFormValid()">
+                  <mat-spinner *ngIf="loading" diameter="20"></mat-spinner>
+                  <span *ngIf="!loading">Pagar Agora</span>
+                </button>
+              </div>
+            </mat-tab>
+
+            <!-- Tab de Assinatura -->
+            <mat-tab label="Recorrente">
+              <div class="tab-content">
+                <div class="payment-type-section">
+                  <mat-button-toggle-group [(ngModel)]="selectedPaymentType" (change)="onPaymentTypeChange($event.value)">
+                    <mat-button-toggle value="PIX">PIX</mat-button-toggle>
+                    <mat-button-toggle value="BOLETO">Boleto</mat-button-toggle>
+                    <mat-button-toggle value="CREDIT_CARD">Crédito</mat-button-toggle>
+                  </mat-button-toggle-group>
+                </div>
+
+                <div class="subscription-options">
+                  <mat-button-toggle-group [(ngModel)]="selectedCycle" (change)="onCycleChange($event.value)">
+                    <mat-button-toggle value="MONTHLY">Mensal</mat-button-toggle>
+                  </mat-button-toggle-group>
+                </div>
+
+                <div class="payment-info">
+                  <p class="total-amount">Valor da Assinatura: R$ {{ courseValue | number:'1.2-2' }}</p>
+                  <p class="cycle-info">Ciclo: {{ getCycleLabel(selectedCycle) }}</p>
+                </div>
+
+                <!-- Formulários compartilhados -->
+                <ng-container *ngTemplateOutlet="sharedForms"></ng-container>
+
+                <button mat-raised-button color="primary" 
+                        (click)="processPayment(true)" 
+                        [disabled]="loading || !isFormValid()">
+                  <mat-spinner *ngIf="loading" diameter="20"></mat-spinner>
+                  <span *ngIf="!loading">Assinar Agora</span>
+                </button>
+              </div>
+            </mat-tab>
+          </mat-tab-group>
+
+          <!-- Template com formulários compartilhados -->
+          <ng-template #sharedForms>
+            <form [formGroup]="customerForm" class="form-section">
+              <mat-form-field>
+                <mat-label>Nome Completo</mat-label>
+                <input matInput formControlName="name" required>
+              </mat-form-field>
+
+              <mat-form-field>
+                <mat-label>Email</mat-label>
+                <input matInput type="email" formControlName="email" required>
+              </mat-form-field>
+
+              <mat-form-field>
+                <mat-label>CPF/CNPJ</mat-label>
+                <input matInput formControlName="cpfCnpj" required>
+              </mat-form-field>
+
+              <mat-form-field>
+                <mat-label>Telefone</mat-label>
+                <input matInput formControlName="phone" required>
+              </mat-form-field>
+
+              <mat-form-field>
+                <mat-label>CEP</mat-label>
+                <input matInput formControlName="postalCode" required>
+              </mat-form-field>
+
+              <mat-form-field>
+                <mat-label>Número</mat-label>
+                <input matInput formControlName="addressNumber" required>
+              </mat-form-field>
+            </form>
+
+            <form *ngIf="selectedPaymentType === 'CREDIT_CARD'" [formGroup]="creditCardForm" class="form-section">
+              <mat-form-field>
+                <mat-label>Nome no Cartão</mat-label>
+                <input matInput formControlName="holderName" required>
+              </mat-form-field>
+
+              <mat-form-field>
+                <mat-label>Número do Cartão</mat-label>
+                <input matInput formControlName="number" required>
+              </mat-form-field>
+
+              <div class="card-details">
+                <mat-form-field>
+                  <mat-label>Mês</mat-label>
+                  <input matInput formControlName="expiryMonth" required>
+                </mat-form-field>
+
+                <mat-form-field>
+                  <mat-label>Ano</mat-label>
+                  <input matInput formControlName="expiryYear" required>
+                </mat-form-field>
+
+                <mat-form-field>
+                  <mat-label>CCV</mat-label>
+                  <input matInput formControlName="ccv" required>
+                </mat-form-field>
+              </div>
+            </form>
+          </ng-template>
+
+          <!-- QR Code PIX -->
+          <div *ngIf="pixQRCode" class="pix-section">
+            <img [src]="pixQRCode" alt="QR Code PIX">
+            <p>Escaneie o QR Code para pagar</p>
+          </div>
+
+          <!-- Link do Boleto -->
+          <div *ngIf="paymentUrl" class="boleto-section">
+            <p>Clique no botão abaixo para acessar o {{ selectedPaymentType === 'BOLETO' ? 'boleto' : 'comprovante' }}</p>
+            <button mat-raised-button color="accent" (click)="openPaymentUrl()">
+              Abrir {{ selectedPaymentType === 'BOLETO' ? 'Boleto' : 'Comprovante' }}
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  `,
+  styles: [`
+    .payment-container {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    .tab-content {
+      padding: 20px 0;
+    }
+
+    .payment-type-section,
+    .subscription-options {
+      margin: 20px 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    mat-button-toggle-group {
+      display: flex;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    mat-button-toggle {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding: 0 12px;
+      min-width: 0;
+    }
+
+    .form-section {
+      margin: 20px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    mat-form-field {
+      width: 100%;
+    }
+
+    .card-details {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .payment-info {
+      margin: 20px 0;
+      padding: 16px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+    }
+
+    .total-amount {
+      font-size: 1.2em;
+      font-weight: bold;
+      margin: 0;
+    }
+
+    .cycle-info {
+      margin: 8px 0 0;
+      color: #666;
+    }
+
+    .pix-section,
+    .boleto-section {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .pix-section img {
+      max-width: 200px;
+      margin: 10px auto;
+    }
+
+    button[mat-raised-button] {
+      width: 100%;
+      margin-top: 20px;
+      height: 48px;
+    }
+
+    mat-spinner {
+      display: inline-block;
+      margin-right: 8px;
+    }
+
+    @media (max-width: 600px) {
+      .card-details {
+        grid-template-columns: 1fr;
+      }
+
+      mat-button-toggle-group {
+        max-width: 100%;
+      }
+
+      mat-button-toggle {
+        padding: 0 8px;
+        font-size: 0.9em;
+      }
+    }
+  `]
 })
 export class PaymentComponent implements OnInit {
   @Input() courseId: string = '';
   @Input() courseValue: number = 0;
-  @Input() isRecurring: boolean = false;
 
-  paymentForm!: FormGroup;
   customerForm!: FormGroup;
   creditCardForm!: FormGroup;
-  loading = false;
   selectedPaymentType: 'BOLETO' | 'CREDIT_CARD' | 'PIX' = 'PIX';
+  selectedCycle: 'MONTHLY' | 'QUARTERLY' | 'YEARLY' = 'MONTHLY';
+  loading = false;
   pixQRCode: string = '';
   paymentUrl: string = '';
 
@@ -54,39 +347,52 @@ export class PaymentComponent implements OnInit {
     this.initializeForms();
   }
 
-  private initializeForms() {
+  initializeForms() {
     this.customerForm = this.fb.group({
       name: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
-      cpfCnpj: ['', [Validators.required, Validators.minLength(11)]],
+      cpfCnpj: ['', Validators.required],
       phone: ['', Validators.required],
-      postalCode: ['', [Validators.required, Validators.pattern(/^\d{8}$/)]],
+      postalCode: ['', Validators.required],
       addressNumber: ['', Validators.required]
     });
 
     this.creditCardForm = this.fb.group({
       holderName: ['', Validators.required],
-      number: ['', [Validators.required, Validators.minLength(16)]],
-      expiryMonth: ['', [Validators.required, Validators.max(12)]],
-      expiryYear: ['', [Validators.required, Validators.minLength(4)]],
-      ccv: ['', [Validators.required, Validators.minLength(3)]]
-    });
-
-    this.paymentForm = this.fb.group({
-      billingType: [this.selectedPaymentType],
-      value: [this.courseValue],
-      dueDate: [new Date().toISOString().split('T')[0]],
-      description: [`Pagamento do curso ${this.courseId}`],
-      cycle: ['MONTHLY']
+      number: ['', Validators.required],
+      expiryMonth: ['', Validators.required],
+      expiryYear: ['', Validators.required],
+      ccv: ['', Validators.required]
     });
   }
 
-  private formatPostalCode(postalCode: string): string {
-    return postalCode.replace(/\D/g, '');
+  onPaymentTypeChange(type: 'BOLETO' | 'CREDIT_CARD' | 'PIX') {
+    this.selectedPaymentType = type;
+    this.pixQRCode = '';
+    this.paymentUrl = '';
   }
 
-  async processPayment() {
-    if (!this.customerForm.valid || (this.selectedPaymentType === 'CREDIT_CARD' && !this.creditCardForm.valid)) {
+  onCycleChange(cycle: 'MONTHLY' | 'QUARTERLY' | 'YEARLY') {
+    this.selectedCycle = cycle;
+  }
+
+  getCycleLabel(cycle: string): string {
+    const labels = {
+      'MONTHLY': 'Mensal',
+      'QUARTERLY': 'Trimestral',
+      'YEARLY': 'Anual'
+    };
+    return labels[cycle as keyof typeof labels] || cycle;
+  }
+
+  isFormValid(): boolean {
+    if (!this.customerForm.valid) return false;
+    if (this.selectedPaymentType === 'CREDIT_CARD' && !this.creditCardForm.valid) return false;
+    return true;
+  }
+
+  async processPayment(isSubscription: boolean) {
+    if (!this.isFormValid()) {
       this.snackBar.open('Por favor, preencha todos os campos obrigatórios', 'OK', { duration: 3000 });
       return;
     }
@@ -94,7 +400,6 @@ export class PaymentComponent implements OnInit {
     this.loading = true;
 
     try {
-      // Primeiro, criar cliente
       const customerData = {
         ...this.customerForm.value,
         postalCode: this.formatPostalCode(this.customerForm.value.postalCode)
@@ -105,16 +410,15 @@ export class PaymentComponent implements OnInit {
       if (!customerResponse || !customerResponse.customerId) {
         throw new Error('Falha ao criar cliente');
       }
-      console.log(customerResponse)
-      if (this.isRecurring) {
-        // Criar assinatura
-        const subscriptionData: AsaasSubscription = {
+
+      if (isSubscription) {
+        const subscriptionData: SubscriptionData = {
           customer: customerResponse.customerId,
           billingType: this.selectedPaymentType,
           value: this.courseValue,
-          nextDueDate: this.paymentForm.get('dueDate')?.value || new Date().toISOString().split('T')[0],
-          description: this.paymentForm.get('description')?.value || '',
-          cycle: this.paymentForm.get('cycle')?.value || 'MONTHLY'
+          nextDueDate: new Date().toISOString().split('T')[0],
+          cycle: this.selectedCycle,
+          description: `Assinatura do curso ${this.courseId}`
         };
 
         if (this.selectedPaymentType === 'CREDIT_CARD') {
@@ -133,19 +437,17 @@ export class PaymentComponent implements OnInit {
           this.asaasService.createSubscription(subscriptionData, this.courseId)
         );
 
-        if (subscriptionResponse?.payment) {
-          this.handlePaymentResponse(subscriptionResponse.payment);
+        if (subscriptionResponse) {
+          this.handlePaymentResponse(subscriptionResponse);
+          this.snackBar.open('Assinatura criada com sucesso!', 'OK', { duration: 3000 });
         }
-
-        this.handleSuccess('Assinatura criada com sucesso!');
       } else {
-        // Criar pagamento único
-        const paymentData: AsaasPayment = {
+        const paymentData: PaymentData = {
           customer: customerResponse.customerId,
           billingType: this.selectedPaymentType,
           value: this.courseValue,
-          dueDate: this.paymentForm.get('dueDate')?.value || new Date().toISOString().split('T')[0],
-          description: this.paymentForm.get('description')?.value || ''
+          dueDate: new Date().toISOString().split('T')[0],
+          description: `Pagamento do curso ${this.courseId}`
         };
 
         if (this.selectedPaymentType === 'CREDIT_CARD') {
@@ -166,37 +468,40 @@ export class PaymentComponent implements OnInit {
 
         if (paymentResponse) {
           this.handlePaymentResponse(paymentResponse);
+          this.snackBar.open('Pagamento criado com sucesso!', 'OK', { duration: 3000 });
         }
-
-        this.handleSuccess('Pagamento criado com sucesso!');
       }
     } catch (error) {
-      console.error('Erro ao processar pagamento:', error);
-      this.loading = false;
+      console.error('Erro ao processar operação:', error);
       this.snackBar.open(
-        error instanceof Error ? error.message : 'Erro ao processar pagamento',
+        error instanceof Error ? error.message : 'Erro ao processar operação',
         'OK',
         { duration: 5000 }
       );
+    } finally {
+      this.loading = false;
     }
   }
 
-  private handlePaymentResponse(payment: any) {
-    if (this.selectedPaymentType === 'PIX' && payment.pixQrCode) {
-      this.pixQRCode = payment.pixQrCode;
-    } else if (this.selectedPaymentType === 'BOLETO' && payment.bankSlipUrl) {
-      this.paymentUrl = payment.bankSlipUrl;
+  handlePaymentResponse(response: any) {
+    if (response.bankSlipUrl) {
+      this.paymentUrl = response.bankSlipUrl;
+    }
+    if (response.invoiceUrl) {
+      this.paymentUrl = response.invoiceUrl;
+    }
+    if (response.pixQrCodeUrl) {
+      this.pixQRCode = response.pixQrCodeUrl;
+    }
+  }
+
+  openPaymentUrl() {
+    if (this.paymentUrl) {
       window.open(this.paymentUrl, '_blank');
     }
   }
 
-  private handleSuccess(message: string) {
-    this.loading = false;
-    this.snackBar.open(message, 'OK', { duration: 3000 });
-  }
-
-  onPaymentTypeChange(type: 'BOLETO' | 'CREDIT_CARD' | 'PIX') {
-    this.selectedPaymentType = type;
-    this.paymentForm.patchValue({ billingType: type });
+  private formatPostalCode(postalCode: string): string {
+    return postalCode.replace(/\D/g, '');
   }
 } 

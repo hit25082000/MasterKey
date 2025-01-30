@@ -72,8 +72,7 @@ import { MatOptionModule } from '@angular/material/core';
             <h3>Teste de Pagamento</h3>
             <app-payment 
               [courseId]="'TEST_COURSE'"
-              [courseValue]="99.90"
-              [isRecurring]="false">
+              [courseValue]="99.90">
             </app-payment>
           </div>
 
