@@ -19,7 +19,15 @@ interface SubscriptionData {
   nextDueDate: string;
   cycle: 'MONTHLY' | 'QUARTERLY' | 'YEARLY';
   description: string;
-  creditCard?: any;
+  totalValue: number;
+  installments: number;
+  creditCard?: {
+    holderName: string;
+    number: string;
+    expiryMonth: string;
+    expiryYear: string;
+    ccv: string;
+  };
   creditCardHolderInfo?: {
     name: string;
     email: string;
@@ -101,7 +109,7 @@ interface PaymentData {
             </mat-tab>
 
             <!-- Tab de Assinatura -->
-            <mat-tab label="Recorrente">
+            <mat-tab label="Assinatura">
               <div class="tab-content">
                 <div class="payment-type-section">
                   <mat-button-toggle-group [(ngModel)]="selectedPaymentType" (change)="onPaymentTypeChange($event.value)">
@@ -113,13 +121,20 @@ interface PaymentData {
 
                 <div class="subscription-options">
                   <mat-button-toggle-group [(ngModel)]="selectedCycle" (change)="onCycleChange($event.value)">
-                    <mat-button-toggle value="MONTHLY">Mensal</mat-button-toggle>
+                    <mat-button-toggle *ngFor="let option of availableSubscriptionOptions" 
+                                     [value]="option.cycle"
+                                     [disabled]="option.disabled">
+                      {{ option.label }}
+                      <div class="option-value">R$ {{ option.value | number:'1.2-2' }}/mês</div>
+                    </mat-button-toggle>
                   </mat-button-toggle-group>
                 </div>
 
                 <div class="payment-info">
-                  <p class="total-amount">Valor da Assinatura: R$ {{ courseValue | number:'1.2-2' }}</p>
+                  <p class="total-amount">Valor da Assinatura: R$ {{ getSubscriptionValue() | number:'1.2-2' }}</p>
                   <p class="cycle-info">Ciclo: {{ getCycleLabel(selectedCycle) }}</p>
+                  <p class="installments-info">Total de parcelas: {{ getInstallmentsCount() }}</p>
+                  <p class="total-info">Valor total do curso: R$ {{ courseValue | number:'1.2-2' }}</p>
                 </div>
 
                 <!-- Formulários compartilhados -->
@@ -323,19 +338,70 @@ interface PaymentData {
         font-size: 0.9em;
       }
     }
+
+    .subscription-options mat-button-toggle {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 8px 16px;
+      line-height: 1.2;
+    }
+
+    .option-value {
+      font-size: 0.85em;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    .payment-info {
+      margin: 20px 0;
+      padding: 16px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+    }
+
+    .total-amount, .cycle-info, .installments-info, .total-info {
+      margin: 8px 0;
+    }
+
+    .total-amount {
+      font-size: 1.2em;
+      font-weight: bold;
+      color: #2196F3;
+    }
+
+    .cycle-info, .installments-info {
+      color: #666;
+    }
+
+    .total-info {
+      font-weight: 500;
+      border-top: 1px solid #ddd;
+      padding-top: 8px;
+      margin-top: 12px;
+    }
   `]
 })
 export class PaymentComponent implements OnInit {
   @Input() courseId: string = '';
   @Input() courseValue: number = 0;
+  @Input() maxInstallments: number = 12;
 
   customerForm!: FormGroup;
   creditCardForm!: FormGroup;
   selectedPaymentType: 'BOLETO' | 'CREDIT_CARD' | 'PIX' = 'PIX';
-  selectedCycle: 'MONTHLY' | 'QUARTERLY' | 'YEARLY' = 'MONTHLY';
+  selectedCycle: 'MONTHLY' = 'MONTHLY';
   loading = false;
   pixQRCode: string = '';
   paymentUrl: string = '';
+
+  availableSubscriptionOptions: Array<{
+    cycle: 'MONTHLY';
+    label: string;
+    value: number;
+    months: number;
+    disabled: boolean;
+  }> = [];
 
   constructor(
     private fb: FormBuilder,
@@ -345,6 +411,7 @@ export class PaymentComponent implements OnInit {
 
   ngOnInit() {
     this.initializeForms();
+    this.calculateSubscriptionOptions();
   }
 
   initializeForms() {
@@ -372,7 +439,7 @@ export class PaymentComponent implements OnInit {
     this.paymentUrl = '';
   }
 
-  onCycleChange(cycle: 'MONTHLY' | 'QUARTERLY' | 'YEARLY') {
+  onCycleChange(cycle: 'MONTHLY') {
     this.selectedCycle = cycle;
   }
 
@@ -389,6 +456,35 @@ export class PaymentComponent implements OnInit {
     if (!this.customerForm.valid) return false;
     if (this.selectedPaymentType === 'CREDIT_CARD' && !this.creditCardForm.valid) return false;
     return true;
+  }
+
+  private calculateSubscriptionOptions() {
+    const baseMonthlyValue = this.courseValue / this.maxInstallments;
+
+    this.availableSubscriptionOptions = [
+      {
+        cycle: 'MONTHLY',
+        label: 'Mensal',
+        value: baseMonthlyValue,
+        months: 1,
+        disabled: false
+      }
+    ];
+
+    const firstAvailable = this.availableSubscriptionOptions.find(opt => !opt.disabled);
+    if (firstAvailable) {
+      this.selectedCycle = firstAvailable.cycle;
+    }
+  }
+
+  getSubscriptionValue(): number {
+    const option = this.availableSubscriptionOptions.find(opt => opt.cycle === this.selectedCycle);
+    return option ? option.value : 0;
+  }
+
+  getInstallmentsCount(): number {
+    const option = this.availableSubscriptionOptions.find(opt => opt.cycle === this.selectedCycle);
+    return option ? Math.ceil(this.maxInstallments / option.months) : 0;
   }
 
   async processPayment(isSubscription: boolean) {
@@ -412,13 +508,16 @@ export class PaymentComponent implements OnInit {
       }
 
       if (isSubscription) {
+        const subscriptionValue = this.getSubscriptionValue();
         const subscriptionData: SubscriptionData = {
           customer: customerResponse.customerId,
           billingType: this.selectedPaymentType,
-          value: this.courseValue,
+          value: subscriptionValue,
           nextDueDate: new Date().toISOString().split('T')[0],
           cycle: this.selectedCycle,
-          description: `Assinatura do curso ${this.courseId}`
+          description: `Assinatura do curso ${this.courseId} - ${this.getCycleLabel(this.selectedCycle)}`,
+          totalValue: this.courseValue,
+          installments: this.getInstallmentsCount()
         };
 
         if (this.selectedPaymentType === 'CREDIT_CARD') {

@@ -327,6 +327,24 @@ const MOCK_SUBSCRIPTIONS: Subscription[] = [
                       </mat-chip>
                     </mat-chip-set>
                   </div>
+
+                  <!-- Novo: Progresso das Parcelas -->
+                  <div class="installments-progress" *ngIf="subscription.subscriptionDetails?.installments">
+                    <div class="progress-header">
+                      <span class="label">Progresso das Parcelas:</span>
+                      <span class="value">
+                        {{ getCompletedInstallments(subscription) }}/{{ subscription.subscriptionDetails.installments!.total }}
+                      </span>
+                    </div>
+                    <div class="progress-bar">
+                      <div class="progress-fill" 
+                           [style.width.%]="getInstallmentsProgress(subscription)">
+                      </div>
+                    </div>
+                    <div class="progress-info">
+                      {{ getInstallmentsProgress(subscription) }}% concluído
+                    </div>
+                  </div>
                 </div>
 
                 <mat-expansion-panel class="custom-expansion">
@@ -338,8 +356,32 @@ const MOCK_SUBSCRIPTIONS: Subscription[] = [
                   </mat-expansion-panel-header>
                   
                   <div class="payments-history">
-                    <ng-container *ngTemplateOutlet="paymentsList; context: { $implicit: getSubscriptionPayments(subscription.asaasSubscriptionId) | async }">
-                    </ng-container>
+                    <div class="payments-list">
+                      <div *ngFor="let payment of subscription.subscriptionDetails?.paymentHistory" 
+                           class="payment-history-item">
+                        <div class="payment-history-info">
+                          <div class="date">
+                            <mat-icon>event</mat-icon>
+                            {{ payment.date | date:'dd/MM/yyyy' }}
+                          </div>
+                          <div class="amount">
+                            <mat-icon>attach_money</mat-icon>
+                            R$ {{ payment.value | number:'1.2-2' }}
+                          </div>
+                          <div class="installment-info" *ngIf="payment.installment">
+                            <mat-icon>payment</mat-icon>
+                            Parcela {{ payment.installment }}
+                          </div>
+                          <mat-chip-set>
+                            <mat-chip [class]="'status-chip ' + payment.status.toLowerCase()" 
+                                     [color]="getStatusColor(payment.status)" 
+                                     selected>
+                              {{ getPaymentStatusTranslation(payment.status) }}
+                            </mat-chip>
+                          </mat-chip-set>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </mat-expansion-panel>
               </mat-card-content>
@@ -580,6 +622,58 @@ const MOCK_SUBSCRIPTIONS: Subscription[] = [
       }
     }
 
+    .installments-progress {
+      margin: 16px 0;
+      padding: 16px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+
+      .label {
+        color: #666;
+        font-weight: 500;
+      }
+
+      .value {
+        font-weight: 600;
+        color: #2196F3;
+      }
+    }
+
+    .progress-bar {
+      height: 8px;
+      background: #e9ecef;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 8px 0;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #2196F3;
+      transition: width 0.3s ease;
+    }
+
+    .progress-info {
+      text-align: center;
+      font-size: 0.9em;
+      color: #666;
+    }
+
+    .installment-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #666;
+      font-weight: 500;
+    }
+
     @media (max-width: 600px) {
       .history-container {
         padding: 10px;
@@ -711,5 +805,22 @@ export class PaymentHistoryComponent implements OnInit {
 
   getSubscriptionCycleTranslation(cycle: string): string {
     return SubscriptionCycleTranslation[cycle as keyof typeof SubscriptionCycleTranslation] || cycle;
+  }
+
+  getCompletedInstallments(subscription: Subscription): number {
+    if (!subscription.subscriptionDetails?.paymentHistory) return 0;
+    
+    return subscription.subscriptionDetails.paymentHistory.filter(
+      payment => payment.status === 'RECEIVED' || payment.status === 'CONFIRMED'
+    ).length;
+  }
+
+  getInstallmentsProgress(subscription: Subscription): number {
+    if (!subscription.subscriptionDetails?.installments?.total) return 0;
+    
+    const completed = this.getCompletedInstallments(subscription);
+    const total = subscription.subscriptionDetails.installments.total;
+    
+    return Math.round((completed / total) * 100);
   }
 } 
