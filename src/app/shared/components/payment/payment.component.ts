@@ -1,15 +1,16 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { AsaasService } from '../../../core/services/asaas.service';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatSelectModule } from '@angular/material/select';
+import { CommonModule } from '@angular/common';
+import { AsaasService } from '../../../core/services/asaas.service';
 import { firstValueFrom } from 'rxjs';
 
 interface SubscriptionData {
@@ -44,6 +45,8 @@ interface PaymentData {
   value: number;
   dueDate: string;
   description: string;
+  installmentCount?: number;
+  installmentValue?: number;
   creditCard?: any;
   creditCardHolderInfo?: {
     name: string;
@@ -69,7 +72,8 @@ interface PaymentData {
     MatButtonToggleModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
-    MatTabsModule
+    MatTabsModule,
+    MatSelectModule
   ],
   providers: [],
   template: `
@@ -109,7 +113,7 @@ interface PaymentData {
             </mat-tab>
 
             <!-- Tab de Assinatura -->
-            <mat-tab label="Assinatura">
+            <mat-tab label="Pagamento Recorrente">
               <div class="tab-content">
                 <div class="payment-type-section">
                   <mat-button-toggle-group [(ngModel)]="selectedPaymentType" (change)="onPaymentTypeChange($event.value)">
@@ -211,6 +215,17 @@ interface PaymentData {
                   <input matInput formControlName="ccv" required>
                 </mat-form-field>
               </div>
+
+              <!-- Seleção de Parcelas -->
+              <mat-form-field *ngIf="!isSubscription && selectedPaymentType === 'CREDIT_CARD'">
+                <mat-label>Parcelas</mat-label>
+                <mat-select formControlName="installments" (selectionChange)="onInstallmentChange($event.value)">
+                  <mat-option *ngFor="let option of installmentOptions" [value]="option.number">
+                    {{ option.number }}x de R$ {{ option.value | number:'1.2-2' }} sem juros
+                  </mat-option>
+                </mat-select>
+                <mat-hint>Parcele em até {{ maxInstallments }}x sem juros</mat-hint>
+              </mat-form-field>
             </form>
           </ng-template>
 
@@ -380,13 +395,30 @@ interface PaymentData {
       padding-top: 8px;
       margin-top: 12px;
     }
+
+    .interest-info {
+      font-size: 0.85em;
+      color: #666;
+      margin-left: 8px;
+    }
+
+    mat-select {
+      width: 100%;
+    }
+
+    mat-hint {
+      color: #2196F3;
+      font-weight: 500;
+    }
   `]
 })
 export class PaymentComponent implements OnInit {
   @Input() courseId: string = '';
   @Input() courseValue: number = 0;
   @Input() maxInstallments: number = 12;
+  @Input() interestRate: number = 2.99; // Taxa de juros mensal para parcelamento
 
+  isSubscription: boolean = false;
   customerForm!: FormGroup;
   creditCardForm!: FormGroup;
   selectedPaymentType: 'BOLETO' | 'CREDIT_CARD' | 'PIX' = 'PIX';
@@ -403,6 +435,11 @@ export class PaymentComponent implements OnInit {
     disabled: boolean;
   }> = [];
 
+  installmentOptions: Array<{
+    number: number;
+    value: number;
+  }> = [];
+
   constructor(
     private fb: FormBuilder,
     private asaasService: AsaasService,
@@ -412,6 +449,7 @@ export class PaymentComponent implements OnInit {
   ngOnInit() {
     this.initializeForms();
     this.calculateSubscriptionOptions();
+    this.calculateInstallmentOptions();
   }
 
   initializeForms() {
@@ -429,7 +467,8 @@ export class PaymentComponent implements OnInit {
       number: ['', Validators.required],
       expiryMonth: ['', Validators.required],
       expiryYear: ['', Validators.required],
-      ccv: ['', Validators.required]
+      ccv: ['', Validators.required],
+      installments: [1] // Novo campo para número de parcelas
     });
   }
 
@@ -487,6 +526,29 @@ export class PaymentComponent implements OnInit {
     return option ? Math.ceil(this.maxInstallments / option.months) : 0;
   }
 
+  calculateInstallmentOptions() {
+    this.installmentOptions = [];
+    
+    // Calcular parcelas sem juros
+    for (let i = 1; i <= this.maxInstallments; i++) {
+      const installmentValue = this.courseValue / i;
+      
+      this.installmentOptions.push({
+        number: i,
+        value: installmentValue
+      });
+    }
+  }
+
+  onInstallmentChange(installments: number) {
+    const option = this.installmentOptions.find(opt => opt.number === installments);
+    if (option) {
+      this.creditCardForm.patchValue({
+        installments: installments
+      });
+    }
+  }
+
   async processPayment(isSubscription: boolean) {
     if (!this.isFormValid()) {
       this.snackBar.open('Por favor, preencha todos os campos obrigatórios', 'OK', { duration: 3000 });
@@ -541,16 +603,26 @@ export class PaymentComponent implements OnInit {
           this.snackBar.open('Assinatura criada com sucesso!', 'OK', { duration: 3000 });
         }
       } else {
+        const selectedInstallment = this.installmentOptions.find(
+          opt => opt.number === this.creditCardForm.value.installments
+        );
+
         const paymentData: PaymentData = {
           customer: customerResponse.customerId,
           billingType: this.selectedPaymentType,
           value: this.courseValue,
           dueDate: new Date().toISOString().split('T')[0],
-          description: `Pagamento do curso ${this.courseId}`
+          description: `Pagamento do curso ${this.courseId}`,
+          installmentCount: this.selectedPaymentType === 'CREDIT_CARD' ? 
+            this.creditCardForm.value.installments : undefined,
+          installmentValue: selectedInstallment?.value
         };
 
         if (this.selectedPaymentType === 'CREDIT_CARD') {
-          paymentData.creditCard = this.creditCardForm.value;
+          paymentData.creditCard = {
+            ...this.creditCardForm.value,
+            installments: this.creditCardForm.value.installments
+          };
           paymentData.creditCardHolderInfo = {
             name: customerData.name,
             email: customerData.email,
@@ -567,7 +639,10 @@ export class PaymentComponent implements OnInit {
 
         if (paymentResponse) {
           this.handlePaymentResponse(paymentResponse);
-          this.snackBar.open('Pagamento criado com sucesso!', 'OK', { duration: 3000 });
+          const msg = this.selectedPaymentType === 'CREDIT_CARD' && this.creditCardForm.value.installments > 1 
+            ? `Pagamento criado com sucesso! Parcelado em ${this.creditCardForm.value.installments}x de R$ ${selectedInstallment?.value.toFixed(2)}`
+            : 'Pagamento criado com sucesso!';
+          this.snackBar.open(msg, 'OK', { duration: 3000 });
         }
       }
     } catch (error) {
