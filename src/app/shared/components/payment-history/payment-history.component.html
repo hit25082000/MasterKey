@@ -190,6 +190,255 @@
                 </div>
               </div>
             </mat-expansion-panel>
+
+            <mat-expansion-panel class="custom-expansion">
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  <mat-icon>calendar_today</mat-icon>
+                  Próximas Faturas
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+
+              <div class="faturas-list">
+                <div *ngFor="let dataFatura of getProximasFaturas(subscription)" class="fatura-item">
+                  <div class="fatura-info">
+                    <div class="fatura-data">
+                      <mat-icon>event</mat-icon>
+                      {{ dataFatura | date:'dd/MM/yyyy' }}
+                    </div>
+                    <div class="fatura-valor">
+                      <mat-icon>attach_money</mat-icon>
+                      R$ {{ subscription.value | number:'1.2-2' }}
+                    </div>
+                    <mat-chip-set>
+                      <mat-chip [ngClass]="'status-chip ' + getFaturaStatus(dataFatura)">
+                        {{ getFaturaStatus(dataFatura) | titlecase }}
+                      </mat-chip>
+                    </mat-chip-set>
+                  </div>
+
+                  <div class="payment-options" *ngIf="getFaturaStatus(dataFatura) !== 'futura'">
+                    <button mat-button color="primary" (click)="gerarPagamentoFatura(subscription, 'PIX')">
+                      <mat-icon>qr_code_2</mat-icon>
+                      Pagar com PIX
+                    </button>
+                    <button mat-button color="primary" (click)="gerarPagamentoFatura(subscription, 'BOLETO')">
+                      <mat-icon>receipt</mat-icon>
+                      Pagar com Boleto
+                    </button>
+                    <button mat-button color="primary" (click)="gerarPagamentoFatura(subscription, 'CREDIT_CARD')">
+                      <mat-icon>credit_card</mat-icon>
+                      Pagar com Cartão
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </mat-expansion-panel>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>
+
+<!-- Template para lista de pagamentos -->
+<ng-template #paymentsList let-payments>
+  <div class="payments-list">
+    <div *ngFor="let payment of payments" class="payment-history-item">
+      <div class="payment-history-info">
+        <div class="date">
+<div class="history-container">
+  <mat-tab-group animationDuration="500ms" class="custom-tabs">
+    <!-- Aba de Pagamentos -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">receipt</mat-icon>
+        <span>Pagamentos</span>
+      </ng-template>
+      
+      <div class="payments-container">
+        <mat-card *ngFor="let payment of payments$ | async" class="payment-card animate-in">
+          <mat-card-header>
+            <mat-icon mat-card-avatar [class]="'payment-icon ' + payment.paymentMethod.toLowerCase()">
+              {{ 
+                payment.paymentMethod === 'PIX' ? 'qr_code_2' :
+                payment.paymentMethod === 'CREDIT_CARD' ? 'credit_card' : 'receipt_long'
+              }}
+            </mat-icon>
+            <mat-card-title>{{ payment.paymentDetails.description || 'Pagamento #' + payment.paymentId }}</mat-card-title>
+            <mat-card-subtitle>
+              {{ payment.createdAt | date:'dd/MM/yyyy HH:mm' }}
+            </mat-card-subtitle>
+          </mat-card-header>
+          
+          <mat-card-content>
+            <div class="payment-info">
+              <div class="info-row">
+                <span class="label">Valor:</span>
+                <span class="value">R$ {{ payment.amount | number:'1.2-2' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Método:</span>
+                <span class="value method">{{ getPaymentMethodTranslation(payment.paymentMethod) }}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Status:</span>
+                <mat-chip-set>
+                  <mat-chip [class]="'status-chip ' + payment.status.toLowerCase()" 
+                           [color]="getStatusColor(payment.status)" 
+                           selected>
+                    {{ getPaymentStatusTranslation(payment.status) }}
+                  </mat-chip>
+                </mat-chip-set>
+              </div>
+            </div>
+
+            <mat-expansion-panel class="custom-expansion">
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  <mat-icon>info</mat-icon>
+                  Detalhes do Pagamento
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+              
+              <div class="payment-details">
+                <div *ngIf="payment.paymentDetails.bankSlipUrl" class="detail-item">
+                  <mat-icon>description</mat-icon>
+                  <a [href]="payment.paymentDetails.bankSlipUrl" target="_blank" mat-button color="primary">
+                    Ver Boleto
+                  </a>
+                </div>
+
+                <div *ngIf="payment.paymentDetails.pixQrCodeUrl" class="detail-item pix-details">
+                  <div class="qr-container">
+                    <img [src]="payment.paymentDetails.pixQrCodeUrl" alt="QR Code PIX">
+                  </div>
+                  <div class="pix-code">
+                    <p>Código PIX:</p>
+                    <pre>{{ payment.paymentDetails.pixCopiaECola }}</pre>
+                    <button mat-button color="primary" (click)="copyToClipboard(payment.paymentDetails.pixCopiaECola)">
+                      <mat-icon>content_copy</mat-icon> Copiar código
+                    </button>
+                  </div>
+                </div>
+
+                <div *ngIf="payment.paymentDetails.invoiceUrl" class="detail-item">
+                  <mat-icon>receipt</mat-icon>
+                  <a [href]="payment.paymentDetails.invoiceUrl" target="_blank" mat-button color="primary">
+                    Ver Fatura
+                  </a>
+                </div>
+              </div>
+            </mat-expansion-panel>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- Aba de Assinaturas -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">subscriptions</mat-icon>
+        <span>Assinaturas</span>
+      </ng-template>
+      
+      <div class="subscriptions-container">
+        <mat-card *ngFor="let subscription of subscriptions$ | async" class="subscription-card animate-in">
+          <mat-card-header>
+            <mat-icon mat-card-avatar class="subscription-icon">
+              {{ subscription.status === 'ACTIVE' ? 'auto_renew' : 'schedule' }}
+            </mat-icon>
+            <mat-card-title>{{ subscription.courseName }}</mat-card-title>
+            <mat-card-subtitle>
+              Assinatura #{{ subscription.asaasSubscriptionId }}
+            </mat-card-subtitle>
+          </mat-card-header>
+
+          <mat-card-content>
+            <div class="subscription-info">
+              <div class="info-row">
+                <span class="label">Valor Mensal:</span>
+                <span class="value">R$ {{ subscription.value | number:'1.2-2' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Ciclo:</span>
+                <span class="value">{{ getSubscriptionCycleTranslation(subscription.cycle) }}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Próximo Vencimento:</span>
+                <span class="value">{{ subscription.nextDueDate | date:'dd/MM/yyyy' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Método:</span>
+                <span class="value method">{{ getPaymentMethodTranslation(subscription.paymentMethod) }}</span>
+              </div>
+              <div class="info-row">
+                <span class="label">Status:</span>
+                <mat-chip-set>
+                  <mat-chip [class]="'status-chip ' + subscription.status.toLowerCase()" 
+                           [color]="getSubscriptionStatusColor(subscription.status)" 
+                           selected>
+                    {{ getSubscriptionStatusTranslation(subscription.status) }}
+                  </mat-chip>
+                </mat-chip-set>
+              </div>
+
+              <!-- Novo: Progresso das Parcelas -->
+              <div class="installments-progress" *ngIf="subscription.subscriptionDetails?.installments">
+                <div class="progress-header">
+                  <span class="label">Progresso das Parcelas:</span>
+                  <span class="value">
+                    {{ getCompletedInstallments(subscription) }}/{{ subscription.subscriptionDetails.installments!.total }}
+                  </span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" 
+                       [style.width.%]="getInstallmentsProgress(subscription)">
+                  </div>
+                </div>
+                <div class="progress-info">
+                  {{ getInstallmentsProgress(subscription) }}% concluído
+                </div>
+              </div>
+            </div>
+
+            <mat-expansion-panel class="custom-expansion">
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  <mat-icon>history</mat-icon>
+                  Histórico de Pagamentos
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+              
+              <div class="payments-history">
+                <div class="payments-list">
+                  <div *ngFor="let payment of subscription.subscriptionDetails?.paymentHistory" 
+                       class="payment-history-item">
+                    <div class="payment-history-info">
+                      <div class="date">
+                        <mat-icon>event</mat-icon>
+                        {{ payment.date | date:'dd/MM/yyyy' }}
+                      </div>
+                      <div class="amount">
+                        <mat-icon>attach_money</mat-icon>
+                        R$ {{ payment.value | number:'1.2-2' }}
+                      </div>
+                      <div class="installment-info" *ngIf="payment.installment">
+                        <mat-icon>payment</mat-icon>
+                        Parcela {{ payment.installment }}
+                      </div>
+                      <mat-chip-set>
+                        <mat-chip [class]="'status-chip ' + payment.status.toLowerCase()" 
+                                 [color]="getStatusColor(payment.status)" 
+                                 selected>
+                          {{ getPaymentStatusTranslation(payment.status) }}
+                        </mat-chip>
+                      </mat-chip-set>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </mat-expansion-panel>
           </mat-card-content>
         </mat-card>
       </div>
