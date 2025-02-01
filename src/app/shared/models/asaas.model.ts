@@ -105,6 +105,19 @@ export interface FirestorePayment {
   paymentDetails: AsaasPaymentResponse;
 }
 
+export interface FirestorePayment2 {
+  asaasId: string;
+  customerId: string;
+  courseId: string;
+  amount: string;
+  createdAt: string;
+  type: 'PAYMENT' | 'SUBSCRIPTION';
+  paymentMethod: string;
+  status:string;
+  invoiceUrl: string;
+  subscriptionId?: string;
+}
+
 export interface FirestoreSubscription {
   id: string;
   customerEmail: string;

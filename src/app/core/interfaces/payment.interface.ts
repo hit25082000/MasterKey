@@ -13,12 +13,21 @@ export interface PaymentTransaction {
   subscriptionId?: string;
   createdAt: string;
   updatedAt: string;
+  invoiceUrl?: string;
+  bankSlipUrl?: string;
+  pixQrCodeUrl?: string;
+  pixCopiaECola?: string;
+  installments?: {
+    total: number;
+    current: number;
+    value: number;
+  };
   paymentDetails: {
+    description?: string;
     invoiceUrl?: string;
     bankSlipUrl?: string;
     pixQrCodeUrl?: string;
     pixCopiaECola?: string;
-    description?: string;
     installments?: {
       total: number;
       current: number;

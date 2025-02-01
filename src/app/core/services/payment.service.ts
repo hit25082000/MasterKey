@@ -64,12 +64,21 @@ export class PaymentService {
   }
 
   // Buscar transações por email e CPF
-  getTransactionsByEmailAndCpf(email: string, cpf: string): Observable<PaymentTransaction[]> {
+  getTransactionsByEmail(email: string): Observable<PaymentTransaction[]> {
     return this.firestoreService.getCollectionWithQuery<PaymentTransaction>(
       'transactions',
       [
         where('customerEmail', '==', email),
-        where('customerCpfCnpj', '==', cpf),
+        orderBy('createdAt', 'desc')
+      ]
+    );
+  }
+
+  getSubscriptionsByEmail(email: string): Observable<Subscription[]> {
+    return this.firestoreService.getCollectionWithQuery<Subscription>(
+      'subscriptions',
+      [
+        where('customerEmail', '==', email),
         orderBy('createdAt', 'desc')
       ]
     );

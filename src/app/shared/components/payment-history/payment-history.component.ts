@@ -8,6 +8,7 @@ import { MatChipsModule, MatChipListbox } from '@angular/material/chips';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { PaymentService } from '../../../core/services/payment.service';
+import { CourseService } from '../../../features/course/services/course.service';
 import { ActivatedRoute } from '@angular/router';
 import { 
   PaymentTransaction, 
@@ -17,9 +18,11 @@ import {
   SubscriptionStatusTranslation,
   SubscriptionCycleTranslation
 } from '../../../core/interfaces/payment.interface';
-import { Observable, of } from 'rxjs';
+import { firstValueFrom, Observable, of } from 'rxjs';
 import { getAuth } from '@angular/fire/auth';
 import { environment } from '../../../../environments/environment';
+import { StudentService } from '../../../features/student/services/student.service';
+import { AsaasService } from '../../../core/services/asaas.service';
 
 // Dados mockados para teste
 const MOCK_PAYMENTS: PaymentTransaction[] = [
@@ -191,525 +194,23 @@ const MOCK_SUBSCRIPTIONS: Subscription[] = [
     MatExpansionModule,
     MatSnackBarModule
   ],
-  template: `
-    <div class="history-container">
-      <mat-tab-group animationDuration="500ms" class="custom-tabs">
-        <!-- Aba de Pagamentos -->
-        <mat-tab>
-          <ng-template mat-tab-label>
-            <mat-icon class="tab-icon">receipt</mat-icon>
-            <span>Pagamentos</span>
-          </ng-template>
-          
-          <div class="payments-container">
-            <mat-card *ngFor="let payment of payments$ | async" class="payment-card animate-in">
-              <mat-card-header>
-                <mat-icon mat-card-avatar [class]="'payment-icon ' + payment.paymentMethod.toLowerCase()">
-                  {{ 
-                    payment.paymentMethod === 'PIX' ? 'qr_code_2' :
-                    payment.paymentMethod === 'CREDIT_CARD' ? 'credit_card' : 'receipt_long'
-                  }}
-                </mat-icon>
-                <mat-card-title>{{ payment.paymentDetails.description || 'Pagamento #' + payment.paymentId }}</mat-card-title>
-                <mat-card-subtitle>
-                  {{ payment.createdAt | date:'dd/MM/yyyy HH:mm' }}
-                </mat-card-subtitle>
-              </mat-card-header>
-              
-              <mat-card-content>
-                <div class="payment-info">
-                  <div class="info-row">
-                    <span class="label">Valor:</span>
-                    <span class="value">R$ {{ payment.amount | number:'1.2-2' }}</span>
-                  </div>
-                  <div class="info-row">
-                    <span class="label">Método:</span>
-                    <span class="value method">{{ getPaymentMethodTranslation(payment.paymentMethod) }}</span>
-                  </div>
-                  <div class="info-row">
-                    <span class="label">Status:</span>
-                    <mat-chip-set>
-                      <mat-chip [class]="'status-chip ' + payment.status.toLowerCase()" 
-                               [color]="getStatusColor(payment.status)" 
-                               selected>
-                        {{ getPaymentStatusTranslation(payment.status) }}
-                      </mat-chip>
-                    </mat-chip-set>
-                  </div>
-                </div>
-
-                <mat-expansion-panel class="custom-expansion">
-                  <mat-expansion-panel-header>
-                    <mat-panel-title>
-                      <mat-icon>info</mat-icon>
-                      Detalhes do Pagamento
-                    </mat-panel-title>
-                  </mat-expansion-panel-header>
-                  
-                  <div class="payment-details">
-                    <div *ngIf="payment.paymentDetails.bankSlipUrl" class="detail-item">
-                      <mat-icon>description</mat-icon>
-                      <a [href]="payment.paymentDetails.bankSlipUrl" target="_blank" mat-button color="primary">
-                        Ver Boleto
-                      </a>
-                    </div>
-
-                    <div *ngIf="payment.paymentDetails.pixQrCodeUrl" class="detail-item pix-details">
-                      <div class="qr-container">
-                        <img [src]="payment.paymentDetails.pixQrCodeUrl" alt="QR Code PIX">
-                      </div>
-                      <div class="pix-code">
-                        <p>Código PIX:</p>
-                        <pre>{{ payment.paymentDetails.pixCopiaECola }}</pre>
-                        <button mat-button color="primary" (click)="copyToClipboard(payment.paymentDetails.pixCopiaECola)">
-                          <mat-icon>content_copy</mat-icon> Copiar código
-                        </button>
-                      </div>
-                    </div>
-
-                    <div *ngIf="payment.paymentDetails.invoiceUrl" class="detail-item">
-                      <mat-icon>receipt</mat-icon>
-                      <a [href]="payment.paymentDetails.invoiceUrl" target="_blank" mat-button color="primary">
-                        Ver Fatura
-                      </a>
-                    </div>
-                  </div>
-                </mat-expansion-panel>
-              </mat-card-content>
-            </mat-card>
-          </div>
-        </mat-tab>
-
-        <!-- Aba de Assinaturas -->
-        <mat-tab>
-          <ng-template mat-tab-label>
-            <mat-icon class="tab-icon">subscriptions</mat-icon>
-            <span>Assinaturas</span>
-          </ng-template>
-          
-          <div class="subscriptions-container">
-            <mat-card *ngFor="let subscription of subscriptions$ | async" class="subscription-card animate-in">
-              <mat-card-header>
-                <mat-icon mat-card-avatar class="subscription-icon">
-                  {{ subscription.status === 'ACTIVE' ? 'auto_renew' : 'schedule' }}
-                </mat-icon>
-                <mat-card-title>{{ subscription.courseName }}</mat-card-title>
-                <mat-card-subtitle>
-                  Assinatura #{{ subscription.asaasSubscriptionId }}
-                </mat-card-subtitle>
-              </mat-card-header>
-
-              <mat-card-content>
-                <div class="subscription-info">
-                  <div class="info-row">
-                    <span class="label">Valor Mensal:</span>
-                    <span class="value">R$ {{ subscription.value | number:'1.2-2' }}</span>
-                  </div>
-                  <div class="info-row">
-                    <span class="label">Ciclo:</span>
-                    <span class="value">{{ getSubscriptionCycleTranslation(subscription.cycle) }}</span>
-                  </div>
-                  <div class="info-row">
-                    <span class="label">Próximo Vencimento:</span>
-                    <span class="value">{{ subscription.nextDueDate | date:'dd/MM/yyyy' }}</span>
-                  </div>
-                  <div class="info-row">
-                    <span class="label">Método:</span>
-                    <span class="value method">{{ getPaymentMethodTranslation(subscription.paymentMethod) }}</span>
-                  </div>
-                  <div class="info-row">
-                    <span class="label">Status:</span>
-                    <mat-chip-set>
-                      <mat-chip [class]="'status-chip ' + subscription.status.toLowerCase()" 
-                               [color]="getSubscriptionStatusColor(subscription.status)" 
-                               selected>
-                        {{ getSubscriptionStatusTranslation(subscription.status) }}
-                      </mat-chip>
-                    </mat-chip-set>
-                  </div>
-
-                  <!-- Novo: Progresso das Parcelas -->
-                  <div class="installments-progress" *ngIf="subscription.subscriptionDetails?.installments">
-                    <div class="progress-header">
-                      <span class="label">Progresso das Parcelas:</span>
-                      <span class="value">
-                        {{ getCompletedInstallments(subscription) }}/{{ subscription.subscriptionDetails.installments!.total }}
-                      </span>
-                    </div>
-                    <div class="progress-bar">
-                      <div class="progress-fill" 
-                           [style.width.%]="getInstallmentsProgress(subscription)">
-                      </div>
-                    </div>
-                    <div class="progress-info">
-                      {{ getInstallmentsProgress(subscription) }}% concluído
-                    </div>
-                  </div>
-                </div>
-
-                <mat-expansion-panel class="custom-expansion">
-                  <mat-expansion-panel-header>
-                    <mat-panel-title>
-                      <mat-icon>history</mat-icon>
-                      Histórico de Pagamentos
-                    </mat-panel-title>
-                  </mat-expansion-panel-header>
-                  
-                  <div class="payments-history">
-                    <div class="payments-list">
-                      <div *ngFor="let payment of subscription.subscriptionDetails?.paymentHistory" 
-                           class="payment-history-item">
-                        <div class="payment-history-info">
-                          <div class="date">
-                            <mat-icon>event</mat-icon>
-                            {{ payment.date | date:'dd/MM/yyyy' }}
-                          </div>
-                          <div class="amount">
-                            <mat-icon>attach_money</mat-icon>
-                            R$ {{ payment.value | number:'1.2-2' }}
-                          </div>
-                          <div class="installment-info" *ngIf="payment.installment">
-                            <mat-icon>payment</mat-icon>
-                            Parcela {{ payment.installment }}
-                          </div>
-                          <mat-chip-set>
-                            <mat-chip [class]="'status-chip ' + payment.status.toLowerCase()" 
-                                     [color]="getStatusColor(payment.status)" 
-                                     selected>
-                              {{ getPaymentStatusTranslation(payment.status) }}
-                            </mat-chip>
-                          </mat-chip-set>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </mat-expansion-panel>
-              </mat-card-content>
-            </mat-card>
-          </div>
-        </mat-tab>
-      </mat-tab-group>
-    </div>
-
-    <!-- Template para lista de pagamentos -->
-    <ng-template #paymentsList let-payments>
-      <div class="payments-list">
-        <div *ngFor="let payment of payments" class="payment-history-item">
-          <div class="payment-history-info">
-            <div class="date">
-              <mat-icon>event</mat-icon>
-              {{ payment.createdAt | date:'dd/MM/yyyy' }}
-            </div>
-            <div class="amount">
-              <mat-icon>attach_money</mat-icon>
-              R$ {{ payment.amount | number:'1.2-2' }}
-            </div>
-            <mat-chip-set>
-              <mat-chip [class]="'status-chip ' + payment.status.toLowerCase()" 
-                       [color]="getStatusColor(payment.status)" 
-                       selected>
-                {{ payment.status }}
-              </mat-chip>
-            </mat-chip-set>
-          </div>
-        </div>
-      </div>
-    </ng-template>
-  `,
-  styles: [`
-    .history-container {
-      padding: 20px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .custom-tabs {
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .tab-icon {
-      margin-right: 8px;
-    }
-
-    .payments-container, .subscriptions-container {
-      padding: 20px;
-      display: grid;
-      gap: 20px;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    }
-
-    .animate-in {
-      animation: fadeIn 0.5s ease-out;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .payment-card, .subscription-card {
-      border-radius: 8px;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-
-      &:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-      }
-    }
-
-    .payment-icon, .subscription-icon {
-      background-color: #f5f5f5;
-      border-radius: 50%;
-      padding: 8px;
-      
-      &.pix { color: #32BCAD; }
-      &.credit_card { color: #5C6BC0; }
-      &.boleto { color: #FFA726; }
-    }
-
-    .info-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-      padding: 8px;
-      background: #f8f9fa;
-      border-radius: 4px;
-
-      .label {
-        color: #666;
-        font-weight: 500;
-      }
-
-      .value {
-        font-weight: 600;
-        
-        &.method {
-          padding: 4px 8px;
-          border-radius: 4px;
-          background: #e9ecef;
-          font-size: 0.9em;
-        }
-      }
-    }
-
-    .status-chip {
-      min-width: 100px;
-      justify-content: center;
-      
-      &.confirmed, &.received, &.active {
-        background-color: #4CAF50 !important;
-        color: white;
-      }
-      
-      &.pending {
-        background-color: #FFA726 !important;
-        color: white;
-      }
-      
-      &.overdue {
-        background-color: #f44336 !important;
-        color: white;
-      }
-      
-      &.canceled, &.expired {
-        background-color: #9E9E9E !important;
-        color: white;
-      }
-    }
-
-    .custom-expansion {
-      margin-top: 16px;
-      border-radius: 4px;
-      
-      ::ng-deep .mat-expansion-panel-header {
-        padding: 16px;
-        
-        .mat-expansion-panel-header-title {
-          color: #333;
-          font-weight: 500;
-          
-          mat-icon {
-            margin-right: 8px;
-          }
-        }
-      }
-    }
-
-    .payment-details {
-      padding: 16px;
-
-      .detail-item {
-        display: flex;
-        align-items: center;
-        margin-bottom: 16px;
-        
-        mat-icon {
-          margin-right: 8px;
-          color: #666;
-        }
-      }
-
-      .pix-details {
-        flex-direction: column;
-        align-items: center;
-        
-        .qr-container {
-          margin: 16px 0;
-          padding: 16px;
-          background: white;
-          border-radius: 8px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          
-          img {
-            max-width: 200px;
-            height: auto;
-          }
-        }
-        
-        .pix-code {
-          width: 100%;
-          text-align: center;
-          
-          pre {
-            background: #f5f5f5;
-            padding: 12px;
-            border-radius: 4px;
-            font-family: monospace;
-            overflow-x: auto;
-            margin: 8px 0;
-          }
-        }
-      }
-    }
-
-    .payments-history {
-      .payment-history-item {
-        padding: 16px;
-        border-bottom: 1px solid #eee;
-        
-        &:last-child {
-          border-bottom: none;
-        }
-        
-        .payment-history-info {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 16px;
-          flex-wrap: wrap;
-          
-          .date, .amount {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #666;
-            min-width: 150px;
-            
-            mat-icon {
-              font-size: 18px;
-              width: 18px;
-              height: 18px;
-            }
-          }
-
-          mat-chip-set {
-            min-width: 120px;
-          }
-        }
-      }
-    }
-
-    .installments-progress {
-      margin: 16px 0;
-      padding: 16px;
-      background: #f8f9fa;
-      border-radius: 8px;
-    }
-
-    .progress-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-
-      .label {
-        color: #666;
-        font-weight: 500;
-      }
-
-      .value {
-        font-weight: 600;
-        color: #2196F3;
-      }
-    }
-
-    .progress-bar {
-      height: 8px;
-      background: #e9ecef;
-      border-radius: 4px;
-      overflow: hidden;
-      margin: 8px 0;
-    }
-
-    .progress-fill {
-      height: 100%;
-      background: #2196F3;
-      transition: width 0.3s ease;
-    }
-
-    .progress-info {
-      text-align: center;
-      font-size: 0.9em;
-      color: #666;
-    }
-
-    .installment-info {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: #666;
-      font-weight: 500;
-    }
-
-    @media (max-width: 600px) {
-      .history-container {
-        padding: 10px;
-      }
-
-      .payments-container, .subscriptions-container {
-        grid-template-columns: 1fr;
-      }
-
-      .payment-history-info {
-        flex-direction: column;
-        gap: 12px;
-        align-items: flex-start !important;
-
-        .date, .amount {
-          min-width: 100% !important;
-        }
-
-        mat-chip-set {
-          width: 100%;
-          display: flex;
-          justify-content: flex-start;
-        }
-      }
-    }
-  `]
+  templateUrl: './payment-history.component.html',
+  styleUrls: ['./payment-history.component.scss']
 })
 export class PaymentHistoryComponent implements OnInit {
   payments$!: Observable<PaymentTransaction[]>;
   subscriptions$!: Observable<Subscription[]>;
   userId: string = '';
+  loading = true;
+  error: string | null = null;
 
   constructor(
     private paymentService: PaymentService,
-    private snackBar: MatSnackBar,
-    private route: ActivatedRoute
+    private courseService: CourseService,
+    private asaasService: AsaasService,
+    private studentService: StudentService,
+    private route: ActivatedRoute,
+    private snackBar: MatSnackBar
   ) {}
 
   ngOnInit() {
@@ -719,7 +220,6 @@ export class PaymentHistoryComponent implements OnInit {
         this.userId = params['id'];
         this.loadUserData();
       } else {
-        // Se não houver ID na URL, usa o usuário logado
         const auth = getAuth();
         this.userId = auth.currentUser?.uid || '';
         if (this.userId) {
@@ -729,26 +229,58 @@ export class PaymentHistoryComponent implements OnInit {
     });
   }
 
-  private loadUserData() {
-    // Em ambiente de desenvolvimento, use dados mockados
-    if (!environment.production) {
-      this.payments$ = of(MOCK_PAYMENTS);
-      this.subscriptions$ = of(MOCK_SUBSCRIPTIONS);
-      return;
+  private async loadUserData() {
+    try {
+      this.loading = true;
+      const student = await this.studentService.selectStudent(this.userId);
+      
+      if (!student()) {
+        throw new Error('Estudante não encontrado');
+      }
+
+      const customer = await firstValueFrom(this.asaasService.getCustomerByEmail(student()?.email!));
+      
+      if (!customer?.asaasId) {
+        throw new Error('Cliente Asaas não encontrado');
+      }
+
+      // Carregar transações e complementar com dados do curso
+      const transactions = await firstValueFrom(this.paymentService.getCustomerTransactions(customer.asaasId));
+      const transactionsWithDetails = await Promise.all(
+        transactions.map(async (transaction) => {
+          try {
+            const course = await this.courseService.getById(transaction.courseId);
+            
+            return {
+              ...transaction,
+              paymentDetails: {
+                description: course.name || 'Curso não encontrado',
+                invoiceUrl: transaction.invoiceUrl,
+                bankSlipUrl: transaction.bankSlipUrl,
+                pixQrCodeUrl: transaction.paymentMethod === 'PIX' ? transaction.pixQrCodeUrl : undefined,
+                pixCopiaECola: transaction.paymentMethod === 'PIX' ? transaction.pixCopiaECola : undefined,
+                installments: transaction.installments ? {
+                  total: transaction.installments.total || 1,
+                  current: transaction.installments.current || 1,
+                  value: transaction.installments.value || transaction.amount
+                } : undefined
+              }
+            } as PaymentTransaction;
+          } catch (error) {
+            console.error(`Erro ao carregar detalhes do curso ${transaction.courseId}:`, error);
+            return transaction;
+          }
+        })
+      );
+
+      this.payments$ = of(transactionsWithDetails);
+      this.subscriptions$ = this.paymentService.getCustomerSubscriptions(customer.asaasId);
+    } catch (error) {
+      console.error('Erro ao carregar dados do usuário:', error);
+      this.error = 'Erro ao carregar histórico de pagamentos';
+    } finally {
+      this.loading = false;
     }
-
-    // Em produção, carrega dados reais
-    this.payments$ = this.paymentService.getCustomerTransactions(this.userId);
-    this.subscriptions$ = this.paymentService.getCustomerSubscriptions(this.userId);
-  }
-
-  getSubscriptionPayments(subscriptionId: string): Observable<PaymentTransaction[]> {
-    // Retornar alguns pagamentos mockados para a assinatura
-    return of(MOCK_PAYMENTS.map(p => ({
-      ...p,
-      type: 'SUBSCRIPTION' as const,
-      subscriptionId: subscriptionId
-    })));
   }
 
   getStatusColor(status: string): string {

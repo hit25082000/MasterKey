@@ -711,13 +711,15 @@ exports.createAsaasPayment = functions.https.onRequest((req, res) => {
 
     try {
       const { 
-        amount, 
+        value, 
         courseId, 
-        paymentMethod, 
+        billingType, 
         creditCardInfo,
         customer 
       } = req.body;
-      if (!amount || !courseId || !paymentMethod || !customer) {
+
+      console.log(req.body)
+      if (!value || !courseId || !billingType || !customer) {
         return res.status(400).json({
           error: 'Dados incompletos para criar pagamento'
         });
@@ -725,27 +727,13 @@ exports.createAsaasPayment = functions.https.onRequest((req, res) => {
 
       // Preparar dados do pagamento
       const paymentData = {
-        customer: customer.asaasId, // Usar o ID do Asaas
-        billingType: paymentMethod,
-        value: amount,
+        customer: customer, // Usar o ID do Asaas
+        billingType: billingType,
+        value: value,
         dueDate: new Date(new Date() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         description: `Pagamento do curso ${courseId}`,
         externalReference: courseId,
-        //postalService: false
-      };
-
-      // if (paymentMethod === 'CREDIT_CARD' && creditCardInfo) {
-      //   paymentData.creditCard = creditCardInfo;
-      //   // paymentData.creditCardHolderInfo = {
-      //   //   name: customer.name,
-      //   //   email: customer.email,
-      //   //   cpfCnpj: customer.cpfCnpj.replace(/\D/g, ''),
-      //   //   postalCode: customer.postalCode,
-      //   //   addressNumber: customer.addressNumber,
-      //   //   phone: customer.phone.replace(/\D/g, ''),
-      //   //   cep: '79005160'
-      //   // };
-      // }
+      };       
 
       const paymentResponse = await fetch(`${config.asaas.apiUrl}/payments`, {
         method: 'POST',
@@ -767,14 +755,14 @@ exports.createAsaasPayment = functions.https.onRequest((req, res) => {
       // Salvar transação no Firestore
       const db = admin.firestore();
       const transactionRef = db.collection('transactions').doc(asaasPayment.id);
-
+      console.log(asaasPayment)
       await transactionRef.set({
         asaasId: asaasPayment.id,
         customerId: asaasPayment.customer,
-            courseId: courseId,
-        amount: amount,
+        courseId: courseId,
+        amount: value,
         status: asaasPayment.status,
-        paymentMethod: paymentMethod,
+        paymentMethod: billingType,
         createdAt: new Date(),
         updatedAt:  new Date(),
         dueDate: asaasPayment.dueDate,

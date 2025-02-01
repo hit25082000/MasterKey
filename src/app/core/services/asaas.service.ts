@@ -1,11 +1,12 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { Observable, from, throwError, of } from 'rxjs';
 import { map, catchError, switchMap } from 'rxjs/operators';
 import { AsaasCustomer, AsaasPayment, AsaasSubscription, AsaasResponse } from '../interfaces/asaas.interface';
-import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { getAuth } from '@angular/fire/auth';
+import { FirestoreService } from './firestore.service';
+import { where } from '@angular/fire/firestore';
 
 interface CustomerResponse {
   customerId?: string;
@@ -23,6 +24,7 @@ interface CustomerResponse {
 }
 
 interface FirestoreCustomerData {
+  id?: string;
   name?: string;
   email?: string;
   cpfCnpj?: string;
@@ -38,10 +40,10 @@ interface FirestoreCustomerData {
 export class AsaasService {
   private apiUrl = environment.apiUrl;
   private headers = new HttpHeaders();
+  private firestore = inject(FirestoreService);
 
   constructor(
     private http: HttpClient,
-    private firestore: AngularFirestore
   ) {
     this.updateHeaders();
   }
@@ -51,7 +53,7 @@ export class AsaasService {
     const token = await auth.currentUser?.getIdToken();
     this.headers = new HttpHeaders()
       .set('Content-Type', 'application/json')
-      .set('Authorization', `Bearer ${token}`)
+      .set('Authorization', `Bearer ${token}`);
   }
 
   // Clientes
@@ -94,46 +96,23 @@ export class AsaasService {
   private async checkExistingCustomer(customerData: any): Promise<CustomerResponse | null> {
     try {
       // Buscar por email
-      const emailQuery = await this.firestore
-        .collection('customers')
-        .ref.where('email', '==', customerData.email)
-        .get();
+      const customers = await this.firestore.getDocumentsByQuery<FirestoreCustomerData>(
+        'customers',
+        where('email', '==', customerData.email)
+      );
 
-      if (!emailQuery.empty) {
-        const doc = emailQuery.docs[0];
-        const data = doc.data() as FirestoreCustomerData;
+      if (customers && customers.length > 0) {
+        const customer = customers[0];
         return {
-          id: doc.id,
-          name: data.name || '',
-          email: data.email || '',
-          cpfCnpj: data.cpfCnpj || '',
-          phone: data.phone || '',
-          postalCode: data.postalCode || '',
-          addressNumber: data.addressNumber || '',
-          asaasId: data.asaasId || '',
-          customerId: data.asaasId || ''
-        };
-      }
-
-      // Buscar por CPF
-      const cpfQuery = await this.firestore
-        .collection('customers')
-        .ref.where('cpfCnpj', '==', customerData.cpfCnpj)
-        .get();
-
-      if (!cpfQuery.empty) {
-        const doc = cpfQuery.docs[0];
-        const data = doc.data() as FirestoreCustomerData;
-        return {
-          id: doc.id,
-          name: data.name || '',
-          email: data.email || '',
-          cpfCnpj: data.cpfCnpj || '',
-          phone: data.phone || '',
-          postalCode: data.postalCode || '',
-          addressNumber: data.addressNumber || '',
-          asaasId: data.asaasId || '',
-          customerId: data.asaasId || ''
+          id: customer.id,
+          name: customer.name || '',
+          email: customer.email || '',
+          cpfCnpj: customer.cpfCnpj || '',
+          phone: customer.phone || '',
+          postalCode: customer.postalCode || '',
+          addressNumber: customer.addressNumber || '',
+          asaasId: customer.asaasId || '',
+          customerId: customer.asaasId || ''
         };
       }
 
@@ -149,6 +128,35 @@ export class AsaasService {
       headers: this.headers,
       withCredentials: false
     });
+  }
+
+  getCustomerByEmail(email: string): Observable<CustomerResponse | null> {
+    return from(this.firestore.getDocumentsByQuery<FirestoreCustomerData>(
+      'customers',
+      where('email', '==', email)
+    )).pipe(
+      map(customers => {
+        if (customers && customers.length > 0) {
+          const customer = customers[0];
+          return {
+            id: customer.id,
+            name: customer.name || '',
+            email: customer.email || '',
+            cpfCnpj: customer.cpfCnpj || '',
+            phone: customer.phone || '',
+            postalCode: customer.postalCode || '',
+            addressNumber: customer.addressNumber || '',
+            asaasId: customer.asaasId || '',
+            customerId: customer.asaasId || ''
+          };
+        }
+        return null;
+      }),
+      catchError(error => {
+        console.error('Erro ao buscar cliente por email:', error);
+        return throwError(() => error);
+      })
+    );
   }
 
   // Pagamentos
@@ -180,8 +188,8 @@ export class AsaasService {
 
   // Assinaturas
   createSubscription(subscriptionData: any, courseId: string): Observable<any> {
-    const data =  courseId ? { ...subscriptionData, courseId } : subscriptionData;
-    return this.http.post(`${this.apiUrl}/createAsaasSubscription`,data).pipe(
+    const data = courseId ? { ...subscriptionData, courseId } : subscriptionData;
+    return this.http.post(`${this.apiUrl}/createAsaasSubscription`, data).pipe(
       catchError(error => {
         console.error('Erro ao criar assinatura:', error);
         return throwError(() => error);

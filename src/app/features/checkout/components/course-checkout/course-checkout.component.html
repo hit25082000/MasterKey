@@ -13,7 +13,9 @@
 
     <app-payment 
   [courseId]="course()?.id!"
-  [courseValue]="course()?.price!"></app-payment>
+  [courseValue]="course()?.price!"
+  [maxInstallments]="course()?.portionCount!"
+  ></app-payment>
 
     
     <!-- <form [formGroup]="customerForm" class="contact-form">

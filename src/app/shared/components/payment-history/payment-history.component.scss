@@ -1,0 +1,283 @@
+
+.history-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.custom-tabs {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.tab-icon {
+  margin-right: 8px;
+}
+
+.payments-container, .subscriptions-container {
+  padding: 20px;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+.animate-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.payment-card, .subscription-card {
+  border-radius: 8px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  }
+}
+
+.payment-icon, .subscription-icon {
+  background-color: #f5f5f5;
+  border-radius: 50%;
+  padding: 8px;
+  
+  &.pix { color: #32BCAD; }
+  &.credit_card { color: #5C6BC0; }
+  &.boleto { color: #FFA726; }
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 8px;
+  background: #f8f9fa;
+  border-radius: 4px;
+
+  .label {
+    color: #666;
+    font-weight: 500;
+  }
+
+  .value {
+    font-weight: 600;
+    
+    &.method {
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: #e9ecef;
+      font-size: 0.9em;
+    }
+  }
+}
+
+.status-chip {
+  min-width: 100px;
+  justify-content: center;
+  
+  &.confirmed, &.received, &.active {
+    background-color: #4CAF50 !important;
+    color: white;
+  }
+  
+  &.pending {
+    background-color: #FFA726 !important;
+    color: white;
+  }
+  
+  &.overdue {
+    background-color: #f44336 !important;
+    color: white;
+  }
+  
+  &.canceled, &.expired {
+    background-color: #9E9E9E !important;
+    color: white;
+  }
+}
+
+.custom-expansion {
+  margin-top: 16px;
+  border-radius: 4px;
+  
+  ::ng-deep .mat-expansion-panel-header {
+    padding: 16px;
+    
+    .mat-expansion-panel-header-title {
+      color: #333;
+      font-weight: 500;
+      
+      mat-icon {
+        margin-right: 8px;
+      }
+    }
+  }
+}
+
+.payment-details {
+  padding: 16px;
+
+  .detail-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+    
+    mat-icon {
+      margin-right: 8px;
+      color: #666;
+    }
+  }
+
+  .pix-details {
+    flex-direction: column;
+    align-items: center;
+    
+    .qr-container {
+      margin: 16px 0;
+      padding: 16px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      
+      img {
+        max-width: 200px;
+        height: auto;
+      }
+    }
+    
+    .pix-code {
+      width: 100%;
+      text-align: center;
+      
+      pre {
+        background: #f5f5f5;
+        padding: 12px;
+        border-radius: 4px;
+        font-family: monospace;
+        overflow-x: auto;
+        margin: 8px 0;
+      }
+    }
+  }
+}
+
+.payments-history {
+  .payment-history-item {
+    padding: 16px;
+    border-bottom: 1px solid #eee;
+    
+    &:last-child {
+      border-bottom: none;
+    }
+    
+    .payment-history-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      
+      .date, .amount {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #666;
+        min-width: 150px;
+        
+        mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+        }
+      }
+
+      mat-chip-set {
+        min-width: 120px;
+      }
+    }
+  }
+}
+
+.installments-progress {
+  margin: 16px 0;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+
+  .label {
+    color: #666;
+    font-weight: 500;
+  }
+
+  .value {
+    font-weight: 600;
+    color: #2196F3;
+  }
+}
+
+.progress-bar {
+  height: 8px;
+  background: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 8px 0;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #2196F3;
+  transition: width 0.3s ease;
+}
+
+.progress-info {
+  text-align: center;
+  font-size: 0.9em;
+  color: #666;
+}
+
+.installment-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #666;
+  font-weight: 500;
+}
+
+@media (max-width: 600px) {
+  .history-container {
+    padding: 10px;
+  }
+
+  .payments-container, .subscriptions-container {
+    grid-template-columns: 1fr;
+  }
+
+  .payment-history-info {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start !important;
+
+    .date, .amount {
+      min-width: 100% !important;
+    }
+
+    mat-chip-set {
+      width: 100%;
+      display: flex;
+      justify-content: flex-start;
+    }
+  }
+}
