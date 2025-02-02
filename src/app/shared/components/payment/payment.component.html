@@ -24,13 +24,6 @@
 
             <!-- Formulários compartilhados -->
             <ng-container *ngTemplateOutlet="sharedForms"></ng-container>
-
-            <button mat-raised-button color="primary" 
-                    (click)="processPayment(false)" 
-                    [disabled]="loading || !isFormValid()">
-              <mat-spinner *ngIf="loading" diameter="20"></mat-spinner>
-              <span *ngIf="!loading">Pagar Agora</span>
-            </button>
           </div>
         </mat-tab>
 
@@ -62,16 +55,6 @@
               <p class="installments-info">Total de parcelas: {{ getInstallmentsCount() }}</p>
               <p class="total-info">Valor total do curso: R$ {{ courseValue | number:'1.2-2' }}</p>
             </div>
-
-            <!-- Formulários compartilhados -->
-            <ng-container *ngTemplateOutlet="sharedForms"></ng-container>
-
-            <button mat-raised-button color="primary" 
-                    (click)="processPayment(true)" 
-                    [disabled]="loading || !isFormValid()">
-              <mat-spinner *ngIf="loading" diameter="20"></mat-spinner>
-              <span *ngIf="!loading">Assinar Agora</span>
-            </button>
           </div>
         </mat-tab>
       </mat-tab-group>

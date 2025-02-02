@@ -48,7 +48,7 @@ export class PaymentHistoryComponent implements OnInit {
   payments$!: Observable<PaymentTransaction[]>;
   subscriptions$!: Observable<Subscription[]>;
   userId: string = '';
-  loadingService = inject(LoadingService)
+  private loadingService = inject(LoadingService)
   error: string | null = null;
 
   constructor(

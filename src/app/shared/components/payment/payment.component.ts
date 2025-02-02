@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, inject, Input, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -12,6 +12,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { CommonModule } from '@angular/common';
 import { AsaasService } from '../../../core/services/asaas.service';
 import { firstValueFrom } from 'rxjs';
+import { LoadingService } from '../../services/loading.service';
 
 interface SubscriptionData {
   customer: string;
@@ -90,7 +91,7 @@ export class PaymentComponent implements OnInit {
   creditCardForm!: FormGroup;
   selectedPaymentType: 'BOLETO' | 'CREDIT_CARD' | 'PIX' = 'PIX';
   selectedCycle: 'MONTHLY' = 'MONTHLY';
-  loading = false;
+  private loadingService = inject(LoadingService)
   pixQRCode: string = '';
   paymentUrl: string = '';
 
@@ -193,7 +194,7 @@ export class PaymentComponent implements OnInit {
       return;
     }
 
-    this.loading = true;
+    this.loadingService.show();
 
     try {
       const customerData = {
@@ -276,7 +277,7 @@ export class PaymentComponent implements OnInit {
         { duration: 5000 }
       );
     } finally {
-      this.loading = false;
+      this.loadingService.hide();
     }
   }
 
