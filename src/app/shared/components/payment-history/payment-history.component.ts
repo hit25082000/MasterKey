@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatCardModule } from '@angular/material/card';
@@ -24,162 +24,7 @@ import { environment } from '../../../../environments/environment';
 import { StudentService } from '../../../features/student/services/student.service';
 import { AsaasService } from '../../../core/services/asaas.service';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-
-// Dados mockados para teste
-const MOCK_PAYMENTS: PaymentTransaction[] = [
-  {
-    id: '1',
-    customerId: 'customer1',
-    customerName: 'João Silva',
-    customerEmail: 'joao@email.com',
-    customerPhone: '11999999999',
-    courseId: 'course1',
-    paymentId: 'pay_123',
-    amount: 199.90,
-    status: 'CONFIRMED',
-    paymentMethod: 'PIX',
-    type: 'PAYMENT',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    paymentDetails: {
-      description: 'Curso de Angular Avançado',
-      pixQrCodeUrl: 'https://via.placeholder.com/150',
-      pixCopiaECola: '00020126580014br.gov.bcb.pix0136a629532e-7831-4c76-a88f-5e6919b67'
-    }
-  },
-  {
-    id: '2',
-    customerId: 'customer1',
-    customerName: 'João Silva',
-    customerEmail: 'joao@email.com',
-    customerPhone: '11999999999',
-    courseId: 'course2',
-    paymentId: 'pay_456',
-    amount: 299.90,
-    status: 'PENDING',
-    paymentMethod: 'BOLETO',
-    type: 'PAYMENT',
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 86400000).toISOString(),
-    paymentDetails: {
-      description: 'Curso de React Native',
-      bankSlipUrl: 'https://exemplo.com/boleto'
-    }
-  },
-  {
-    id: '3',
-    customerId: 'customer1',
-    customerName: 'João Silva',
-    customerEmail: 'joao@email.com',
-    customerPhone: '11999999999',
-    courseId: 'course3',
-    paymentId: 'pay_789',
-    amount: 1499.90,
-    status: 'CONFIRMED',
-    paymentMethod: 'CREDIT_CARD',
-    type: 'PAYMENT',
-    createdAt: new Date(Date.now() - 5 * 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 5 * 86400000).toISOString(),
-    paymentDetails: {
-      description: 'Curso de Data Science (12x R$ 124,99)',
-      invoiceUrl: 'https://exemplo.com/fatura',
-      installments: {
-        total: 12,
-        current: 1,
-        value: 124.99
-      }
-    }
-  },
-  {
-    id: '4',
-    customerId: 'customer1',
-    customerName: 'João Silva',
-    customerEmail: 'joao@email.com',
-    customerPhone: '11999999999',
-    courseId: 'course4',
-    paymentId: 'pay_101',
-    amount: 89.90,
-    status: 'RECEIVED',
-    paymentMethod: 'CREDIT_CARD',
-    type: 'SUBSCRIPTION',
-    subscriptionId: 'sub_123',
-    createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-    paymentDetails: {
-      description: 'Assinatura Premium - Pagamento Mensal',
-      invoiceUrl: 'https://exemplo.com/fatura-recorrente'
-    }
-  }
-];
-
-const MOCK_SUBSCRIPTIONS: Subscription[] = [
-  {
-    id: '1',
-    courseId: 'course3',
-    courseName: 'Assinatura Premium',
-    customerId: 'customer1',
-    customerEmail: 'joao@email.com',
-    asaasSubscriptionId: 'sub_123',
-    value: 89.90,
-    cycle: 'MONTHLY',
-    paymentMethod: 'CREDIT_CARD',
-    status: 'ACTIVE',
-    nextDueDate: new Date(Date.now() + 28 * 86400000).toISOString(),
-    createdAt: new Date(Date.now() - 60 * 86400000).toISOString(),
-    updatedAt: new Date().toISOString(),
-    subscriptionDetails: {
-      description: 'Assinatura Premium - Acesso a todos os cursos',
-      paymentHistory: [
-        {
-          date: new Date(Date.now() - 2 * 86400000).toISOString(),
-          status: 'RECEIVED',
-          value: 89.90
-        },
-        {
-          date: new Date(Date.now() - 32 * 86400000).toISOString(),
-          status: 'RECEIVED',
-          value: 89.90
-        },
-        {
-          date: new Date(Date.now() - 62 * 86400000).toISOString(),
-          status: 'RECEIVED',
-          value: 89.90
-        }
-      ]
-    }
-  },
-  {
-    id: '2',
-    courseId: 'course4',
-    courseName: 'Plano Anual Premium',
-    customerId: 'customer1',
-    customerEmail: 'joao@email.com',
-    asaasSubscriptionId: 'sub_456',
-    value: 899.90,
-    cycle: 'YEARLY',
-    paymentMethod: 'CREDIT_CARD',
-    status: 'ACTIVE',
-    nextDueDate: new Date(Date.now() + 335 * 86400000).toISOString(),
-    createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
-    updatedAt: new Date().toISOString(),
-    subscriptionDetails: {
-      description: 'Plano Anual Premium - Economia de 50%',
-      installments: {
-        total: 12,
-        current: 1,
-        value: 74.99
-      },
-      paymentHistory: [
-        {
-          date: new Date(Date.now() - 2 * 86400000).toISOString(),
-          status: 'RECEIVED',
-          value: 74.99,
-          installment: 1
-        }
-      ]
-    }
-  }
-];
+import { LoadingService } from '../../services/loading.service';
 
 @Component({
   selector: 'app-payment-history',
@@ -203,7 +48,7 @@ export class PaymentHistoryComponent implements OnInit {
   payments$!: Observable<PaymentTransaction[]>;
   subscriptions$!: Observable<Subscription[]>;
   userId: string = '';
-  loading = true;
+  loadingService = inject(LoadingService)
   error: string | null = null;
 
   constructor(
@@ -234,7 +79,7 @@ export class PaymentHistoryComponent implements OnInit {
 
   private async loadUserData() {
     try {
-      this.loading = true;
+      this.loadingService.show()
       const student = await this.studentService.selectStudent(this.userId);
       
       if (!student()) {
@@ -332,8 +177,22 @@ export class PaymentHistoryComponent implements OnInit {
       console.error('Erro ao carregar dados do usuário:', error);
       this.error = 'Erro ao carregar histórico de pagamentos';
     } finally {
-      this.loading = false;
+      this.loadingService.hide();
     }
+  }
+
+  convertTimestamp(timestamp: any): Date {
+    if (!timestamp) return new Date();
+    
+    if (timestamp.seconds) {
+      // É um Timestamp do Firestore
+      return new Date(timestamp.seconds * 1000);
+    } else if (typeof timestamp === 'string') {
+      // É uma string ISO
+      return new Date(timestamp);
+    }
+    
+    return new Date(timestamp);
   }
 
   getStatusColor(status: string): string {
@@ -409,17 +268,45 @@ export class PaymentHistoryComponent implements OnInit {
     return Math.round((completed / total) * 100);
   }
 
-  async gerarPagamentoFatura(subscription: Subscription, paymentMethod: 'PIX' | 'BOLETO' | 'CREDIT_CARD') {
+  async gerarPagamentoFatura(
+    subscription: Subscription, 
+    paymentMethod: 'PIX' | 'BOLETO' | 'CREDIT_CARD',
+    dataFatura: Date
+  ) {
+    this.loadingService.show()
     try {
+
+      // Validações de data
+      const hoje = new Date();
+      const dataLimite = new Date();
+      dataLimite.setDate(dataLimite.getDate() + 40);
+      
+      if (dataFatura > dataLimite) {
+        this.snackBar.open('Não é possível gerar pagamentos com mais de 40 dias de antecedência', 'OK', {
+          duration: 5000
+        });
+        return;
+      }
+
+      if (dataFatura < hoje) {
+        const diasAtraso = Math.floor((hoje.getTime() - dataFatura.getTime()) / (1000 * 60 * 60 * 24));
+        if (diasAtraso > 60) {
+          this.snackBar.open('Não é possível gerar pagamentos para faturas com mais de 60 dias de atraso', 'OK', {
+            duration: 5000
+          });
+          return;
+        }
+      }
+
       const paymentData = {
-        customer: subscription.asaasSubscriptionId,
+        customer: subscription.customerId,
         billingType: paymentMethod,
         value: subscription.value,
-        dueDate: subscription.nextDueDate,
+        dueDate: dataFatura.toISOString().split('T')[0], // Formato YYYY-MM-DD
         description: `Pagamento da assinatura - ${subscription.courseName}`,
-        externalReference: subscription.courseId
+        externalReference: subscription.courseId,
+        postalService: false // Desabilita envio de correspondência física
       };
-
       const response = await firstValueFrom(this.asaasService.createPayment(paymentData));
 
       if (response) {
@@ -432,48 +319,113 @@ export class PaymentHistoryComponent implements OnInit {
         });
 
         // Se for pagamento por cartão, redirecionar para a página de pagamento
-        if (paymentMethod === 'CREDIT_CARD' && response.invoiceUrl) {
+        if (response.invoiceUrl) {
           window.location.href = response.invoiceUrl;
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao gerar pagamento:', error);
-      this.snackBar.open('Erro ao gerar pagamento. Tente novamente.', 'OK', {
-        duration: 3000
-      });
+      
+      // Tratamento específico para erros do Asaas
+      if (error.response?.data?.errors) {
+        const errorMessage = error.response.data.errors
+          .map((err: any) => err.description)
+          .join(', ');
+        this.snackBar.open(`Erro ao gerar pagamento: ${errorMessage}`, 'OK', {
+          duration: 5000
+        });
+      } else {
+        this.snackBar.open('Erro ao gerar pagamento. Tente novamente.', 'OK', {
+          duration: 3000
+        });
+      }
+    }finally{
+      this.loadingService.hide()
     }
   }
 
   getProximasFaturas(subscription: Subscription): Date[] {
     const faturas: Date[] = [];
     const dataAtual = new Date();
-    const dataProximaFatura = new Date(subscription.nextDueDate);
+    let dataFatura = new Date(subscription.createdAt); // Começa da data de criação
+    const dataLimite = new Date();
+    dataLimite.setMonth(dataLimite.getMonth() + 12); // Limite de 12 meses para frente
     
-    // Gerar próximas 3 faturas baseado no ciclo
-    for (let i = 0; i < 3; i++) {
-      if (dataProximaFatura > dataAtual) {
-        faturas.push(new Date(dataProximaFatura));
-      }
-      
-      // Adicionar intervalo baseado no ciclo
+    // Ajustar para o primeiro vencimento
+    while (dataFatura < new Date(subscription.nextDueDate)) {
       switch (subscription.cycle) {
         case 'WEEKLY':
-          dataProximaFatura.setDate(dataProximaFatura.getDate() + 7);
+          dataFatura.setDate(dataFatura.getDate() + 7);
           break;
         case 'BIWEEKLY':
-          dataProximaFatura.setDate(dataProximaFatura.getDate() + 14);
+          dataFatura.setDate(dataFatura.getDate() + 14);
           break;
         case 'MONTHLY':
-          dataProximaFatura.setMonth(dataProximaFatura.getMonth() + 1);
+          dataFatura.setMonth(dataFatura.getMonth() + 1);
           break;
         case 'QUARTERLY':
-          dataProximaFatura.setMonth(dataProximaFatura.getMonth() + 3);
+          dataFatura.setMonth(dataFatura.getMonth() + 3);
           break;
         case 'SEMIANNUALLY':
-          dataProximaFatura.setMonth(dataProximaFatura.getMonth() + 6);
+          dataFatura.setMonth(dataFatura.getMonth() + 6);
           break;
         case 'YEARLY':
-          dataProximaFatura.setFullYear(dataProximaFatura.getFullYear() + 1);
+          dataFatura.setFullYear(dataFatura.getFullYear() + 1);
+          break;
+      }
+    }
+
+    // Voltar algumas faturas para mostrar histórico
+    for (let i = 0; i < 6; i++) { // Mostra até 6 faturas passadas
+      switch (subscription.cycle) {
+        case 'WEEKLY':
+          dataFatura.setDate(dataFatura.getDate() - 7);
+          break;
+        case 'BIWEEKLY':
+          dataFatura.setDate(dataFatura.getDate() - 14);
+          break;
+        case 'MONTHLY':
+          dataFatura.setMonth(dataFatura.getMonth() - 1);
+          break;
+        case 'QUARTERLY':
+          dataFatura.setMonth(dataFatura.getMonth() - 3);
+          break;
+        case 'SEMIANNUALLY':
+          dataFatura.setMonth(dataFatura.getMonth() - 6);
+          break;
+        case 'YEARLY':
+          dataFatura.setFullYear(dataFatura.getFullYear() - 1);
+          break;
+      }
+      
+      if (dataFatura >= new Date(subscription.createdAt)) {
+        faturas.unshift(new Date(dataFatura));
+      }
+    }
+
+    // Adicionar faturas futuras
+    dataFatura = new Date(subscription.nextDueDate);
+    while (dataFatura <= dataLimite) {
+      faturas.push(new Date(dataFatura));
+      
+      switch (subscription.cycle) {
+        case 'WEEKLY':
+          dataFatura.setDate(dataFatura.getDate() + 7);
+          break;
+        case 'BIWEEKLY':
+          dataFatura.setDate(dataFatura.getDate() + 14);
+          break;
+        case 'MONTHLY':
+          dataFatura.setMonth(dataFatura.getMonth() + 1);
+          break;
+        case 'QUARTERLY':
+          dataFatura.setMonth(dataFatura.getMonth() + 3);
+          break;
+        case 'SEMIANNUALLY':
+          dataFatura.setMonth(dataFatura.getMonth() + 6);
+          break;
+        case 'YEARLY':
+          dataFatura.setFullYear(dataFatura.getFullYear() + 1);
           break;
       }
     }
@@ -481,9 +433,18 @@ export class PaymentHistoryComponent implements OnInit {
     return faturas;
   }
 
-  getFaturaStatus(dataFatura: Date): 'pendente' | 'atrasada' | 'futura' {
+  getFaturaStatus(dataFatura: Date, subscription: Subscription): 'pendente' | 'atrasada' | 'futura' | 'paga' {
     const hoje = new Date();
     const fatura = new Date(dataFatura);
+    
+    // Verifica se a fatura já foi paga
+    const pagamento = subscription.subscriptionDetails?.paymentHistory?.find(
+      p => new Date(p.date).toDateString() === fatura.toDateString()
+    );
+    
+    if (pagamento) {
+      return 'paga';
+    }
     
     if (fatura < hoje) {
       return 'atrasada';
@@ -492,5 +453,44 @@ export class PaymentHistoryComponent implements OnInit {
     } else {
       return 'futura';
     }
+  }
+
+  isProximaFatura(dataFatura: Date, subscription: Subscription): boolean {
+    const hoje = new Date();
+    const fatura = new Date(dataFatura);
+    const status = this.getFaturaStatus(dataFatura, subscription);
+    
+    // A próxima fatura é a primeira não paga a partir de hoje
+    if (status !== 'paga' && fatura >= hoje) {
+      const todasFaturas = this.getProximasFaturas(subscription);
+      const proximasFaturas = todasFaturas.filter(d => 
+        this.getFaturaStatus(d, subscription) !== 'paga' && new Date(d) >= hoje
+      );
+      
+      return proximasFaturas[0]?.getTime() === fatura.getTime();
+    }
+    
+    return false;
+  }
+
+  getFaturaPagamento(dataFatura: Date, subscription: Subscription): { status: string; method?: string } {
+    const pagamento = subscription.subscriptionDetails?.paymentHistory?.find(
+      p => new Date(p.date).toDateString() === new Date(dataFatura).toDateString()
+    );
+    
+    if (pagamento) {
+      return {
+        status: pagamento.status,
+        method: pagamento.paymentMethod
+      };
+    }
+    
+    return {
+      status: this.getFaturaStatus(dataFatura, subscription)
+    };
+  }
+
+  isPagamentoAntecipado(dataFatura: Date, subscription: Subscription): boolean {
+    return dataFatura > new Date(subscription.nextDueDate);
   }
 } 

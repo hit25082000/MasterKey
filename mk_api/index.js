@@ -712,14 +712,16 @@ exports.createAsaasPayment = functions.https.onRequest((req, res) => {
     try {
       const { 
         value, 
-        courseId, 
+        externalReference, 
         billingType, 
         creditCardInfo,
+        description,
+        dueDate,
         customer 
       } = req.body;
 
       console.log(req.body)
-      if (!value || !courseId || !billingType || !customer) {
+      if (!value || !externalReference || !billingType || !customer) {
         return res.status(400).json({
           error: 'Dados incompletos para criar pagamento'
         });
@@ -730,9 +732,9 @@ exports.createAsaasPayment = functions.https.onRequest((req, res) => {
         customer: customer, // Usar o ID do Asaas
         billingType: billingType,
         value: value,
-        dueDate: new Date(new Date() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        description: `Pagamento do curso ${courseId}`,
-        externalReference: courseId,
+        dueDate: dueDate,
+        description: description,
+        externalReference: externalReference,
       };       
 
       const paymentResponse = await fetch(`${config.asaas.apiUrl}/payments`, {
@@ -755,11 +757,11 @@ exports.createAsaasPayment = functions.https.onRequest((req, res) => {
       // Salvar transação no Firestore
       const db = admin.firestore();
       const transactionRef = db.collection('transactions').doc(asaasPayment.id);
-      console.log(asaasPayment)
+
       await transactionRef.set({
         asaasId: asaasPayment.id,
         customerId: asaasPayment.customer,
-        courseId: courseId,
+        courseId: externalReference,
         amount: value,
         status: asaasPayment.status,
         paymentMethod: billingType,

@@ -489,7 +489,7 @@ export class PaymentTestComponent implements OnInit, OnDestroy {
         }
       };
 
-      const paymentResponse = await this.asaasService.createPayment(payment, 'TEST_COURSE').toPromise();
+      const paymentResponse = await this.asaasService.createPayment({...payment, courseId: 'TEST_COURSE'},).toPromise();
       
       if (!paymentResponse?.id) {
         throw new Error('Falha ao criar pagamento de teste');

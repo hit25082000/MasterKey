@@ -62,6 +62,7 @@ export interface Subscription {
       status: string;
       value: number;
       installment?: number;
+      paymentMethod?: string;
     }[];
   };
 }
@@ -125,4 +126,12 @@ export enum SubscriptionCycleTranslation {
   QUARTERLY = 'Trimestral',
   SEMIANNUALLY = 'Semestral',
   YEARLY = 'Anual'
+}
+
+interface PaymentHistory {
+  date: string;
+  status: string;
+  value: number;
+  installment?: number;
+  paymentMethod?: string;
 } 

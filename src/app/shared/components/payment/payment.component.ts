@@ -241,27 +241,18 @@ export class PaymentComponent implements OnInit {
           this.snackBar.open('Assinatura criada com sucesso!', 'OK', { duration: 3000 });
         }
       } else {
-        const paymentData: PaymentData = {
+        const paymentData = {
           customer: customerResponse.customerId,
           billingType: this.selectedPaymentType,
           value: this.courseValue,
           dueDate: new Date().toISOString().split('T')[0],
-          description: `Pagamento do curso ${this.courseId}`
-        };
-
-        if (this.selectedPaymentType === 'CREDIT_CARD') {
-          paymentData.creditCardHolderInfo = {
-            name: customerData.name,
-            email: customerData.email,
-            cpfCnpj: customerData.cpfCnpj,
-            postalCode: customerData.postalCode,
-            addressNumber: customerData.addressNumber,
-            phone: customerData.phone
-          };
-        }
+          description: `Pagamento do curso ${this.courseId}`,
+          externalReference: this.courseId,
+          postalService: false // Desabilita envio de correspondência física
+        }; 
 
         const paymentResponse = await firstValueFrom(
-          this.asaasService.createPayment(paymentData, this.courseId)
+          this.asaasService.createPayment(paymentData)
         );
 
         if (paymentResponse) {
