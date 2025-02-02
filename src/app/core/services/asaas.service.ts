@@ -4,11 +4,11 @@ import { environment } from '../../../environments/environment';
 import { Observable, from, throwError, of } from 'rxjs';
 import { map, catchError, switchMap } from 'rxjs/operators';
 import { AsaasCustomer, AsaasPayment, AsaasSubscription, AsaasResponse } from '../interfaces/asaas.interface';
-import { getAuth } from '@angular/fire/auth';
 import { FirestoreService } from './firestore.service';
 import { where } from '@angular/fire/firestore';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { retry, timeout } from 'rxjs/operators';
+import { AuthService } from '../services/auth.service';
 
 interface CustomerResponse {
   customerId?: string;
@@ -76,6 +76,24 @@ interface AsaasSubscriptionRequest extends BasePaymentRequest {
   cycle: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'SEMIANNUALLY' | 'YEARLY';
 }
 
+interface PaymentTransaction {
+  id?: string;
+  customerId: string;
+  courseId: string;
+  status: string;
+  type: string;
+  paymentMethod?: string;
+}
+
+interface Subscription {
+  id?: string;
+  customerId: string;
+  courseId: string;
+  status: string;
+  paymentMethod: string;
+  nextDueDate: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -87,17 +105,18 @@ export class AsaasService {
 
   constructor(
     private http: HttpClient,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private authService: AuthService
   ) {
     this.updateHeaders();
   }
 
   private async updateHeaders() {
-    const auth = getAuth();
-    const token = await auth.currentUser?.getIdToken();
+    const token = await this.authService.getIdToken();
     this.headers = new HttpHeaders()
       .set('Content-Type', 'application/json')
-      .set('Authorization', `Bearer ${token}`);
+      .set('Authorization', `Bearer ${token}`)
+      .set('Accept', 'application/json');
   }
 
   // Clientes
@@ -286,24 +305,78 @@ export class AsaasService {
     return null;
   }
 
+  private async checkExistingPayment(paymentData: AsaasPaymentRequest): Promise<PaymentTransaction | null> {
+    try {
+      // Buscar pagamentos pendentes para o mesmo curso e cliente
+      const customerId = typeof paymentData.customer === 'string' ? 
+        paymentData.customer : 
+        paymentData.customer.asaasId;
+
+      const externalReference = paymentData.externalReference;
+      if (!externalReference) {
+        return null;
+      }
+
+      const payments = await this.firestore.getDocumentsByQuery<PaymentTransaction>(
+        'transactions',
+        where('customerId', '==', customerId),
+        where('courseId', '==', externalReference),
+        where('status', '==', 'PENDING'),
+        where('type', '==', 'PAYMENT')
+      );
+      console.log(payments)
+      return payments && payments.length > 0 ? payments[0] : null;
+    } catch (error) {
+      console.error('Erro ao verificar pagamento existente:', error);
+      return null;
+    }
+  }
+
   // Método para criar pagamento com validações melhoradas
   createPayment(paymentData: AsaasPaymentRequest): Observable<any> {
-    const validationError = this.validatePaymentData(paymentData);
-    if (validationError) {
-      return throwError(() => new Error(validationError));
-    }
+    return from(this.updateHeaders()).pipe(
+      switchMap(() => {
+        // Validação inicial dos dados
+        const validationError = this.validatePaymentData(paymentData);
+        if (validationError) {
+          return throwError(() => new Error(validationError));
+        }
 
-    const paymentRequest = {
-      ...paymentData,
-      postalService: false,
-      dueDate: paymentData.dueDate || new Date().toISOString().split('T')[0]
-    };
+        // Preparar o objeto de requisição
+        const paymentRequest = {
+          ...paymentData,
+          postalService: false,
+          dueDate: paymentData.dueDate || new Date().toISOString().split('T')[0]
+        };
 
-    return this.http.post(
-      `${this.apiUrl}/createAsaasPayment`,
-      paymentRequest,
-      { headers: this.headers.append('access_token', this.apiKey) }
-    ).pipe(
+        // Verificar pagamentos existentes e criar novo pagamento
+        return from(this.checkExistingPayment(paymentData)).pipe(
+          switchMap(existingPayment => {
+            // Se encontrou pagamento pendente com mesmo método
+            if (existingPayment && existingPayment.paymentMethod === paymentData.billingType) {
+              return throwError(() => new Error('Já existe um pagamento pendente para este curso'));
+            }
+
+            // Se encontrou pagamento pendente com método diferente, deletar
+            if (existingPayment && existingPayment.id) {
+              return from(this.firestore.deleteDocument('transactions', existingPayment.id)).pipe(
+                switchMap(() => this.http.post(
+                  `${this.apiUrl}/createAsaasPayment`,
+                  paymentRequest,
+                  { headers: this.headers }
+                ))
+              );
+            }
+
+            // Se não encontrou pagamento pendente, criar novo
+            return this.http.post(
+              `${this.apiUrl}/createAsaasPayment`,
+              paymentRequest,
+              { headers: this.headers }
+            );
+          })
+        );
+      }),
       map(response => {
         if (!response) {
           throw new Error('Resposta vazia do servidor');
@@ -321,32 +394,83 @@ export class AsaasService {
     });
   }
 
+  private async checkExistingSubscription(subscriptionData: AsaasSubscriptionRequest, courseId: string): Promise<Subscription | null> {
+    try {
+      // Buscar assinaturas ativas para o mesmo curso e cliente
+      const customerId = typeof subscriptionData.customer === 'string' ? 
+        subscriptionData.customer : 
+        subscriptionData.customer.asaasId;
+
+      const subscriptions = await this.firestore.getDocumentsByQuery<Subscription>(
+        'subscriptions',
+        where('customerId', '==', customerId),
+        where('courseId', '==', courseId),
+        where('status', 'in', ['ACTIVE', 'PENDING'])
+      );
+
+      if (!subscriptions || subscriptions.length === 0) {
+        return null;
+      }
+
+      // Verificar se existe assinatura com próximo pagamento na mesma data
+      const nextDueDate = new Date(subscriptionData.nextDueDate).toISOString().split('T')[0];
+      return subscriptions.find(sub => 
+        new Date(sub.nextDueDate).toISOString().split('T')[0] === nextDueDate
+      ) || null;
+    } catch (error) {
+      console.error('Erro ao verificar assinatura existente:', error);
+      return null;
+    }
+  }
+
   // Método para criar assinatura com validações melhoradas
   createSubscription(subscriptionData: AsaasSubscriptionRequest, courseId: string): Observable<any> {
-    const validationError = this.validatePaymentData(subscriptionData);
-    if (validationError) {
-      return throwError(() => new Error(validationError));
-    }
+    return from(this.updateHeaders()).pipe(
+      switchMap(() => {
+        // Validação inicial dos dados
+        const validationError = this.validatePaymentData(subscriptionData);
+        if (validationError) {
+          return throwError(() => new Error(validationError));
+        }
 
-    const subscriptionRequest = {
-      ...subscriptionData,
-      courseId,
-      postalService: false,
-      nextDueDate: new Date(subscriptionData.nextDueDate).toISOString().split('T')[0]
-    };
+        // Preparar o objeto de requisição
+        const subscriptionRequest = {
+          ...subscriptionData,
+          courseId,
+          postalService: false,
+          nextDueDate: new Date(subscriptionData.nextDueDate).toISOString().split('T')[0]
+        };
 
-    return this.http.post(
-      `${this.apiUrl}/createAsaasSubscription`,
-      subscriptionRequest,
-      { headers: this.headers.append('access_token', this.apiKey) }
-    ).pipe(
+        // Verificar assinaturas existentes e criar nova assinatura
+        return from(this.checkExistingSubscription(subscriptionData, courseId)).pipe(
+          switchMap(existingSubscription => {
+            // Se encontrou assinatura ativa/pendente, não permite criar nova
+            if (existingSubscription) {
+              return throwError(() => new Error('Já existe uma assinatura ativa para este curso. Cada fatura pode ser paga com um método diferente.'));
+            }
+
+            // Se não encontrou assinatura ativa, criar nova
+            return this.http.post(
+              `${this.apiUrl}/createAsaasSubscription`,
+              subscriptionRequest,
+              { 
+                headers: this.headers,
+                withCredentials: false
+              }
+            );
+          })
+        );
+      }),
       map(response => {
         if (!response) {
           throw new Error('Resposta vazia do servidor');
         }
         return response;
       }),
-      catchError(error => this.handleAsaasError(error))
+      catchError(error => {
+        console.error('Erro na criação da assinatura:', error);
+        return this.handleAsaasError(error);
+      })
     );
   }
 

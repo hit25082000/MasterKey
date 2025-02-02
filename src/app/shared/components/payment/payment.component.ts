@@ -252,22 +252,21 @@ export class PaymentComponent implements OnInit {
           postalService: false // Desabilita envio de correspondência física
         }; 
 
-        const paymentResponse = await firstValueFrom(
-          this.asaasService.createPayment(paymentData)
-        );
+          this.asaasService.createPayment(paymentData).subscribe((paymentResponse)=>{   
 
-        if (paymentResponse) {
+            console.log(paymentResponse)
+            if (paymentResponse) {
           this.handlePaymentResponse(paymentResponse);
           const msg = this.selectedPaymentType === 'CREDIT_CARD' 
             ? 'Você será redirecionado para a página de pagamento do cartão'
             : 'Pagamento criado com sucesso!';
           this.snackBar.open(msg, 'OK', { duration: 5000 });
 
-          // Redirecionar para a página de pagamento do Asaas
           if (paymentResponse.invoiceUrl) {
             window.location.href = paymentResponse.invoiceUrl;
           }
         }
+      })
       }
     } catch (error) {
       console.error('Erro ao processar operação:', error);
