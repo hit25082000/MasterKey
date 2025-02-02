@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatCardModule } from '@angular/material/card';
@@ -41,6 +41,7 @@ import { LoadingService } from '../../services/loading.service';
     MatSnackBarModule,
     MatDialogModule
   ],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './payment-history.component.html',
   styleUrls: ['./payment-history.component.scss']
 })
@@ -94,6 +95,7 @@ export class PaymentHistoryComponent implements OnInit {
 
       // Carregar transações e complementar com dados do curso
       const transactions = await firstValueFrom(this.paymentService.getCustomerTransactions(customer.asaasId));
+      console.log(transactions)
       const transactionsWithDetails = await Promise.all(
         transactions
           .filter(transaction => !transaction.subscriptionId) // Filtrar apenas pagamentos sem assinatura
@@ -122,59 +124,59 @@ export class PaymentHistoryComponent implements OnInit {
             }
           })
       );
-
       // Carregar assinaturas e complementar com dados do curso
       const subscriptions = await firstValueFrom(this.paymentService.getCustomerSubscriptions(customer.asaasId));
       const subscriptionsWithDetails = await Promise.all(
         subscriptions.map(async (subscription) => {
           try {
             const course = await this.courseService.getById(subscription.courseId);
+            const payments = await firstValueFrom(this.asaasService.getSubscriptionPayments(subscription.id || ''));
             
-            // Garantir que todos os campos obrigatórios estejam presentes
-            const mappedSubscription: Subscription = {
-              id: subscription.id,
-              courseId: subscription.courseId,
-              courseName: course.name || 'Curso não encontrado',
-              customerId: subscription.customerId,
-              customerEmail: student()?.email || '',
-              asaasSubscriptionId: subscription.asaasSubscriptionId,
-              value: subscription.value,
-              cycle: subscription.cycle,
-              paymentMethod: subscription.paymentMethod,
-              status: subscription.status,
-              nextDueDate: subscription.nextDueDate,
-              createdAt: subscription.createdAt,
-              updatedAt: subscription.updatedAt,
-              subscriptionDetails: {
-                description: course.name || 'Curso não encontrado',
-                installments: subscription.subscriptionDetails?.installments,
-                paymentHistory: subscription.subscriptionDetails?.paymentHistory || []
-              }
-            };
-            
-            return mappedSubscription;
-          } catch (error) {
-            console.error(`Erro ao carregar detalhes do curso ${subscription.courseId}:`, error);
-            
-            // Criar uma assinatura com dados mínimos em caso de erro
-            const fallbackSubscription: Subscription = {
+            // Ordenar pagamentos por data
+            const sortedPayments = payments.sort((a, b) => {
+              const dateA = new Date(a.dueDate);
+              const dateB = new Date(b.dueDate);
+              return dateA.getTime() - dateB.getTime();
+            });
+
+            // Calcular próximas faturas baseado no ciclo e quantidade de parcelas
+            const nextPaymentDates = this.calculateNextPaymentDates(
+              subscription.nextDueDate,
+              subscription.cycle,
+              subscription.maxInstallments || 1,
+              sortedPayments.length
+            );
+
+            return {
               ...subscription,
-              courseName: 'Curso não encontrado',
-              customerEmail: student()?.email || '',
+              courseName: course.name || 'Curso não encontrado',
               subscriptionDetails: {
-                description: 'Curso não encontrado',
-                installments: subscription.subscriptionDetails?.installments,
-                paymentHistory: subscription.subscriptionDetails?.paymentHistory || []
+                paymentHistory: sortedPayments.map(payment => ({
+                  id: payment.id,
+                  status: payment.status,
+                  dueDate: payment.dueDate,
+                  value: payment.amount,
+                  installmentNumber: payment.installmentNumber,
+                  paymentMethod: payment.billingType || subscription.paymentMethod,
+                  invoiceUrl: payment.invoiceUrl,
+                  bankSlipUrl: payment.bankSlipUrl,
+                  pixQrCodeUrl: payment.pixQrCodeUrl
+                })),
+                nextPayments: nextPaymentDates.map((date, index) => ({
+                  dueDate: date,
+                  installmentNumber: (sortedPayments.length || 0) + index + 1
+                }))
               }
             };
-            
-            return fallbackSubscription;
+          } catch (error) {
+            console.error(`Erro ao carregar detalhes da assinatura ${subscription.id}:`, error);
+            return subscription;
           }
         })
       );
 
-      this.payments$ = of(transactionsWithDetails);
-      this.subscriptions$ = of(subscriptionsWithDetails);
+      this.payments$ = of(transactionsWithDetails || []);
+      this.subscriptions$ = of(subscriptionsWithDetails || []);
     } catch (error) {
       console.error('Erro ao carregar dados do usuário:', error);
       this.error = 'Erro ao carregar histórico de pagamentos';
@@ -262,87 +264,58 @@ export class PaymentHistoryComponent implements OnInit {
   }
 
   getInstallmentsProgress(subscription: Subscription): number {
-    if (!subscription.subscriptionDetails?.installments?.total) return 0;
+    if (!subscription.maxInstallments) return 0;
     
     const completed = this.getCompletedInstallments(subscription);
-    const total = subscription.subscriptionDetails.installments.total;
+    const total = subscription.maxInstallments;
     
     return Math.round((completed / total) * 100);
+  }
+
+  sortPaymentsByDate(payments: any[]): any[] {
+    return payments.sort((a, b) => {
+      const dateA = new Date(a.dueDate);
+      const dateB = new Date(b.dueDate);
+      return dateA.getTime() - dateB.getTime();
+    });
   }
 
   async gerarPagamentoFatura(
     subscription: Subscription, 
     paymentMethod: 'PIX' | 'BOLETO' | 'CREDIT_CARD',
-    dataFatura: Date
+    dataFatura: Date | string
   ) {
-    this.loadingService.show()
+    this.loadingService.show();
     try {
-
-      // Validações de data
-      const hoje = new Date();
-      const dataLimite = new Date();
-      dataLimite.setDate(dataLimite.getDate() + 40);
-      
-      if (dataFatura > dataLimite) {
-        this.snackBar.open('Não é possível gerar pagamentos com mais de 40 dias de antecedência', 'OK', {
-          duration: 5000
-        });
-        return;
-      }
-
-      if (dataFatura < hoje) {
-        const diasAtraso = Math.floor((hoje.getTime() - dataFatura.getTime()) / (1000 * 60 * 60 * 24));
-        if (diasAtraso > 60) {
-          this.snackBar.open('Não é possível gerar pagamentos para faturas com mais de 60 dias de atraso', 'OK', {
-            duration: 5000
-          });
-          return;
-        }
-      }
-
       const paymentData = {
         customer: subscription.customerId,
         billingType: paymentMethod,
         value: subscription.value,
-        dueDate: dataFatura.toISOString().split('T')[0], // Formato YYYY-MM-DD
+        dueDate: new Date(dataFatura).toISOString().split('T')[0],
         description: `Pagamento da assinatura - ${subscription.courseName}`,
         externalReference: subscription.courseId,
-        postalService: false // Desabilita envio de correspondência física
+        postalService: false
       };
+
       const response = await firstValueFrom(this.asaasService.createPayment(paymentData));
 
       if (response) {
-        // Atualizar a lista de pagamentos
         await this.loadUserData();
-        
-        // Mostrar mensagem de sucesso
-        this.snackBar.open('Pagamento gerado com sucesso!', 'OK', {
-          duration: 3000
-        });
+        this.snackBar.open('Pagamento gerado com sucesso!', 'OK', { duration: 3000 });
 
-        // Se for pagamento por cartão, redirecionar para a página de pagamento
         if (response['invoiceUrl']) {
           window.location.href = response['invoiceUrl'];
         }
       }
     } catch (error: any) {
       console.error('Erro ao gerar pagamento:', error);
-      
-      // Tratamento específico para erros do Asaas
-      if (error.response?.data?.errors) {
-        const errorMessage = error.response.data.errors
-          .map((err: any) => err.description)
-          .join(', ');
-        this.snackBar.open(`Erro ao gerar pagamento: ${errorMessage}`, 'OK', {
-          duration: 5000
-        });
-      } else {
-        this.snackBar.open('Erro ao gerar pagamento. Tente novamente.', 'OK', {
-          duration: 3000
-        });
-      }
-    }finally{
-      this.loadingService.hide()
+      this.snackBar.open(
+        error instanceof Error ? error.message : 'Erro ao gerar pagamento. Tente novamente.',
+        'OK',
+        { duration: 3000 }
+      );
+    } finally {
+      this.loadingService.hide();
     }
   }
 
@@ -441,7 +414,7 @@ export class PaymentHistoryComponent implements OnInit {
     
     // Verifica se a fatura já foi paga
     const pagamento = subscription.subscriptionDetails?.paymentHistory?.find(
-      p => new Date(p.date).toDateString() === fatura.toDateString()
+      p => new Date(p.dueDate).toDateString() === fatura.toDateString()
     );
     
     if (pagamento) {
@@ -477,7 +450,7 @@ export class PaymentHistoryComponent implements OnInit {
 
   getFaturaPagamento(dataFatura: Date, subscription: Subscription): { status: string; method?: string } {
     const pagamento = subscription.subscriptionDetails?.paymentHistory?.find(
-      p => new Date(p.date).toDateString() === new Date(dataFatura).toDateString()
+      p => new Date(p.dueDate).toDateString() === new Date(dataFatura).toDateString()
     );
     
     if (pagamento) {
@@ -494,5 +467,69 @@ export class PaymentHistoryComponent implements OnInit {
 
   isPagamentoAntecipado(dataFatura: Date, subscription: Subscription): boolean {
     return dataFatura > new Date(subscription.nextDueDate);
+  }
+
+  private calculateNextPaymentDates(
+    nextDueDate: string,
+    cycle: string,
+    maxInstallments: number,
+    currentInstallments: number
+  ): Date[] {
+    const dates: Date[] = [];
+    if (currentInstallments >= maxInstallments) return dates;
+
+    let currentDate = new Date(nextDueDate);
+    const remainingInstallments = maxInstallments - currentInstallments;
+
+    for (let i = 0; i < remainingInstallments; i++) {
+      dates.push(new Date(currentDate));
+      
+      switch (cycle) {
+        case 'WEEKLY':
+          currentDate.setDate(currentDate.getDate() + 7);
+          break;
+        case 'BIWEEKLY':
+          currentDate.setDate(currentDate.getDate() + 14);
+          break;
+        case 'MONTHLY':
+          currentDate.setMonth(currentDate.getMonth() + 1);
+          break;
+        case 'QUARTERLY':
+          currentDate.setMonth(currentDate.getMonth() + 3);
+          break;
+        case 'SEMIANNUALLY':
+          currentDate.setMonth(currentDate.getMonth() + 6);
+          break;
+        case 'YEARLY':
+          currentDate.setFullYear(currentDate.getFullYear() + 1);
+          break;
+      }
+    }
+
+    return dates;
+  }
+
+  getPaymentDate(payment: any): Date {
+    return new Date(payment.dueDate);
+  }
+
+  getPaymentMethod(payment: any): string {
+    return payment.billingType || 'Não informado';
+  }
+
+  getInstallmentInfo(subscription: Subscription): { current: number; total: number } {
+    const paidPayments = subscription.subscriptionDetails?.paymentHistory?.filter(
+      payment => payment.status === 'RECEIVED' || payment.status === 'CONFIRMED'
+    ).length || 0;
+
+    return {
+      current: paidPayments,
+      total: subscription.maxInstallments
+    };
+  }
+
+  calculateProgress(subscription: Subscription): number {
+    const info = this.getInstallmentInfo(subscription);
+    return Math.round((info.current / info.total) * 100);
   }
 } 

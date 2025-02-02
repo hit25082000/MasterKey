@@ -38,32 +38,34 @@ export interface PaymentTransaction {
 
 export interface Subscription {
   id?: string;
-  courseId: string;
-  courseName: string;
   customerId: string;
-  customerEmail: string;
-  asaasSubscriptionId: string;
-  value: number;
-  cycle: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'SEMIANNUALLY' | 'YEARLY';
-  paymentMethod: 'BOLETO' | 'CREDIT_CARD' | 'PIX';
-  status: SubscriptionStatus;
+  courseId: string;
+  courseName?: string;
+  status: string;
+  paymentMethod: string;
   nextDueDate: string;
-  createdAt: string;
-  updatedAt: string;
-  subscriptionDetails: {
-    description: string;
-    installments?: {
-      total: number;
-      current: number;
-      value: number;
-    };
-    paymentHistory?: {
-      date: string;
+  cycle: string;
+  value: number;
+  maxInstallments: number;
+  currentInstallment: number;
+  createdAt: any;
+  updatedAt: any;
+  subscriptionDetails?: {
+    paymentHistory: Array<{
+      id: string;
       status: string;
+      dueDate: string;
       value: number;
-      installment?: number;
-      paymentMethod?: string;
-    }[];
+      installmentNumber: number;
+      paymentMethod: string;
+      invoiceUrl?: string;
+      bankSlipUrl?: string;
+      pixQrCodeUrl?: string;
+    }>;
+    nextPayments: Array<{
+      dueDate: Date;
+      installmentNumber: number;
+    }>;
   };
 }
 
