@@ -925,20 +925,21 @@ async function createSubscription(customer, courseData, cycle = 'MONTHLY', payme
     const customerData = await customerResponse.json();
 
     // Criar assinatura
-    const subscriptionBody = {
+    const subscriptionData = {
       customer: customerData.id,
       billingType: paymentMethod,
       nextDueDate: new Date(new Date() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       value: courseData.price,
       cycle: cycle,
       description: `Assinatura do curso: ${courseData.name}`,
-      externalReference: courseData.id
+      externalReference: courseData.id,
+      maxInstallments: req.body.maxInstallments || 1
     };
 
     // Adicionar dados do cartão se necessário
     if (paymentMethod === 'CREDIT_CARD' && customer.creditCard) {
-      subscriptionBody.creditCard = customer.creditCard;
-      subscriptionBody.creditCardHolderInfo = {
+      subscriptionData.creditCard = customer.creditCard;
+      subscriptionData.creditCardHolderInfo = {
         name: customer.name,
         email: customer.email,
         cpfCnpj: customer.cpfCnpj.replace(/\D/g, ''),
@@ -954,7 +955,7 @@ async function createSubscription(customer, courseData, cycle = 'MONTHLY', payme
         'Content-Type': 'application/json',
         'access_token': config.asaas.apiKey
       },
-      body: JSON.stringify(subscriptionBody)
+      body: JSON.stringify(subscriptionData)
     });
 
     if (!subscriptionResponse.ok) {
@@ -1202,7 +1203,6 @@ exports.downloadImage = functions.https.onRequest((req, res) => {
 
 // Endpoint para criar assinatura no Asaas
 exports.createAsaasSubscription = functions.https.onRequest((req, res) => {
-  // Configurar headers CORS
   res.set('Access-Control-Allow-Origin', '*');
   res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -1218,7 +1218,6 @@ exports.createAsaasSubscription = functions.https.onRequest((req, res) => {
     res.status(405).send('Método não permitido');
     return;
   }
-
   cors(req, res, async () => {
     try {
       const { 
@@ -1239,16 +1238,17 @@ exports.createAsaasSubscription = functions.https.onRequest((req, res) => {
 
       // Preparar dados da assinatura
       const subscriptionData = {
-        customer: customer, // ID do cliente no Asaas
+        customer: customer,
         billingType: billingType || 'BOLETO',
         value: value,
         nextDueDate: nextDueDate || new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         cycle: cycle || 'MONTHLY',
         description: description || `Assinatura do curso ${courseId}`,
-        externalReference: courseId
+        externalReference: courseId,
+        maxInstallments: req.body.maxInstallments || 1
       };
 
-      // Fazer requisição para o Asaas
+      // Criar assinatura no Asaas
       const subscriptionResponse = await fetch(`${config.asaas.apiUrl}/subscriptions`, {
         method: 'POST',
         headers: {
@@ -1265,6 +1265,22 @@ exports.createAsaasSubscription = functions.https.onRequest((req, res) => {
 
       const asaasSubscription = await subscriptionResponse.json();
 
+      // Buscar o primeiro pagamento da assinatura
+      const paymentsResponse = await fetch(`${config.asaas.apiUrl}/subscriptions/${asaasSubscription.id}/payments`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'access_token': config.asaas.apiKey
+        }
+      });
+
+      if (!paymentsResponse.ok) {
+        const errorText = await paymentsResponse.text();
+        throw new Error(`Erro ao buscar pagamentos da assinatura: ${errorText}`);
+      }
+
+      const payments = await paymentsResponse.json();
+      const firstPayment = payments.data && payments.data.length > 0 ? payments.data[0] : null;
+
       // Salvar assinatura no Firestore
       const db = admin.firestore();
       const subscriptionRef = db.collection('subscriptions').doc(asaasSubscription.id);
@@ -1278,12 +1294,46 @@ exports.createAsaasSubscription = functions.https.onRequest((req, res) => {
         cycle: cycle || 'MONTHLY',
         nextDueDate: asaasSubscription.nextDueDate,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        maxInstallments: req.body.maxInstallments || 1,
+        currentInstallment: 1,
+        firstPaymentId: firstPayment ? firstPayment.id : null
       });
+
+      // Se houver primeiro pagamento, salvar também na coleção de transações
+      if (firstPayment) {
+        const paymentRef = db.collection('transactions').doc(firstPayment.id);
+        await paymentRef.set({
+          asaasId: firstPayment.id,
+          subscriptionId: asaasSubscription.id,
+          customerId: customer,
+          courseId: courseId,
+          amount: firstPayment.value,
+          status: firstPayment.status,
+          paymentMethod: billingType,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          dueDate: firstPayment.dueDate,
+          invoiceUrl: firstPayment.invoiceUrl,
+          bankSlipUrl: firstPayment.bankSlipUrl,
+          installmentNumber: 1,
+          totalInstallments: req.body.maxInstallments || 1
+        });
+      }
 
       res.status(200).json({
         id: asaasSubscription.id,
         status: asaasSubscription.status,
+        maxInstallments: req.body.maxInstallments || 1,
+        currentInstallment: 1,
+        firstPayment: firstPayment ? {
+          id: firstPayment.id,
+          status: firstPayment.status,
+          invoiceUrl: firstPayment.invoiceUrl,
+          bankSlipUrl: firstPayment.bankSlipUrl,
+          pixQrCodeUrl: firstPayment.pixQrCodeUrl,
+          installmentNumber: 1
+        } : null,
         message: 'Assinatura criada com sucesso'
       });
 

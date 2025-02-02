@@ -3,7 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { Observable, from, throwError, of } from 'rxjs';
 import { map, catchError, switchMap } from 'rxjs/operators';
-import { AsaasCustomer, AsaasPayment, AsaasSubscription, AsaasResponse } from '../interfaces/asaas.interface';
+import { AsaasCustomer, AsaasPayment, AsaasSubscription } from '../interfaces/asaas.interface';
 import { FirestoreService } from './firestore.service';
 import { where } from '@angular/fire/firestore';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -64,6 +64,8 @@ interface AsaasPaymentRequest extends BasePaymentRequest {
 interface AsaasSubscriptionRequest extends BasePaymentRequest {
   nextDueDate: string;
   cycle: 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'SEMIANNUALLY' | 'YEARLY';
+  maxInstallments: number;
+  currentInstallment?: number;
 }
 
 interface PaymentTransaction {
@@ -82,6 +84,28 @@ interface Subscription {
   status: string;
   paymentMethod: string;
   nextDueDate: string;
+  maxInstallments?: number;
+  currentInstallment?: number;
+}
+
+interface AsaasResponse {
+  id: string;
+  [key: string]: any;
+}
+
+interface AsaasSubscriptionWithPayment extends AsaasResponse {
+  id: string;
+  status: string;
+  maxInstallments: number;
+  currentInstallment: number;
+  firstPayment?: {
+    id: string;
+    status: string;
+    invoiceUrl?: string;
+    bankSlipUrl?: string;
+    pixQrCodeUrl?: string;
+    installmentNumber: number;
+  };
 }
 
 @Injectable({
@@ -459,16 +483,14 @@ export class AsaasService {
   }
 
   // Método para criar assinatura com validações melhoradas
-  createSubscription(subscriptionData: AsaasSubscriptionRequest, courseId: string): Observable<AsaasResponse> {
+  createSubscription(subscriptionData: AsaasSubscriptionRequest, courseId: string): Observable<AsaasSubscriptionWithPayment> {
     return from(this.updateHeaders()).pipe(
       switchMap(() => {
-        // Validação inicial dos dados
         const validationError = this.validatePaymentData(subscriptionData);
         if (validationError) {
           return throwError(() => new Error(validationError));
         }
 
-        // Preparar o objeto de requisição
         const subscriptionRequest = {
           ...subscriptionData,
           courseId,
@@ -476,38 +498,30 @@ export class AsaasService {
           nextDueDate: new Date(subscriptionData.nextDueDate).toISOString().split('T')[0]
         };
 
-        // Verificar assinaturas existentes e criar nova assinatura
         return from(this.checkExistingSubscription(subscriptionData, courseId)).pipe(
           switchMap(existingSubscription => {
-             // Se encontrou pagamento pendente com mesmo método
-             if (existingSubscription) {
+            if (existingSubscription) {
               return of({
                 id: existingSubscription.id || '',
-                ...existingSubscription
-              } as AsaasResponse);
+                ...existingSubscription,
+                maxInstallments: existingSubscription.maxInstallments || 1,
+                currentInstallment: existingSubscription.currentInstallment || 1
+              } as AsaasSubscriptionWithPayment);
             }
 
-            // Se não encontrou assinatura ativa, criar nova
-            return this.http.post<AsaasResponse>(
+            return this.http.post<AsaasSubscriptionWithPayment>(
               `${this.apiUrl}/createAsaasSubscription`,
               subscriptionRequest,
               { 
                 headers: this.headers,
                 withCredentials: false
               }
+            ).pipe(
+              map(subscription => {
+                // O primeiro pagamento já está incluído na resposta do backend
+                return subscription;
+              })
             );
-          }),
-          map(response => {
-            console.log(response)
-            console.log(this.getAsaasPaymentUrl(response.id))
-            if (subscriptionData.billingType === 'CREDIT_CARD' && response && response.id) {
-
-              return {
-                ...response,
-                paymentUrl: this.getAsaasPaymentUrl(response.id)
-              };
-            }
-            return response;
           })
         );
       }),
@@ -524,11 +538,16 @@ export class AsaasService {
     );
   }
 
+  // Método para buscar pagamentos de uma assinatura
+  getSubscriptionPayments(subscriptionId: string): Observable<any[]> {
+    return from(this.firestore.getDocumentsByQuery(
+      'transactions',
+      where('subscriptionId', '==', subscriptionId)
+    ));
+  }
+
   getSubscription(id: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/subscriptions/${id}`, { 
-      headers: this.headers,
-      withCredentials: false
-    });
+    return from(this.firestore.getDocument('subscriptions', id));
   }
 
   // Gerar QR Code PIX

@@ -693,7 +693,8 @@ export class PaymentTestComponent implements OnInit, OnDestroy {
         value: formData.value,
         nextDueDate: new Date().toISOString().split('T')[0],
         cycle: formData.cycle,
-        description: 'Assinatura de teste'
+        description: `Assinatura de teste - ${formData.subscriptionId}`,
+        maxInstallments: formData.maxInstallments || 1
       };
       console.log(subscriptionData)
       console.log(formData)

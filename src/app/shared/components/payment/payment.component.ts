@@ -23,6 +23,7 @@ interface SubscriptionData {
   description: string;
   totalValue: number;
   installments: number;
+  maxInstallments: number;
   creditCard?: {
     holderName: string;
     number: string;
@@ -218,30 +219,31 @@ export class PaymentComponent implements OnInit {
           cycle: this.selectedCycle,
           description: `Assinatura do curso ${this.courseId} - ${this.getCycleLabel(this.selectedCycle)}`,
           totalValue: this.courseValue,
-          installments: this.getInstallmentsCount()
+          installments: this.getInstallmentsCount(),
+          maxInstallments: this.maxInstallments
         };
-
-        if (this.selectedPaymentType === 'CREDIT_CARD') {
-          subscriptionData.creditCard = this.creditCardForm.value;
-          subscriptionData.creditCardHolderInfo = {
-            name: customerData.name,
-            email: customerData.email,
-            cpfCnpj: customerData.cpfCnpj,
-            postalCode: customerData.postalCode,
-            addressNumber: customerData.addressNumber,
-            phone: customerData.phone
-          };
-        }
 
         const subscriptionResponse = await firstValueFrom(
           this.asaasService.createSubscription(subscriptionData, this.courseId)
         );
+
         if (subscriptionResponse) {
-          this.handlePaymentResponse(subscriptionResponse);
-          this.snackBar.open('Assinatura criada com sucesso!', 'OK', { duration: 3000 });
+          // Tratar o primeiro pagamento da assinatura
+          if (subscriptionResponse.firstPayment) {
+            this.handlePaymentResponse(subscriptionResponse.firstPayment);
+            const msg = this.selectedPaymentType === 'CREDIT_CARD' 
+              ? 'Você será redirecionado para a página de pagamento do cartão'
+              : 'Primeiro pagamento da assinatura criado com sucesso!';
+            this.snackBar.open(msg, 'OK', { duration: 5000 });
+
+            if (subscriptionResponse.firstPayment['invoiceUrl']) {
+              window.location.href = subscriptionResponse.firstPayment['invoiceUrl'];
+            }
+          } else {
+            this.snackBar.open('Assinatura criada com sucesso!', 'OK', { duration: 3000 });
+          }
         }
         this.loadingService.hide();
-
       } else {
         const paymentData = {
           customer: customerResponse.customerId,
@@ -263,8 +265,8 @@ export class PaymentComponent implements OnInit {
             : 'Pagamento criado com sucesso!';
           this.snackBar.open(msg, 'OK', { duration: 5000 });
 
-          if (paymentResponse.invoiceUrl) {
-            window.location.href = paymentResponse.invoiceUrl;
+          if (paymentResponse['invoiceUrl']) {
+            window.location.href = paymentResponse['invoiceUrl'];
             this.loadingService.hide();
           }
         }
@@ -283,14 +285,14 @@ export class PaymentComponent implements OnInit {
   }
 
   handlePaymentResponse(response: any) {
-    if (response.bankSlipUrl) {
-      this.paymentUrl = response.bankSlipUrl;
+    if (response['bankSlipUrl']) {
+      this.paymentUrl = response['bankSlipUrl'];
     }
-    if (response.invoiceUrl) {
-      this.paymentUrl = response.invoiceUrl;
+    if (response['invoiceUrl']) {
+      this.paymentUrl = response['invoiceUrl'];
     }
-    if (response.pixQrCodeUrl) {
-      this.pixQRCode = response.pixQrCodeUrl;
+    if (response['pixQrCodeUrl']) {
+      this.pixQRCode = response['pixQrCodeUrl'];
     }
   }
 

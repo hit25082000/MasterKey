@@ -95,30 +95,32 @@ export class PaymentHistoryComponent implements OnInit {
       // Carregar transações e complementar com dados do curso
       const transactions = await firstValueFrom(this.paymentService.getCustomerTransactions(customer.asaasId));
       const transactionsWithDetails = await Promise.all(
-        transactions.map(async (transaction) => {
-          try {
-            const course = await this.courseService.getById(transaction.courseId);
-            
-            return {
-              ...transaction,
-              paymentDetails: {
-                description: course.name || 'Curso não encontrado',
-                invoiceUrl: transaction.invoiceUrl,
-                bankSlipUrl: transaction.bankSlipUrl,
-                pixQrCodeUrl: transaction.paymentMethod === 'PIX' ? transaction.pixQrCodeUrl : undefined,
-                pixCopiaECola: transaction.paymentMethod === 'PIX' ? transaction.pixCopiaECola : undefined,
-                installments: transaction.installments ? {
-                  total: transaction.installments.total || 1,
-                  current: transaction.installments.current || 1,
-                  value: transaction.installments.value || transaction.amount
-                } : undefined
-              }
-            } as PaymentTransaction;
-          } catch (error) {
-            console.error(`Erro ao carregar detalhes do curso ${transaction.courseId}:`, error);
-            return transaction;
-          }
-        })
+        transactions
+          .filter(transaction => !transaction.subscriptionId) // Filtrar apenas pagamentos sem assinatura
+          .map(async (transaction) => {
+            try {
+              const course = await this.courseService.getById(transaction.courseId);
+              
+              return {
+                ...transaction,
+                paymentDetails: {
+                  description: course.name || 'Curso não encontrado',
+                  invoiceUrl: transaction.invoiceUrl,
+                  bankSlipUrl: transaction.bankSlipUrl,
+                  pixQrCodeUrl: transaction.paymentMethod === 'PIX' ? transaction.pixQrCodeUrl : undefined,
+                  pixCopiaECola: transaction.paymentMethod === 'PIX' ? transaction.pixCopiaECola : undefined,
+                  installments: transaction.installments ? {
+                    total: transaction.installments.total || 1,
+                    current: transaction.installments.current || 1,
+                    value: transaction.installments.value || transaction.amount
+                  } : undefined
+                }
+              } as PaymentTransaction;
+            } catch (error) {
+              console.error(`Erro ao carregar detalhes do curso ${transaction.courseId}:`, error);
+              return transaction;
+            }
+          })
       );
 
       // Carregar assinaturas e complementar com dados do curso
@@ -319,8 +321,8 @@ export class PaymentHistoryComponent implements OnInit {
         });
 
         // Se for pagamento por cartão, redirecionar para a página de pagamento
-        if (response.invoiceUrl) {
-          window.location.href = response.invoiceUrl;
+        if (response['invoiceUrl']) {
+          window.location.href = response['invoiceUrl'];
         }
       }
     } catch (error: any) {
