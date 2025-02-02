@@ -55,20 +55,10 @@ interface BasePaymentRequest {
   externalReference?: string;
   postalService?: boolean;
   courseId?: string;
-  creditCardInfo?: any;
-  creditCardHolderInfo?: any;
 }
 
 interface AsaasPaymentRequest extends BasePaymentRequest {
   dueDate?: string;
-  creditCardHolderInfo?: {
-    name: string;
-    email: string;
-    cpfCnpj: string;
-    postalCode: string;
-    addressNumber: string;
-    phone: string;
-  };
 }
 
 interface AsaasSubscriptionRequest extends BasePaymentRequest {
@@ -125,7 +115,7 @@ export class AsaasService {
     return from(this.checkExistingCustomer(customerData)).pipe(
       switchMap(existingCustomer => {
         if (existingCustomer) {
-          console.log('Cliente existente encontrado:', existingCustomer);
+
           const response: CustomerResponse = {
             customerId: existingCustomer.asaasId,
             firestoreId: existingCustomer.id,
@@ -228,9 +218,14 @@ export class AsaasService {
 
     if (error.response?.data?.errors) {
       const asaasError = error.response.data as AsaasErrorResponse;
-      errorMessage = asaasError.errors.map(err => err.description).join(', ');
+      errorMessage = asaasError.errors.map(err => {
+        // Tratamento específico para erros de cartão
+        if (err.code === 'invalid_billingType' && err.description.includes('CREDIT_CARD')) {
+          return 'Dados comerciais incompletos. Por favor, entre em contato com o suporte.';
+        }
+        return err.description;
+      }).join(', ');
       
-      // Log detalhado para debugging
       console.error('Erro Asaas:', {
         errors: asaasError.errors,
         status: error.status,
@@ -239,7 +234,7 @@ export class AsaasService {
     } else if (error.status) {
       switch (error.status) {
         case 400:
-          errorMessage = 'Dados inválidos. Verifique as informações fornecidas.';
+          errorMessage = 'Dados inválidos. Verifique as informações do cartão.';
           break;
         case 401:
           errorMessage = 'Não autorizado. Verifique suas credenciais.';
@@ -258,7 +253,9 @@ export class AsaasService {
       }
     }
 
-    // Mostrar mensagem de erro para o usuário
+    if(error.message != undefined)
+      errorMessage = error.message
+
     this.snackBar.open(errorMessage, 'Fechar', {
       duration: 5000,
       horizontalPosition: 'center',
@@ -307,7 +304,6 @@ export class AsaasService {
 
   private async checkExistingPayment(paymentData: AsaasPaymentRequest): Promise<PaymentTransaction | null> {
     try {
-      // Buscar pagamentos pendentes para o mesmo curso e cliente
       const customerId = typeof paymentData.customer === 'string' ? 
         paymentData.customer : 
         paymentData.customer.asaasId;
@@ -317,23 +313,41 @@ export class AsaasService {
         return null;
       }
 
-      const payments = await this.firestore.getDocumentsByQuery<PaymentTransaction>(
+      // Primeiro, verificar se já existe um pagamento CONFIRMADO
+      const confirmedPayments = await this.firestore.getDocumentsByQuery<PaymentTransaction>(
         'transactions',
         where('customerId', '==', customerId),
         where('courseId', '==', externalReference),
-        where('status', '==', 'PENDING'),
-        where('type', '==', 'PAYMENT')
+        where('status', '==', 'CONFIRMED')
       );
-      console.log(payments)
-      return payments && payments.length > 0 ? payments[0] : null;
+
+      if (confirmedPayments && confirmedPayments.length > 0) {
+        throw new Error('Você já possui acesso a este curso através de um pagamento anterior.');
+      }
+
+      // Buscar pagamentos pendentes
+      const pendingPayments = await this.firestore.getDocumentsByQuery<PaymentTransaction>(
+        'transactions',
+        where('customerId', '==', customerId),
+        where('courseId', '==', externalReference),
+        where('status', '==', 'PENDING')
+      );
+
+      return pendingPayments && pendingPayments.length > 0 ? pendingPayments[0] : null;
     } catch (error) {
       console.error('Erro ao verificar pagamento existente:', error);
-      return null;
+      throw error; // Propagar o erro para ser tratado no createPayment
     }
   }
 
+  // Método para obter URL de pagamento do Asaas
+  getAsaasPaymentUrl(paymentId: string, isSandbox: boolean = true): string {
+    const baseUrl = isSandbox ? 'https://sandbox.asaas.com' : 'https://www.asaas.com';
+    return `${baseUrl}/c/${paymentId}`;
+  }
+
   // Método para criar pagamento com validações melhoradas
-  createPayment(paymentData: AsaasPaymentRequest): Observable<any> {
+  createPayment(paymentData: AsaasPaymentRequest): Observable<AsaasResponse> {
     return from(this.updateHeaders()).pipe(
       switchMap(() => {
         // Validação inicial dos dados
@@ -354,13 +368,16 @@ export class AsaasService {
           switchMap(existingPayment => {
             // Se encontrou pagamento pendente com mesmo método
             if (existingPayment && existingPayment.paymentMethod === paymentData.billingType) {
-              return throwError(() => new Error('Já existe um pagamento pendente para este curso'));
+              return of({
+                id: existingPayment.id || '',
+                ...existingPayment
+              } as AsaasResponse);
             }
 
             // Se encontrou pagamento pendente com método diferente, deletar
             if (existingPayment && existingPayment.id) {
               return from(this.firestore.deleteDocument('transactions', existingPayment.id)).pipe(
-                switchMap(() => this.http.post(
+                switchMap(() => this.http.post<AsaasResponse>(
                   `${this.apiUrl}/createAsaasPayment`,
                   paymentRequest,
                   { headers: this.headers }
@@ -369,11 +386,21 @@ export class AsaasService {
             }
 
             // Se não encontrou pagamento pendente, criar novo
-            return this.http.post(
+            return this.http.post<AsaasResponse>(
               `${this.apiUrl}/createAsaasPayment`,
               paymentRequest,
               { headers: this.headers }
             );
+          }),
+          map(response => {
+            if (paymentData.billingType === 'CREDIT_CARD' && response) {
+              // Adiciona a URL de pagamento do Asaas na resposta
+              return {
+                ...response,
+                paymentUrl: this.getAsaasPaymentUrl(response.id)
+              };
+            }
+            return response;
           })
         );
       }),
@@ -396,35 +423,43 @@ export class AsaasService {
 
   private async checkExistingSubscription(subscriptionData: AsaasSubscriptionRequest, courseId: string): Promise<Subscription | null> {
     try {
-      // Buscar assinaturas ativas para o mesmo curso e cliente
       const customerId = typeof subscriptionData.customer === 'string' ? 
         subscriptionData.customer : 
         subscriptionData.customer.asaasId;
 
-      const subscriptions = await this.firestore.getDocumentsByQuery<Subscription>(
+      // Primeiro, verificar se já existe um pagamento CONFIRMADO para este curso
+      const confirmedPayments = await this.firestore.getDocumentsByQuery<PaymentTransaction>(
+        'transactions',
+        where('customerId', '==', customerId),
+        where('courseId', '==', courseId),
+        where('status', '==', 'CONFIRMED')
+      );
+
+      if (confirmedPayments && confirmedPayments.length > 0) {
+        throw new Error('Você já possui acesso a este curso através de um pagamento anterior. Não é possível criar uma assinatura.');
+      }
+
+      const subscriptions = await this.firestore.getDocumentsByQuery<any>(
         'subscriptions',
         where('customerId', '==', customerId),
         where('courseId', '==', courseId),
-        where('status', 'in', ['ACTIVE', 'PENDING'])
+        where('status', '==', 'ACTIVE')
       );
-
+      
       if (!subscriptions || subscriptions.length === 0) {
         return null;
       }
 
       // Verificar se existe assinatura com próximo pagamento na mesma data
-      const nextDueDate = new Date(subscriptionData.nextDueDate).toISOString().split('T')[0];
-      return subscriptions.find(sub => 
-        new Date(sub.nextDueDate).toISOString().split('T')[0] === nextDueDate
-      ) || null;
+      throw new Error('Você já possui uma assinatura para este curso.');
     } catch (error) {
       console.error('Erro ao verificar assinatura existente:', error);
-      return null;
+      throw error; // Propagar o erro para ser tratado no createSubscription
     }
   }
 
   // Método para criar assinatura com validações melhoradas
-  createSubscription(subscriptionData: AsaasSubscriptionRequest, courseId: string): Observable<any> {
+  createSubscription(subscriptionData: AsaasSubscriptionRequest, courseId: string): Observable<AsaasResponse> {
     return from(this.updateHeaders()).pipe(
       switchMap(() => {
         // Validação inicial dos dados
@@ -444,13 +479,16 @@ export class AsaasService {
         // Verificar assinaturas existentes e criar nova assinatura
         return from(this.checkExistingSubscription(subscriptionData, courseId)).pipe(
           switchMap(existingSubscription => {
-            // Se encontrou assinatura ativa/pendente, não permite criar nova
-            if (existingSubscription) {
-              return throwError(() => new Error('Já existe uma assinatura ativa para este curso. Cada fatura pode ser paga com um método diferente.'));
+             // Se encontrou pagamento pendente com mesmo método
+             if (existingSubscription) {
+              return of({
+                id: existingSubscription.id || '',
+                ...existingSubscription
+              } as AsaasResponse);
             }
 
             // Se não encontrou assinatura ativa, criar nova
-            return this.http.post(
+            return this.http.post<AsaasResponse>(
               `${this.apiUrl}/createAsaasSubscription`,
               subscriptionRequest,
               { 
@@ -458,6 +496,18 @@ export class AsaasService {
                 withCredentials: false
               }
             );
+          }),
+          map(response => {
+            console.log(response)
+            console.log(this.getAsaasPaymentUrl(response.id))
+            if (subscriptionData.billingType === 'CREDIT_CARD' && response && response.id) {
+
+              return {
+                ...response,
+                paymentUrl: this.getAsaasPaymentUrl(response.id)
+              };
+            }
+            return response;
           })
         );
       }),
@@ -504,17 +554,5 @@ export class AsaasService {
         });
       });
     });
-  }
-
-  // Método para verificar status do pagamento com retry
-  getPaymentStatus(paymentId: string): Observable<any> {
-    return this.http.get(
-      `${this.apiUrl}/getPaymentStatus/${paymentId}`,
-      { headers: this.headers }
-    ).pipe(
-      retry(3), // Tenta 3 vezes antes de falhar
-      timeout(30000), // Timeout de 30 segundos
-      catchError(error => this.handleAsaasError(error))
-    );
   }
 } 

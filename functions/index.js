@@ -396,7 +396,7 @@ exports.createAsaasPayment = functions.https.onRequest((req, res) => {
         updatedAt: FieldValue.serverTimestamp(),
         dueDate: asaasPayment.dueDate,
         invoiceUrl: asaasPayment.invoiceUrl,
-        bankSlipUrl: asaasPayment.bankSlipUrl
+        bankSlipUrl: asaasPayment.bankSlipUrl,
       });
 
       res.status(200).json({

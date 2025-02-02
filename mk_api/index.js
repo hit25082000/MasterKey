@@ -1281,7 +1281,6 @@ exports.createAsaasSubscription = functions.https.onRequest((req, res) => {
         updatedAt: new Date()
       });
 
-      // Retornar resposta
       res.status(200).json({
         id: asaasSubscription.id,
         status: asaasSubscription.status,

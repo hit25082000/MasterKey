@@ -236,11 +236,12 @@ export class PaymentComponent implements OnInit {
         const subscriptionResponse = await firstValueFrom(
           this.asaasService.createSubscription(subscriptionData, this.courseId)
         );
-
         if (subscriptionResponse) {
           this.handlePaymentResponse(subscriptionResponse);
           this.snackBar.open('Assinatura criada com sucesso!', 'OK', { duration: 3000 });
         }
+        this.loadingService.hide();
+
       } else {
         const paymentData = {
           customer: customerResponse.customerId,
@@ -264,6 +265,7 @@ export class PaymentComponent implements OnInit {
 
           if (paymentResponse.invoiceUrl) {
             window.location.href = paymentResponse.invoiceUrl;
+            this.loadingService.hide();
           }
         }
       })
@@ -275,9 +277,9 @@ export class PaymentComponent implements OnInit {
         'OK',
         { duration: 5000 }
       );
-    } finally {
       this.loadingService.hide();
-    }
+
+    } 
   }
 
   handlePaymentResponse(response: any) {
