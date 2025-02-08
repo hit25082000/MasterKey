@@ -9,7 +9,6 @@ import {
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
-import { NotificationType } from '../../shared/models/notifications-enum';
 import { SystemLogService } from '../../core/services/system-log.service';
 import { NotificationService } from '../../shared/services/notification.service';
 

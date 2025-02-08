@@ -10,7 +10,6 @@ import { CommonModule } from '@angular/common';
 import { SearchBarComponent } from '../../../../shared/components/search-bar/search-bar.component';
 import { BookService } from '../../services/book.service';
 import { CourseManagementService } from '../../../course/services/course-management.service';
-import { NotificationType } from '../../../../shared/models/notifications-enum';
 import { CourseService } from '../../../course/services/course.service';
 import { Book } from '../../../../core/models/book.model';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';

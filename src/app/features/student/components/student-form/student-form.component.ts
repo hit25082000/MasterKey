@@ -6,7 +6,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ValidatorCpf } from '../../../../shared/Validators/cpf.validator';
 import { passwordMatchValidator } from '../../../../shared/Validators/password-math.validator';
 import { Student } from '../../../../core/models/student.model';
-import { NotificationType } from '../../../../shared/models/notifications-enum';
 import { StudentService } from '../../services/student.service';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { ClassSelectorComponent } from '../../../class/components/class-selector/class-selector.component';

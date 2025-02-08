@@ -4,7 +4,6 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { CategoryService } from '../../services/category.service';
 import { Category } from '../../../../core/models/category.model';
-import { NotificationType } from '../../../../shared/models/notifications-enum';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { ConfirmationService } from '../../../../shared/services/confirmation.service';
 import { ConfirmationDialogComponent } from '../../../../shared/components/confirmation-dialog/confirmation-dialog.component';
