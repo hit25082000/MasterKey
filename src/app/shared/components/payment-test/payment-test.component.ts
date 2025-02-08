@@ -7,7 +7,6 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AsaasService } from '../../../core/services/asaas.service';
-import { PaymentService } from '../../../core/services/payment.service';
 import { PaymentStateService } from '../../../core/services/payment-state.service';
 import { WebhookService } from '../../../core/services/webhook.service';
 import { PaymentComponent } from '../payment/payment.component';
@@ -24,6 +23,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatOptionModule } from '@angular/material/core';
+import { PaymentService } from '../../services/payment.service';
 
 @Component({
   selector: 'app-payment-test',

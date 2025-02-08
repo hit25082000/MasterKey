@@ -9,7 +9,9 @@ import {
   FirestorePayment,
   FirestoreSubscription
 } from '../models/asaas.model';
-import { Firestore, collection, query, where, getDocs, doc, updateDoc } from '@angular/fire/firestore';
+import { Firestore, collection, query, where, getDocs, doc, updateDoc, orderBy } from '@angular/fire/firestore';
+import { FirestoreService } from '../../core/services/firestore.service';
+import { PaymentTransaction, Subscription } from '../../core/interfaces/payment.interface';
 
 export interface CustomerData {
   name: string;
@@ -40,6 +42,7 @@ export class PaymentService {
   private readonly apiUrl = environment.apiUrl;
   private http = inject(HttpClient);
   private firestore = inject(Firestore);
+  private firestoreService = inject(FirestoreService);
 
   // Signals
   private _payments = signal<FirestorePayment[]>([]);
@@ -66,28 +69,7 @@ export class PaymentService {
     return this.http.post<AsaasSubscriptionResponse>(`${this.apiUrl}/createSubscription`, data);
   }
 
-  getSubscriptionPayments(email: string): Observable<FirestorePayment[]> {
-    const subscriptionsQuery = query(
-      collection(this.firestore, 'transactions'),
-      where('customerEmail', '==', email),
-      where('type', '==', 'SUBSCRIPTION')
-    );
-
-    return from(getDocs(subscriptionsQuery)).pipe(
-      map(snapshot => {
-        const payments = snapshot.docs.map(doc => {
-          const data = doc.data() as FirestorePayment;
-          return data;
-        });
-        this._subscriptionPayments.set(payments);
-        return payments;
-      }),
-      catchError(error => {
-        console.error('Erro ao buscar pagamentos da assinatura:', error);
-        return of([]);
-      })
-    );
-  }
+ 
 
   getPayments(email: string): Observable<FirestorePayment[]> {
     const paymentsQuery = query(
@@ -188,5 +170,92 @@ export class PaymentService {
       .reduce((acc, curr) => acc + curr.paymentDetails.value, 0);
 
     return paidPaymentsTotal + paidSubscriptionPaymentsTotal;
+  }
+
+  getCustomerTransactions(customerId: string): Observable<PaymentTransaction[]> {
+    return this.firestoreService.getCollectionWithQuery<PaymentTransaction>(
+      'transactions',
+      [where('customerId', '==', customerId), orderBy('createdAt', 'desc')]
+    );
+  }
+
+  // Buscar assinaturas do usuário
+  getCustomerSubscriptions(customerId: string): Observable<Subscription[]> {
+    return this.firestoreService.getCollectionWithQuery<Subscription>(
+      'subscriptions',
+      [where('customerId', '==', customerId), orderBy('createdAt', 'desc')]
+    );
+  }
+
+  // Buscar histórico de eventos de um pagamento
+  getPaymentEvents(paymentId: string): Observable<any[]> {
+    return this.firestoreService.getCollectionWithQuery(
+      'payment_events',
+      [where('paymentId', '==', paymentId), orderBy('createdAt', 'desc')]
+    );
+  }
+
+  getSubscriptionPayments(email: string): Observable<FirestorePayment[]> {
+    const subscriptionsQuery = query(
+      collection(this.firestore, 'transactions'),
+      where('customerEmail', '==', email),
+      where('type', '==', 'SUBSCRIPTION')
+    );
+
+    return from(getDocs(subscriptionsQuery)).pipe(
+      map(snapshot => {
+        const payments = snapshot.docs.map(doc => {
+          const data = doc.data() as FirestorePayment;
+          return data;
+        });
+        this._subscriptionPayments.set(payments);
+        return payments;
+      }),
+      catchError(error => {
+        console.error('Erro ao buscar pagamentos da assinatura:', error);
+        return of([]);
+      })
+    );
+  }
+
+  // Buscar status atual de um pagamento
+  getPaymentStatus(paymentId: string): Observable<string> {
+    return this.firestoreService.getCollectionWithQuery<PaymentTransaction>(
+      'transactions',
+      [where('paymentId', '==', paymentId)]
+    ).pipe(
+      map(transactions => transactions[0]?.status || 'UNKNOWN')
+    );
+  }
+
+  // Buscar status atual de uma assinatura
+  getSubscriptionStatus(subscriptionId: string): Observable<string> {
+    return this.firestoreService.getCollectionWithQuery<Subscription>(
+      'subscriptions',
+      [where('asaasSubscriptionId', '==', subscriptionId)]
+    ).pipe(
+      map(subscriptions => subscriptions[0]?.status || 'UNKNOWN')
+    );
+  }
+
+  // Buscar transações por email e CPF
+  getTransactionsByEmail(email: string): Observable<PaymentTransaction[]> {
+    return this.firestoreService.getCollectionWithQuery<PaymentTransaction>(
+      'transactions',
+      [
+        where('customerEmail', '==', email),
+        orderBy('createdAt', 'desc')
+      ]
+    );
+  }
+
+  getSubscriptionsByEmail(email: string): Observable<Subscription[]> {
+    return this.firestoreService.getCollectionWithQuery<Subscription>(
+      'subscriptions',
+      [
+        where('customerEmail', '==', email),
+        orderBy('createdAt', 'desc')
+      ]
+    );
   }
 }  

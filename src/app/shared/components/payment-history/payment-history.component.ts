@@ -7,7 +7,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule, MatChipListbox } from '@angular/material/chips';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { PaymentService } from '../../../core/services/payment.service';
 import { CourseService } from '../../../features/course/services/course.service';
 import { ActivatedRoute } from '@angular/router';
 import { 
@@ -25,6 +24,7 @@ import { StudentService } from '../../../features/student/services/student.servi
 import { AsaasService } from '../../../core/services/asaas.service';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { LoadingService } from '../../services/loading.service';
+import { PaymentService } from '../../services/payment.service';
 
 @Component({
   selector: 'app-payment-history',
@@ -130,7 +130,7 @@ export class PaymentHistoryComponent implements OnInit {
         subscriptions.map(async (subscription) => {
           try {
             const course = await this.courseService.getById(subscription.courseId);
-            const payments = await firstValueFrom(this.asaasService.getSubscriptionPayments(subscription.id || ''));
+            const payments = await firstValueFrom(this.asaasService.getSubscriptionPayments(customer.email));
             
             // Ordenar pagamentos por data
             const sortedPayments = payments.sort((a, b) => {
