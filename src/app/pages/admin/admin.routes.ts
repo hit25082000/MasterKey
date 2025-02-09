@@ -29,6 +29,7 @@ import { MeetComponent } from '../../features/meet/components/meet/meet.componen
 import { ClassAttendanceComponent } from '../../features/class/components/class-attendance/class-attendance.component';
 import { ClassAttendanceListComponent } from '../../features/class/components/class-attendance-list/class-attendance-list.component';
 import { StudentFinancialComponent } from '../../features/student/components/student-financial/student-financial.component';
+import { StudentFinancialListComponent } from '../../features/student/components/student-financial-list/student-financial-list.component';
 
 export const ADMIN_ROUTES: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
@@ -232,7 +233,6 @@ export const ADMIN_ROUTES: Routes = [
         canActivate: [RoleGuard],
         data: { permission: RoutePermission.VIEW_LIBRARY }
       },
-      // Rotas de Aulas ao Vivo
       {
         path: 'meet',
         component: MeetComponent,
@@ -240,18 +240,14 @@ export const ADMIN_ROUTES: Routes = [
         data: { permission: RoutePermission.VIEW_MEETINGS }
       },
       {
+        path: 'student-financial-list',
+        component: StudentFinancialListComponent,
+        canActivate: [RoleGuard],
+        data: { permission: RoutePermission.VIEW_STUDENT_FINANCIAL }
+      },
+      {
         path: 'library-list',
         component: LibraryListComponent,
         data: { permission: RoutePermission.ADMIN }
-      },
-      // {
-      //   path: 'library-form',
-      //   component: LibraryFormComponent,
-      //   data: { permission: RoutePermission.ADMIN }
-      // },
-      // {
-      //   path: 'library-form/:id',
-      //   component: Libr,
-      //   data: { permission: RoutePermission.ADMIN }
-      // }
+      },      
 ];

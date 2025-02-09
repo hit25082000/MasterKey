@@ -65,6 +65,15 @@ export class SidenavComponent {
       ]
     },
     {
+      id: 'financial',
+      label: 'Financeiro',
+      icon: 'fas fa-dollar-sign',
+      subItems: [
+        { label: 'Histórico Financeiro', route: '/admin/student-financial-list' },
+        { label: 'Relatórios', route: '/admin/financial-reports' }
+      ]
+    },
+    {
       id: 'courses',
       label: 'Cursos',
       icon: 'fas fa-book',
