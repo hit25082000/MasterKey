@@ -1209,3 +1209,46 @@
     }
   }
 }
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.installments-section {
+  margin: 20px 0;
+  opacity: 1;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.payment-card {
+  margin: 10px 0;
+  opacity: 1;
+  transition: all 0.3s ease-in-out;
+}
+
+.payment-details {
+  margin-top: 15px;
+}
+
+.mat-card-actions {
+  padding: 8px;
+}
+
+.installment-list {
+  margin-top: 16px;
+}
+
+.mat-expansion-panel {
+  margin-bottom: 8px;
+  
+  &:not(.mat-expanded) {
+    transition: margin 0.3s ease-in-out;
+  }
+}
+
+.mat-expansion-panel-header {
+  transition: height 0.3s ease-in-out;
+}

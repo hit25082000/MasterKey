@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, CUSTOM_ELEMENTS_SCHEMA, Input } from '@angular/core';
+import { Component, inject, OnInit, CUSTOM_ELEMENTS_SCHEMA, Input, signal, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatTabsModule } from '@angular/material/tabs';
@@ -8,16 +8,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
-import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { Observable, firstValueFrom, of } from 'rxjs';
+import { Observable, firstValueFrom, of, Subject, takeUntil } from 'rxjs';
 import { LoadingService } from '../../services/loading.service';
 import { PaymentService } from '../../services/payment.service';
-import { FormBuilder } from '@angular/forms';
-import { DomSanitizer } from '@angular/platform-browser';
 import { SafePipe } from '../../pipes/safe.pipe';
 import { CourseService } from '../../../features/course/services/course.service';
 import { ActivatedRoute } from '@angular/router';
@@ -32,7 +30,6 @@ import {
   SubscriptionCycleTranslation
 } from '../../../core/interfaces/payment.interface';
 import { getAuth } from '@angular/fire/auth';
-import { environment } from '../../../../environments/environment';
 import { StudentService } from '../../../features/student/services/student.service';
 import { AsaasService } from '../../../core/services/asaas.service';
 
@@ -62,19 +59,28 @@ import { AsaasService } from '../../../core/services/asaas.service';
   templateUrl: './payment-history.component.html',
   styleUrls: ['./payment-history.component.scss']
 })
-export class PaymentHistoryComponent implements OnInit {
+export class PaymentHistoryComponent implements OnInit, OnDestroy {
   @Input() courseId: string = '';
   @Input() courseValue: number = 0;
-  payments$!: Observable<PaymentTransaction[]>;
-  subscriptions$!: Observable<Subscription[]>;
+  
+  private destroy$ = new Subject<void>();
+  public loadingService = inject(LoadingService);
+  
+  // Signals para armazenar os dados
+  private _payments = signal<PaymentTransaction[]>([]);
+  private _subscriptions = signal<Subscription[]>([]);
+  private _groupedPayments = signal<{ [key: string]: PaymentTransaction[] }>({});
+  
+  // Getters públicos readonly
+  readonly payments = this._payments.asReadonly();
+  readonly subscriptions = this._subscriptions.asReadonly();
+  readonly groupedPayments = this._groupedPayments.asReadonly();
+
   userId: string = '';
-  private loadingService = inject(LoadingService)
   error: string | null = null;
   selectedInstallments: number = 1;
   asaasPaymentUrl: string = '';
   installmentOptions: Array<{value: number, label: string, installmentValue: number}> = [];
-  payments: PaymentTransaction[] = [];
-  groupedInstallments: { [key: string]: PaymentTransaction[] } = {};
   courseNames: { [key: string]: string } = {};
 
   constructor(
@@ -84,30 +90,33 @@ export class PaymentHistoryComponent implements OnInit {
     private studentService: StudentService,
     private route: ActivatedRoute,
     private snackBar: MatSnackBar,
-    private dialog: MatDialog,
-    private fb: FormBuilder,
-    private sanitizer: DomSanitizer
   ) {}
 
   ngOnInit() {
-    // Primeiro tenta pegar o ID da URL
-    this.route.params.subscribe(params => {
-      if (params['id']) {
-        this.userId = params['id'];
-        this.loadUserData();
-      } else {
-        const auth = getAuth();
-        this.userId = auth.currentUser?.uid || '';
-        if (this.userId) {
+    this.route.params
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(params => {
+        if (params['id']) {
+          this.userId = params['id'];
           this.loadUserData();
+        } else {
+          const auth = getAuth();
+          this.userId = auth.currentUser?.uid || '';
+          if (this.userId) {
+            this.loadUserData();
+          }
         }
-      }
-    });
+      });
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   private async loadUserData() {
     try {
-      this.loadingService.show()
+      this.loadingService.show();
       const student = await this.studentService.selectStudent(this.userId);
       
       if (!student()) {
@@ -127,7 +136,6 @@ export class PaymentHistoryComponent implements OnInit {
           try {
             const course = await this.courseService.getById(transaction.courseId);
             
-            // Adicionar informações de parcelamento se existirem
             let installmentInfo = null;
             if (transaction.type === 'INSTALLMENT') {
               installmentInfo = {
@@ -155,7 +163,12 @@ export class PaymentHistoryComponent implements OnInit {
           }
         })
       );
-      // Carregar assinaturas e complementar com dados do curso
+
+      // Atualizar os dados uma única vez
+      this._payments.set(transactionsWithDetails);
+      this._groupedPayments.set(this.groupInstallmentPayments(transactionsWithDetails));
+
+      // Carregar assinaturas
       const subscriptions = await firstValueFrom(this.paymentService.getCustomerSubscriptions(customer.asaasId));
       const subscriptionsWithDetails = await Promise.all(
         subscriptions.map(async (subscription) => {
@@ -163,14 +176,12 @@ export class PaymentHistoryComponent implements OnInit {
             const course = await this.courseService.getById(subscription.courseId);
             const payments = await firstValueFrom(this.asaasService.getSubscriptionPayments(customer.email));
             
-            // Ordenar pagamentos por data
             const sortedPayments = payments.sort((a, b) => {
               const dateA = new Date(a.dueDate);
               const dateB = new Date(b.dueDate);
               return dateA.getTime() - dateB.getTime();
             });
 
-            // Calcular próximas faturas baseado no ciclo e quantidade de parcelas
             const nextPaymentDates = this.calculateNextPaymentDates(
               subscription.nextDueDate,
               subscription.cycle,
@@ -206,11 +217,11 @@ export class PaymentHistoryComponent implements OnInit {
         })
       );
 
-      this.payments$ = of(transactionsWithDetails || []);
-      this.subscriptions$ = of(subscriptionsWithDetails || []);
+      this._subscriptions.set(subscriptionsWithDetails || []);
     } catch (error) {
       console.error('Erro ao carregar dados do usuário:', error);
       this.error = 'Erro ao carregar histórico de pagamentos';
+      this.snackBar.open('Erro ao carregar histórico de pagamentos', 'OK', { duration: 3000 });
     } finally {
       this.loadingService.hide();
     }
@@ -316,8 +327,8 @@ export class PaymentHistoryComponent implements OnInit {
     paymentMethod: 'PIX' | 'BOLETO' | 'CREDIT_CARD',
     dataFatura: Date | string
   ) {
-    this.loadingService.show();
     try {
+      this.loadingService.show();
       const paymentData = {
         customer: subscription.customerId,
         billingType: paymentMethod,
@@ -584,7 +595,7 @@ export class PaymentHistoryComponent implements OnInit {
     if (!details?.total) return 0;
     
     // Buscar todos os pagamentos do mesmo parcelamento
-    const installmentPayments = this.payments.filter(p => 
+    const installmentPayments = this._payments().filter(p => 
       p.installmentId === payment.installmentId && 
       (p.status === 'RECEIVED' || p.status === 'CONFIRMED')
     );
@@ -676,7 +687,6 @@ export class PaymentHistoryComponent implements OnInit {
     
     payments.forEach(payment => {
       if (this.isInstallmentPayment(payment)) {
-        // Usar installmentId como chave para agrupar
         const key = payment.installmentId;
         if (!grouped[key]) {
           grouped[key] = [];
@@ -685,7 +695,6 @@ export class PaymentHistoryComponent implements OnInit {
       }
     });
 
-    // Ordenar cada grupo por número da parcela
     Object.keys(grouped).forEach(key => {
       grouped[key].sort((a, b) => {
         const aNumber = a.installmentNumber || 0;
@@ -704,14 +713,14 @@ export class PaymentHistoryComponent implements OnInit {
   }
 
   get hasInstallments(): boolean {
-    return Object.keys(this.groupedInstallments).length > 0;
+    return Object.keys(this._groupedPayments()).length > 0;
   }
 
   async loadPayments() {
     try {
       // Carregar pagamentos do serviço
       // this.payments = await this.paymentService.getPayments();
-      this.groupedInstallments = this.groupInstallmentPayments(this.payments);
+      this._groupedPayments.set(this.groupInstallmentPayments(this._payments()));
       await this.loadCourseNames();
     } catch (error) {
       console.error('Erro ao carregar pagamentos:', error);
@@ -719,7 +728,7 @@ export class PaymentHistoryComponent implements OnInit {
   }
 
   async loadCourseNames() {
-    const courseIds = Object.keys(this.groupedInstallments);
+    const courseIds = Object.keys(this._groupedPayments());
     for (const courseId of courseIds) {
       try {
         // Carregar nome do curso do serviço
