@@ -28,7 +28,7 @@ import { LoadingService } from '../../../../../shared/services/loading.service';
           (click)="selectPaymentMethod('CREDIT_CARD')"
         >
           <i class="fas fa-credit-card"></i>
-          Cartão de Crédito
+          Crédito
         </button>
         
         <button 

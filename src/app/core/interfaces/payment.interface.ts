@@ -113,7 +113,7 @@ export enum PaymentStatusTranslation {
 
 export enum PaymentMethodTranslation {
   BOLETO = 'Boleto',
-  CREDIT_CARD = 'Cartão de Crédito',
+  CREDIT_CARD = 'Crédito',
   PIX = 'PIX'
 }
 

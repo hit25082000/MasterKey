@@ -1,3 +1,9 @@
+:host{
+  display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 .financial-container {
   padding: 20px;
   display: flex;
@@ -406,4 +412,44 @@
       color: #333;
     }
   }
+}
+
+.course-selection {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin: 24px auto;
+  max-width: 800px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+
+  mat-card-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid #eee;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  mat-card-content {
+    padding: 24px;
+    width: 100%;
+  }
+}
+
+.course-select {
+  width: 100%;
+  max-width: 500px;
+  display: block;
+  margin: 0 auto;
+}
+
+mat-card-title {
+  color: #333;
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin: 0;
 } 
