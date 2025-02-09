@@ -12,8 +12,9 @@
     </div>
 
     <app-payment 
-  [courseId]="course()?.id!"
-  [courseValue]="course()?.price!"
+  [courseId]="course()?.id || ''"
+  [courseValue]="course()?.price || 0"
+  [courseName]="course()?.name || ''"
   [maxInstallments]="course()?.portionCount!"
   ></app-payment>
 

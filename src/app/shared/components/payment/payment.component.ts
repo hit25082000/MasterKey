@@ -68,6 +68,7 @@ export class PaymentComponent implements OnInit {
   @Input() courseValue: number = 0;
   @Input() maxInstallments: number = 12;
   @Input() interestRate: number = 2.99; // Taxa de juros mensal para parcelamento
+  @Input() courseName: string = '';  // Novo input para o nome do curso
 
   isSubscription: boolean = false;
   isInstallment: boolean = false;
@@ -239,7 +240,7 @@ export class PaymentComponent implements OnInit {
           value: subscriptionValue,
           nextDueDate: new Date().toISOString().split('T')[0],
           cycle: this.selectedCycle,
-          description: `Assinatura do curso ${this.courseId} - ${this.getCycleLabel(this.selectedCycle)}`,
+          description: `Assinatura do curso ${this.courseName || 'Não identificado'} - ${this.getCycleLabel(this.selectedCycle)}`,
           totalValue: this.courseValue,
           installments: this.getInstallmentsCount(),
           maxInstallments: this.maxInstallments
@@ -264,7 +265,7 @@ export class PaymentComponent implements OnInit {
           totalValue: this.courseValue,
           installmentCount: this.installmentForm.get('installmentCount')?.value || 1,
           dueDate: this.installmentForm.get('dueDate')?.value,
-          description: `Pagamento parcelado do curso ${this.courseId}`,
+          description: `Pagamento parcelado do curso ${this.courseName || 'Não identificado'}`,
           courseId: this.courseId
         };
 
@@ -286,7 +287,7 @@ export class PaymentComponent implements OnInit {
           paymentMethod: this.selectedPaymentType,
           amount: this.courseValue,
           dueDate: new Date().toISOString().split('T')[0],
-          description: `Pagamento do curso ${this.courseId}`,
+          description: `Pagamento do curso ${this.courseName || 'Não identificado'}`,
           courseId: this.courseId
         }; 
 
