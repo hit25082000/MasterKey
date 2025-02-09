@@ -41,7 +41,7 @@ Chart.register(...registerables);
         <mat-card class="summary-card">
           <mat-card-header>
             <mat-icon mat-card-avatar>payments</mat-icon>
-            <mat-card-title>Receita Total</mat-card-title>
+            <mat-card-title>Receita Total Este Mês</mat-card-title>
             <mat-card-subtitle>R$ {{ totalRevenue() | number:'1.2-2' }}</mat-card-subtitle>
           </mat-card-header>
         </mat-card>
@@ -184,11 +184,18 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
   readonly totalStudents = computed(() => this._students().length);
   readonly totalCourses = computed(() => this._courses().length);
-  readonly totalRevenue = computed(() => 
-    this._payments()
-      .filter(p => p.paymentDetails.status === 'CONFIRMED' || p.paymentDetails.status === 'RECEIVED')
-      .reduce((acc, curr) => acc + curr.paymentDetails.value, 0)
-  );
+  readonly totalRevenue = computed(() => {
+    const now = new Date();
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    
+    return this._payments()
+      .filter(p => {
+        const paymentDate = new Date(p.paymentDetails.dateCreated);
+        return (p.paymentDetails.status === 'CONFIRMED' || p.paymentDetails.status === 'RECEIVED') &&
+               paymentDate >= firstDayOfMonth;
+      })
+      .reduce((acc, curr) => acc + curr.paymentDetails.value, 0);
+  });
 
   readonly recentPayments = computed(() => {
     const now = new Date();
