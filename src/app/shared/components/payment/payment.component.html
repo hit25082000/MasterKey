@@ -1,151 +1,111 @@
-
 <div class="payment-container">
-  <mat-card>
+  <mat-card class="payment-card">
     <mat-card-header>
-      <mat-card-title>Opções de Pagamento</mat-card-title>
+      <mat-card-title>Pagamento</mat-card-title>
+      <mat-card-subtitle>Valor total: R$ {{ courseValue | number:'1.2-2' }}</mat-card-subtitle>
     </mat-card-header>
-    
+
     <mat-card-content>
-      <mat-tab-group>
-        <!-- Tab de Pagamento Único -->
-        <mat-tab label="Pagamento Único">
-          <div class="tab-content">
-            <div class="payment-type-section">
-              <mat-button-toggle-group [(ngModel)]="selectedPaymentType" (change)="onPaymentTypeChange($event.value)">
-                <mat-button-toggle value="PIX">PIX</mat-button-toggle>
-                <mat-button-toggle value="BOLETO">Boleto</mat-button-toggle>
-                <mat-button-toggle value="CREDIT_CARD">Crédito</mat-button-toggle>
-              </mat-button-toggle-group>
-            </div>
+      <!-- Tipo de Pagamento -->
+      <div class="payment-type-selector">
+        <mat-button-toggle-group [(ngModel)]="selectedPaymentType">
+          <mat-button-toggle value="PIX" (click)="onPaymentTypeChange('PIX')">PIX</mat-button-toggle>
+          <mat-button-toggle value="BOLETO" (click)="onPaymentTypeChange('BOLETO')">Boleto</mat-button-toggle>
+          <mat-button-toggle value="CREDIT_CARD" (click)="onPaymentTypeChange('CREDIT_CARD')">Cartão de Crédito</mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
 
-            <div class="payment-info">
-              <p class="total-amount">Valor Total: R$ {{ courseValue | number:'1.2-2' }}</p>
-            </div>
+      <!-- Opções de Pagamento -->
+      <div class="payment-options">
+        <mat-button-toggle-group>
+          <mat-button-toggle [checked]="!isSubscription && !isInstallment" (change)="isSubscription = false; isInstallment = false">
+            À Vista
+          </mat-button-toggle>
+          <mat-button-toggle [checked]="isInstallment" (change)="isInstallment = true; isSubscription = false">
+            Parcelado
+          </mat-button-toggle>
+          <mat-button-toggle [checked]="isSubscription" (change)="isSubscription = true; isInstallment = false">
+            Assinatura
+          </mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
 
-            <!-- Formulários compartilhados -->
-            <ng-container *ngTemplateOutlet="sharedForms"></ng-container>
+      <!-- Formulário do Cliente -->
+      <form [formGroup]="customerForm" class="customer-form">
+        <mat-form-field appearance="outline">
+          <mat-label>Nome Completo</mat-label>
+          <input matInput formControlName="name" required>
+        </mat-form-field>
 
-            <button mat-raised-button color="primary" 
-                    (click)="processPayment(false)" 
-                    [disabled]="!isFormValid()">
-              <span>Pagar Agora</span>
-            </button>
-          </div>
-        </mat-tab>
+        <mat-form-field appearance="outline">
+          <mat-label>Email</mat-label>
+          <input matInput type="email" formControlName="email" required>
+        </mat-form-field>
 
-        <!-- Tab de Assinatura -->
-        <mat-tab label="Pagamento Recorrente">
-          <div class="tab-content">
-            <div class="payment-type-section">
-              <mat-button-toggle-group [(ngModel)]="selectedPaymentType" (change)="onPaymentTypeChange($event.value)">
-                <mat-button-toggle value="PIX">PIX</mat-button-toggle>
-                <mat-button-toggle value="BOLETO">Boleto</mat-button-toggle>
-                <mat-button-toggle value="CREDIT_CARD">Crédito</mat-button-toggle>
-              </mat-button-toggle-group>
-            </div>
+        <mat-form-field appearance="outline">
+          <mat-label>CPF/CNPJ</mat-label>
+          <input matInput formControlName="cpfCnpj" required>
+        </mat-form-field>
 
-            <div class="subscription-options">
-              <mat-button-toggle-group [(ngModel)]="selectedCycle" (change)="onCycleChange($event.value)">
-                <mat-button-toggle *ngFor="let option of availableSubscriptionOptions" 
-                                 [value]="option.cycle"
-                                 [disabled]="option.disabled">
-                  {{ option.label }}
-                  <div class="option-value">R$ {{ option.value | number:'1.2-2' }}/mês</div>
-                </mat-button-toggle>
-              </mat-button-toggle-group>
-            </div>
+        <mat-form-field appearance="outline">
+          <mat-label>Telefone</mat-label>
+          <input matInput formControlName="phone" required>
+        </mat-form-field>
 
-            <div class="payment-info">
-              <p class="total-amount">Valor da Assinatura: R$ {{ getSubscriptionValue() | number:'1.2-2' }}</p>
-              <p class="cycle-info">Ciclo: {{ getCycleLabel(selectedCycle) }}</p>
-              <p class="installments-info">Total de parcelas: {{ getInstallmentsCount() }}</p>
-              <p class="total-info">Valor total do curso: R$ {{ courseValue | number:'1.2-2' }}</p>
-            </div>
+        <mat-form-field appearance="outline">
+          <mat-label>CEP</mat-label>
+          <input matInput formControlName="postalCode" required>
+        </mat-form-field>
 
-            <!-- Formulários compartilhados -->
-            <ng-container *ngTemplateOutlet="sharedForms"></ng-container>
+        <mat-form-field appearance="outline">
+          <mat-label>Número</mat-label>
+          <input matInput formControlName="addressNumber" required>
+        </mat-form-field>
+      </form>
 
-            <button mat-raised-button color="primary" 
-                    (click)="processPayment(true)" 
-                    [disabled]="!isFormValid()">
-              <span>Assinar Agora</span>
-            </button>
-          </div>
-        </mat-tab>
-      </mat-tab-group>
+      <!-- Opções de Parcelamento -->
+      <div *ngIf="isInstallment" class="installment-form" [formGroup]="installmentForm">
+        <mat-form-field appearance="outline">
+          <mat-label>Número de Parcelas</mat-label>
+          <mat-select formControlName="installmentCount">
+            <mat-option *ngFor="let option of installmentOptions" [value]="option.value">
+              {{ option.label }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
 
-      <!-- Template com formulários compartilhados -->
-      <ng-template #sharedForms>
-        <form [formGroup]="customerForm" class="form-section">
-          <mat-form-field>
-            <mat-label>Nome Completo</mat-label>
-            <input matInput formControlName="name" required>
-          </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Data do Primeiro Vencimento</mat-label>
+          <input matInput type="date" formControlName="dueDate">
+        </mat-form-field>
+      </div>
 
-          <mat-form-field>
-            <mat-label>Email</mat-label>
-            <input matInput type="email" formControlName="email" required>
-          </mat-form-field>
+      <!-- Opções de Assinatura -->
+      <div *ngIf="isSubscription" class="subscription-options">
+        <mat-form-field appearance="outline">
+          <mat-label>Ciclo de Pagamento</mat-label>
+          <mat-select [(ngModel)]="selectedCycle" (selectionChange)="onCycleChange($event.value)">
+            <mat-option *ngFor="let option of availableSubscriptionOptions" 
+                        [value]="option.cycle"
+                        [disabled]="option.disabled">
+              {{ option.label }} - R$ {{ option.value | number:'1.2-2' }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
 
-          <mat-form-field>
-            <mat-label>CPF/CNPJ</mat-label>
-            <input matInput formControlName="cpfCnpj" required>
-          </mat-form-field>
-
-          <mat-form-field>
-            <mat-label>Telefone</mat-label>
-            <input matInput formControlName="phone" required>
-          </mat-form-field>
-
-          <mat-form-field>
-            <mat-label>CEP</mat-label>
-            <input matInput formControlName="postalCode" required>
-          </mat-form-field>
-
-          <mat-form-field>
-            <mat-label>Número</mat-label>
-            <input matInput formControlName="addressNumber" required>
-          </mat-form-field>
-        </form>
-
-        <!-- Formulário de Cartão apenas para assinatura -->
-        <form *ngIf="selectedPaymentType === 'CREDIT_CARD' && isSubscription" [formGroup]="creditCardForm" class="form-section">
-          <mat-form-field>
-            <mat-label>Nome no Cartão</mat-label>
-            <input matInput formControlName="holderName" required>
-          </mat-form-field>
-
-          <mat-form-field>
-            <mat-label>Número do Cartão</mat-label>
-            <input matInput formControlName="number" required>
-          </mat-form-field>
-
-          <div class="card-details">
-            <mat-form-field>
-              <mat-label>Mês</mat-label>
-              <input matInput formControlName="expiryMonth" required>
-            </mat-form-field>
-
-            <mat-form-field>
-              <mat-label>Ano</mat-label>
-              <input matInput formControlName="expiryYear" required>
-            </mat-form-field>
-
-            <mat-form-field>
-              <mat-label>CCV</mat-label>
-              <input matInput formControlName="ccv" required>
-            </mat-form-field>
-          </div>
-        </form>
-      </ng-template>
-
-      <!-- Link do Boleto -->
-      <div *ngIf="paymentUrl" class="boleto-section">
-        <p>Clique no botão abaixo para fazer o pagamento</p>
-        <button mat-raised-button color="accent" (click)="openPaymentUrl()">
-          Abrir Pagamento
-        </button>
+      <!-- QR Code do PIX -->
+      <div *ngIf="pixQRCode" class="pix-qrcode">
+        <img [src]="pixQRCode" alt="QR Code PIX">
       </div>
     </mat-card-content>
+
+    <mat-card-actions>
+      <button mat-raised-button color="primary" 
+              (click)="processPayment(isSubscription)"
+              [disabled]="!isFormValid()">
+        Finalizar Pagamento
+      </button>
+    </mat-card-actions>
   </mat-card>
 </div>

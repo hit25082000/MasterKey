@@ -389,7 +389,6 @@ export class PaymentTestComponent implements OnInit, OnDestroy {
 
   constructor(
     private asaasService: AsaasService,
-    private paymentService: PaymentService,
     private paymentState: PaymentStateService,
     private webhookService: WebhookService,
     private firestore: AngularFirestore,

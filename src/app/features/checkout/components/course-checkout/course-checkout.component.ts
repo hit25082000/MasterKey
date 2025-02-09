@@ -134,7 +134,7 @@ export class CourseCheckoutComponent implements OnInit {
           amount: this.course()!.price,
           courseId: this.course()!.id,
           paymentMethod,
-          customer: customerData
+          customer: customerData.asaasId || ''
         }));
 
         if (!response) {

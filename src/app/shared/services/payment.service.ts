@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
 import { Observable, of, catchError, from, map } from 'rxjs';
 import { environment } from '../../../environments/environment.development';
@@ -19,14 +19,25 @@ export interface CustomerData {
   cpfCnpj: string;
   phone: string;
   courseId: string;
+  asaasId?: string;
 }
 
-export interface PaymentRequest {
+export interface BaseAsaasPayment {
+  customer: string;
+  billingType?: string;
+  paymentMethod: string;
   amount: number;
   courseId: string;
-  paymentMethod: string;
-  customer: CustomerData;
+  dueDate?: string;
+  description?: string;
 }
+
+export interface AsaasInstallmentPayment extends BaseAsaasPayment {
+  totalValue: number;
+  installmentCount: number;
+}
+
+export interface AsaasPayment extends BaseAsaasPayment {}
 
 export interface SubscriptionRequest {
   customer: CustomerData;
@@ -54,22 +65,41 @@ export class PaymentService {
   readonly subscriptionPayments = this._subscriptionPayments.asReadonly();
   readonly subscription = this._subscription.asReadonly();
 
-  processPayment(request: PaymentRequest): Observable<AsaasPaymentResponse> {
+  processPayment(request: AsaasPayment): Observable<AsaasPaymentResponse> {
+    const headers = new HttpHeaders()
+      .set('Content-Type', 'application/json')
+      .set('Accept', 'application/json');
+
     return this.http.post<AsaasPaymentResponse>(
       `${this.apiUrl}/createAsaasPayment`,
-      request
+      request,
+      { headers, withCredentials: true }
     );
   }
 
-  saveCustomerData(data: CustomerData): Observable<any> {
-    return this.http.post(`${this.apiUrl}/saveCustomerData`, data);
-  }
-
   createSubscription(data: SubscriptionRequest): Observable<AsaasSubscriptionResponse> {
-    return this.http.post<AsaasSubscriptionResponse>(`${this.apiUrl}/createSubscription`, data);
+    const headers = new HttpHeaders()
+      .set('Content-Type', 'application/json')
+      .set('Accept', 'application/json');
+
+    return this.http.post<AsaasSubscriptionResponse>(
+      `${this.apiUrl}/createSubscription`, 
+      data,
+      { headers, withCredentials: true }
+    );
   }
 
- 
+  createInstallmentPayment(request: AsaasInstallmentPayment): Observable<any> {
+    const headers = new HttpHeaders()
+      .set('Content-Type', 'application/json')
+      .set('Accept', 'application/json');
+
+    return this.http.post<any>(
+      `${this.apiUrl}/createInstallmentPayment`,
+      request,
+      { headers, withCredentials: true }
+    );
+  }
 
   getPayments(email: string): Observable<FirestorePayment[]> {
     const paymentsQuery = query(
@@ -257,5 +287,9 @@ export class PaymentService {
         orderBy('createdAt', 'desc')
       ]
     );
+  }
+
+  saveCustomerData(customerData: CustomerData): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/createCustomer`, customerData);
   }
 }  

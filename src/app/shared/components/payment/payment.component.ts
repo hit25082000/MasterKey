@@ -13,6 +13,7 @@ import { CommonModule } from '@angular/common';
 import { AsaasService } from '../../../core/services/asaas.service';
 import { firstValueFrom } from 'rxjs';
 import { LoadingService } from '../../services/loading.service';
+import { AsaasInstallmentPayment, AsaasPayment } from '../../services/payment.service';
 
 interface SubscriptionData {
   customer: string;
@@ -31,25 +32,6 @@ interface SubscriptionData {
     expiryYear: string;
     ccv: string;
   };
-  creditCardHolderInfo?: {
-    name: string;
-    email: string;
-    cpfCnpj: string;
-    postalCode: string;
-    addressNumber: string;
-    phone: string;
-  };
-}
-
-interface PaymentData {
-  customer: string;
-  billingType: 'BOLETO' | 'CREDIT_CARD' | 'PIX';
-  value: number;
-  dueDate: string;
-  description: string;
-  installmentCount?: number;
-  installmentValue?: number;
-  creditCard?: any;
   creditCardHolderInfo?: {
     name: string;
     email: string;
@@ -88,8 +70,10 @@ export class PaymentComponent implements OnInit {
   @Input() interestRate: number = 2.99; // Taxa de juros mensal para parcelamento
 
   isSubscription: boolean = false;
+  isInstallment: boolean = false;
   customerForm!: FormGroup;
   creditCardForm!: FormGroup;
+  installmentForm!: FormGroup;
   selectedPaymentType: 'BOLETO' | 'CREDIT_CARD' | 'PIX' = 'PIX';
   selectedCycle: 'MONTHLY' = 'MONTHLY';
   private loadingService = inject(LoadingService)
@@ -104,6 +88,8 @@ export class PaymentComponent implements OnInit {
     disabled: boolean;
   }> = [];
 
+  installmentOptions: Array<{value: number, label: string, installmentValue: number}> = [];
+
   constructor(
     private fb: FormBuilder,
     private asaasService: AsaasService,
@@ -113,6 +99,7 @@ export class PaymentComponent implements OnInit {
   ngOnInit() {
     this.initializeForms();
     this.calculateSubscriptionOptions();
+    this.calculateInstallmentOptions();
   }
 
   initializeForms() {
@@ -132,6 +119,16 @@ export class PaymentComponent implements OnInit {
       expiryYear: ['', Validators.required],
       ccv: ['', Validators.required],
       installments: [1] // Novo campo para número de parcelas
+    });
+
+    this.installmentForm = this.fb.group({
+      installmentCount: [1, [Validators.required, Validators.min(1), Validators.max(this.maxInstallments)]],
+      dueDate: [new Date().toISOString().split('T')[0], Validators.required]
+    });
+
+    // Atualizar valor da parcela quando mudar o número de parcelas
+    this.installmentForm.get('installmentCount')?.valueChanges.subscribe(count => {
+      this.updateInstallmentValue(count);
     });
   }
 
@@ -189,7 +186,32 @@ export class PaymentComponent implements OnInit {
     return option ? Math.ceil(this.maxInstallments / option.months) : 0;
   }
 
-  async processPayment(isSubscription: boolean) {
+  calculateInstallmentOptions() {
+    this.installmentOptions = [];
+    for (let i = 1; i <= this.maxInstallments; i++) {
+      const installmentValue = this.courseValue / i;
+      this.installmentOptions.push({
+        value: i,
+        label: `${i}x de R$ ${installmentValue.toFixed(2)}`,
+        installmentValue: installmentValue
+      });
+    }
+  }
+
+  calculateInstallmentValue(installments: number): number {
+    return this.courseValue / installments;
+  }
+
+  updateInstallmentValue(installments: number) {
+    const option = this.installmentOptions.find(opt => opt.value === installments);
+    if (option) {
+      this.installmentForm.patchValue({
+        installmentValue: option.installmentValue
+      }, { emitEvent: false });
+    }
+  }
+
+  async processPayment(isSubscription: boolean = false) {
     if (!this.isFormValid()) {
       this.snackBar.open('Por favor, preencha todos os campos obrigatórios', 'OK', { duration: 3000 });
       return;
@@ -227,50 +249,58 @@ export class PaymentComponent implements OnInit {
           this.asaasService.createSubscription(subscriptionData, this.courseId)
         );
 
-        if (subscriptionResponse) {
-          // Tratar o primeiro pagamento da assinatura
-          if (subscriptionResponse.firstPayment) {
-            this.handlePaymentResponse(subscriptionResponse.firstPayment);
-            const msg = this.selectedPaymentType === 'CREDIT_CARD' 
-              ? 'Você será redirecionado para a página de pagamento do cartão'
-              : 'Primeiro pagamento da assinatura criado com sucesso!';
-            this.snackBar.open(msg, 'OK', { duration: 5000 });
-
-            if (subscriptionResponse.firstPayment['invoiceUrl']) {
-              window.location.href = subscriptionResponse.firstPayment['invoiceUrl'];
-            }
-          } else {
-            this.snackBar.open('Assinatura criada com sucesso!', 'OK', { duration: 3000 });
+        if (subscriptionResponse?.firstPayment) {
+          this.handlePaymentResponse(subscriptionResponse.firstPayment);
+          if (subscriptionResponse.firstPayment.invoiceUrl) {
+            window.location.href = subscriptionResponse.firstPayment.invoiceUrl;
           }
+        } else {
+          this.snackBar.open('Assinatura criada com sucesso!', 'OK', { duration: 3000 });
         }
-        this.loadingService.hide();
-      } else {
-        const paymentData = {
+      } else if (this.isInstallment) {
+        const installmentData: AsaasInstallmentPayment = {
           customer: customerResponse.customerId,
           billingType: this.selectedPaymentType,
-          value: this.courseValue,
-          dueDate: new Date().toISOString().split('T')[0],
-          description: `Pagamento do curso ${this.courseId}`,
-          externalReference: this.courseId,
-          postalService: false // Desabilita envio de correspondência física
-        }; 
+          paymentMethod: this.selectedPaymentType,
+          amount: this.courseValue,
+          totalValue: this.courseValue,
+          installmentCount: this.installmentForm.get('installmentCount')?.value || 1,
+          dueDate: this.installmentForm.get('dueDate')?.value,
+          description: `Pagamento parcelado do curso ${this.courseId}`,
+          courseId: this.courseId
+        };
 
-          this.asaasService.createPayment(paymentData).subscribe((paymentResponse)=>{   
+        const paymentResponse = await firstValueFrom(
+          this.asaasService.createInstallmentPayment(installmentData)
+        );
 
-            console.log(paymentResponse)
-            if (paymentResponse) {
-          this.handlePaymentResponse(paymentResponse);
-          const msg = this.selectedPaymentType === 'CREDIT_CARD' 
-            ? 'Você será redirecionado para a página de pagamento do cartão'
-            : 'Pagamento criado com sucesso!';
-          this.snackBar.open(msg, 'OK', { duration: 5000 });
-
-          if (paymentResponse['invoiceUrl']) {
-            window.location.href = paymentResponse['invoiceUrl'];
-            this.loadingService.hide();
+        if (paymentResponse?.payments?.[0]) {
+          this.handlePaymentResponse(paymentResponse.payments[0]);
+          if (paymentResponse.payments[0]['invoiceUrl']) {
+            window.location.href = paymentResponse.payments[0]['invoiceUrl'];
           }
         }
-      })
+      } else {
+        const paymentData: AsaasPayment = {
+          customer: customerResponse.customerId,
+          billingType: this.selectedPaymentType,
+          paymentMethod: this.selectedPaymentType,
+          amount: this.courseValue,
+          dueDate: new Date().toISOString().split('T')[0],
+          description: `Pagamento do curso ${this.courseId}`,
+          courseId: this.courseId
+        };
+
+        const paymentResponse = await firstValueFrom(
+          this.asaasService.createPayment(paymentData)
+        );
+
+        if (paymentResponse) {
+          this.handlePaymentResponse(paymentResponse);
+          if (paymentResponse['invoiceUrl']) {
+            window.location.href = paymentResponse['invoiceUrl'];
+          }
+        }
       }
     } catch (error) {
       console.error('Erro ao processar operação:', error);
@@ -279,26 +309,35 @@ export class PaymentComponent implements OnInit {
         'OK',
         { duration: 5000 }
       );
+    } finally {
       this.loadingService.hide();
+      this.resetForms();
+    }
+  }
 
-    } 
+  private resetForms() {
+    this.customerForm.reset();
+    this.creditCardForm.reset();
+    this.installmentForm.reset({
+      installmentCount: 1,
+      dueDate: new Date().toISOString().split('T')[0]
+    });
+    this.isInstallment = false;
+    this.isSubscription = false;
+    this.selectedPaymentType = 'PIX';
+    this.pixQRCode = '';
+    this.paymentUrl = '';
   }
 
   handlePaymentResponse(response: any) {
-    if (response['bankSlipUrl']) {
-      this.paymentUrl = response['bankSlipUrl'];
+    if (response.bankSlipUrl) {
+      this.paymentUrl = response.bankSlipUrl;
     }
-    if (response['invoiceUrl']) {
-      this.paymentUrl = response['invoiceUrl'];
+    if (response.invoiceUrl) {
+      this.paymentUrl = response.invoiceUrl;
     }
-    if (response['pixQrCodeUrl']) {
-      this.pixQRCode = response['pixQrCodeUrl'];
-    }
-  }
-
-  openPaymentUrl() {
-    if (this.paymentUrl) {
-      window.open(this.paymentUrl, '_blank');
+    if (response.pixQrCodeUrl) {
+      this.pixQRCode = response.pixQrCodeUrl;
     }
   }
 

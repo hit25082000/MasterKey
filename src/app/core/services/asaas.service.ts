@@ -113,7 +113,6 @@ interface AsaasSubscriptionWithPayment extends AsaasResponse {
 })
 export class AsaasService {
   private apiUrl = environment.apiUrl;
-  private apiKey = environment.asaasApiKey;
   private headers = new HttpHeaders();
   private firestore = inject(FirestoreService);
 
@@ -167,6 +166,19 @@ export class AsaasService {
         console.error('Erro ao processar cliente:', error);
         return throwError(() => error);
       })
+    );
+  }
+  
+  createInstallmentPayment(request: any): Observable<any> {
+    return from(this.updateHeaders()).pipe(
+      switchMap(() => {
+        return this.http.post<any>(
+          `${this.apiUrl}/createInstallmentPayment`,
+          request,
+          { headers: this.headers }
+        );
+      }),
+      catchError(error => this.handleAsaasError(error))
     );
   }
 
