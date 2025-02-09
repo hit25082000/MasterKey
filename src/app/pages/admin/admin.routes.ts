@@ -30,6 +30,7 @@ import { ClassAttendanceComponent } from '../../features/class/components/class-
 import { ClassAttendanceListComponent } from '../../features/class/components/class-attendance-list/class-attendance-list.component';
 import { StudentFinancialComponent } from '../../features/student/components/student-financial/student-financial.component';
 import { StudentFinancialListComponent } from '../../features/student/components/student-financial-list/student-financial-list.component';
+import { FinancialReportsComponent } from '../../features/financial/components/financial-reports/financial-reports.component';
 
 export const ADMIN_ROUTES: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
@@ -249,5 +250,11 @@ export const ADMIN_ROUTES: Routes = [
         path: 'library-list',
         component: LibraryListComponent,
         data: { permission: RoutePermission.ADMIN }
-      },      
+      },
+      {
+        path: 'financial-reports',
+        component: FinancialReportsComponent,
+        canActivate: [RoleGuard],
+        data: { permission: RoutePermission.VIEW_STUDENT_FINANCIAL }
+      },
 ];

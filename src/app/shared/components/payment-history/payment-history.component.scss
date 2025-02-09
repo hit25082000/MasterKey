@@ -1252,3 +1252,106 @@
 .mat-expansion-panel-header {
   transition: height 0.3s ease-in-out;
 }
+
+.payment-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  &.confirmed {
+    color: #4CAF50;
+  }
+
+  &.pending {
+    color: #FFA000;
+  }
+
+  &.overdue {
+    color: #F44336;
+  }
+
+  .payment-method {
+    color: #666;
+    font-size: 0.9em;
+    margin-left: 8px;
+  }
+
+  a[mat-raised-button] {
+    margin-left: auto;
+    text-decoration: none;
+    
+    mat-icon {
+      margin-right: 8px;
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+}
+
+.asaas-link {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+
+  a {
+    text-decoration: none;
+    
+    mat-icon {
+      margin-right: 8px;
+    }
+  }
+}
+
+.payment-method-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 12px;
+  padding: 4px 8px;
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 16px;
+  font-size: 0.9em;
+  color: #666;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  &[data-method="PIX"] {
+    color: #32BCAD;
+  }
+
+  &[data-method="CREDIT_CARD"] {
+    color: #7CB342;
+  }
+
+  &[data-method="BOLETO"] {
+    color: #5C6BC0;
+  }
+}
+
+mat-card-header {
+  .mat-mdc-card-header-text {
+    width: 100%;
+  }
+
+  mat-card-subtitle {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+}

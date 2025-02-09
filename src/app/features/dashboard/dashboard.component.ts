@@ -82,28 +82,28 @@ Chart.register(...registerables);
             <ng-container matColumnDef="date">
               <th mat-header-cell *matHeaderCellDef>Data</th>
               <td mat-cell *matCellDef="let payment">
-                {{ payment.paymentDetails.dateCreated | date:'dd/MM/yyyy' }}
+                {{ payment.createdAt | date:'dd/MM/yyyy' }}
               </td>
             </ng-container>
 
             <ng-container matColumnDef="description">
               <th mat-header-cell *matHeaderCellDef>Descrição</th>
               <td mat-cell *matCellDef="let payment">
-                {{ payment.paymentDetails.description }}
+                {{ payment.description }}
               </td>
             </ng-container>
 
             <ng-container matColumnDef="value">
               <th mat-header-cell *matHeaderCellDef>Valor</th>
               <td mat-cell *matCellDef="let payment">
-                R$ {{ payment.paymentDetails.value | number:'1.2-2' }}
+                R$ {{ payment.amount | number:'1.2-2' }}
               </td>
             </ng-container>
 
             <ng-container matColumnDef="status">
               <th mat-header-cell *matHeaderCellDef>Status</th>
               <td mat-cell *matCellDef="let payment">
-                {{ payment.paymentDetails.status }}
+                {{ payment.status }}
               </td>
             </ng-container>
 
@@ -190,11 +190,11 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     
     return this._payments()
       .filter(p => {
-        const paymentDate = new Date(p.paymentDetails.dateCreated);
-        return (p.paymentDetails.status === 'CONFIRMED' || p.paymentDetails.status === 'RECEIVED') &&
+        const paymentDate = new Date(p.createdAt);
+        return (p.status === 'CONFIRMED' || p.status === 'RECEIVED') &&
                paymentDate >= firstDayOfMonth;
       })
-      .reduce((acc, curr) => acc + curr.paymentDetails.value, 0);
+      .reduce((acc, curr) => acc + curr.amount, 0);
   });
 
   readonly recentPayments = computed(() => {
@@ -202,8 +202,8 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     
     return this._payments()
-      .filter(payment => new Date(payment.paymentDetails.dateCreated) >= firstDayOfMonth)
-      .sort((a, b) => new Date(b.paymentDetails.dateCreated).getTime() - new Date(a.paymentDetails.dateCreated).getTime());
+      .filter(payment => new Date(payment.createdAt) >= firstDayOfMonth)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   });
 
   displayedColumns = ['date', 'description', 'value', 'status'];

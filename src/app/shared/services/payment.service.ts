@@ -12,6 +12,7 @@ import {
 import { Firestore, collection, query, where, getDocs, doc, updateDoc, orderBy } from '@angular/fire/firestore';
 import { FirestoreService } from '../../core/services/firestore.service';
 import { PaymentTransaction, Subscription } from '../../core/interfaces/payment.interface';
+import { AsaasService } from '../../core/services/asaas.service';
 
 export interface CustomerData {
   name: string;
@@ -54,6 +55,7 @@ export class PaymentService {
   private http = inject(HttpClient);
   private firestore = inject(Firestore);
   private firestoreService = inject(FirestoreService);
+  private asaasService = inject(AsaasService);
 
   // Signals
   private _payments = signal<FirestorePayment[]>([]);
@@ -156,11 +158,11 @@ export class PaymentService {
   // Métodos auxiliares para cálculos
   getPendingPayments(): number {
     const pendingPayments = this.payments().filter(p => 
-      p.paymentDetails.status === 'PENDING' || p.paymentDetails.status === 'OVERDUE'
+      p.status === 'PENDING' || p.status === 'OVERDUE'
     ).length;
 
     const pendingSubscriptionPayments = this.subscriptionPayments().filter(p => 
-      p.paymentDetails.status === 'PENDING' || p.paymentDetails.status === 'OVERDUE'
+      p.status === 'PENDING' || p.status === 'OVERDUE'
     ).length;
 
     return pendingPayments + pendingSubscriptionPayments;
@@ -168,11 +170,11 @@ export class PaymentService {
 
   getPaidPayments(): number {
     const paidPayments = this.payments().filter(p => 
-      p.paymentDetails.status === 'RECEIVED' || p.paymentDetails.status === 'CONFIRMED'
+      p.status === 'RECEIVED' || p.status === 'CONFIRMED'
     ).length;
 
     const paidSubscriptionPayments = this.subscriptionPayments().filter(p => 
-      p.paymentDetails.status === 'RECEIVED' || p.paymentDetails.status === 'CONFIRMED'
+      p.status === 'RECEIVED' || p.status === 'CONFIRMED'
     ).length;
 
     return paidPayments + paidSubscriptionPayments;
@@ -180,24 +182,24 @@ export class PaymentService {
 
   getTotalPending(): number {
     const pendingPaymentsTotal = this.payments()
-      .filter(p => p.paymentDetails.status === 'PENDING' || p.paymentDetails.status === 'OVERDUE')
-      .reduce((acc, curr) => acc + curr.paymentDetails.value, 0);
+      .filter(p => p.status === 'PENDING' || p.status === 'OVERDUE')
+      .reduce((acc, curr) => acc + curr.amount, 0);
 
     const pendingSubscriptionPaymentsTotal = this.subscriptionPayments()
-      .filter(p => p.paymentDetails.status === 'PENDING' || p.paymentDetails.status === 'OVERDUE')
-      .reduce((acc, curr) => acc + curr.paymentDetails.value, 0);
+      .filter(p => p.status === 'PENDING' || p.status === 'OVERDUE')
+      .reduce((acc, curr) => acc + curr.amount, 0);
 
     return pendingPaymentsTotal + pendingSubscriptionPaymentsTotal;
   }
 
   getTotalPaid(): number {
     const paidPaymentsTotal = this.payments()
-      .filter(p => p.paymentDetails.status === 'RECEIVED' || p.paymentDetails.status === 'CONFIRMED')
-      .reduce((acc, curr) => acc + curr.paymentDetails.value, 0);
+      .filter(p => p.status === 'RECEIVED' || p.status === 'CONFIRMED')
+      .reduce((acc, curr) => acc + curr.amount, 0);
 
     const paidSubscriptionPaymentsTotal = this.subscriptionPayments()
-      .filter(p => p.paymentDetails.status === 'RECEIVED' || p.paymentDetails.status === 'CONFIRMED')
-      .reduce((acc, curr) => acc + curr.paymentDetails.value, 0);
+      .filter(p => p.status === 'RECEIVED' || p.status === 'CONFIRMED')
+      .reduce((acc, curr) => acc + curr.amount, 0);
 
     return paidPaymentsTotal + paidSubscriptionPaymentsTotal;
   }
@@ -291,5 +293,31 @@ export class PaymentService {
 
   saveCustomerData(customerData: CustomerData): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/createCustomer`, customerData);
+  }
+
+  getAllTransactions(): Observable<PaymentTransaction[]> {
+    console.log('Iniciando getAllTransactions...');
+    return from(getDocs(
+      query(
+        collection(this.firestore, 'transactions'),
+        orderBy('createdAt', 'desc')
+      )
+    )).pipe(
+      map(snapshot => {
+        console.log('Snapshot recebido:', snapshot);
+        const payments = snapshot.docs.map(doc => {
+          const data = doc.data() as PaymentTransaction;
+          console.log('Documento processado:', { id: doc.id, data });
+          return { ...data, id: doc.id };
+        });
+        console.log('Total de pagamentos encontrados:', payments.length);
+        this._payments.set(payments as any);
+        return payments;
+      }),
+      catchError(error => {
+        console.error('Erro detalhado em getAllTransactions:', error);
+        return of([]);
+      })
+    );
   }
 }  

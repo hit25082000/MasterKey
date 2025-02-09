@@ -6,9 +6,9 @@ const cors = require('cors')({
   allowedHeaders: [
     'Origin',
     'X-Requested-With',
-    'Content-Type',
+    'Content-Type', 
     'Accept',
-    'Authorization',
+    'Authorization', 
     'Access-Control-Allow-Origin',
     'Access-Control-Allow-Methods',
     'Access-Control-Allow-Headers'
@@ -418,16 +418,16 @@ exports.asaasWebhook = functions.https.onRequest(async (req, res) => {
   // Responder imediatamente para requisições OPTIONS
     if (req.method === 'OPTIONS') {
     res.status(204).send('');
-    return;
-  }
+      return;
+    }
 
   // Verificar se é POST
   if (req.method !== 'POST') {
     res.status(405).send('Método não permitido');
       return;
-    }
+      }
 
-    try {
+      try {
     // Log para debug
     console.log('Webhook recebido:', {
       method: req.method,
@@ -531,7 +531,7 @@ async function processPaymentEvent(event, eventRef) {
     // 1. Atualizar transação
     const paymentRef = db.collection('transactions').doc(payment.id);
     await paymentRef.set({
-      status: payment.status,
+          status: payment.status,
       updatedAt: new Date(),
       paymentDate: payment.paymentDate || null,
       netValue: payment.netValue,
@@ -559,7 +559,7 @@ async function processPaymentEvent(event, eventRef) {
       processedAt: new Date()
     });
 
-  } catch (error) {
+    } catch (error) {
     // Registrar falha no processamento
     await eventRef.update({
       status: 'FAILED',
@@ -659,9 +659,9 @@ exports.createCustomer = functions.https.onRequest(applyMiddleware(async (req, r
     // 1. Criar cliente no Asaas
     const customerResponse = await fetch(`${config.asaas.apiUrl}/customers`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'access_token': config.asaas.apiKey
+            headers: {
+              'Content-Type': 'application/json',
+              'access_token': config.asaas.apiKey
       },
       body: JSON.stringify({
         name: customerData.name,
@@ -684,7 +684,7 @@ exports.createCustomer = functions.https.onRequest(applyMiddleware(async (req, r
       throw new Error('Resposta inválida do Asaas');
     }
 
-    if (!customerResponse.ok) {
+        if (!customerResponse.ok) {
       console.error('Erro Asaas:', responseData);
       if (customerResponse.status === 401) {
         throw new Error('Erro de autenticação com a API do Asaas. Verifique a chave de API.');
@@ -1040,103 +1040,103 @@ async function createSubscription(customer, courseData, cycle = 'MONTHLY', payme
 
 // Endpoint para criar assinatura
 exports.createSubscription = functions.https.onRequest(applyMiddleware(async (req, res) => {
-  if (req.method === 'OPTIONS') {
-    res.status(200).send();
-    return;
-  }
-
-  try {
-    const { courseId, customer, cycle, paymentMethod } = req.body;
-
-    if (!courseId || !customer || !customer.cpfCnpj || !paymentMethod) {
-      return res.status(400).json({
-        error: 'Dados incompletos para criar assinatura. CourseId, customer (com CPF) e paymentMethod são obrigatórios.'
-      });
+    if (req.method === 'OPTIONS') {
+      res.status(200).send();
+      return;
     }
 
-    // Validar método de pagamento
-    if (!['BOLETO', 'PIX'].includes(paymentMethod)) {
-      return res.status(400).json({
-        error: 'Método de pagamento inválido. Use BOLETO ou PIX.'
-      });
-    }
+    try {
+      const { courseId, customer, cycle, paymentMethod } = req.body;
 
-    // Buscar dados do curso
-    const courseDoc = await admin.firestore()
-      .collection('courses')
-      .doc(courseId)
-      .get();
+      if (!courseId || !customer || !customer.cpfCnpj || !paymentMethod) {
+        return res.status(400).json({
+          error: 'Dados incompletos para criar assinatura. CourseId, customer (com CPF) e paymentMethod são obrigatórios.'
+        });
+      }
 
-    if (!courseDoc.exists) {
-      throw new Error('Curso não encontrado');
-    }
+      // Validar método de pagamento
+      if (!['BOLETO', 'PIX'].includes(paymentMethod)) {
+        return res.status(400).json({
+          error: 'Método de pagamento inválido. Use BOLETO ou PIX.'
+        });
+      }
 
-    const courseData = courseDoc.data();
+      // Buscar dados do curso
+      const courseDoc = await admin.firestore()
+        .collection('courses')
+        .doc(courseId)
+        .get();
 
-    // Criar assinatura
-    const subscriptionData = await createSubscription(customer, courseData, cycle, paymentMethod);
-    console.log('Dados da assinatura criada:', subscriptionData);
+      if (!courseDoc.exists) {
+        throw new Error('Curso não encontrado');
+      }
 
-    // Buscar dados do primeiro pagamento da assinatura
+      const courseData = courseDoc.data();
+
+      // Criar assinatura
+      const subscriptionData = await createSubscription(customer, courseData, cycle, paymentMethod);
+      console.log('Dados da assinatura criada:', subscriptionData);
+
+      // Buscar dados do primeiro pagamento da assinatura
     const paymentsResponse = await fetch(`${config.asaas.apiUrl}/subscriptions/${subscriptionData.subscription.id}/payments`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'access_token': config.asaas.apiKey
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'access_token': config.asaas.apiKey
+        }
+      });
+
+      if (!paymentsResponse.ok) {
+        throw new Error('Erro ao buscar pagamentos da assinatura');
       }
-    });
 
-    if (!paymentsResponse.ok) {
-      throw new Error('Erro ao buscar pagamentos da assinatura');
-    }
+      const paymentsData = await paymentsResponse.json();
+      const firstPayment = paymentsData.data[0];
+      console.log("dados de primeiro pagamento", firstPayment)
+      // Buscar dados específicos do pagamento (boleto/pix)
+      const paymentResponse = await fetch(`${config.asaas.apiUrl}/payments/${firstPayment.id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'access_token': config.asaas.apiKey
+        }
+      });
 
-    const paymentsData = await paymentsResponse.json();
-    const firstPayment = paymentsData.data[0];
-    console.log("dados de primeiro pagamento", firstPayment)
-    // Buscar dados específicos do pagamento (boleto/pix)
-    const paymentResponse = await fetch(`${config.asaas.apiUrl}/payments/${firstPayment.id}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'access_token': config.asaas.apiKey
+      
+      if (!paymentResponse.ok) {
+        throw new Error('Erro ao buscar dados do pagamento');
       }
-    });
-
-    
-    if (!paymentResponse.ok) {
-      throw new Error('Erro ao buscar dados do pagamento');
-    }
-    
-    const paymentData = await paymentResponse.json();
-    
-    console.log("resposta do pagamento", paymentData)
-    // Salvar assinatura no Firestore
-    const subscriptionRef = await admin.firestore().collection('subscriptions').add({
-      courseId: courseId,
-      courseName: courseData.name,
+      
+      const paymentData = await paymentResponse.json();
+      
+      console.log("resposta do pagamento", paymentData)
+      // Salvar assinatura no Firestore
+      const subscriptionRef = await admin.firestore().collection('subscriptions').add({
+        courseId: courseId,
+        courseName: courseData.name,
       customerId: subscriptionData.subscription.customer,
-      customerEmail: customer.email,
+        customerEmail: customer.email,
       asaasSubscriptionId: subscriptionData.subscription.id,
-      value: courseData.price,
-      cycle: cycle || 'MONTHLY',
-      paymentMethod: paymentMethod,
+        value: courseData.price,
+        cycle: cycle || 'MONTHLY',
+        paymentMethod: paymentMethod,
       status: subscriptionData.subscription.status,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       subscriptionDetails: subscriptionData.subscription
-    });
+      });
 
-    // Salvar o primeiro pagamento da assinatura
+      // Salvar o primeiro pagamento da assinatura
     const transactionData = {
       customerId: customer.id,
-      courseId: courseId,
-      status: paymentData.status,
+        courseId: courseId,
+        status: paymentData.status,
       type: 'INSTALLMENT',
-      paymentMethod: paymentMethod,
+        paymentMethod: paymentMethod,
       amount: paymentData.value,
       dueDate: paymentData.dueDate,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       installmentId: firstPayment.id,
       installmentNumber: 1,
       totalInstallments: 1,
@@ -1160,27 +1160,27 @@ exports.createSubscription = functions.https.onRequest(applyMiddleware(async (re
 
     await admin.firestore().collection('transactions').add(transactionData);
 
-    res.status(200).json({
+      res.status(200).json({
       subscription: subscriptionData.subscription,
-      payment: {
-        id: paymentData.id,
-        value: paymentData.value,
-        dueDate: paymentData.dueDate,
-        status: paymentData.status,
-        invoiceUrl: paymentData.invoiceUrl,
-        bankSlipUrl: paymentData.bankSlipUrl,
-        pixQrCodeUrl: paymentData.pixQrCodeUrl,
-        pixCopiaECola: paymentData.pixCopiaECola
-      }
-    });
+        payment: {
+          id: paymentData.id,
+          value: paymentData.value,
+          dueDate: paymentData.dueDate,
+          status: paymentData.status,
+          invoiceUrl: paymentData.invoiceUrl,
+          bankSlipUrl: paymentData.bankSlipUrl,
+          pixQrCodeUrl: paymentData.pixQrCodeUrl,
+          pixCopiaECola: paymentData.pixCopiaECola
+        }
+      });
 
-  } catch (error) {
+    } catch (error) {
     console.error('Erro ao processar assinatura:', error);
-    res.status(500).json({
-      error: 'Erro ao processar assinatura',
-      details: error.message
-    });
-  }
+      res.status(500).json({
+        error: 'Erro ao processar assinatura',
+        details: error.message
+      });
+    }
 }));
 
 // Função para download de imagem
@@ -1433,6 +1433,8 @@ exports.createInstallmentPayment = functions.https.onRequest((req, res) => {
         throw new Error(installmentResponse.message || 'Erro ao criar parcelamento');
       }
 
+
+      console.log(installmentResponse)
       // Buscar detalhes das parcelas
       const paymentsResponse = await fetch(`${config.asaas.apiUrl}/installments/${installmentResponse.id}/payments`, {
         method: 'GET',
@@ -1443,6 +1445,8 @@ exports.createInstallmentPayment = functions.https.onRequest((req, res) => {
       });
 
       const paymentsData = await paymentsResponse.json();
+
+      console.log(paymentsData)
 
       // Salvar dados do parcelamento no Firestore
       const db = admin.firestore();
@@ -1475,21 +1479,21 @@ exports.createInstallmentPayment = functions.https.onRequest((req, res) => {
           type: 'INSTALLMENT',
           paymentMethod: billingType,
           amount: payment.value,
-          dueDate: installmentDates[index].toISOString().split('T')[0],
+          dueDate: payment.dueDate,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           installmentId: installmentResponse.id,
-          installmentNumber: index + 1,
+          installmentNumber: payment.installmentNumber,
           totalInstallments: installmentCount,
           invoiceUrl: payment.invoiceUrl,
-          description: `${description} - Parcela ${index + 1}/${installmentCount}`,
+          description: `${description} - Parcela ${payment.installmentNumber}/${installmentCount}`,
           paymentDetails: {
             description: description,
             invoiceUrl: payment.invoiceUrl,
             bankSlipUrl: payment.bankSlipUrl,
-            dueDate: installmentDates[index].toISOString().split('T')[0],
+            dueDate: payment.dueDate,
             installmentInfo: {
-              installmentNumber: index + 1,
+              installmentNumber: payment.installmentNumber,
               totalInstallments: installmentCount,
               installmentValue: payment.value
             }
@@ -1500,14 +1504,21 @@ exports.createInstallmentPayment = functions.https.onRequest((req, res) => {
 
       await batch.commit();
 
-      const firstPayment = paymentsData.data[paymentsData.data.length - 1] || null;
+      // Ordenar pagamentos por data de vencimento e pegar o mais próximo
+      const sortedPayments = paymentsData.data.sort((a, b) => {
+        const dateA = new Date(a.dueDate);
+        const dateB = new Date(b.dueDate);
+        return dateA.getTime() - dateB.getTime();
+      });
+
+      const firstPayment = sortedPayments[0] || null;
 
       res.json({
         id: installmentResponse.id,
         status: 'PENDING',
         totalValue,
         installmentCount,
-        payments: paymentsData.data,
+        payments: sortedPayments,
         invoiceUrl: firstPayment?.invoiceUrl,
         firstPayment: firstPayment
       });

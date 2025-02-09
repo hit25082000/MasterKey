@@ -98,11 +98,31 @@ export interface AsaasSubscriptionResponse {
 
 export interface FirestorePayment {
   id: string;
-  customerEmail: string;
+  installmentId?: string;
+  invoiceUrl?: string;
+  updatedAt: string;
+  createdAt: string;
+  dueDate: string;
+  paymentDetails: {
+    bankSlipUrl: string | null;
+    dueDate: string;
+    invoiceUrl: string;
+    installmentInfo?: {
+      installmentNumber: number;
+      installmentValue: number;
+      totalInstallments: number;
+    };
+    description?: string;
+  };
   courseId: string;
-  type: 'PAYMENT' | 'SUBSCRIPTION';
-  subscriptionId?: string;
-  paymentDetails: AsaasPaymentResponse;
+  totalInstallments?: number;
+  status: string;
+  amount: number;
+  customerId: string;
+  type: 'PAYMENT' | 'SUBSCRIPTION' | 'INSTALLMENT';
+  installmentNumber?: number;
+  description?: string;
+  paymentMethod: 'BOLETO' | 'CREDIT_CARD' | 'PIX';
 }
 
 export interface FirestorePayment2 {

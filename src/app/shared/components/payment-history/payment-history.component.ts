@@ -167,7 +167,7 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
       // Atualizar os dados uma única vez
       this._payments.set(transactionsWithDetails);
       this._groupedPayments.set(this.groupInstallmentPayments(transactionsWithDetails));
-
+      console.log(transactionsWithDetails)
       // Carregar assinaturas
       const subscriptions = await firstValueFrom(this.paymentService.getCustomerSubscriptions(customer.asaasId));
       const subscriptionsWithDetails = await Promise.all(
@@ -685,16 +685,24 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
     
     if (!payments) return grouped;
     
+    // Primeiro, agrupar os pagamentos por installmentId
     payments.forEach(payment => {
       if (this.isInstallmentPayment(payment)) {
         const key = payment.installmentId;
         if (!grouped[key]) {
           grouped[key] = [];
         }
-        grouped[key].push(payment);
+        grouped[key].push({
+          ...payment,
+          paymentDetails: {
+            ...payment.paymentDetails,
+            invoiceUrl: payment.invoiceUrl // Garantir que cada parcela mantenha seu próprio invoiceUrl
+          }
+        });
       }
     });
 
+    // Ordenar cada grupo por número da parcela
     Object.keys(grouped).forEach(key => {
       grouped[key].sort((a, b) => {
         const aNumber = a.installmentNumber || 0;
@@ -707,8 +715,7 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
   }
 
   // Método para obter a URL de visualização do parcelamento no Asaas
-  getInstallmentViewUrl(payment: PaymentTransaction): string {
-    
+  getInstallmentViewUrl(payment: PaymentTransaction): string {    
     return payment.invoiceUrl!;
   }
 
@@ -743,5 +750,15 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
 
   getCourseTitle(courseId: string): string {
     return this.courseNames[courseId] || 'Carregando...';
+  }
+
+  isNextPayment(payment: PaymentTransaction, payments: PaymentTransaction[]): boolean {
+    if (payment.status === 'CONFIRMED') return false;
+    
+    const pendingPayments = payments
+      .filter(p => p.status !== 'CONFIRMED')
+      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+    
+    return pendingPayments[0]?.id === payment.id;
   }
 } 

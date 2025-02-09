@@ -235,6 +235,13 @@
             <mat-card-subtitle>
               {{ group.value[0].paymentDetails.installmentInfo?.totalInstallments }} parcelas de 
               R$ {{ group.value[0].paymentDetails.installmentInfo?.installmentValue | number:'1.2-2' }}
+              <span class="payment-method-badge" [attr.data-method]="group.value[0].paymentMethod">
+                <mat-icon>{{ 
+                  group.value[0].paymentMethod === 'PIX' ? 'qr_code_2' :
+                  group.value[0].paymentMethod === 'CREDIT_CARD' ? 'credit_card' : 'receipt'
+                }}</mat-icon>
+                {{ getPaymentMethodTranslation(group.value[0].paymentMethod) }}
+              </span>
             </mat-card-subtitle>
           </mat-card-header>
 
@@ -276,16 +283,26 @@
                       <span class="payment-method" *ngIf="payment.status === 'CONFIRMED'">
                         (Pago com {{ getPaymentMethodTranslation(payment.paymentMethod) }})
                       </span>
+                      
+                      <!-- Botão de Pagamento -->
+                      <a *ngIf="payment.status !== 'CONFIRMED' && isNextPayment(payment, group.value)" 
+                         mat-raised-button 
+                         color="primary"
+                         [href]="payment.invoiceUrl"
+                         target="_blank">
+                        <mat-icon>payment</mat-icon>
+                        Pagar Parcela
+                      </a>
                     </div>
                   </div>
                 </div>
               </div>
 
               <!-- Link para o Asaas -->
-              <div class="asaas-link">
+              <div class="asaas-link" *ngIf="getInstallmentProgressPercentage(group.value[0]) === 100">
                 <a mat-raised-button color="primary" [href]="getInstallmentViewUrl(group.value[0])" target="_blank">
                   <mat-icon>visibility</mat-icon>
-                  Fazer Pagamento
+                  Visualizar Parcelamento
                 </a>
               </div>
             </div>
