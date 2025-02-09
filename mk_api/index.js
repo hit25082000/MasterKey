@@ -1366,143 +1366,127 @@ exports.createAsaasSubscription = functions.https.onRequest((req, res) => {
 });
 
 // Endpoint para criar pagamento parcelado
-exports.createInstallmentPayment = functions.https.onRequest(applyMiddleware(async (req, res) => {
-  if (req.method === 'OPTIONS') {
-    res.status(200).send();
-    return;
-  }
+exports.createInstallmentPayment = functions.https.onRequest((req, res) => {
+  return applyMiddleware(async (req, res) => {
+    // Configurar headers CORS
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  try {
-    const { 
-      value,
-      totalValue,
-      installmentCount,
-      dueDate,
-      courseId,
-      billingType,
-      customer,
-      description
-    } = req.body;
-
-    if (!totalValue || !installmentCount || !dueDate || !customer || !courseId) {
-      return res.status(400).json({
-        error: 'Dados incompletos para criar pagamento parcelado',
-        details: 'Todos os campos são obrigatórios: totalValue, installmentCount, dueDate, customer, courseId'
-      });
+    // Tratar requisição OPTIONS
+    if (req.method === 'OPTIONS') {
+      res.status(200).end();
+      return;
     }
 
-    // Calcular valor das parcelas
-    const installmentValue = totalValue / installmentCount;
+    try {
+      const { customer, billingType, totalValue, installmentCount, dueDate, description, courseId } = req.body;
 
-    // Criar array de pagamentos
-    const payments = [];
-    let currentDueDate = new Date(dueDate);
+      if (!customer || !billingType || !totalValue || !installmentCount || !dueDate || !description || !courseId) {
+        return res.status(400).json({ error: 'Dados incompletos para criar parcelamento' });
+      }
 
-    for (let i = 1; i <= installmentCount; i++) {
-      const paymentData = {
-        customer,
-        billingType: billingType || 'BOLETO',
-        value: installmentValue,
-        dueDate: currentDueDate.toISOString().split('T')[0],
-        description: `${description || 'Pagamento parcelado'} - Parcela ${i}/${installmentCount}`,
-        externalReference: courseId,
-        postalService: false
-      };
-
-      // Criar pagamento no Asaas
-      const paymentResponse = await fetch(`${config.asaas.apiUrl}/payments`, {
+      // Criar parcelamento no Asaas
+      const response = await fetch(`${config.asaas.apiUrl}/installments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'access_token': config.asaas.apiKey
         },
-        body: JSON.stringify(paymentData)
+        body: JSON.stringify({
+          customer,
+          billingType,
+          totalValue,
+          installmentCount,
+          dueDate,
+          description,
+          externalReference: courseId
+        })
       });
 
-      if (!paymentResponse.ok) {
-        throw new Error(`Erro ao criar pagamento ${i}: ${await paymentResponse.text()}`);
+      const installmentResponse = await response.json();
+
+      if (!response.ok) {
+        throw new Error(installmentResponse.message || 'Erro ao criar parcelamento');
       }
 
-      const payment = await paymentResponse.json();
-      payments.push(payment);
+      // Buscar detalhes das parcelas
+      const paymentsResponse = await fetch(`${config.asaas.apiUrl}/installments/${installmentResponse.id}/payments`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'access_token': config.asaas.apiKey
+        }
+      });
 
-      // Adicionar 1 mês para próximo vencimento
-      currentDueDate.setMonth(currentDueDate.getMonth() + 1);
-    }
+      const paymentsData = await paymentsResponse.json();
 
-    // Salvar informações no Firestore
-    const db = admin.firestore();
-    const batch = db.batch();
+      console.log(paymentsData)
 
-    // Criar documento principal do parcelamento
-    const installmentRef = db.collection('installments').doc();
-    batch.set(installmentRef, {
-      customerId: customer,
-      totalValue,
-      installmentCount,
-      installmentValue,
-      status: 'PENDING',
-      courseId: courseId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      payments: payments.map(p => p.id)
-    });
+      // Salvar dados do parcelamento no Firestore
+      const db = admin.firestore();
+      const batch = db.batch();
 
-    // Criar documentos para cada parcela
-    payments.forEach((payment, index) => {
-      const paymentRef = db.collection('transactions').doc(payment.id);
-      const transactionData = {
-        asaasId: payment.id,
+      // Documento principal do parcelamento
+      const installmentRef = db.collection('installments').doc(installmentResponse.id);
+      batch.set(installmentRef, {
+        id: installmentResponse.id,
         customerId: customer,
-        courseId: courseId,
-        amount: installmentValue,
-        status: payment.status,
-        paymentMethod: billingType,
+        courseId,
+        status: 'PENDING',
         type: 'INSTALLMENT',
-        installmentNumber: index + 1,
-        totalInstallments: installmentCount,
-        installmentId: installmentRef.id,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        dueDate: payment.dueDate
-      };
+        paymentMethod: billingType,
+        totalValue,
+        installmentCount,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        description,
+        dueDate
+      });
 
-      // Adicionar URLs apenas se existirem
-      if (payment.invoiceUrl) {
-        transactionData.invoiceUrl = payment.invoiceUrl;
-      }
-      if (payment.bankSlipUrl) {
-        transactionData.bankSlipUrl = payment.bankSlipUrl;
-      }
-      if (payment.pixQrCodeUrl) {
-        transactionData.pixQrCodeUrl = payment.pixQrCodeUrl;
-      }
+      // Salvar cada parcela individualmente
+      paymentsData.data.forEach((payment, index) => {
+        const paymentRef = db.collection('transactions').doc(payment.id);
+        batch.set(paymentRef, {
+          id: payment.id,
+          customerId: customer,
+          courseId,
+          status: payment.status,
+          type: 'INSTALLMENT',
+          paymentMethod: billingType,
+          amount: payment.value,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          dueDate: payment.dueDate,
+          installmentId: installmentResponse.id,
+          installmentNumber: index + 1,
+          totalInstallments: installmentCount,
+          invoiceUrl: payment.invoiceUrl,
+          description: `${description} - Parcela ${index + 1}/${installmentCount}`
+        });
+      });
 
-      batch.set(paymentRef, transactionData);
-    });
+      // Executar todas as operações em batch
+      await batch.commit();
 
-    // Executar todas as operações
-    await batch.commit();
+      // Pegar o último elemento da lista como primeiro pagamento
+      const firstPayment = paymentsData.data[paymentsData.data.length - 1] || null;
 
-    res.status(200).json({
-      installmentId: installmentRef.id,
-      payments: payments.map(p => ({
-        id: p.id,
-        value: p.value,
-        dueDate: p.dueDate,
-        status: p.status,
-        invoiceUrl: p.invoiceUrl || null,
-        bankSlipUrl: p.bankSlipUrl || null,
-        pixQrCodeUrl: p.pixQrCodeUrl || null
-      }))
-    });
+      res.json({
+        id: installmentResponse.id,
+        status: 'PENDING',
+        totalValue,
+        installmentCount,
+        payments: paymentsData.data,
+        invoiceUrl: firstPayment?.invoiceUrl,
+        firstPayment: firstPayment
+      });
+    } catch (error) {
+      console.error('Erro ao criar parcelamento:', error);
+      res.status(500).json({ error: error.message || 'Erro interno ao criar parcelamento' });
+    }
+  })(req, res);
+});
 
-  } catch (error) {
-    console.error('Erro ao criar pagamento parcelado:', error);
-    res.status(500).json({
-      error: 'Erro ao criar pagamento parcelado',
-      details: error.message
-    });
-  }
-}));
+
 

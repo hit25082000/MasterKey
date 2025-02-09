@@ -42,6 +42,10 @@
                   </mat-chip>
                 </mat-chip-set>
               </div>
+              <div class="info-row">
+                <span class="label">Parcelamento:</span>
+                <span class="value">{{ isInstallmentPayment(payment) ? formatInstallmentInfo(payment) : 'Não é um pagamento parcelado' }}</span>
+              </div>
             </div>
 
             <mat-expansion-panel class="custom-expansion">
@@ -210,6 +214,80 @@
                 mode="determinate"
                 [value]="calculateProgress(subscription)">
               </mat-progress-bar>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- Aba de Parcelamento -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="tab-icon">payments</mat-icon>
+        <span>Parcelamento</span>
+      </ng-template>
+      
+      <div class="installments-container">
+        <mat-card *ngFor="let group of groupInstallmentPayments(payments$ | async) | keyvalue" class="installment-card animate-in">
+          <mat-card-header>
+            <mat-icon mat-card-avatar class="installment-icon">payments</mat-icon>
+            <mat-card-title>{{ group.value[0].paymentDetails.description }}</mat-card-title>
+            <mat-card-subtitle>
+              {{ group.value[0].paymentDetails.installmentInfo?.totalInstallments }} parcelas de 
+              R$ {{ group.value[0].paymentDetails.installmentInfo?.installmentValue | number:'1.2-2' }}
+            </mat-card-subtitle>
+          </mat-card-header>
+
+          <mat-card-content>
+            <div class="installment-info">
+              <div class="info-row">
+                <span class="label">Valor Total:</span>
+                <span class="value">R$ {{ (group.value[0].amount * (group.value[0].paymentDetails.installmentInfo?.totalInstallments ?? 1)) | number:'1.2-2' }}</span>
+              </div>
+
+              <!-- Barra de Progresso -->
+              <div class="progress-section">
+                <div class="progress-label">
+                  Progresso do Parcelamento: {{ getInstallmentProgressPercentage(group.value[0]) }}%
+                </div>
+                <mat-progress-bar
+                  mode="determinate"
+                  [value]="getInstallmentProgressPercentage(group.value[0])">
+                </mat-progress-bar>
+              </div>
+
+              <!-- Lista de Parcelas -->
+              <div class="installments-list">
+                <h3>Parcelas</h3>
+                <div class="installment-item" *ngFor="let payment of group.value">
+                  <div class="installment-details">
+                    <div class="installment-header">
+                      <span class="installment-number">{{ payment.paymentDetails.installmentInfo?.installmentNumber }} de {{ payment.paymentDetails.installmentInfo?.totalInstallments }}</span>
+                      <span class="installment-date">{{ convertTimestamp(payment.createdAt) | date:'dd/MM/yyyy' }}</span>
+                      <span class="installment-value">R$ {{ payment.paymentDetails.installmentInfo?.installmentValue | number:'1.2-2' }}</span>
+                    </div>
+                    <div class="payment-status" [ngClass]="payment.status.toLowerCase()">
+                      <mat-icon>{{ 
+                        payment.status === 'CONFIRMED' ? 'check_circle' :
+                        payment.status === 'PENDING' ? 'schedule' :
+                        payment.status === 'OVERDUE' ? 'error' : 'info'
+                      }}</mat-icon>
+                      <span>{{ getPaymentStatusTranslation(payment.status) }}</span>
+                      <span class="payment-method" *ngIf="payment.status === 'CONFIRMED'">
+                        (Pago com {{ getPaymentMethodTranslation(payment.paymentMethod) }})
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Link para o Asaas -->
+              <div class="asaas-link">
+                <a mat-raised-button color="primary" [href]="getInstallmentViewUrl(group.value[0])" target="_blank">
+                  <mat-icon>visibility</mat-icon>
+                  Visualizar Parcelamento no Asaas
+                </a>
+              </div>
             </div>
           </mat-card-content>
         </mat-card>

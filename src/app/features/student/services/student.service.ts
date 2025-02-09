@@ -44,6 +44,11 @@ export class StudentService {
 
   isLoading = signal<boolean>(true);
 
+  getStudentEmail(userId: string): string | null {
+    const student = this.students().find(stu => stu.id === userId);
+    return student?.email || null;
+  }
+
   constructor() {
     collectionData(this.studentsCollection, { idField: 'id' }).subscribe(
       (data) => {

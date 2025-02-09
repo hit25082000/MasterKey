@@ -250,19 +250,17 @@ export class PaymentComponent implements OnInit {
         );
 
         if (subscriptionResponse?.firstPayment) {
-          this.handlePaymentResponse(subscriptionResponse.firstPayment);
+            this.handlePaymentResponse(subscriptionResponse.firstPayment);
           if (subscriptionResponse.firstPayment.invoiceUrl) {
             window.location.href = subscriptionResponse.firstPayment.invoiceUrl;
-          }
-        } else {
-          this.snackBar.open('Assinatura criada com sucesso!', 'OK', { duration: 3000 });
+            }
+          } else {
+            this.snackBar.open('Assinatura criada com sucesso!', 'OK', { duration: 3000 });
         }
       } else if (this.isInstallment) {
-        const installmentData: AsaasInstallmentPayment = {
+        const installmentData = {
           customer: customerResponse.customerId,
           billingType: this.selectedPaymentType,
-          paymentMethod: this.selectedPaymentType,
-          amount: this.courseValue,
           totalValue: this.courseValue,
           installmentCount: this.installmentForm.get('installmentCount')?.value || 1,
           dueDate: this.installmentForm.get('dueDate')?.value,
@@ -274,10 +272,11 @@ export class PaymentComponent implements OnInit {
           this.asaasService.createInstallmentPayment(installmentData)
         );
 
-        if (paymentResponse?.payments?.[0]) {
-          this.handlePaymentResponse(paymentResponse.payments[0]);
-          if (paymentResponse.payments[0]['invoiceUrl']) {
-            window.location.href = paymentResponse.payments[0]['invoiceUrl'];
+        if (paymentResponse) {
+          this.handlePaymentResponse(paymentResponse);
+          console.log(paymentResponse)
+          if (paymentResponse.invoiceUrl) {
+            window.location.href = paymentResponse.invoiceUrl;
           }
         }
       } else {
@@ -289,13 +288,13 @@ export class PaymentComponent implements OnInit {
           dueDate: new Date().toISOString().split('T')[0],
           description: `Pagamento do curso ${this.courseId}`,
           courseId: this.courseId
-        };
+        }; 
 
         const paymentResponse = await firstValueFrom(
           this.asaasService.createPayment(paymentData)
         );
 
-        if (paymentResponse) {
+            if (paymentResponse) {
           this.handlePaymentResponse(paymentResponse);
           if (paymentResponse['invoiceUrl']) {
             window.location.href = paymentResponse['invoiceUrl'];

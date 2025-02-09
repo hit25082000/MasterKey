@@ -108,6 +108,18 @@ interface AsaasSubscriptionWithPayment extends AsaasResponse {
   };
 }
 
+interface InstallmentResponse {
+  viewUrl?: string;
+  invoiceUrl?: string;
+  bankSlipUrl?: string;
+  pixQrCodeUrl?: string;
+  firstPayment?: {
+    pixQrCodeUrl?: string;
+    bankSlipUrl?: string;
+    invoiceUrl?: string;
+  };
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -169,16 +181,42 @@ export class AsaasService {
     );
   }
   
-  createInstallmentPayment(request: any): Observable<any> {
-    return from(this.updateHeaders()).pipe(
-      switchMap(() => {
-        return this.http.post<any>(
-          `${this.apiUrl}/createInstallmentPayment`,
-          request,
-          { headers: this.headers }
-        );
+  createInstallmentPayment(data: {
+    customer: string;
+    billingType: string;
+    totalValue: number;
+    installmentCount: number;
+    dueDate: string;
+    description: string;
+    courseId: string;
+  }): Observable<InstallmentResponse> {
+    const url = `${this.apiUrl}/createInstallmentPayment`;
+    return this.http.post<InstallmentResponse>(url, data).pipe(
+      map(response => {
+        if (!response) {
+          throw new Error('Resposta vazia do servidor');
+        }
+        // Remove campos undefined antes de retornar
+        const cleanResponse: Partial<InstallmentResponse> = {};
+        
+        if (response.viewUrl) cleanResponse.viewUrl = response.viewUrl;
+        if (response.invoiceUrl) cleanResponse.invoiceUrl = response.invoiceUrl;
+        if (response.bankSlipUrl) cleanResponse.bankSlipUrl = response.bankSlipUrl;
+        if (response.pixQrCodeUrl) cleanResponse.pixQrCodeUrl = response.pixQrCodeUrl;
+        
+        if (response.firstPayment) {
+          cleanResponse.firstPayment = {};
+          if (response.firstPayment.pixQrCodeUrl) cleanResponse.firstPayment.pixQrCodeUrl = response.firstPayment.pixQrCodeUrl;
+          if (response.firstPayment.bankSlipUrl) cleanResponse.firstPayment.bankSlipUrl = response.firstPayment.bankSlipUrl;
+          if (response.firstPayment.invoiceUrl) cleanResponse.firstPayment.invoiceUrl = response.firstPayment.invoiceUrl;
+        }
+
+        return cleanResponse as InstallmentResponse;
       }),
-      catchError(error => this.handleAsaasError(error))
+      catchError(error => {
+        console.error('Erro ao criar pagamento parcelado:', error);
+        return this.handleAsaasError(error);
+      })
     );
   }
 

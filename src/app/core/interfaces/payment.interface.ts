@@ -9,7 +9,7 @@ export interface PaymentTransaction {
   amount: number;
   status: PaymentStatus;
   paymentMethod: 'BOLETO' | 'CREDIT_CARD' | 'PIX';
-  type: 'PAYMENT' | 'SUBSCRIPTION';
+  type: 'PAYMENT' | 'SUBSCRIPTION' | 'INSTALLMENT';
   subscriptionId?: string;
   createdAt: string;
   updatedAt: string;
@@ -33,7 +33,14 @@ export interface PaymentTransaction {
       current: number;
       value: number;
     };
+    installmentInfo?: {
+      installmentNumber: number;
+      totalInstallments: number;
+      installmentValue: number;
+    };
   };
+  installmentNumber?: number;
+  totalInstallments?: number;
 }
 
 export interface Subscription {

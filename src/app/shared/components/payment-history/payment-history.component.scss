@@ -248,11 +248,43 @@
 }
 
 .installment-info {
+  margin: 16px 0;
+  padding: 16px;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-radius: 4px;
+
+  .progress-bar {
+    width: 100%;
+    height: 8px;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+
+    .progress {
+      height: 100%;
+      background-color: #2196F3;
+      transition: width 0.3s ease;
+    }
+  }
+
+  .progress-text {
+    margin: 0;
+    color: rgba(0, 0, 0, 0.87);
+    font-size: 14px;
+  }
+}
+
+.payment-info {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #666;
-  font-weight: 500;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 8px 0;
+
+  span {
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.87);
+  }
 }
 
 .faturas-list {
@@ -906,6 +938,274 @@
           background-color: rgba(124, 179, 66, 0.1) !important;
         }
       }
+    }
+  }
+}
+
+.installments-container {
+  padding: 20px;
+  
+  .installment-card {
+    margin-bottom: 20px;
+    
+    .installment-info {
+      padding: 16px;
+      
+      .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        
+        .label {
+          color: rgba(0, 0, 0, 0.6);
+          font-weight: 500;
+        }
+        
+        .value {
+          font-size: 1.1em;
+          font-weight: 500;
+        }
+      }
+      
+      .progress-section {
+        margin: 20px 0;
+        
+        .progress-label {
+          margin-bottom: 8px;
+          color: rgba(0, 0, 0, 0.6);
+        }
+      }
+      
+      .asaas-link {
+        margin-top: 20px;
+        text-align: center;
+        
+        a {
+          min-width: 200px;
+        }
+      }
+    }
+  }
+}
+
+.installment-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  margin-bottom: 20px;
+
+  .mat-card-header {
+    background: linear-gradient(45deg, #2196F3, #1976D2);
+    color: white;
+    padding: 24px;
+    border-radius: 12px 12px 0 0;
+
+    .installment-icon {
+      background-color: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      padding: 8px;
+      color: white;
+    }
+
+    .mat-card-title {
+      font-size: 1.4rem;
+      margin-bottom: 8px;
+    }
+
+    .mat-card-subtitle {
+      color: rgba(255, 255, 255, 0.9);
+    }
+  }
+}
+
+.installment-simulator {
+  padding: 24px;
+
+  .full-width {
+    width: 100%;
+    margin-bottom: 16px;
+  }
+
+  .installment-summary {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+
+    h3 {
+      color: #333;
+      margin-bottom: 16px;
+      font-size: 1.2rem;
+    }
+
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid #eee;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      span {
+        &:first-child {
+          color: #666;
+        }
+
+        &:last-child {
+          font-weight: 500;
+          color: #2196F3;
+        }
+      }
+    }
+  }
+
+  .payment-methods {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 24px;
+
+    button {
+      padding: 16px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+
+      mat-icon {
+        margin-right: 8px;
+      }
+
+      &:nth-child(1) {
+        background-color: #E8F5E9;
+        color: #32BCAD;
+        &:hover {
+          background-color: #C8E6C9;
+        }
+      }
+
+      &:nth-child(2) {
+        background-color: #E8EAF6;
+        color: #5C6BC0;
+        &:hover {
+          background-color: #C5CAE9;
+        }
+      }
+
+      &:nth-child(3) {
+        background-color: #F1F8E9;
+        color: #7CB342;
+        &:hover {
+          background-color: #DCEDC8;
+        }
+      }
+    }
+  }
+}
+
+.asaas-interface {
+  margin-top: 24px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  iframe {
+    display: block;
+    width: 100%;
+    height: 600px;
+    border: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .installments-container {
+    padding: 10px;
+  }
+
+  .payment-methods {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+.installments-list {
+  margin-top: 20px;
+  
+  h3 {
+    font-size: 1.1rem;
+    color: #333;
+    margin-bottom: 16px;
+  }
+
+  .installment-item {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    background: #fff;
+    transition: all 0.2s ease;
+
+    &:hover {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+  }
+
+  .installment-details {
+    padding: 16px;
+  }
+
+  .installment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    
+    .installment-number {
+      font-weight: 500;
+      color: #333;
+    }
+
+    .installment-date {
+      color: #666;
+    }
+
+    .installment-value {
+      font-weight: 500;
+      color: #2196F3;
+    }
+  }
+
+  .payment-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+
+    &.confirmed {
+      color: #4CAF50;
+    }
+
+    &.pending {
+      color: #FF9800;
+    }
+
+    &.overdue {
+      color: #f44336;
+    }
+
+    .payment-method {
+      color: #666;
+      margin-left: 8px;
     }
   }
 }

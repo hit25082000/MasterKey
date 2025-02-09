@@ -1,12 +1,23 @@
-import { Component, inject, OnInit, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, inject, OnInit, CUSTOM_ELEMENTS_SCHEMA, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatChipsModule, MatChipListbox } from '@angular/material/chips';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatExpansionModule } from '@angular/material/expansion';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { Observable, firstValueFrom, of } from 'rxjs';
+import { LoadingService } from '../../services/loading.service';
+import { PaymentService } from '../../services/payment.service';
+import { FormBuilder } from '@angular/forms';
+import { DomSanitizer } from '@angular/platform-browser';
+import { SafePipe } from '../../pipes/safe.pipe';
 import { CourseService } from '../../../features/course/services/course.service';
 import { ActivatedRoute } from '@angular/router';
 import { 
@@ -17,40 +28,45 @@ import {
   SubscriptionStatusTranslation,
   SubscriptionCycleTranslation
 } from '../../../core/interfaces/payment.interface';
-import { firstValueFrom, Observable, of } from 'rxjs';
 import { getAuth } from '@angular/fire/auth';
 import { environment } from '../../../../environments/environment';
 import { StudentService } from '../../../features/student/services/student.service';
 import { AsaasService } from '../../../core/services/asaas.service';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { LoadingService } from '../../services/loading.service';
-import { PaymentService } from '../../services/payment.service';
 
 @Component({
   selector: 'app-payment-history',
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     MatTabsModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
     MatChipsModule,
-    MatChipListbox,
     MatExpansionModule,
     MatSnackBarModule,
-    MatDialogModule
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    SafePipe
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './payment-history.component.html',
   styleUrls: ['./payment-history.component.scss']
 })
 export class PaymentHistoryComponent implements OnInit {
+  @Input() courseId: string = '';
+  @Input() courseValue: number = 0;
   payments$!: Observable<PaymentTransaction[]>;
   subscriptions$!: Observable<Subscription[]>;
   userId: string = '';
   private loadingService = inject(LoadingService)
   error: string | null = null;
+  selectedInstallments: number = 1;
+  asaasPaymentUrl: string = '';
+  installmentOptions: Array<{value: number, label: string, installmentValue: number}> = [];
 
   constructor(
     private paymentService: PaymentService,
@@ -59,7 +75,9 @@ export class PaymentHistoryComponent implements OnInit {
     private studentService: StudentService,
     private route: ActivatedRoute,
     private snackBar: MatSnackBar,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private fb: FormBuilder,
+    private sanitizer: DomSanitizer
   ) {}
 
   ngOnInit() {
@@ -95,34 +113,38 @@ export class PaymentHistoryComponent implements OnInit {
 
       // Carregar transações e complementar com dados do curso
       const transactions = await firstValueFrom(this.paymentService.getCustomerTransactions(customer.asaasId));
-      console.log(transactions)
       const transactionsWithDetails = await Promise.all(
-        transactions
-          .filter(transaction => !transaction.subscriptionId) // Filtrar apenas pagamentos sem assinatura
-          .map(async (transaction) => {
-            try {
-              const course = await this.courseService.getById(transaction.courseId);
-              
-              return {
-                ...transaction,
-                paymentDetails: {
-                  description: course.name || 'Curso não encontrado',
-                  invoiceUrl: transaction.invoiceUrl,
-                  bankSlipUrl: transaction.bankSlipUrl,
-                  pixQrCodeUrl: transaction.paymentMethod === 'PIX' ? transaction.pixQrCodeUrl : undefined,
-                  pixCopiaECola: transaction.paymentMethod === 'PIX' ? transaction.pixCopiaECola : undefined,
-                  installments: transaction.installments ? {
-                    total: transaction.installments.total || 1,
-                    current: transaction.installments.current || 1,
-                    value: transaction.installments.value || transaction.amount
-                  } : undefined
-                }
-              } as PaymentTransaction;
-            } catch (error) {
-              console.error(`Erro ao carregar detalhes do curso ${transaction.courseId}:`, error);
-              return transaction;
+        transactions.map(async (transaction) => {
+          try {
+            const course = await this.courseService.getById(transaction.courseId);
+            
+            // Adicionar informações de parcelamento se existirem
+            let installmentInfo = null;
+            if (transaction.type === 'INSTALLMENT') {
+              installmentInfo = {
+                installmentNumber: transaction.installmentNumber || 1,
+                totalInstallments: transaction.totalInstallments || 1,
+                installmentValue: transaction.amount || 0
+              };
             }
-          })
+            
+            return {
+              ...transaction,
+              courseName: course.name || 'Curso não encontrado',
+              paymentDetails: {
+                description: course.name || 'Curso não encontrado',
+                invoiceUrl: transaction.invoiceUrl,
+                bankSlipUrl: transaction.bankSlipUrl,
+                pixQrCodeUrl: transaction.paymentMethod === 'PIX' ? transaction.pixQrCodeUrl : undefined,
+                pixCopiaECola: transaction.paymentMethod === 'PIX' ? transaction.pixCopiaECola : undefined,
+                installmentInfo: installmentInfo
+              }
+            } as PaymentTransaction;
+          } catch (error) {
+            console.error(`Erro ao carregar detalhes do curso ${transaction.courseId}:`, error);
+            return transaction;
+          }
+        })
       );
       // Carregar assinaturas e complementar com dados do curso
       const subscriptions = await firstValueFrom(this.paymentService.getCustomerSubscriptions(customer.asaasId));
@@ -531,5 +553,142 @@ export class PaymentHistoryComponent implements OnInit {
   calculateProgress(subscription: Subscription): number {
     const info = this.getInstallmentInfo(subscription);
     return Math.round((info.current / info.total) * 100);
+  }
+
+  // Adicionar novos métodos para informações de parcelamento
+  isInstallmentPayment(transaction: PaymentTransaction): boolean {
+    return transaction.type === 'INSTALLMENT';
+  }
+
+  getInstallmentDetails(transaction: PaymentTransaction): { current: number; total: number; value: number } | null {
+    if (!this.isInstallmentPayment(transaction)) return null;
+    
+    return {
+      current: transaction.paymentDetails?.installmentInfo?.installmentNumber || 1,
+      total: transaction.paymentDetails?.installmentInfo?.totalInstallments || 1,
+      value: transaction.paymentDetails?.installmentInfo?.installmentValue || transaction.amount
+    };
+  }
+
+  getInstallmentProgressPercentage(transaction: PaymentTransaction): number {
+    const details = this.getInstallmentDetails(transaction);
+    if (!details) return 0;
+    
+    return Math.round((details.current / details.total) * 100);
+  }
+
+  formatInstallmentInfo(transaction: PaymentTransaction): string {
+    const details = this.getInstallmentDetails(transaction);
+    if (!details) return '';
+    
+    return `Parcela ${details.current}/${details.total} - R$ ${details.value.toFixed(2)}`;
+  }
+
+  calculateInstallmentOptions() {
+    this.installmentOptions = [];
+    for (let i = 1; i <= 12; i++) {
+      const installmentValue = this.courseValue / i;
+      this.installmentOptions.push({
+        value: i,
+        label: `${i}x de R$ ${installmentValue.toFixed(2)}`,
+        installmentValue: installmentValue
+      });
+    }
+  }
+
+  onInstallmentChange(value: number) {
+    this.selectedInstallments = value;
+  }
+
+  getInstallmentValue(): number {
+    const option = this.installmentOptions.find(opt => opt.value === this.selectedInstallments);
+    return option ? option.installmentValue : 0;
+  }
+
+  async generateInstallmentPayment(paymentMethod: 'PIX' | 'BOLETO' | 'CREDIT_CARD') {
+    try {
+      const studentEmail = this.studentService.getStudentEmail(this.userId);
+      if (!studentEmail) {
+        throw new Error('Email do estudante não encontrado');
+      }
+
+      const customerResponse = await firstValueFrom(this.asaasService.getCustomerByEmail(studentEmail));
+      
+      if (!customerResponse?.customerId) {
+        throw new Error('Cliente Asaas não encontrado');
+      }
+
+      const installmentData = {
+        customer: customerResponse.customerId,
+        billingType: paymentMethod,
+        totalValue: this.courseValue,
+        installmentCount: this.selectedInstallments,
+        dueDate: new Date().toISOString().split('T')[0],
+        description: `Pagamento parcelado do curso ${this.courseId}`,
+        courseId: this.courseId
+      };
+
+      const response = await firstValueFrom(this.asaasService.createInstallmentPayment(installmentData));
+      
+      if (response) {
+        // Redirecionar para a URL de visualização do parcelamento
+        if (response.viewUrl) {
+          window.location.href = response.viewUrl;
+          return;
+        }
+
+        // Se não tiver viewUrl, tentar usar URLs específicas do método de pagamento
+        if (paymentMethod === 'PIX' && response.firstPayment?.pixQrCodeUrl) {
+          this.asaasPaymentUrl = response.firstPayment.pixQrCodeUrl;
+        } else if (paymentMethod === 'BOLETO' && response.firstPayment?.bankSlipUrl) {
+          window.location.href = response.firstPayment.bankSlipUrl;
+        } else if (paymentMethod === 'CREDIT_CARD' && response.firstPayment?.invoiceUrl) {
+          window.location.href = response.firstPayment.invoiceUrl;
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao gerar pagamento:', error);
+      this.snackBar.open('Erro ao gerar pagamento. Tente novamente.', 'OK', { duration: 3000 });
+    }
+  }
+
+  // Novo método para agrupar parcelamentos
+  groupInstallmentPayments(payments: PaymentTransaction[] | null): { [key: string]: PaymentTransaction[] } {
+    const grouped: { [key: string]: PaymentTransaction[] } = {};
+    
+    if (!payments) return grouped;
+    
+    payments.forEach(payment => {
+      if (this.isInstallmentPayment(payment)) {
+        // Usar courseId como chave para agrupar
+        const key = payment.courseId;
+        if (!grouped[key]) {
+          grouped[key] = [];
+        }
+        grouped[key].push(payment);
+      }
+    });
+
+    // Ordenar cada grupo por número da parcela
+    Object.keys(grouped).forEach(key => {
+      grouped[key].sort((a, b) => {
+        const aNumber = a.paymentDetails?.installmentInfo?.installmentNumber || 0;
+        const bNumber = b.paymentDetails?.installmentInfo?.installmentNumber || 0;
+        return aNumber - bNumber;
+      });
+    });
+
+    return grouped;
+  }
+
+  // Método para obter a URL de visualização do parcelamento no Asaas
+  getInstallmentViewUrl(payment: PaymentTransaction): string {
+    // A URL base do Asaas (ambiente de produção ou sandbox)
+    const baseUrl = environment.production ? 
+      'https://www.asaas.com' : 
+      'https://sandbox.asaas.com';
+    
+    // Retorna a URL para visualização do parcelamento
+    return `${baseUrl}/payment/installment/${payment.paymentId}`;
   }
 } 
