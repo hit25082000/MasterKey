@@ -12,6 +12,7 @@ import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Observable, firstValueFrom, of } from 'rxjs';
 import { LoadingService } from '../../services/loading.service';
 import { PaymentService } from '../../services/payment.service';
@@ -20,6 +21,8 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { SafePipe } from '../../pipes/safe.pipe';
 import { CourseService } from '../../../features/course/services/course.service';
 import { ActivatedRoute } from '@angular/router';
+import { PaymentStatusPipe } from '../../pipes/payment-status.pipe';
+import { PaymentMethodPipe } from '../../pipes/payment-method.pipe';
 import { 
   PaymentTransaction, 
   Subscription,
@@ -50,7 +53,10 @@ import { AsaasService } from '../../../core/services/asaas.service';
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
-    SafePipe
+    MatProgressBarModule,
+    SafePipe,
+    PaymentStatusPipe,
+    PaymentMethodPipe
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   templateUrl: './payment-history.component.html',
@@ -67,6 +73,9 @@ export class PaymentHistoryComponent implements OnInit {
   selectedInstallments: number = 1;
   asaasPaymentUrl: string = '';
   installmentOptions: Array<{value: number, label: string, installmentValue: number}> = [];
+  payments: PaymentTransaction[] = [];
+  groupedInstallments: { [key: string]: PaymentTransaction[] } = {};
+  courseNames: { [key: string]: string } = {};
 
   constructor(
     private paymentService: PaymentService,
@@ -564,24 +573,31 @@ export class PaymentHistoryComponent implements OnInit {
     if (!this.isInstallmentPayment(transaction)) return null;
     
     return {
-      current: transaction.paymentDetails?.installmentInfo?.installmentNumber || 1,
-      total: transaction.paymentDetails?.installmentInfo?.totalInstallments || 1,
-      value: transaction.paymentDetails?.installmentInfo?.installmentValue || transaction.amount
+      current: transaction.installmentNumber || 1,
+      total: transaction.totalInstallments || 1,
+      value: transaction.amount || 0
     };
   }
 
-  getInstallmentProgressPercentage(transaction: PaymentTransaction): number {
-    const details = this.getInstallmentDetails(transaction);
-    if (!details) return 0;
+  getInstallmentProgressPercentage(payment: PaymentTransaction): number {
+    const details = this.getInstallmentDetails(payment);
+    if (!details?.total) return 0;
     
-    return Math.round((details.current / details.total) * 100);
+    // Buscar todos os pagamentos do mesmo parcelamento
+    const installmentPayments = this.payments.filter(p => 
+      p.installmentId === payment.installmentId && 
+      (p.status === 'RECEIVED' || p.status === 'CONFIRMED')
+    );
+    
+    const paidCount = installmentPayments.length;
+    return Math.round((paidCount / details.total) * 100);
   }
 
   formatInstallmentInfo(transaction: PaymentTransaction): string {
     const details = this.getInstallmentDetails(transaction);
     if (!details) return '';
     
-    return `Parcela ${details.current}/${details.total} - R$ ${details.value.toFixed(2)}`;
+    return `Parcela ${details.total - details.current + 1}/${details.total} - R$ ${details.value.toFixed(2)}`;
   }
 
   calculateInstallmentOptions() {
@@ -660,8 +676,8 @@ export class PaymentHistoryComponent implements OnInit {
     
     payments.forEach(payment => {
       if (this.isInstallmentPayment(payment)) {
-        // Usar courseId como chave para agrupar
-        const key = payment.courseId;
+        // Usar installmentId como chave para agrupar
+        const key = payment.installmentId;
         if (!grouped[key]) {
           grouped[key] = [];
         }
@@ -672,8 +688,8 @@ export class PaymentHistoryComponent implements OnInit {
     // Ordenar cada grupo por número da parcela
     Object.keys(grouped).forEach(key => {
       grouped[key].sort((a, b) => {
-        const aNumber = a.paymentDetails?.installmentInfo?.installmentNumber || 0;
-        const bNumber = b.paymentDetails?.installmentInfo?.installmentNumber || 0;
+        const aNumber = a.installmentNumber || 0;
+        const bNumber = b.installmentNumber || 0;
         return aNumber - bNumber;
       });
     });
@@ -683,12 +699,40 @@ export class PaymentHistoryComponent implements OnInit {
 
   // Método para obter a URL de visualização do parcelamento no Asaas
   getInstallmentViewUrl(payment: PaymentTransaction): string {
-    // A URL base do Asaas (ambiente de produção ou sandbox)
-    const baseUrl = environment.production ? 
-      'https://www.asaas.com' : 
-      'https://sandbox.asaas.com';
     
-    // Retorna a URL para visualização do parcelamento
-    return `${baseUrl}/payment/installment/${payment.paymentId}`;
+    return payment.invoiceUrl!;
+  }
+
+  get hasInstallments(): boolean {
+    return Object.keys(this.groupedInstallments).length > 0;
+  }
+
+  async loadPayments() {
+    try {
+      // Carregar pagamentos do serviço
+      // this.payments = await this.paymentService.getPayments();
+      this.groupedInstallments = this.groupInstallmentPayments(this.payments);
+      await this.loadCourseNames();
+    } catch (error) {
+      console.error('Erro ao carregar pagamentos:', error);
+    }
+  }
+
+  async loadCourseNames() {
+    const courseIds = Object.keys(this.groupedInstallments);
+    for (const courseId of courseIds) {
+      try {
+        // Carregar nome do curso do serviço
+        // const course = await this.courseService.getCourse(courseId);
+        // this.courseNames[courseId] = course.name;
+      } catch (error) {
+        console.error(`Erro ao carregar nome do curso ${courseId}:`, error);
+        this.courseNames[courseId] = 'Curso não encontrado';
+      }
+    }
+  }
+
+  getCourseTitle(courseId: string): string {
+    return this.courseNames[courseId] || 'Carregando...';
   }
 } 

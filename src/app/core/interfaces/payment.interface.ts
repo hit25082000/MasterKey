@@ -11,8 +11,10 @@ export interface PaymentTransaction {
   paymentMethod: 'BOLETO' | 'CREDIT_CARD' | 'PIX';
   type: 'PAYMENT' | 'SUBSCRIPTION' | 'INSTALLMENT';
   subscriptionId?: string;
+  installmentId: string;
   createdAt: string;
   updatedAt: string;
+  dueDate: string;
   invoiceUrl?: string;
   bankSlipUrl?: string;
   pixQrCodeUrl?: string;
@@ -28,11 +30,6 @@ export interface PaymentTransaction {
     bankSlipUrl?: string;
     pixQrCodeUrl?: string;
     pixCopiaECola?: string;
-    installments?: {
-      total: number;
-      current: number;
-      value: number;
-    };
     installmentInfo?: {
       installmentNumber: number;
       totalInstallments: number;

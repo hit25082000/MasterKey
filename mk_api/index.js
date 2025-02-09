@@ -1127,20 +1127,38 @@ exports.createSubscription = functions.https.onRequest(applyMiddleware(async (re
     });
 
     // Salvar o primeiro pagamento da assinatura
-    await admin.firestore().collection('transactions').add({
-      customerId: subscriptionData.subscription.customer,
-      customerEmail: customer.email,
+    const transactionData = {
+      customerId: customer.id,
       courseId: courseId,
-      paymentId: paymentData.id,
-      amount: paymentData.value,
       status: paymentData.status,
+      type: 'INSTALLMENT',
       paymentMethod: paymentMethod,
-      type: 'SUBSCRIPTION',
-      subscriptionId: subscriptionData.subscription.id,
+      amount: paymentData.value,
+      dueDate: paymentData.dueDate,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      paymentDetails: paymentData
-    });
+      installmentId: firstPayment.id,
+      installmentNumber: 1,
+      totalInstallments: 1,
+      invoiceUrl: paymentData.invoiceUrl,
+      bankSlipUrl: paymentData.bankSlipUrl,
+      pixQrCodeUrl: paymentData.pixQrCodeUrl,
+      paymentDetails: {
+        description: description,
+        invoiceUrl: paymentData.invoiceUrl,
+        bankSlipUrl: paymentData.bankSlipUrl,
+        pixQrCodeUrl: paymentData.pixQrCodeUrl,
+        pixCopiaECola: paymentData.pixCopiaECola,
+        dueDate: paymentData.dueDate,
+        installmentInfo: {
+          installmentNumber: 1,
+          totalInstallments: 1,
+          installmentValue: paymentData.value
+        }
+      }
+    };
+
+    await admin.firestore().collection('transactions').add(transactionData);
 
     res.status(200).json({
       subscription: subscriptionData.subscription,
@@ -1368,17 +1386,6 @@ exports.createAsaasSubscription = functions.https.onRequest((req, res) => {
 // Endpoint para criar pagamento parcelado
 exports.createInstallmentPayment = functions.https.onRequest((req, res) => {
   return applyMiddleware(async (req, res) => {
-    // Configurar headers CORS
-    res.set('Access-Control-Allow-Origin', '*');
-    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-    // Tratar requisição OPTIONS
-    if (req.method === 'OPTIONS') {
-      res.status(200).end();
-      return;
-    }
-
     try {
       const { customer, billingType, totalValue, installmentCount, dueDate, description, courseId } = req.body;
 
@@ -1386,22 +1393,38 @@ exports.createInstallmentPayment = functions.https.onRequest((req, res) => {
         return res.status(400).json({ error: 'Dados incompletos para criar parcelamento' });
       }
 
-      // Criar parcelamento no Asaas
+      // Calcular datas de vencimento para cada parcela
+      const installmentDates = [];
+      let currentDate = new Date(dueDate);
+      
+      for (let i = 0; i < installmentCount; i++) {
+        installmentDates.push(new Date(currentDate));
+        // Adiciona um mês para a próxima parcela
+        currentDate.setMonth(currentDate.getMonth() + 1);
+      }
+
+      // Criar parcelamento no Asaas com as datas calculadas
+      const installmentData = {
+        customer,
+        billingType,
+        totalValue,
+        installmentCount,
+        dueDate,
+        description,
+        externalReference: courseId,
+        installments: installmentDates.map((date, index) => ({
+          value: totalValue / installmentCount,
+          dueDate: date.toISOString().split('T')[0]
+        }))
+      };
+
       const response = await fetch(`${config.asaas.apiUrl}/installments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'access_token': config.asaas.apiKey
         },
-        body: JSON.stringify({
-          customer,
-          billingType,
-          totalValue,
-          installmentCount,
-          dueDate,
-          description,
-          externalReference: courseId
-        })
+        body: JSON.stringify(installmentData)
       });
 
       const installmentResponse = await response.json();
@@ -1420,8 +1443,6 @@ exports.createInstallmentPayment = functions.https.onRequest((req, res) => {
       });
 
       const paymentsData = await paymentsResponse.json();
-
-      console.log(paymentsData)
 
       // Salvar dados do parcelamento no Firestore
       const db = admin.firestore();
@@ -1444,32 +1465,41 @@ exports.createInstallmentPayment = functions.https.onRequest((req, res) => {
         dueDate
       });
 
-      // Salvar cada parcela individualmente
+      // Salvar cada parcela individualmente com sua respectiva data de vencimento
       paymentsData.data.forEach((payment, index) => {
         const paymentRef = db.collection('transactions').doc(payment.id);
-        batch.set(paymentRef, {
-          id: payment.id,
+        const transactionData = {
           customerId: customer,
           courseId,
           status: payment.status,
           type: 'INSTALLMENT',
           paymentMethod: billingType,
           amount: payment.value,
+          dueDate: installmentDates[index].toISOString().split('T')[0],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          dueDate: payment.dueDate,
           installmentId: installmentResponse.id,
           installmentNumber: index + 1,
           totalInstallments: installmentCount,
           invoiceUrl: payment.invoiceUrl,
-          description: `${description} - Parcela ${index + 1}/${installmentCount}`
-        });
+          description: `${description} - Parcela ${index + 1}/${installmentCount}`,
+          paymentDetails: {
+            description: description,
+            invoiceUrl: payment.invoiceUrl,
+            bankSlipUrl: payment.bankSlipUrl,
+            dueDate: installmentDates[index].toISOString().split('T')[0],
+            installmentInfo: {
+              installmentNumber: index + 1,
+              totalInstallments: installmentCount,
+              installmentValue: payment.value
+            }
+          }
+        };
+        batch.set(paymentRef, transactionData);
       });
 
-      // Executar todas as operações em batch
       await batch.commit();
 
-      // Pegar o último elemento da lista como primeiro pagamento
       const firstPayment = paymentsData.data[paymentsData.data.length - 1] || null;
 
       res.json({

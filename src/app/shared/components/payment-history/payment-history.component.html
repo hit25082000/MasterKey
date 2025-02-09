@@ -263,7 +263,7 @@
                   <div class="installment-details">
                     <div class="installment-header">
                       <span class="installment-number">{{ payment.paymentDetails.installmentInfo?.installmentNumber }} de {{ payment.paymentDetails.installmentInfo?.totalInstallments }}</span>
-                      <span class="installment-date">{{ convertTimestamp(payment.createdAt) | date:'dd/MM/yyyy' }}</span>
+                      <span class="installment-date">{{ convertTimestamp(payment.dueDate) | date:'dd/MM/yyyy' }}</span>
                       <span class="installment-value">R$ {{ payment.paymentDetails.installmentInfo?.installmentValue | number:'1.2-2' }}</span>
                     </div>
                     <div class="payment-status" [ngClass]="payment.status.toLowerCase()">
@@ -320,3 +320,78 @@
     </div>
   </div>
 </ng-template>
+
+<!-- Seção de Parcelamentos -->
+<div class="installments-section" *ngIf="hasInstallments">
+  <h3>Parcelamentos</h3>
+  
+  <mat-accordion>
+    <mat-expansion-panel *ngFor="let group of groupedInstallments | keyvalue">
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          {{ getCourseTitle(group.key) }}
+        </mat-panel-title>
+        <mat-panel-description>
+          {{ group.value.length }} parcelas
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+
+      <div class="installment-list">
+        <mat-card *ngFor="let payment of group.value" class="payment-card">
+          <mat-card-header>
+            <mat-card-title>{{ formatInstallmentInfo(payment) }}</mat-card-title>
+            <mat-card-subtitle>
+              Status: {{ payment.status | paymentStatus }}
+            </mat-card-subtitle>
+          </mat-card-header>
+
+          <mat-card-content>
+            <mat-progress-bar
+              [mode]="'determinate'"
+              [value]="getInstallmentProgressPercentage(payment)"
+              [color]="payment.status === 'CONFIRMED' ? 'primary' : 'accent'">
+            </mat-progress-bar>
+
+            <div class="payment-details">
+              <p>Vencimento: {{ payment.dueDate | date:'dd/MM/yyyy' }}</p>
+              <p>Método: {{ payment.paymentMethod | paymentMethod }}</p>
+            </div>
+          </mat-card-content>
+
+          <mat-card-actions align="end">
+            <a mat-button [href]="payment.invoiceUrl" target="_blank" *ngIf="payment.invoiceUrl">
+              <mat-icon>receipt</mat-icon>
+              Ver Fatura
+            </a>
+            <a mat-button [href]="getInstallmentViewUrl(payment)" target="_blank">
+              <mat-icon>visibility</mat-icon>
+              Ver no Asaas
+            </a>
+          </mat-card-actions>
+        </mat-card>
+      </div>
+    </mat-expansion-panel>
+  </mat-accordion>
+</div>
+
+<style>
+.installments-section {
+  margin: 20px 0;
+}
+
+.payment-card {
+  margin: 10px 0;
+}
+
+.payment-details {
+  margin-top: 15px;
+}
+
+.mat-card-actions {
+  padding: 8px;
+}
+
+.installment-list {
+  margin-top: 16px;
+}
+</style>
