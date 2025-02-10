@@ -29,6 +29,7 @@ $font-family-inter: 'Inter', sans-serif;
   .banner-content {
     display: flex;
     width: 90%;
+    margin-left: 2rem;
     max-width: 1400px;
     gap: clamp(2rem, 5vw, 25rem);
     padding: 2rem;
@@ -37,6 +38,7 @@ $font-family-inter: 'Inter', sans-serif;
     @media (max-width: 1200px) {
       flex-direction: column;
       gap: 3rem;
+      margin:1rem;
       align-items: center;
       justify-content: center;
     }
