@@ -12,6 +12,11 @@ import { Router } from '@angular/router';
 import { LoadingService } from '../../../shared/services/loading.service';
 import { NotificationService, NotificationType } from '../../../shared/services/notification.service';
 
+interface Category {
+  id: string;
+  name: string;
+}
+
 @Component({
   selector: 'app-products',
   standalone: true,
@@ -32,22 +37,35 @@ export class ProductsComponent implements OnInit {
   categoryService = inject(CategoryService);
   private readonly loadingService = inject(LoadingService);
   private readonly notificationService = inject(NotificationService);
+  
   courses = signal<Course[]>([]);
-  categories = signal<string[]>(['Todos']);
-  selectedCategory = signal<string>('Todos');
+  allCourses = signal<Course[]>([]);
+  categories = signal<Category[]>([{ id: 'todos', name: 'Todos' }]);
+  selectedCategory = signal<string>('todos');
   selectedOrder = signal<string>('Alfabética');
-  priceRange = signal<number>(1000);
+  priceRange = signal<number>(5000);
+  maxPrice = signal<number>(5000);
+  searchTerm = signal<string>('');
 
   filteredCourses = computed(() => {
-    let filtered = [...this.courses()];
+    let filtered = [...this.allCourses()];
+
+    // Filtro por termo de busca
+    if (this.searchTerm()) {
+      const term = this.searchTerm().toLowerCase();
+      filtered = filtered.filter(course => 
+        course.name.toLowerCase().includes(term) ||
+        course.description.toLowerCase().includes(term)
+      );
+    }
 
     // Filtro por categoria
-    if (this.selectedCategory() !== 'Todos') {
+    if (this.selectedCategory() !== 'todos') {
       filtered = filtered.filter(course => course.category === this.selectedCategory());
     }
 
     // Filtro por preço
-    filtered = filtered.filter(course => course.price <= this.priceRange());
+    filtered = filtered.filter(course => !course.hidePrice && course.price <= this.priceRange());
 
     // Ordenação
     switch (this.selectedOrder()) {
@@ -73,24 +91,40 @@ export class ProductsComponent implements OnInit {
         this.categoryService.getAll()
       ]);
       
+      this.allCourses.set(allCourses);
       this.courses.set(allCourses);
-      this.categories.set(['Todos', ...allCategories.map(cat => cat.name)]);
+      
+      // Transformar categorias em array de objetos com id e nome
+      const categoryOptions: Category[] = [
+        { id: 'todos', name: 'Todos' },
+        ...allCategories.map(cat => ({
+          id: cat.id,
+          name: cat.name
+        }))
+      ];
+      this.categories.set(categoryOptions);
+
+      // Calcular o preço máximo com base nos cursos
+      const maxCoursePrice = Math.max(...allCourses
+        .filter(course => !course.hidePrice)
+        .map(course => course.price));
+      
+      const roundedMaxPrice = Math.ceil(maxCoursePrice / 1000) * 1000;
+      this.maxPrice.set(roundedMaxPrice);
+      this.priceRange.set(roundedMaxPrice);
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('Erro ao carregar dados:', error);
     } finally {
       this.loadingService.hide();
     }
   }
 
   onSearch(searchTerm: string) {
-    const filtered = this.courses().filter(course =>
-      course.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    this.courses.set(filtered);
+    this.searchTerm.set(searchTerm);
   }
 
-  updateCategory(category: string) {
-    this.selectedCategory.set(category);
+  updateCategory(categoryId: string) {
+    this.selectedCategory.set(categoryId);
   }
 
   updateOrder(order: string) {
@@ -101,7 +135,7 @@ export class ProductsComponent implements OnInit {
     this.priceRange.set(price);
   }
 
-  redirectToCourse(courseId : string){
+  redirectToCourse(courseId: string) {
     this.router.navigate(['/course', courseId]);
   }
 
@@ -114,8 +148,6 @@ export class ProductsComponent implements OnInit {
       return;
     }
 
-    // Redireciona para a página de checkout com o ID do curso
     this.router.navigate(['/checkout', course.id]);
   }
-
 }

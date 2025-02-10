@@ -13,9 +13,9 @@
       <div class="categories">
         <button
           *ngFor="let category of categories()"
-          [class.active]="selectedCategory() === category"
-          (click)="updateCategory(category)">
-          {{category}}
+          [class.active]="selectedCategory() === category.id"
+          (click)="updateCategory(category.id)">
+          {{category.name}}
         </button>
       </div>
 
@@ -38,14 +38,14 @@
         </button>
       </div>
 
-      <h3>Preço Máximo: R${{priceRange()}}</h3>
+      <h3>Preço Máximo: R$ {{priceRange() | number:'1.2-2'}}</h3>
       <input
         type="range"
         [ngModel]="priceRange()"
         (ngModelChange)="updatePriceRange($event)"
-        min="0"
-        max="1000"
-        step="50">
+        [min]="0"
+        [max]="maxPrice()"
+        [step]="100">
     </div>
 
     <div class="courses-grid">
