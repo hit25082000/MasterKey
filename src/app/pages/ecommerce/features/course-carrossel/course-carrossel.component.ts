@@ -1,4 +1,5 @@
-import { Component, ElementRef, ViewChild, AfterViewInit, HostListener } from '@angular/core';
+import { Component, ElementRef, ViewChild, AfterViewInit, HostListener, inject } from '@angular/core';
+import { Router, ROUTES } from '@angular/router';
 
 @Component({
   selector: 'app-course-carrossel',
@@ -9,6 +10,7 @@ import { Component, ElementRef, ViewChild, AfterViewInit, HostListener } from '@
 })
 export class CourseCarrosselComponent implements AfterViewInit {
   @ViewChild('carouselContent') carouselContent!: ElementRef;
+  router = inject(Router)
   currentIndex = 0;
   totalItems = 0;
   isMobile = window.innerWidth <= 1200;
@@ -72,6 +74,12 @@ export class CourseCarrosselComponent implements AfterViewInit {
       // Ajusta visibilidade e blur
       item.style.filter = distance === 0 ? 'blur(0)' : 'blur(2px)';
       item.style.opacity = Math.abs(distance) <= 1 ? '1' : '0.3';
+    });
+  }
+
+  redirectCourseCarrossel(){
+    this.router.navigate(['/products']).then(() => {
+      window.scrollTo(0, 0);
     });
   }
 }

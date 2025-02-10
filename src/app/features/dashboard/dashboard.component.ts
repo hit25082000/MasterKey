@@ -160,11 +160,16 @@ Chart.register(...registerables);
 
     .payments-table {
       width: 100%;
+      color: black;
     }
 
     mat-card-subtitle {
       font-size: 1.5em;
-      color: #2196F3;
+      color: black;
+    }
+
+    .mat-mdc-header-cell, .mat-mdc-cell {
+      color: black;
     }
   `]
 })

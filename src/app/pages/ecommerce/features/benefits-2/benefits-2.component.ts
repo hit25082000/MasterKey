@@ -12,6 +12,8 @@ export class Benefits2Component {
   constructor(private router: Router) {}
 
   navigateToContact() {
-    this.router.navigate(['/contato']);
+    this.router.navigate(['/contact']).then(() => {
+      window.scrollTo(0, 0);
+    });
   }
 }

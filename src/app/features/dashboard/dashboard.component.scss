@@ -4,6 +4,10 @@
   margin: 0 auto;
 }
 
+:host{
+  color: #333;
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
