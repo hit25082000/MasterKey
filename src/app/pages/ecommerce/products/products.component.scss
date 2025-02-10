@@ -1,5 +1,24 @@
 $color-primary: #384A87;
 $color-secondary: #ee3c48;
+$color-white: #fff;
+$color-black: #000;
+$color-transparent-white: rgba(255, 255, 255, 0.1);
+$color-transparent-white-hover: rgba(255, 255, 255, 0.2);
+$border-radius-default: 8px;
+$box-shadow-default: 4px 4px 25px rgba(0, 0, 0, 0.5);
+$transition-default: all 0.3s ease;
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin glass-effect {
+  background: $color-transparent-white;
+  backdrop-filter: blur(20px);
+  box-shadow: $box-shadow-default;
+}
 
 :host {
   display: block;
@@ -7,13 +26,13 @@ $color-secondary: #ee3c48;
 
   padding: 4rem 0;
   background:
-  linear-gradient(90deg, rgba(238, 60, 72, 0.2) 0%, rgba(56, 74, 135, 0.2) 100%), #000000;
+  linear-gradient(90deg, rgba($color-secondary, 0.2) 0%, rgba($color-primary, 0.2) 100%), $color-black;
 }
 
 .products {
   padding: 2rem;
   min-height: calc(100vh - 80px);
-  background: linear-gradient(90deg, rgba(238, 60, 72, 0.2) 0%, rgba(56, 74, 135, 0.2) 100%), #000000;
+  background: linear-gradient(90deg, rgba($color-secondary, 0.2) 0%, rgba($color-primary, 0.2) 100%), $color-black;
 
   .header {
     max-width: 1200px;
@@ -27,7 +46,7 @@ $color-secondary: #ee3c48;
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      color: #fff;
+      color: $color-white;
       font-size: 2.5rem;
       margin-bottom: 1rem;
 
@@ -45,30 +64,30 @@ $color-secondary: #ee3c48;
     gap: 2rem;
 
     .filters {
-      background: rgba(255, 255, 255, 0.1);
+      @include glass-effect;
       padding: 1.5rem;
-      border-radius: 8px;
+      border-radius: $border-radius-default;
       height: fit-content;
       display: flex;
     flex-direction: column;
     gap: 1rem;
 
       h3 {
-        color: #fff;
+        color: $color-white;
       }
 
       button {
         background: transparent;
-        border: 1px solid #384A87;
-        color: #fff;
+        border: 1px solid $color-primary;
+        color: $color-white;
         padding: 0.5rem 1rem;
         margin: 0.25rem;
         border-radius: 4px;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: $transition-default;
 
         &.active {
-          background: #384A87;
+          background: $color-primary;
         }
       }
 
@@ -83,12 +102,10 @@ $color-secondary: #ee3c48;
       gap: 1.5rem;
 
       .course-card {
-        background: rgba(255, 255, 255, 0.1);
-        box-shadow: 4px 4px 25px rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(20px);
-        border-radius: 8px;
+        @include glass-effect;
+        border-radius: $border-radius-default;
         overflow: hidden;
-        transition: transform 0.3s ease;
+        transition: $transition-default;
 
         &:hover {
           transform: translateY(-5px);
@@ -104,12 +121,12 @@ $color-secondary: #ee3c48;
           padding: 1rem;
 
           h3 {
-            color: #fff;
+            color: $color-white;
             margin-bottom: 0.5rem;
           }
 
           p {
-            color: rgba(255, 255, 255, 0.8);
+            color: rgba($color-white, 0.8);
             font-size: 0.9rem;
             margin-bottom: 1rem;
           }
@@ -119,12 +136,12 @@ $color-secondary: #ee3c48;
 
             span {
               display: block;
-              color: rgba(255, 255, 255, 0.8);
+              color: rgba($color-white, 0.8);
               font-size: 0.8rem;
             }
 
             strong {
-              color: #ee3c48;
+              color: $color-secondary;
               font-size: 1.2rem;
             }
           }
@@ -134,7 +151,7 @@ $color-secondary: #ee3c48;
             gap: 1rem;
             margin-top: 1rem;
             padding-top: 1rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: 1px solid $color-transparent-white;
 
             button {
               flex: 1;
@@ -143,29 +160,27 @@ $color-secondary: #ee3c48;
               border-radius: 6px;
               font-weight: 500;
               cursor: pointer;
-              display: flex;
-              align-items: center;
-              justify-content: center;
+              @include flex-center;
               gap: 0.5rem;
-              transition: all 0.3s ease;
+              transition: $transition-default;
 
               i {
                 font-size: 1rem;
               }
 
               &.btn-details {
-                background: rgba(255, 255, 255, 0.1);
-                color: white;
+                background: $color-transparent-white;
+                color: $color-white;
 
                 &:hover {
-                  background: rgba(255, 255, 255, 0.2);
+                  background: $color-transparent-white-hover;
                   transform: translateY(-2px);
                 }
               }
 
               &.btn-buy {
                 background: $color-secondary;
-                color: white;
+                color: $color-white;
 
                 &:hover {
                   background: darken($color-secondary, 10%);
