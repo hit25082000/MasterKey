@@ -12,166 +12,15 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { firstValueFrom } from 'rxjs';
 import { Chart, registerables } from 'chart.js';
+import { PaymentTransaction } from '../../core/interfaces/payment.interface';
 Chart.register(...registerables);
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   imports: [CommonModule, MatTableModule, MatCardModule, MatIconModule],
-  template: `
-    <div class="dashboard-container">
-      <!-- Cards de Resumo -->
-      <div class="summary-cards">
-        <mat-card class="summary-card">
-          <mat-card-header>
-            <mat-icon mat-card-avatar>people</mat-icon>
-            <mat-card-title>Total de Alunos</mat-card-title>
-            <mat-card-subtitle>{{ totalStudents() }}</mat-card-subtitle>
-          </mat-card-header>
-        </mat-card>
-
-        <mat-card class="summary-card">
-          <mat-card-header>
-            <mat-icon mat-card-avatar>school</mat-icon>
-            <mat-card-title>Total de Cursos</mat-card-title>
-            <mat-card-subtitle>{{ totalCourses() }}</mat-card-subtitle>
-          </mat-card-header>
-        </mat-card>
-
-        <mat-card class="summary-card">
-          <mat-card-header>
-            <mat-icon mat-card-avatar>payments</mat-icon>
-            <mat-card-title>Receita Total Este Mês</mat-card-title>
-            <mat-card-subtitle>R$ {{ totalRevenue() | number:'1.2-2' }}</mat-card-subtitle>
-          </mat-card-header>
-        </mat-card>
-      </div>
-
-      <!-- Gráficos -->
-      <div class="charts-container">
-        <mat-card class="chart-card">
-          <mat-card-header>
-            <mat-card-title>Matrículas por Mês</mat-card-title>
-          </mat-card-header>
-          <mat-card-content>
-            <div class="chart-wrapper">
-              <canvas #registrationsChart></canvas>
-            </div>
-          </mat-card-content>
-        </mat-card>
-
-        <mat-card class="chart-card">
-          <mat-card-header>
-            <mat-card-title>Status dos Alunos</mat-card-title>
-          </mat-card-header>
-          <mat-card-content>
-            <div class="chart-wrapper">
-              <canvas #studentStatusChart></canvas>
-            </div>
-          </mat-card-content>
-        </mat-card>
-      </div>
-
-      <!-- Tabela de Pagamentos do Mês -->
-      <mat-card class="table-card">
-        <mat-card-header>
-          <mat-card-title>Pagamentos do Mês</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <table mat-table [dataSource]="recentPayments()" class="payments-table">
-            <ng-container matColumnDef="date">
-              <th mat-header-cell *matHeaderCellDef>Data</th>
-              <td mat-cell *matCellDef="let payment">
-                {{ payment.createdAt | date:'dd/MM/yyyy' }}
-              </td>
-            </ng-container>
-
-            <ng-container matColumnDef="description">
-              <th mat-header-cell *matHeaderCellDef>Descrição</th>
-              <td mat-cell *matCellDef="let payment">
-                {{ payment.description }}
-              </td>
-            </ng-container>
-
-            <ng-container matColumnDef="value">
-              <th mat-header-cell *matHeaderCellDef>Valor</th>
-              <td mat-cell *matCellDef="let payment">
-                R$ {{ payment.amount | number:'1.2-2' }}
-              </td>
-            </ng-container>
-
-            <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>Status</th>
-              <td mat-cell *matCellDef="let payment">
-                {{ payment.status }}
-              </td>
-            </ng-container>
-
-            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-          </table>
-        </mat-card-content>
-      </mat-card>
-    </div>
-  `,
-  styles: [`
-    .dashboard-container {
-      padding: 20px;
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-
-    .summary-cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
-      margin-bottom: 20px;
-    }
-
-    .summary-card {
-      padding: 16px;
-    }
-
-    .charts-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-      gap: 20px;
-      margin-bottom: 20px;
-    }
-
-    .chart-wrapper {
-      position: relative;
-      height: 300px;
-      width: 100%;
-    }
-
-    .chart-card {
-      padding: 16px;
-      margin-bottom: 20px;
-    }
-
-    .chart-card mat-card-content {
-      padding: 16px;
-    }
-
-    .table-card {
-      margin-top: 20px;
-    }
-
-    .payments-table {
-      width: 100%;
-      color: black;
-    }
-
-    mat-card-subtitle {
-      font-size: 1.5em;
-      color: black;
-    }
-
-    .mat-mdc-header-cell, .mat-mdc-cell {
-      color: black;
-    }
-  `]
+  templateUrl: './dashboard.component.html', 
+  styleUrl: './dashboard.component.scss' 
 })
 export class DashboardComponent implements OnInit, AfterViewInit {
   @ViewChild('registrationsChart') registrationsChart!: ElementRef;
@@ -184,7 +33,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
   private _courses = signal<Course[]>([]);
   private _students = this.studentService.students;
-  private _payments = signal<FirestorePayment[]>([]);
+  private _payments = signal<PaymentTransaction[]>([]);
   private _registrations = signal<{ currentMonth: number; previousMonth: number }>({ currentMonth: 0, previousMonth: 0 });
 
   readonly totalStudents = computed(() => this._students().length);
@@ -231,7 +80,9 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
   private async loadData() {
     const courses = await this.courseService.getAll();
-    const payments = this.paymentService.payments();
+    const payments = await firstValueFrom(this.paymentService.getAllTransactions());
+
+    console.log(payments)
 
     this._courses.set(courses);
     this._payments.set(payments);

@@ -55,7 +55,6 @@ export class PaymentService {
   private http = inject(HttpClient);
   private firestore = inject(Firestore);
   private firestoreService = inject(FirestoreService);
-  private asaasService = inject(AsaasService);
 
   // Signals
   private _payments = signal<FirestorePayment[]>([]);
