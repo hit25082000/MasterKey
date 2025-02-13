@@ -17,6 +17,25 @@
   --danger-hover-color: #F56565;
 }
 
+// Mixins para Breakpoints
+@mixin mobile {
+  @media (max-width: 480px) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (max-width: 768px) {
+    @content;
+  }
+}
+
+@mixin laptop {
+  @media (max-width: 1024px) {
+    @content;
+  }
+}
+
 .course-form {
   background: #fff;
   border-radius: 12px;
@@ -24,12 +43,58 @@
   padding: 2rem;
   position: relative;
 
-  // Espaçamento entre o GenericForm e a seção de vídeos
   app-generic-form {
     margin-bottom: 2rem;
     border-bottom: 1px solid #eee;
     padding-bottom: 2rem;
-    padding-right: 320px;
+
+    @include laptop {
+      padding-right: 0;
+    }
+  }
+
+  .current-image {
+    top: 2rem;
+    right: 2rem;
+    width: 300px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+    @include laptop {
+      position: relative;
+      top: auto;
+      right: auto;
+      width: 100%;
+      max-width: 300px;
+      margin: 0 auto 2rem;
+    }
+
+    .course-image {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+      @include tablet {
+        height: 150px;
+      }
+    }
+
+    &::after {
+      content: 'Imagem do Curso';
+      display: block;
+      text-align: center;
+      margin-top: 0.5rem;
+      font-size: 0.875rem;
+      color: #666;
+    }
+  }
+
+  @include tablet {
+    padding: 1rem;
   }
 
   input, textarea, select {
@@ -50,230 +115,203 @@
     &::placeholder {
       color: var(--text-color-secondary);
     }
+
+    @include mobile {
+      font-size: 16px; // Evita zoom em dispositivos iOS
+    }
+  }
+}
+
+.modules-section {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: var(--surface-section);
+  border-radius: 8px;
+
+  h3 {
+    margin: 0 0 1.5rem;
+    color: var(--text-color);
+    font-size: 1.25rem;
   }
 
-  .current-image {
-    position: absolute;
-    top: 2rem;
-    right: 2rem;
-    width: 300px;
-    background-color: #f8f9fa;
-    border-radius: 8px;
+  .module-item {
+    background: var(--surface-card);
+    border-radius: 6px;
+    margin-bottom: 1rem;
     padding: 1rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
-    .course-image {
-      width: 100%;
-      height: 200px;
-      object-fit: cover;
-      border-radius: 4px;
+    @include mobile {
+      padding: 0.75rem;
+    }
+
+    .module-header {
+      padding: 1rem;
+      background: var(--surface-hover);
+
+      .form-group {
+        margin-bottom: 1rem;
+        
+        @include mobile {
+          margin-bottom: 0.75rem;
+        }
+
+        label {
+          display: block;
+          margin-bottom: 0.5rem;
+          color: var(--text-color);
+          font-weight: 500;
+        }
+
+        input, textarea {
+          width: 100%;
+          padding: 0.75rem 1rem;
+          
+          @include mobile {
+            padding: 0.5rem 0.75rem;
+          }
+        }
+
+        textarea {
+          min-height: 80px;
+          resize: vertical;
+        }
+      }
+    }
+
+    .videos-section {
+      margin-top: 1rem;
+      padding: 1rem;
+      background-color: var(--surface-card);
+      border-radius: 8px;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
 
-    &::after {
-      content: 'Imagem do Curso';
-      display: block;
-      text-align: center;
-      margin-top: 0.5rem;
-      font-size: 0.875rem;
-      color: #666;
-    }
-  }
+      .videos-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
 
-  .modules-section {
-    margin: 2rem 0;
-    padding: 1.5rem;
-    background: var(--surface-section);
-    border-radius: 8px;
+        h4 {
+          margin: 0;
+          color: var(--text-color);
+        }
 
-    h3 {
-      margin: 0 0 1.5rem;
-      color: var(--text-color);
-      font-size: 1.25rem;
-    }
-
-    .module-item {
-      background: var(--surface-card);
-      border-radius: 6px;
-      margin-bottom: 1rem;
-      overflow: hidden;
-
-      .module-header {
-        padding: 1rem;
-        background: var(--surface-hover);
-
-        .form-group {
-          margin-bottom: 1rem;
-
-          label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: var(--text-color);
-            font-weight: 500;
-          }
-
-          input, textarea {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 1px solid var(--surface-border);
-            border-radius: 0.375rem;
-            background-color: var(--surface-card);
-            color: var(--text-color);
-            transition: border-color 0.2s, box-shadow 0.2s;
-
-            &:focus {
-              outline: none;
-              border-color: var(--primary-color);
-              box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-            }
-
-            &::placeholder {
-              color: var(--text-color-secondary);
-            }
-          }
-
-          textarea {
-            min-height: 80px;
-            resize: vertical;
+        .btn-danger {
+          padding: 0.5rem 1rem;
+          font-size: 0.9rem;
+          
+          i {
+            margin-right: 0.5rem;
           }
         }
       }
 
-      .videos-section {
-        margin-top: 1rem;
-        padding: 1rem;
-        background-color: var(--surface-card);
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      .video-item {
+        margin-bottom: 0.5rem;
 
-        .videos-header {
+        .video-content {
           display: flex;
-          justify-content: space-between;
           align-items: center;
-          margin-bottom: 1rem;
+          gap: 1rem;
 
-          h4 {
-            margin: 0;
+          .video-name-input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid var(--surface-border);
+            border-radius: 4px;
+            background-color: var(--surface-section);
             color: var(--text-color);
           }
 
-          .btn-danger {
-            padding: 0.5rem 1rem;
-            font-size: 0.9rem;
-            
-            i {
-              margin-right: 0.5rem;
-            }
-          }
-        }
-
-        .video-item {
-          margin-bottom: 0.5rem;
-
-          .video-content {
+          .video-actions {
             display: flex;
-            align-items: center;
-            gap: 1rem;
+            gap: 0.5rem;
 
-            .video-name-input {
-              flex: 1;
+            .btn-icon {
               padding: 0.5rem;
-              border: 1px solid var(--surface-border);
               border-radius: 4px;
-              background-color: var(--surface-section);
-              color: var(--text-color);
-            }
-
-            .video-actions {
+              border: none;
+              cursor: pointer;
+              transition: all 0.2s;
               display: flex;
-              gap: 0.5rem;
+              align-items: center;
+              justify-content: center;
+              width: 32px;
+              height: 32px;
 
-              .btn-icon {
-                padding: 0.5rem;
-                border-radius: 4px;
-                border: none;
-                cursor: pointer;
-                transition: all 0.2s;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                width: 32px;
-                height: 32px;
+              &.btn-danger {
+                background-color: var(--danger-color);
+                color: white;
 
-                &.btn-danger {
-                  background-color: var(--danger-color);
-                  color: white;
-
-                  &:hover {
-                    background-color: var(--danger-hover-color);
-                  }
+                &:hover {
+                  background-color: var(--danger-hover-color);
                 }
+              }
 
-                i {
-                  font-size: 1rem;
-                }
+              i {
+                font-size: 1rem;
               }
             }
           }
         }
       }
     }
+  }
 
-    .btn-primary {
-      background-color: var(--primary-color);
-      color: white;
-      border: none;
-      padding: 0.75rem 1.5rem;
-      border-radius: 0.375rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background-color 0.2s;
+  .btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
 
-      &:hover {
-        background-color: var(--primary-dark);
-      }
-
-      i {
-        margin-right: 0.5rem;
-      }
+    &:hover {
+      background-color: var(--primary-dark);
     }
 
-    .btn-secondary {
-      background-color: var(--surface-hover);
-      color: var(--text-color);
-      border: 1px solid var(--surface-border);
-      padding: 0.75rem 1.5rem;
-      border-radius: 0.375rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background-color 0.2s;
+    i {
+      margin-right: 0.5rem;
+    }
+  }
 
-      &:hover {
-        background-color: var(--surface-section);
-      }
+  .btn-secondary {
+    background-color: var(--surface-hover);
+    color: var(--text-color);
+    border: 1px solid var(--surface-border);
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
 
-      i {
-        margin-right: 0.5rem;
-      }
+    &:hover {
+      background-color: var(--surface-section);
     }
 
-    .btn-danger {
-      background-color: var(--danger-color);
-      color: white;
-      border: none;
-      padding: 0.75rem 1.5rem;
-      border-radius: 0.375rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background-color 0.2s;
+    i {
+      margin-right: 0.5rem;
+    }
+  }
 
-      &:hover {
-        background-color: var(--danger-dark);
-      }
+  .btn-danger {
+    background-color: var(--danger-color);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
 
-      i {
-        margin-right: 0.5rem;
-      }
+    &:hover {
+      background-color: var(--danger-dark);
+    }
+
+    i {
+      margin-right: 0.5rem;
     }
   }
 }
@@ -522,12 +560,14 @@
 // Estilos do Modal
 :host ::ng-deep app-modal {
   .modal-dialog {
-    width: 100%;
+    width: 90%;
     max-width: 800px;
     margin: 1.75rem auto;
-    background: var(--surface-card);
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+    @include mobile {
+      width: 95%;
+      margin: 1rem auto;
+    }
   }
 
   .modal-content {
@@ -571,6 +611,11 @@
     padding: 1.5rem;
     max-height: calc(100vh - 210px);
     overflow-y: auto;
+
+    @include mobile {
+      max-height: calc(100vh - 180px);
+      padding: 1rem;
+    }
 
     app-video-selector {
       display: block;
@@ -646,102 +691,24 @@
   }
 }
 
-// Responsividade
-@media (max-width: 1024px) {
-  .course-form {
-    app-generic-form {
-      padding-right: 0;
-    }
-
-    .current-image {
-      position: relative;
-      top: auto;
-      right: auto;
-      width: 100%;
-      max-width: 300px;
-      margin: 0 auto 2rem;
-    }
-  }
-}
-
-@media (max-width: 768px) {
-  :host {
-    padding: 1rem;
-  }
-
-  .course-form {
-    padding: 1rem;
-  }
-
-  .video-section {
-    padding: 1rem;
-  }
-
-  .video-edit-form {
-    grid-template-columns: 1fr !important;
-  }
-
-  .current-image {
-    margin-bottom: 1rem;
-
-    .course-image {
-      height: 150px;
-    }
-  }
-}
-
 .selectors-section {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1rem;
   margin: 2rem 0;
   padding: 1rem;
-  background: #f8f9fa;
-  border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+  @include tablet {
+    grid-template-columns: 1fr;
+  }
 
   .selector-item {
     .selector-button {
       width: 100%;
       padding: 1rem;
-      background: white;
-      border: 2px solid #e2e8f0;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
-
-      &:hover:not(:disabled) {
-        border-color: #4a90e2;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 6px rgba(74, 144, 226, 0.1);
-      }
-
-      &:disabled {
-        opacity: 0.7;
-        cursor: not-allowed;
-      }
-
-      .button-icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 40px;
-        height: 40px;
-        background: #4a90e2;
-        border-radius: 8px;
-        color: white;
-        font-size: 1.2rem;
-      }
-
-      .button-text {
-        flex: 1;
-        text-align: left;
-        font-size: 0.95rem;
-        color: #2d3748;
-        font-weight: 500;
+      
+      @include mobile {
+        padding: 0.75rem;
       }
     }
 
@@ -814,19 +781,13 @@
   }
 }
 
-// Responsividade
-@media (max-width: 768px) {
-  .selectors-section {
-    grid-template-columns: 1fr;
-  }
-}
-
 .resources-section {
   margin-top: 2rem;
   padding: 2rem;
-  background: #f8f9fa;
-  border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+  @include tablet {
+    padding: 1rem;
+  }
 
   h3 {
     color: #2c3e50;
@@ -839,6 +800,14 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1rem;
+
+    @include tablet {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @include mobile {
+      grid-template-columns: 1fr;
+    }
 
     .resource-item {
       .resource-button {
@@ -888,23 +857,6 @@
   }
 }
 
-// Responsividade para recursos
-@media (max-width: 768px) {
-  .resources-section {
-    padding: 1rem;
-
-    .resources-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-}
-
-@media (max-width: 480px) {
-  .resources-section .resources-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
 .selector-button {
   &.google-auth {
     background: #fff;
@@ -940,6 +892,11 @@
 
   i {
     font-size: 1rem;
+  }
+
+  @include mobile {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
   }
 
   &.btn-primary {

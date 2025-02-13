@@ -189,9 +189,19 @@ export class AsaasService {
     dueDate: string;
     description: string;
     courseId: string;
+    fineValue?: number;         // Percentual de multa por atraso
+    interestValue?: number;     // Percentual de juros por dia de atraso
   }): Observable<InstallmentResponse> {
     const url = `${this.apiUrl}/createInstallmentPayment`;
-    return this.http.post<InstallmentResponse>(url, data).pipe(
+    
+    // Adiciona configurações padrão de juros e multa se não fornecidas
+    const paymentData = {
+      ...data,
+      fineValue: data.fineValue || 10,        // 10% de multa por padrão
+      interestValue: data.interestValue || 0   // Sem juros diários
+    };
+
+    return this.http.post<InstallmentResponse>(url, paymentData).pipe(
       map(response => {
         if (!response) {
           throw new Error('Resposta vazia do servidor');

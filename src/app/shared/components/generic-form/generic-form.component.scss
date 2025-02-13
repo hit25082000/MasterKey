@@ -1,3 +1,22 @@
+// Mixins para Breakpoints
+@mixin mobile {
+  @media (max-width: 480px) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (max-width: 768px) {
+    @content;
+  }
+}
+
+@mixin laptop {
+  @media (max-width: 1024px) {
+    @content;
+  }
+}
+
 :host {
   display: block;
   width: 100%;
@@ -164,7 +183,6 @@ form {
 .form-container {
   display: flex;
   flex-direction: column;
-  padding: 1rem;
   max-height: none;
   overflow: visible;
 
@@ -267,22 +285,27 @@ form {
     text-align: left;
     width: 100%;
   }
-
   @media (max-width: 1600px) {
     .form-grid {
       grid-template-columns: repeat(4, 1fr);
     }
   }
 
-  @media (max-width: 1200px) {
+  @media (max-width: 1300px) {
     .form-grid {
       grid-template-columns: repeat(3, 1fr);
     }
   }
 
-  @media (max-width: 992px) {
+   @media (max-width: 1200px) {
     .form-grid {
       grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 992px) {
+    .form-grid {
+      grid-template-columns: repeat(1, 1fr);
     }
   }
 
