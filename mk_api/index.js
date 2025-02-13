@@ -1412,6 +1412,14 @@ exports.createInstallmentPayment = functions.https.onRequest((req, res) => {
         dueDate,
         description,
         externalReference: courseId,
+        fine: {
+          value: 10,  // 10% de multa por atraso
+          type: 'PERCENTAGE'
+        },
+        interest: {
+          value: 0,   // Sem juros diários
+          type: 'PERCENTAGE'
+        },
         installments: installmentDates.map((date, index) => ({
           value: totalValue / installmentCount,
           dueDate: date.toISOString().split('T')[0]

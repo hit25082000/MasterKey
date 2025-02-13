@@ -196,9 +196,7 @@ export class AsaasService {
     
     // Adiciona configurações padrão de juros e multa se não fornecidas
     const paymentData = {
-      ...data,
-      fineValue: data.fineValue || 10,        // 10% de multa por padrão
-      interestValue: data.interestValue || 0   // Sem juros diários
+      ...data
     };
 
     return this.http.post<InstallmentResponse>(url, paymentData).pipe(

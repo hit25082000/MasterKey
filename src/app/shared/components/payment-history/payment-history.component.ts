@@ -632,53 +632,6 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
     return option ? option.installmentValue : 0;
   }
 
-  async generateInstallmentPayment(paymentMethod: 'PIX' | 'BOLETO' | 'CREDIT_CARD') {
-    try {
-      const studentEmail = this.studentService.getStudentEmail(this.userId);
-      if (!studentEmail) {
-        throw new Error('Email do estudante não encontrado');
-      }
-
-      const customerResponse = await firstValueFrom(this.asaasService.getCustomerByEmail(studentEmail));
-      
-      if (!customerResponse?.customerId) {
-        throw new Error('Cliente Asaas não encontrado');
-      }
-
-      const installmentData = {
-        customer: customerResponse.customerId,
-        billingType: paymentMethod,
-        totalValue: this.courseValue,
-        installmentCount: this.selectedInstallments,
-        dueDate: new Date().toISOString().split('T')[0],
-        description: `Pagamento parcelado do curso ${this.courseId}`,
-        courseId: this.courseId
-      };
-
-      const response = await firstValueFrom(this.asaasService.createInstallmentPayment(installmentData));
-      
-      if (response) {
-        // Redirecionar para a URL de visualização do parcelamento
-        if (response.viewUrl) {
-          window.location.href = response.viewUrl;
-          return;
-        }
-
-        // Se não tiver viewUrl, tentar usar URLs específicas do método de pagamento
-        if (paymentMethod === 'PIX' && response.firstPayment?.pixQrCodeUrl) {
-          this.asaasPaymentUrl = response.firstPayment.pixQrCodeUrl;
-        } else if (paymentMethod === 'BOLETO' && response.firstPayment?.bankSlipUrl) {
-          window.location.href = response.firstPayment.bankSlipUrl;
-        } else if (paymentMethod === 'CREDIT_CARD' && response.firstPayment?.invoiceUrl) {
-          window.location.href = response.firstPayment.invoiceUrl;
-        }
-      }
-    } catch (error) {
-      console.error('Erro ao gerar pagamento:', error);
-      this.snackBar.open('Erro ao gerar pagamento. Tente novamente.', 'OK', { duration: 3000 });
-    }
-  }
-
   // Novo método para agrupar parcelamentos
   groupInstallmentPayments(payments: PaymentTransaction[] | null): { [key: string]: PaymentTransaction[] } {
     const grouped: { [key: string]: PaymentTransaction[] } = {};
