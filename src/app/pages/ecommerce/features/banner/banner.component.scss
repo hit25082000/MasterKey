@@ -26,6 +26,34 @@ $font-family-inter: 'Inter', sans-serif;
   background-size: cover;
   background-position: center;
 
+  @media (max-width: 1024px) {
+    background: linear-gradient(90deg, rgba(238, 60, 72, 0.2) 0%, rgba(56, 74, 135, 0.2) 100%), 
+      linear-gradient(0deg, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
+      url(/assets/bannerInicial.png), 
+      #000000;
+
+    background-size: cover;
+    background-position: center;
+  }
+
+  @media (max-width: 527px){
+    h1{
+      font-size: 30px !important;
+    }
+  }
+
+  .mobileNone {
+    @media (max-width: 1024px) {
+      display: none;
+    }
+
+    .mobile{
+      @media (max-width: 1024px) {
+        display: block;
+      }
+    }
+  }
+
   .banner-content {
     display: flex;
     width: 90%;
@@ -35,9 +63,9 @@ $font-family-inter: 'Inter', sans-serif;
     padding: 2rem;
     justify-content: space-between;
     
-    @media (max-width: 1200px) {
+    @media (max-width: 1024px) {
       flex-direction: column;
-      gap: 3rem;
+      gap: 0;
       margin:1rem;
       align-items: center;
       justify-content: center;
@@ -51,8 +79,9 @@ $font-family-inter: 'Inter', sans-serif;
     flex-direction: column;
     justify-content: center;
 
-      @media (max-width: 1200px) {
+      @media (max-width: 1024px) {
         max-width: 100%;
+        font-size: 32px;
         text-align: center;
       }
 
@@ -76,6 +105,10 @@ $font-family-inter: 'Inter', sans-serif;
         font-weight: 200;
         color: #FFFFFF;
 
+        @media (max-width: 1024px) {
+          display: none;
+        }
+
         .icon {
         margin-bottom: .75rem;
           width: clamp(1.5rem, 3vw, 2rem);
@@ -97,12 +130,16 @@ $font-family-inter: 'Inter', sans-serif;
       padding: clamp(1rem, 3vw, 2rem);
       box-shadow: 0.25rem 0.25rem 1.5rem rgba(0, 0, 0, 0.5);
 
-      @media (max-width: 1200px) {
+      @media (max-width: 1024px) {
         width: 100%;
+        font-size: 24px;
         margin: 0;
       }
 
       h2 {
+        @media(max-width: 527px){
+          font-size: 26px !important;
+        }
         font-size: clamp(1.75rem, 3vw, 3rem);
         font-weight: 600;
         line-height: 1.2;
