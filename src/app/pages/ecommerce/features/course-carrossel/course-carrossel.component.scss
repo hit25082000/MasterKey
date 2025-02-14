@@ -64,15 +64,14 @@ $color-secondary: #ee3c48;
           left: 50%;
           top: 50%;
           transform: translate(-50%, -50%);
-          width: 300px;
           background: rgba(255, 255, 255, 0.1);
           backdrop-filter: blur(10px);
           border-radius: 1rem;
-          padding: 1.5rem;
+          padding: 1rem;
           transition: all 0.5s ease;
           cursor: pointer;
 
-          @media (max-width: 1200px) {
+          @media (max-width: 1024) {
             transform: translate(-50%, -50%);
             &:hover {
               transform: translate(-10%, -10%) scale(1.05);
@@ -180,7 +179,7 @@ $color-secondary: #ee3c48;
     }
 
     .view-all-button {
-      margin-top: 2rem;
+      margin-top: 4rem;
       padding: 0.75rem 2rem;
       background: rgba(255, 255, 255, 0.1);
       border: 1px solid rgba(255, 255, 255, 0.2);
@@ -191,8 +190,8 @@ $color-secondary: #ee3c48;
       transition: all 0.3s ease;
 
       @media (max-width: 768px) {
-        margin-top: 1.5rem;
-        padding: 0.5rem 1.5rem;
+        margin-top: 4rem;
+        padding: 0.5rem 1rem;
         font-size: 0.9rem;
       }
 

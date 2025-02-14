@@ -46,11 +46,12 @@ $font-family-inter: 'Inter', sans-serif;
     @media (max-width: 1024px) {
       display: none;
     }
+  }
 
-    .mobile{
-      @media (max-width: 1024px) {
-        display: block;
-      }
+  .mobile {
+    display: none;
+    @media (max-width: 1024px) {
+      display: block;
     }
   }
 
