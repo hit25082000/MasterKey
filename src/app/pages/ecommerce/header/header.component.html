@@ -12,10 +12,29 @@
 
   <!-- Grupo 2: Botões de Navegação -->
   <nav class="header-nav" [class.open]="isMenuOpen()">
-    <button routerLink="/home" routerLinkActive="active" (click)="isMenuOpen.set(false)">Início</button>
-    <button routerLink="/products" routerLinkActive="active" (click)="isMenuOpen.set(false)">Nossos cursos</button>
-    <button routerLink="/about" routerLinkActive="active" (click)="isMenuOpen.set(false)">Quem Somos</button>
-    <button routerLink="/contact" routerLinkActive="active" (click)="isMenuOpen.set(false)">Contato</button>
+    <button class="close-btn" (click)="isMenuOpen.set(false)">
+      <i class="material-icons">chevron_right</i>
+    </button>
+    <button routerLink="/home" routerLinkActive="active" (click)="isMenuOpen.set(false)">
+      <i class="material-icons">home</i>
+      <span>Início</span>
+    </button>
+    <button routerLink="/products" routerLinkActive="active" (click)="isMenuOpen.set(false)">
+      <i class="material-icons">school</i>
+      <span>Nossos cursos</span>
+    </button>
+    <button routerLink="/about" routerLinkActive="active" (click)="isMenuOpen.set(false)">
+      <i class="material-icons">groups</i>
+      <span>Quem Somos</span>
+    </button>
+    <button routerLink="/contact" routerLinkActive="active" (click)="isMenuOpen.set(false)">
+      <i class="material-icons">contact_support</i>
+      <span>Contato</span>
+    </button>
+    <button routerLink="/login" routerLinkActive="active" (click)="isMenuOpen.set(false)">
+      <i class="material-icons">person</i>
+      <span>Já sou Aluno</span>
+    </button>
   </nav>
 
   <!-- Grupo 3: Ícone de Perfil -->
