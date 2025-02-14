@@ -12,7 +12,7 @@ $color-secondary: #ee3c48;
   position: relative;
   z-index: 1000;
 
-  @media (max-width: 1200px) {
+  @media (max-width: 1024px) {
     padding: 0 2rem;
   }
 }
@@ -33,7 +33,7 @@ $color-secondary: #ee3c48;
   padding: 0;
   z-index: 1001;
 
-  @media (max-width: 1200px) {
+  @media (max-width: 1024px) {
     display: flex;
     order: 1;
   }
@@ -70,7 +70,7 @@ $color-secondary: #ee3c48;
   gap: 1rem;
   align-items: center;
 
-  @media (max-width: 1200px) {
+  @media (max-width: 1024px) {
     display: none;
     
     &.open {
@@ -98,7 +98,7 @@ $color-secondary: #ee3c48;
     font-size: 1rem;
     transition: all 0.3s ease;
 
-    @media (max-width: 1200px) {
+    @media (max-width: 1024px) {
       width: 100%;
       text-align: center;
       padding: 1rem;
@@ -119,12 +119,12 @@ $color-secondary: #ee3c48;
         background-color: #EE3C48;
         border-radius: 2px;
 
-        @media (max-width: 1200px) {
+        @media (max-width: 1024px) {
           display: none;
         }
       }
 
-      @media (max-width: 1200px) {
+      @media (max-width: 1024px) {
         background: rgba(255, 255, 255, 0.1);
       }
     }
@@ -148,7 +148,7 @@ $color-secondary: #ee3c48;
       color: #EE3C48;
     }
 
-    @media (max-width: 1200px) {
+    @media (max-width: 1024px) {
       display: none;
     }
   }
@@ -156,7 +156,7 @@ $color-secondary: #ee3c48;
 
 // Classes de visibilidade responsiva
 .desktop-only {
-  @media (max-width: 1200px) {
+  @media (max-width: 1024px) {
     display: none !important;
   }
 }
@@ -164,7 +164,7 @@ $color-secondary: #ee3c48;
 .mobile-only {
   display: none !important;
 
-  @media (max-width: 1200px) {
+  @media (max-width: 1024px) {
     display: flex !important;
   }
 }
