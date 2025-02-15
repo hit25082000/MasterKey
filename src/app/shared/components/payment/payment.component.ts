@@ -1,15 +1,15 @@
-import { Component, inject, Input, OnInit } from '@angular/core';
+import { Component, inject, Input, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
-import { MatTabsModule } from '@angular/material/tabs';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
+import { PaymentService } from '../../services/payment.service';
 import { AsaasService } from '../../../core/services/asaas.service';
 import { firstValueFrom } from 'rxjs';
 import { LoadingService } from '../../services/loading.service';
@@ -47,28 +47,26 @@ interface SubscriptionData {
   standalone: true,
   imports: [
     CommonModule,
-    ReactiveFormsModule,
     FormsModule,
+    ReactiveFormsModule,
     MatCardModule,
     MatButtonModule,
+    MatButtonToggleModule,
     MatFormFieldModule,
     MatInputModule,
-    MatButtonToggleModule,
-    MatProgressSpinnerModule,
-    MatSnackBarModule,
-    MatTabsModule,
-    MatSelectModule
+    MatSelectModule,
+    MatIconModule,
   ],
   providers: [],
   templateUrl: './payment.component.html',
   styleUrl: './payment.component.scss'
 })
 export class PaymentComponent implements OnInit {
-  @Input() courseId: string = '';
-  @Input() courseValue: number = 0;
-  @Input() maxInstallments: number = 12;
-  @Input() interestRate: number = 2.99; // Taxa de juros mensal para parcelamento
-  @Input() courseName: string = '';  // Novo input para o nome do curso
+  @Input() courseId!: string;
+  @Input() courseValue!: number;
+  @Input() courseName!: string;
+  @Input() maxInstallments!: number;
+  @Input() interestRate: number = 0; // Taxa de juros mensal para parcelamento
 
   isSubscription: boolean = false;
   isInstallment: boolean = false;
@@ -80,6 +78,8 @@ export class PaymentComponent implements OnInit {
   private loadingService = inject(LoadingService)
   pixQRCode: string = '';
   paymentUrl: string = '';
+
+  paymentOption = signal<'single' | 'installment' | 'subscription'>('single');
 
   availableSubscriptionOptions: Array<{
     cycle: 'MONTHLY';
@@ -209,6 +209,20 @@ export class PaymentComponent implements OnInit {
       this.installmentForm.patchValue({
         installmentValue: option.installmentValue
       }, { emitEvent: false });
+    }
+  }
+
+  onPaymentOptionChange(value: 'single' | 'installment' | 'subscription') {
+    this.paymentOption.set(value);
+    if (value === 'single') {
+      this.isInstallment = false;
+      this.isSubscription = false;
+    } else if (value === 'installment') {
+      this.isInstallment = true;
+      this.isSubscription = false;
+    } else {
+      this.isInstallment = false;
+      this.isSubscription = true;
     }
   }
 

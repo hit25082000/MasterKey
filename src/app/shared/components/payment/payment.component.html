@@ -8,26 +8,94 @@
     <mat-card-content>
       <!-- Tipo de Pagamento -->
       <div class="payment-type-selector">
-        <mat-button-toggle-group [(ngModel)]="selectedPaymentType">
-          <mat-button-toggle value="PIX" (click)="onPaymentTypeChange('PIX')">PIX</mat-button-toggle>
-          <mat-button-toggle value="BOLETO" (click)="onPaymentTypeChange('BOLETO')">Boleto</mat-button-toggle>
-          <mat-button-toggle value="CREDIT_CARD" (click)="onPaymentTypeChange('CREDIT_CARD')">Crédito</mat-button-toggle>
-        </mat-button-toggle-group>
+        <div class="desktop-view">
+          <mat-button-toggle-group [(ngModel)]="selectedPaymentType" class="full-width">
+            <mat-button-toggle value="PIX" (click)="onPaymentTypeChange('PIX')">
+              <mat-icon>qr_code</mat-icon>
+              <span>PIX</span>
+            </mat-button-toggle>
+            <mat-button-toggle value="BOLETO" (click)="onPaymentTypeChange('BOLETO')">
+              <mat-icon>receipt</mat-icon>
+              <span>Boleto</span>
+            </mat-button-toggle>
+            <mat-button-toggle value="CREDIT_CARD" (click)="onPaymentTypeChange('CREDIT_CARD')">
+              <mat-icon>credit_card</mat-icon>
+              <span>Crédito</span>
+            </mat-button-toggle>
+          </mat-button-toggle-group>
+        </div>
+
+        <div class="mobile-view">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Forma de Pagamento</mat-label>
+            <mat-select [(ngModel)]="selectedPaymentType" (selectionChange)="onPaymentTypeChange($event.value)">
+              <mat-option value="PIX">
+                <div class="select-option">
+                  <mat-icon>qr_code</mat-icon>
+                  <span>PIX</span>
+                </div>
+              </mat-option>
+              <mat-option value="BOLETO">
+                <div class="select-option">
+                  <mat-icon>receipt</mat-icon>
+                  <span>Boleto</span>
+                </div>
+              </mat-option>
+              <mat-option value="CREDIT_CARD">
+                <div class="select-option">
+                  <mat-icon>credit_card</mat-icon>
+                  <span>Crédito</span>
+                </div>
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
       </div>
 
       <!-- Opções de Pagamento -->
       <div class="payment-options">
-        <mat-button-toggle-group>
-          <mat-button-toggle [checked]="!isSubscription && !isInstallment" (change)="isSubscription = false; isInstallment = false">
-            À Vista
-          </mat-button-toggle>
-          <mat-button-toggle [checked]="isInstallment" (change)="isInstallment = true; isSubscription = false">
-            Parcelado
-          </mat-button-toggle>
-          <mat-button-toggle [checked]="isSubscription" (change)="isSubscription = true; isInstallment = false">
-            Assinatura
-          </mat-button-toggle>
-        </mat-button-toggle-group>
+        <div class="desktop-view">
+          <mat-button-toggle-group class="full-width">
+            <mat-button-toggle [checked]="!isSubscription && !isInstallment" (change)="onPaymentOptionChange('single')">
+              <mat-icon>payments</mat-icon>
+              <span>À Vista</span>
+            </mat-button-toggle>
+            <mat-button-toggle [checked]="isInstallment" (change)="onPaymentOptionChange('installment')">
+              <mat-icon>calendar_month</mat-icon>
+              <span>Parcelado</span>
+            </mat-button-toggle>
+            <mat-button-toggle [checked]="isSubscription" (change)="onPaymentOptionChange('subscription')">
+              <mat-icon>sync</mat-icon>
+              <span>Assinatura</span>
+            </mat-button-toggle>
+          </mat-button-toggle-group>
+        </div>
+
+        <div class="mobile-view">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Tipo de Pagamento</mat-label>
+            <mat-select [(value)]="paymentOption" (selectionChange)="onPaymentOptionChange($event.value)">
+              <mat-option value="single">
+                <div class="select-option">
+                  <mat-icon>payments</mat-icon>
+                  <span>À Vista</span>
+                </div>
+              </mat-option>
+              <mat-option value="installment">
+                <div class="select-option">
+                  <mat-icon>calendar_month</mat-icon>
+                  <span>Parcelado</span>
+                </div>
+              </mat-option>
+              <mat-option value="subscription">
+                <div class="select-option">
+                  <mat-icon>sync</mat-icon>
+                  <span>Assinatura</span>
+                </div>
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
       </div>
 
       <!-- Formulário do Cliente -->

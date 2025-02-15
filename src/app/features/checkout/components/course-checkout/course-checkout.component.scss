@@ -1,17 +1,269 @@
+// Variáveis
+$mobile-breakpoint: 420px;
+$tablet-breakpoint: 1024px;
+$color-primary: #384A87;
+$color-secondary: #ee3c48;
+
+// Mixins
+@mixin mobile {
+  @media (max-width: $mobile-breakpoint) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (max-width: $tablet-breakpoint) {
+    @content;
+  }
+}
+
 .checkout-page {
   min-height: 100vh;
-  padding: 2rem;
+  padding: 1rem;
   background: linear-gradient(90deg, rgba(238, 60, 72, 0.2) 0%, rgba(56, 74, 135, 0.2) 100%), #000000;
+
+  @include mobile {
+    padding: 0.5rem;
+  }
 }
 
 .checkout-container {
-  max-width: 800px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border-radius: 15px;
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  min-height: calc(100vh - 80px);
+  background: linear-gradient(90deg, rgba(238, 60, 72, 0.1) 0%, rgba(56, 74, 135, 0.1) 100%);
+
+  @include tablet {
+    padding: 1.5rem;
+  }
+
+  @include mobile {
+    padding: 1rem;
+  }
+
+  .checkout-header {
+    text-align: center;
+    margin-bottom: 2rem;
+
+    @include mobile {
+      margin-bottom: 1.5rem;
+    }
+
+    h1 {
+      font-size: 2rem;
+      color: $color-primary;
+      margin-bottom: 1rem;
+
+      @include tablet {
+        font-size: 1.8rem;
+      }
+
+      @include mobile {
+        font-size: 1.5rem;
+      }
+    }
+
+    p {
+      font-size: 1.1rem;
+      color: #666;
+
+      @include mobile {
+        font-size: 0.9rem;
+      }
+    }
+  }
+
+  .checkout-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+
+    @include tablet {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    .course-info {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+      @include mobile {
+        padding: 1rem;
+      }
+
+      .course-image {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+
+        @include mobile {
+          height: 150px;
+        }
+      }
+
+      .course-details {
+        h2 {
+          font-size: 1.6rem;
+          color: $color-primary;
+          margin-bottom: 0.8rem;
+
+          @include mobile {
+            font-size: 1.3rem;
+          }
+        }
+
+        .price {
+          font-size: 1.8rem;
+          color: $color-secondary;
+          font-weight: bold;
+          margin-bottom: 0.8rem;
+
+          @include mobile {
+            font-size: 1.4rem;
+          }
+        }
+
+        .features {
+          list-style: none;
+          padding: 0;
+
+          li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.6rem;
+            color: #666;
+            font-size: 0.95rem;
+
+            @include mobile {
+              font-size: 0.9rem;
+            }
+
+            i {
+              color: $color-primary;
+              margin-right: 0.5rem;
+            }
+          }
+        }
+      }
+    }
+
+    .payment-form {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+      @include mobile {
+        padding: 1rem;
+      }
+
+      h3 {
+        font-size: 1.5rem;
+        color: $color-primary;
+        margin-bottom: 1.5rem;
+
+        @include mobile {
+          font-size: 1.3rem;
+        }
+      }
+
+      .form-group {
+        margin-bottom: 1.5rem;
+
+        label {
+          display: block;
+          margin-bottom: 0.5rem;
+          color: #444;
+        }
+
+        input {
+          width: 100%;
+          padding: 0.8rem;
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          font-size: 1rem;
+
+          &:focus {
+            outline: none;
+            border-color: $color-primary;
+          }
+        }
+
+        .error-message {
+          color: $color-secondary;
+          font-size: 0.9rem;
+          margin-top: 0.3rem;
+        }
+      }
+
+      .payment-methods {
+        margin-bottom: 2rem;
+
+        .method-options {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 1rem;
+
+          @include mobile {
+            grid-template-columns: 1fr;
+          }
+
+          .method-option {
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+
+            &:hover {
+              border-color: $color-primary;
+              background: rgba($color-primary, 0.05);
+            }
+
+            &.active {
+              border-color: $color-primary;
+              background: rgba($color-primary, 0.1);
+            }
+
+            i {
+              font-size: 1.5rem;
+              margin-bottom: 0.5rem;
+              color: $color-primary;
+            }
+          }
+        }
+      }
+
+      .submit-button {
+        width: 100%;
+        padding: 1rem;
+        background: linear-gradient(45deg, $color-secondary, $color-primary);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.3s ease;
+
+        &:hover {
+          transform: translateY(-2px);
+        }
+
+        &:disabled {
+          background: #ccc;
+          cursor: not-allowed;
+          transform: none;
+        }
+      }
+    }
+  }
 }
 
 .course-details {
