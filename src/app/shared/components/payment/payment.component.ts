@@ -226,6 +226,11 @@ export class PaymentComponent implements OnInit {
     }
   }
 
+  updatePaymentOption(value: any) {
+    this.paymentOption.set(value);
+    this.onPaymentOptionChange(value);
+  }
+
   async processPayment(isSubscription: boolean = false) {
     if (!this.isFormValid()) {
       this.snackBar.open('Por favor, preencha todos os campos obrigatórios', 'OK', { duration: 3000 });
@@ -357,5 +362,57 @@ export class PaymentComponent implements OnInit {
 
   private formatPostalCode(postalCode: string): string {
     return postalCode.replace(/\D/g, '');
+  }
+
+  getPaymentTypeIcon(type: string): string {
+    switch (type) {
+      case 'PIX':
+        return 'qr_code';
+      case 'BOLETO':
+        return 'receipt';
+      case 'CREDIT_CARD':
+        return 'credit_card';
+      default:
+        return 'payments';
+    }
+  }
+
+  getPaymentTypeLabel(type: string): string {
+    switch (type) {
+      case 'PIX':
+        return 'PIX';
+      case 'BOLETO':
+        return 'Boleto';
+      case 'CREDIT_CARD':
+        return 'Crédito';
+      default:
+        return 'Selecione';
+    }
+  }
+
+  getPaymentOptionIcon(option: string): string {
+    switch (option) {
+      case 'single':
+        return 'payments';
+      case 'installment':
+        return 'calendar_month';
+      case 'subscription':
+        return 'sync';
+      default:
+        return 'payments';
+    }
+  }
+
+  getPaymentOptionLabel(option: string): string {
+    switch (option) {
+      case 'single':
+        return 'À Vista';
+      case 'installment':
+        return 'Parcelado';
+      case 'subscription':
+        return 'Assinatura';
+      default:
+        return 'Selecione';
+    }
   }
 } 

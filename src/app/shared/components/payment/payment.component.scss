@@ -181,6 +181,38 @@ mat-card-actions {
   .mat-mdc-form-field {
     width: 100%;
   }
+
+  .mat-mdc-select-value {
+    display: flex;
+    align-items: center;
+    
+    .mat-mdc-select-value-text {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  }
+
+  .mat-mdc-select-trigger {
+    height: auto;
+    padding: 8px 0;
+  }
+
+  .mat-mdc-option {
+    .select-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      
+      mat-icon {
+        margin-right: 4px;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        line-height: 20px;
+      }
+    }
+  }
 }
 
 .payment-header {
