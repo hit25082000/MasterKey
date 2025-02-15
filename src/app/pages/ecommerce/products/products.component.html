@@ -84,6 +84,7 @@
     </div>
 </section>
 
+<div class="modal-overlay" [class.active]="isFilterModalOpen()" (click)="closeFilters()"></div>
 <div class="filters modal" [class.active]="isFilterModalOpen()">
   <div class="modal-header">
     <h3>Filtros</h3>

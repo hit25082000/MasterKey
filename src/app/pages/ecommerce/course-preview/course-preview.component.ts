@@ -1,7 +1,8 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseService } from '../../../features/course/services/course.service';
+import { CategoryService } from '../../../features/category/services/category.service';
 import { Course } from '../../../core/models/course.model';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { LoadingService } from '../../../shared/services/loading.service';
@@ -18,31 +19,40 @@ export class CoursePreviewComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private courseService = inject(CourseService);
+  private categoryService = inject(CategoryService);
   private notificationService = inject(NotificationService);
   private loadingService = inject(LoadingService);
   private sanitizer = inject(DomSanitizer);
 
   course = signal<Course | null>(null);
-  safeVideoUrl = signal<SafeResourceUrl | null>(null);
+  categoryName = signal<string>('');
+  safeVideoUrl = computed(() => {
+    if (this.course()!.modules[0].videos[0].webViewLink!) {
+      return this.sanitizer.bypassSecurityTrustResourceUrl(this.course()!.modules[0].videos[0].webViewLink!);
+    }
+    return null;
+  });
 
   async ngOnInit() {
-    const courseId = this.route.snapshot.params['id'];
+    const courseId = this.route.snapshot.paramMap.get('id');
     if (!courseId) {
       this.notificationService.error('Curso não encontrado');
-      this.router.navigate(['/courses']);
+      this.router.navigate(['/']);
       return;
     }
 
     try {
-      const course = await this.courseService.getById(courseId);
-      this.course.set(course);
-      
-      if (course.modules[0].videos[0].webViewLink) {
-        this.safeVideoUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(course.modules[0].videos[0].webViewLink));
+      const courseData = await this.courseService.getById(courseId);
+      this.course.set(courseData);
+      console.log(this.course()!.modules[0].videos[0].webViewLink!)
+      // Buscar o nome da categoria
+      if (courseData.category) {
+        const category = await this.categoryService.getById(courseData.category);
+        this.categoryName.set(category.name);
       }
     } catch (error) {
       this.notificationService.error('Erro ao carregar o curso');
-      this.router.navigate(['/courses']);
+      this.router.navigate(['/']);
     }
   }
 

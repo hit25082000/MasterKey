@@ -1,7 +1,7 @@
 <div class="course-preview" *ngIf="course()">
   <div class="course-header">
+    <img [src]="course()!.image" class="course-img" [alt]="course()!.name">
     <div class="course-main-info">
-      <img [src]="course()!.image" class="course-img" [alt]="course()!.name">
       <div class="course-details">
         <h1>
           <img src="assets/icons/interrogacao.png" alt="ícone de interrogação" class="icon">
@@ -14,39 +14,16 @@
         <div class="course-meta">
           <span>
             <img src="assets/icons/relogio.png" alt="ícone de relógio" class="icon">
-            {{course()!.workHours}} hora(s)
+            Carga Horária: {{course()!.workHours}} hora(s)
           </span>
           <span>
             <img src="assets/icons/tag.png" alt="ícone de tag" class="icon">
-            {{course()!.category}}
+            Categoria: {{categoryName()}}
           </span>
         </div>
-      </div>
-    </div>
-  </div>
 
-  <div class="preview-section">
-    <div class="video-preview">
-      <h2>Aula Demonstrativa</h2>
-      <div class="video-container">
-        @if (safeVideoUrl()) {
-          <iframe [src]="safeVideoUrl()"
-                  frameborder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowfullscreen>
-          </iframe>
-        } @else {
-          <div class="video-placeholder">
-            <p>Vídeo não disponível</p>
-          </div>
-        }
-      </div>
-    </div>
-
-    <div class="course-info">
-      <div class="info-card">
-        <h3>Informações do Curso</h3>
-        <div class="price-info">
+        <div class="price-info">          
+          <h2><img src="assets/icons/cash.png" alt="ícone de interrogação" class="icon">Temos o melhor preço para voçe</h2>
           <div class="price-container" *ngIf="!course()!.hidePrice">
             <span class="original-price" *ngIf="course()!.promoPrice">R$ {{course()!.price}}</span>
             <span class="promo-price">R$ {{course()!.promoPrice || course()!.price}}</span>
@@ -61,6 +38,30 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <div class="preview-section">
+    <div class="video-preview">
+      <h2>
+        Aula Demonstrativa
+      </h2>
+      <div class="video-container">
+        @if (safeVideoUrl()) {
+          <iframe [src]="safeVideoUrl()"
+                  frameborder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen>
+          </iframe>
+        } @else {
+          <div class="video-placeholder">
+            <p>
+              <i class="fas fa-video"></i>
+              Vídeo não disponível no momento
+            </p>
+          </div>
+        }
+      </div>
+    </div>    
   </div>
 
   <div class="course-content">
@@ -82,14 +83,7 @@
                     <img src="assets/icons/relogio.png" alt="ícone de duração" class="icon-small">
                     {{video.duration | number:'1.0-0'}} minutos
                   </span>
-                </div>
-                @if (i === 0) {
-                  <span class="preview-badge">Preview</span>
-                } @else {
-                  <span class="lock-icon">
-                    <i class="fas fa-lock"></i>
-                  </span>
-                }
+                </div>                
               </div>
             }
           </div>
