@@ -125,11 +125,10 @@ $font-family-inter: 'Inter', sans-serif;
       min-width: min(100%, 25rem);
       margin-left: 2rem;
       height: fit-content;
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
       backdrop-filter: blur(20px);
       border-radius: 1.25rem;
       padding: clamp(1rem, 3vw, 2rem);
-      box-shadow: 0.25rem 0.25rem 1.5rem rgba(0, 0, 0, 0.5);
 
       @media (max-width: 1024px) {
         width: 100%;

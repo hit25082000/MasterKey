@@ -46,6 +46,7 @@ export class ProductsComponent implements OnInit {
   priceRange = signal<number>(5000);
   maxPrice = signal<number>(5000);
   searchTerm = signal<string>('');
+  isFilterModalOpen = signal<boolean>(false);
 
   filteredCourses = computed(() => {
     let filtered = [...this.allCourses()];
@@ -123,12 +124,26 @@ export class ProductsComponent implements OnInit {
     this.searchTerm.set(searchTerm);
   }
 
+  toggleFilters() {
+    this.isFilterModalOpen.update(value => !value);
+  }
+
+  closeFilters() {
+    this.isFilterModalOpen.set(false);
+  }
+
   updateCategory(categoryId: string) {
     this.selectedCategory.set(categoryId);
+    if (window.innerWidth <= 768) {
+      this.closeFilters();
+    }
   }
 
   updateOrder(order: string) {
     this.selectedOrder.set(order);
+    if (window.innerWidth <= 768) {
+      this.closeFilters();
+    }
   }
 
   updatePriceRange(price: number) {
