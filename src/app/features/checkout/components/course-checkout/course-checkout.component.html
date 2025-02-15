@@ -1,13 +1,19 @@
 <div class="checkout-page">
   <div class="checkout-container" *ngIf="course()">
     <div class="course-details">
-        <img class="price-info" [src]="course()?.image">
-      <h2>{{ course()?.name }}</h2>
-      <p class="description">{{ course()?.description }}</p>
-      <div class="price-info">
-        <h3>Valor do Curso</h3>
-        <p class="price">R$ {{ course()?.price | number:'1.2-2' }}</p>
-        <p class="installments">ou até {{ course()?.portionCount }}x de R$ {{ (course()?.price || 0) / (course()?.portionCount || 1) | number:'1.2-2' }}</p>
+        <img class="course-image" [src]="course()?.image">
+      <div class="course-info">
+        <h2>{{ course()?.name }}</h2>
+        <p class="description">{{ course()?.description }}</p>
+        <div class="promotional-text">
+          <h3>Compre seu curso agora mesmo!</h3>
+          <p>Invista em seu futuro com nossos cursos de alta qualidade</p>
+        </div>
+        <div class="price-info">
+          <h3>Valor do Curso</h3>
+          <p class="price">R$ {{ course()?.price | number:'1.2-2' }}</p>
+          <p class="installments">ou até {{ course()?.portionCount }}x de R$ {{ (course()?.price || 0) / (course()?.portionCount || 1) | number:'1.2-2' }}</p>
+        </div>
       </div>
     </div>
 
@@ -72,5 +78,4 @@
     </div>
   </div>
 </div> 
-
 
