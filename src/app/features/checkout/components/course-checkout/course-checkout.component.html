@@ -3,12 +3,8 @@
     <div class="course-details">
         <img class="course-image" [src]="course()?.image">
       <div class="course-info">
-        <h2>{{ course()?.name }}</h2>
+        <h2>Comprar curso de: <br><br> {{ course()?.name }}</h2>
         <p class="description">{{ course()?.description }}</p>
-        <div class="promotional-text">
-          <h3>Compre seu curso agora mesmo!</h3>
-          <p>Invista em seu futuro com nossos cursos de alta qualidade</p>
-        </div>
         <div class="price-info">
           <h3>Valor do Curso</h3>
           <p class="price">R$ {{ course()?.price | number:'1.2-2' }}</p>
