@@ -4,6 +4,12 @@
   min-width: 90vw;
   font-family: 'Arial', sans-serif;
   background-color: #f0f2f5;
+  margin: 1rem;
+    min-width: 80vw;
+}
+
+:host{
+  color: black
 }
 
 .sidebar {
@@ -84,6 +90,7 @@
 }
 
 .option {
+  color:black;
   margin-bottom: 10px;
 
   input[type="radio"] {

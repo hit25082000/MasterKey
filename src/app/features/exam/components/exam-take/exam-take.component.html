@@ -1,12 +1,5 @@
 <div *ngIf="!isLoading(); else loading">
-  <div class="exam-container" *ngIf="exam() as exam">
-    <div class="sidebar">
-      <ul class="question-list">
-        <li *ngFor="let question of exam.questions; let i = index">
-          <a href="#question-{{i+1}}">Questão {{i+1}}</a>
-        </li>
-      </ul>
-    </div>
+  <div class="exam-container" *ngIf="exam() as exam"> 
 
     <div class="main-content">
       <div class="exam-header">
@@ -31,7 +24,7 @@
                      [class.correct-answer]="isExamSubmitted() && isCorrectAnswer(question, j)"
                      [class.incorrect-answer]="isExamSubmitted() && isSelectedAnswer(question, j) && !isCorrectAnswer(question, j)"
                      [class.selected-answer]="isExamSubmitted() && isSelectedAnswer(question, j)">
-                {{ indexToLetter(j) }}) {{ option }}
+                {{ indexToLetter(j) }} {{ option }}
                 <span *ngIf="isExamSubmitted() && isCorrectAnswer(question, j)" class="correct-answer-indicator"> (Resposta correta)</span>
               </label>
             </div>

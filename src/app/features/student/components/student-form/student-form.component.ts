@@ -1,10 +1,9 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Validators } from '@angular/forms';
 import { StudentManagementService } from '../../services/student-management.service';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ValidatorCpf } from '../../../../shared/Validators/cpf.validator';
-import { passwordMatchValidator } from '../../../../shared/Validators/password-math.validator';
 import { Student } from '../../../../core/models/student.model';
 import { StudentService } from '../../services/student.service';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
@@ -30,35 +29,33 @@ import { ClassService } from '../../../class/services/class.service';
     PackageSelectorComponent,
     GenericFormComponent,
     LoadingOverlayComponent
-],
+  ],
   templateUrl: './student-form.component.html',
   styleUrls: ['./student-form.component.scss'],
 })
-export class StudentFormComponent implements OnInit {
-  notificationService = inject(NotificationService)
-  studentManagement = inject(StudentManagementService)
-  studentService = inject(StudentService)
-  loadingService = inject(LoadingService)
-  router = inject(Router)
-  route = inject(ActivatedRoute)
-  classManagementService = inject(ClassManagementService)
-  classService = inject(ClassService)
+export class StudentFormComponent {
+  // Injeção de dependências usando inject()
+  private readonly notificationService = inject(NotificationService);
+  private readonly studentManagement = inject(StudentManagementService);
+  private readonly studentService = inject(StudentService);
+  readonly loadingService = inject(LoadingService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly classManagementService = inject(ClassManagementService);
+  private readonly classService = inject(ClassService);
 
-  isLoading = this.loadingService.isLoading;
-  studentId = signal<string | null>(null);
-  isEditMode = computed(() => !!this.studentId());
-  formConfig = signal<FormFieldConfig[]>([]);
-  selectedFile = signal<File | null>(null);
-  submitButtonText = computed(() => this.isEditMode() ? 'Atualizar' : 'Cadastrar');
-  currentImage = signal<string>('');
+  // Signals
+  readonly isLoading = this.loadingService.isLoading;
+  readonly studentId = signal<string | null>(this.route.snapshot.paramMap.get('id'));
+  readonly isEditMode = computed(() => !!this.studentId());
+  readonly formConfig = signal<FormFieldConfig[]>(this.initFormConfig());
+  readonly selectedFile = signal<File | null>(null);
+  readonly submitButtonText = computed(() => this.isEditMode() ? 'Atualizar' : 'Cadastrar');
+  readonly currentImage = signal<string>('');
 
-  constructor(
-  ) {
-    this.initFormConfig();
-  }
-
-  initFormConfig() {
-    this.formConfig.set([
+  // Inicialização do formulário
+  private initFormConfig(): FormFieldConfig[] {
+    return [
       {
         name: 'name',
         label: 'Nome',
@@ -280,19 +277,17 @@ export class StudentFormComponent implements OnInit {
           passwordMismatch: 'As senhas não coincidem'
         }
       }
-    ]);
+    ];
   }
 
-  onFileChange(event: any) {
+  onFileChange(event: any): void {
     const file = event.target.files[0];
     if (file) {
-      // Validar tipo de arquivo
       if (!file.type.startsWith('image/')) {
         this.notificationService.error('Por favor, selecione apenas arquivos de imagem');
         return;
       }
 
-      // Validar tamanho (5MB)
       const maxSize = 5 * 1024 * 1024;
       if (file.size > maxSize) {
         this.notificationService.error('A imagem deve ter no máximo 5MB');
@@ -300,57 +295,60 @@ export class StudentFormComponent implements OnInit {
       }
 
       this.selectedFile.set(file);
-
-      // Criar preview
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (reader.result) {
-          this.currentImage.set(reader.result as string);
-        }
-      };
-      reader.onerror = () => {
-        this.notificationService.error('Erro ao carregar a imagem');
-        this.currentImage.set('');
-      };
-      reader.readAsDataURL(file);
+      this.createImagePreview(file);
     }
   }
 
-  async ngOnInit() {
+  private createImagePreview(file: File): void {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (reader.result) {
+        this.currentImage.set(reader.result as string);
+      }
+    };
+    reader.onerror = () => {
+      this.notificationService.error('Erro ao carregar a imagem');
+      this.currentImage.set('');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async ngOnInit(): Promise<void> {
     this.loadingService.show();
-    this.studentId.set(this.route.snapshot.paramMap.get('id'));
 
-    if (this.isEditMode() && this.studentId() != null) {
-      try {
-        await this.studentService.selectStudent(this.studentId()!);
-        const student = this.studentService.selectedStudent;
+    if (this.isEditMode()) {
+      await this.loadStudentData();
+    }
 
-        if(student() == undefined){
-          this.notificationService.error(
-            'Estudante não encontrado',
-            5000
-          );
-          this.loadingService.hide();
-          return;
-        }
+    this.loadingService.hide();
+  }
 
-        // Atualiza a imagem atual
-        if (student()?.profilePic) {
-          this.currentImage.set(student()?.profilePic!);
-        }
+  private async loadStudentData(): Promise<void> {
+    try {
+      await this.studentService.selectStudent(this.studentId()!);
+      const student = this.studentService.selectedStudent;
 
-        this.formConfig.set(this.formConfig().map(field => ({
+      if (!student()) {
+        this.notificationService.error('Estudante não encontrado', 5000);
+        return;
+      }
+
+      if (student()?.profilePic) {
+        this.currentImage.set(student()?.profilePic!);
+      }
+
+      this.formConfig.update(config => 
+        config.map(field => ({
           ...field,
           value: student()![field.name as keyof Student]
-        })));
-      } catch (error) {
-        this.notificationService.error(
-          'Erro ao consultar dados do estudante: ' + error,
-          5000
-        );
-      }
+        }))
+      );
+    } catch (error) {
+      this.notificationService.error(
+        'Erro ao consultar dados do estudante: ' + error,
+        5000
+      );
     }
-    this.loadingService.hide();
   }
 
   private generateRA(): string {
@@ -359,86 +357,76 @@ export class StudentFormComponent implements OnInit {
     return `${year}${randomNumbers}`;
   }
 
-  onSubmit(formData: any) {
+  async onSubmit(formData: any): Promise<void> {
     this.loadingService.show();
-    const studentData: Student = formData;
-    studentData.id = this.studentId() || '';
-    studentData.role = 'student';
     
-    // Gerar RA apenas para novos estudantes
-    if (!this.isEditMode()) {
-      studentData.ra = this.generateRA();
+    try {
+      const studentData: Student = {
+        ...formData,
+        id: this.studentId() || '',
+        role: 'student',
+        ra: this.isEditMode() ? formData.ra : this.generateRA()
+      };
+
+      const operation = this.isEditMode()
+        ? this.studentManagement.update(studentData, this.selectedFile())
+        : this.studentManagement.create(studentData, this.selectedFile());
+
+      await operation;
+      
+      this.notificationService.success(
+        `Estudante ${this.isEditMode() ? 'atualizado' : 'cadastrado'} com sucesso`,
+        1000
+      );
+
+      setTimeout(() => {
+        this.router.navigate(['/admin/student-list']);
+      }, 1000);
+    } catch (error: any) {
+      this.notificationService.error(
+        `Erro ao ${this.isEditMode() ? 'editar' : 'cadastrar'} estudante: ${error.message}`,
+        5000
+      );
+    } finally {
+      this.loadingService.hide();
     }
-
-    const operation = this.isEditMode()
-      ? this.studentManagement.update(studentData, this.selectedFile())
-      : this.studentManagement.create(studentData, this.selectedFile());
-
-    operation
-      .then((success) => {
-        this.notificationService.success(success, 1);
-        setTimeout(() => {
-          this.loadingService.hide();
-          this.router.navigate(['/admin/student-list']);
-        }, 1000);
-      })
-      .catch((error) => {
-        this.notificationService.error(
-          `Erro ao ${this.isEditMode() ? 'editar' : 'cadastrar'} estudante: ${error.message}`,
-          5000
-        );
-        this.loadingService.hide();
-      });
   }
 
   getImageUrl(url: string): string {
     if (!url) return 'assets/images/default-profile.png';
+    if (url.startsWith('data:image')) return url;
 
-    // Se for uma URL base64 (preview local), retorna diretamente
-    if (url.startsWith('data:image')) {
-      return url;
-    }
+    const baseUrl = url.includes('storage.googleapis.com') 
+      ? url.split('?')[0]
+      : url;
 
-    // Para URLs do Storage, adiciona timestamp para evitar cache
-    if (url.includes('storage.googleapis.com')) {
-      const baseUrl = url.split('?')[0]; // Remove parâmetros existentes
-      return `${baseUrl}?t=${Date.now()}`; // Adiciona novo timestamp
-    }
-
-    // Para outras URLs
-    return `${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}`;
+    return `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}t=${Date.now()}`;
   }
 
-  async updateStudentClasses(selectedClassIds: string[]) {
+  async updateStudentClasses(selectedClassIds: string[]): Promise<void> {
     try {
-      // Busca todas as turmas atuais do estudante
       const currentClasses = await this.classService.getStudentClasses(this.studentId()!);
-      
-      // Classes para adicionar (estão em selectedClassIds mas não em currentClasses)
       const classesToAdd = selectedClassIds.filter(id => !currentClasses.includes(id));
-      
-      // Classes para remover (estão em currentClasses mas não em selectedClassIds)
       const classesToRemove = currentClasses.filter(id => !selectedClassIds.includes(id));
 
-      // Adiciona o estudante nas novas turmas
-      for (const classId of classesToAdd) {
-        const classStudents = await this.classService.getClassStudents(classId);
-        await this.classManagementService.updateClass(
-          classId,
-          {},
-          [...classStudents, this.studentId()!]
-        );
-      }
-
-      // Remove o estudante das turmas não selecionadas
-      for (const classId of classesToRemove) {
-        const classStudents = await this.classService.getClassStudents(classId);
-        await this.classManagementService.updateClass(
-          classId,
-          {},
-          classStudents.filter(id => id !== this.studentId()!)
-        );
-      }
+      await Promise.all([
+        ...classesToAdd.map(async classId => {
+          const classStudents = await this.classService.getClassStudents(classId);
+          return this.classManagementService.updateClass(
+            classId,
+            {},
+            [...classStudents, this.studentId()!]
+          );
+        }),
+        ...classesToRemove.map(async classId => {
+          const classStudents = await this.classService.getClassStudents(classId);
+          return this.classManagementService.updateClass(
+            classId,
+            {},
+            classStudents.filter(id => id !== this.studentId()!)
+          );
+        })
+      ]);
 
       this.notificationService.success('Turmas atualizadas com sucesso');
     } catch (error) {
