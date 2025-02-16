@@ -44,7 +44,6 @@ export class CoursePreviewComponent implements OnInit {
     try {
       const courseData = await this.courseService.getById(courseId);
       this.course.set(courseData);
-      console.log(this.course()!.modules[0].videos[0].webViewLink!)
       // Buscar o nome da categoria
       if (courseData.category) {
         const category = await this.categoryService.getById(courseData.category);

@@ -295,7 +295,6 @@ export class PaymentService {
   }
 
   getAllTransactions(): Observable<PaymentTransaction[]> {
-    console.log('Iniciando getAllTransactions...');
     return from(getDocs(
       query(
         collection(this.firestore, 'transactions'),
@@ -303,13 +302,10 @@ export class PaymentService {
       )
     )).pipe(
       map(snapshot => {
-        console.log('Snapshot recebido:', snapshot);
         const payments = snapshot.docs.map(doc => {
           const data = doc.data() as PaymentTransaction;
-          console.log('Documento processado:', { id: doc.id, data });
           return { ...data, id: doc.id };
         });
-        console.log('Total de pagamentos encontrados:', payments.length);
         this._payments.set(payments as any);
         return payments;
       }),

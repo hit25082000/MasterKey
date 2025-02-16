@@ -95,13 +95,17 @@ export class FirestoreService {
     path: string,
     id: string,
     data: any
-  ): Promise<any> {
+  ): Promise<void> {
+    return await setDoc(doc(this.firestore, path, id), { ...data });
+  }
+
+  async setDocument(path: string, id: string, data: any): Promise<void> {
     return await setDoc(doc(this.firestore, path, id), { ...data });
   }
 
   updateDocument<T>(path: string, id: string, data: any): Promise<void> {
-    var ref = doc(collection(this.firestore, path), id);
-    return setDoc(ref, { ...data }, { merge: true });
+    const docRef = doc(this.firestore, path, id);
+    return updateDoc(docRef, data);
   }
 
   deleteDocument(path: string, id: string): Promise<void> {

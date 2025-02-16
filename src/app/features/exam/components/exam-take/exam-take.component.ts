@@ -112,7 +112,6 @@ export class ExamTakeComponent implements OnInit {
         tap(studentExam => {
           this.studentExam.set(studentExam);
           this.hasCompletedExam.set(true);
-          console.log('Exame submetido com sucesso', studentExam);
         }),
         catchError(error => {
           console.error('Erro ao submeter o exame', error);

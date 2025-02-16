@@ -294,7 +294,6 @@ export class PaymentComponent implements OnInit {
 
         if (paymentResponse) {
           this.handlePaymentResponse(paymentResponse);
-          console.log(paymentResponse)
           if (paymentResponse.invoiceUrl) {
             window.location.href = paymentResponse.invoiceUrl;
           }

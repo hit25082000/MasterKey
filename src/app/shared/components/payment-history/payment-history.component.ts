@@ -167,7 +167,6 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
       // Atualizar os dados uma única vez
       this._payments.set(transactionsWithDetails);
       this._groupedPayments.set(this.groupInstallmentPayments(transactionsWithDetails));
-      console.log(transactionsWithDetails)
       // Carregar assinaturas
       const subscriptions = await firstValueFrom(this.paymentService.getCustomerSubscriptions(customer.asaasId));
       const subscriptionsWithDetails = await Promise.all(

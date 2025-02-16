@@ -124,7 +124,6 @@ export class ClassAttendanceListComponent implements OnInit {
     try {
       // As classes já são carregadas e mantidas no serviço
       this.classes = this.classService.classes;
-      console.log(this.classes)
     } catch (error) {
       console.error('Erro ao carregar turmas:', error);
       this.notificationService.error('Erro ao carregar lista de turmas');

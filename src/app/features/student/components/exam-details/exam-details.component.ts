@@ -28,7 +28,6 @@ export class ExamDetailsComponent implements OnInit {
     if (examId) {
       this.loadExamDetails(examId);
     } else {
-      console.error('ID do exame não fornecido');
       this.isLoading.set(false);
     }
   }
@@ -41,7 +40,6 @@ export class ExamDetailsComponent implements OnInit {
         this.loadExam(examId);
       },
       error: (error) => {
-        console.error('Erro ao carregar detalhes do exame do estudante', error);
         this.isLoading.set(false);
       }
     });
@@ -51,10 +49,12 @@ export class ExamDetailsComponent implements OnInit {
     this.examService.getExamById(examId).subscribe({
       next: (exam) => {
         this.exam.set(exam);
+        console.log(examId);
+        console.log(this.exam());
+        console.log(this.studentExam());
         this.isLoading.set(false);
       },
       error: (error) => {
-        console.error('Erro ao carregar detalhes do exame', error);
         this.isLoading.set(false);
       }
     });

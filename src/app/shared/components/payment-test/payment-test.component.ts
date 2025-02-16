@@ -670,7 +670,6 @@ export class PaymentTestComponent implements OnInit, OnDestroy {
         postalCode: '79005160',
         addressNumber: '123'
       };
-      console.log(customerData)
       // Primeiro, verificar se o cliente já existe
       const customerResponse = await firstValueFrom(this.asaasService.createCustomer(customerData))
         .catch(error => {
@@ -695,8 +694,6 @@ export class PaymentTestComponent implements OnInit, OnDestroy {
         description: `Assinatura de teste - ${formData.subscriptionId}`,
         maxInstallments: formData.maxInstallments || 1
       };
-      console.log(subscriptionData)
-      console.log(formData)
       const subscriptionResponse = await firstValueFrom(
         this.asaasService.createSubscription(subscriptionData, formData.subscriptionId)
       ).catch(error => {

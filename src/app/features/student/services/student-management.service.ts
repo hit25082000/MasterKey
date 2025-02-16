@@ -37,7 +37,6 @@ export class StudentManagementService {
       return new Promise((resolve, reject) => {
         this.adminService.createUser(newStudent, iconBase64).subscribe(
           (student) => {
-            console.log(student);
             this.logSuccessfulRegistration(student);
             resolve('Estudante criado com sucesso!');
           },

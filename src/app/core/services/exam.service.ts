@@ -53,10 +53,8 @@ export class ExamService {
   }
 
   submitStudentExam(studentExam: StudentExam): Observable<void> {
-    return from(this.firestore.addToCollection('student_exams', studentExam));
+    return from(this.firestore.setDocument('student_exams', studentExam.examId, studentExam));
   }
-
-
 
   calculateScoreAndSaveStudentExam(examId: string, studentId: string, answers: Answer[]): Observable<StudentExam> {
     return this.getExamById(examId).pipe(

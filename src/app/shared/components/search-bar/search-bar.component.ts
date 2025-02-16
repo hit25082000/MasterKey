@@ -11,22 +11,33 @@ import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 })
 export class SearchBarComponent implements OnInit {
   dataList = input<any[]>(['']);
+  searchKeys = input<string[]>(['']);
   searchControl = new FormControl('');
   searchValue = signal<string>('');
 
-  filteredList = computed(() => {
-    return this.dataList().filter(item =>
-      JSON.stringify(item).toLowerCase().includes(this.searchValue())
-    );
+  filteredList = computed(() => {   
+    if (!this.searchValue()) {
+      return this.dataList();
+    }
+
+    return this.dataList().filter(item => {
+      if (!item) return false;
+      
+      return this.searchKeys().some(key => {
+        const value = item[key];
+        if (!value) return false;
+        return value.toString().toLowerCase().includes(this.searchValue().toLowerCase());
+      });
+    });
   });
 
-  filter(){
-    this.searchValue.set(this.searchControl.value!.toLowerCase())
+  filter() {
+    this.searchValue.set(this.searchControl.value?.toLowerCase() || '');
   }
 
   ngOnInit(): void {
-    this.searchControl.valueChanges.subscribe(() => {
-      this.filteredList();
+    this.searchControl.valueChanges.subscribe(value => {
+      this.filter();
     });
   }
 }

@@ -190,13 +190,7 @@ export class CategoryFormComponent implements OnInit {
           name: formData.name,
           image: this.selectedFile ? '' : this.categoryData()?.image || '',
           active: true
-        };
-
-        console.log('Dados para atualização:', {
-          id: this.categoryId(),
-          data: updatedData,
-          newImage: this.selectedFile
-        });
+        };    
 
         await this.categoryManagementService.update(
           this.categoryId()!,
@@ -211,11 +205,6 @@ export class CategoryFormComponent implements OnInit {
           image: "",
           active: true
         };
-
-        console.log('Dados para criação:', {
-          category: newCategory,
-          image: this.selectedFile
-        });
 
         await this.categoryManagementService.create(newCategory, this.selectedFile);
         this.notificationService.success('Categoria criada com sucesso');

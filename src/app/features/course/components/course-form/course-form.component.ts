@@ -143,7 +143,6 @@ export class CourseFormComponent implements OnInit {
   }
 
   removeVideo(moduleIndex: number, videoIndex: number) {
-    console.log('Removendo vídeo:', { moduleIndex, videoIndex });
     const moduleFormGroup = this.modulesArray.at(moduleIndex) as FormGroup;
     if (!moduleFormGroup) {
       console.error('Módulo não encontrado:', moduleIndex);
@@ -156,10 +155,6 @@ export class CourseFormComponent implements OnInit {
       return;
     }
 
-
-
-
-    console.log('Removendo vídeo no índice real:', videoIndex);
     videosArray.removeAt(videoIndex);
     this.notificationService.success('Vídeo removido com sucesso!');
   }

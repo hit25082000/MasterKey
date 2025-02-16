@@ -146,10 +146,8 @@ export class FinancialReportsComponent implements OnInit {
 
   async ngOnInit() {
     try {
-      console.log('Iniciando FinancialReportsComponent...');
       this.loadingService.show();
       await firstValueFrom(this.paymentService.getAllTransactions());
-      console.log('Pagamentos carregados:', this.payments());
     } catch (error) {
       console.error('Erro detalhado ao carregar pagamentos:', error);
       this.notificationService.error('Erro ao carregar pagamentos');
@@ -168,25 +166,20 @@ export class FinancialReportsComponent implements OnInit {
 
   async generateReport() {
     try {
-      console.log('Iniciando geração de relatório...');
       this.loadingService.show();
       const filters = this.filterForm.value as ReportFilter;
-      console.log('Filtros aplicados:', filters);
       
       let data: any[] = [];
       
       switch (filters.type) {
         case 'registrations':
-          console.log('Buscando dados de registros...');
           data = await this.getRegistrationsData(filters);
           break;
         default:
-          console.log('Buscando dados de pagamentos...');
           data = await this.getPaymentsData(filters);
           break;
       }
 
-      console.log('Dados obtidos para o relatório:', data);
       this.generatePDF(data, filters);
       this.notificationService.success('Relatório gerado com sucesso!');
     } catch (error) {
@@ -216,9 +209,7 @@ export class FinancialReportsComponent implements OnInit {
 
   private async getPaymentsData(filters: ReportFilter) {
     try {
-      console.log('Iniciando getPaymentsData com filtros:', filters);
       const allPayments = this.payments();
-      console.log('Total de pagamentos disponíveis:', allPayments.length);
       
       const filteredPayments = allPayments
         .filter((payment: FirestorePayment) => {
@@ -226,16 +217,6 @@ export class FinancialReportsComponent implements OnInit {
           const matchesDate = paymentDate >= filters.startDate && paymentDate <= filters.endDate;
           const matchesMethod = filters.paymentMethod === 'all' || payment.paymentMethod === filters.paymentMethod;
           const matchesStatus = filters.status === 'all' || payment.status === filters.status;
-          
-          console.log('Processando pagamento:', {
-            id: payment.id,
-            date: paymentDate,
-            method: payment.paymentMethod,
-            status: payment.status,
-            matchesDate,
-            matchesMethod,
-            matchesStatus
-          });
 
           let matches = false;
           switch (filters.type) {
@@ -251,7 +232,6 @@ export class FinancialReportsComponent implements OnInit {
               matches = matchesDate && matchesMethod && matchesStatus;
           }
           
-          console.log('Resultado do filtro:', matches);
           return matches;
         })
         .map((payment: FirestorePayment) => {
@@ -265,11 +245,9 @@ export class FinancialReportsComponent implements OnInit {
             status: payment.status,
             metodo: payment.paymentMethod
           };
-          console.log('Pagamento mapeado:', mappedPayment);
           return mappedPayment;
         });
 
-      console.log('Total de pagamentos filtrados:', filteredPayments.length);
       return filteredPayments;
     } catch (error) {
       console.error('Erro detalhado ao buscar pagamentos:', error);

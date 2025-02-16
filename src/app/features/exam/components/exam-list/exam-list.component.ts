@@ -95,7 +95,6 @@ export class ExamListComponent implements OnInit {
       this.examService.getExamsByCourse(this.courseId()!).subscribe({
         next: (exams) => {
           this.exams.set(exams);
-          console.log(exams);
         },
         error: (error) => {
           console.error('Erro ao carregar exames:', error);
@@ -117,7 +116,6 @@ export class ExamListComponent implements OnInit {
 
   editExam(exam: Exam) {
     if (!this.courseId()) return;
-    console.log(exam);
     this.router.navigate(['/admin/exams-form', this.courseId() + "_" + exam.id]);
   }
 

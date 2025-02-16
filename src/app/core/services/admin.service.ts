@@ -49,7 +49,7 @@ export class AdminService {
       userData: user,
       iconFile: icon || '',
     };
-    console.log(body);
+
     return this.getHeaders().pipe(
       switchMap((headers) =>
         this.http.post(`${this.apiUrl}/createUserWithProfile`, body, {

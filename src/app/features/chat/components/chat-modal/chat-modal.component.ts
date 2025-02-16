@@ -234,7 +234,6 @@ export class ChatModalComponent implements OnInit {
   private async loadConversations() {
     if (this.currentUserId()) {
       const conversations = await this.chatService.getConversations(this.currentUserId()!);
-      console.log(conversations)
       this.conversations.set(conversations);
     }
   }

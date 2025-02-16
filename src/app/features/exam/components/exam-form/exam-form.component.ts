@@ -217,7 +217,6 @@ export class ExamFormComponent implements OnInit {
           this.notificationService.success('Exame atualizado com sucesso');
         } else {
           const createdExam = await firstValueFrom(this.examService.createExam(examData));
-          console.log('Exame criado:', createdExam);
           this.notificationService.success('Exame criado com sucesso');
         }
 

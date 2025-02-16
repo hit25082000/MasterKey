@@ -13,9 +13,6 @@ exports.asaasWebhook = functions.https.onRequest(async (request, response) => {
     const payment = request.body.payment;
     const subscription = request.body.subscription;
 
-    console.log('Evento recebido:', event);
-    console.log('Dados:', request.body);
-
     // Processamento assíncrono dos eventos
     await processAsaasEvent(event, payment, subscription);
 
@@ -90,12 +87,10 @@ async function processAsaasEvent(event, payment, subscription) {
         break;
 
       default:
-        console.log('Evento não processado:', event);
     }
 
     // Commit das alterações em batch
     await batch.commit();
-    console.log('Evento processado com sucesso:', event);
 
   } catch (error) {
     console.error('Erro ao processar evento:', event, error);

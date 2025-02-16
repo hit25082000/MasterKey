@@ -32,7 +32,6 @@ export class EmployeeManagementService {
             resolve('Funcionario criado com sucesso!');
           },
           (error) => {
-            console.log(error);
             reject(this.handleError(error));
           }
         );
@@ -109,7 +108,6 @@ export class EmployeeManagementService {
     if(error.error != null){
       return new Error(error.error);
     }
-    console.log(error);
     return new Error('Erro desconhecido');
   }
 

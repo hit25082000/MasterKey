@@ -62,7 +62,6 @@ export class CourseCarrosselComponent implements AfterViewInit {
       ? distance === 0 ? '50px' : '0'
       : distance === 0 ? '50px' : '0';
       
-      console.log(translateX, translateY);
       // Aplica as transformações
       item.style.transform = `
         translateX(${translateX})

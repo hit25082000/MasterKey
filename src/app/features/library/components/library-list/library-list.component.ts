@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, inject, signal } from '@angular/core';
+import { Component, inject, signal, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Book } from '../../../../core/models/book.model';
@@ -8,6 +8,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { ConfirmationService } from '../../../../shared/services/confirmation.service';
 import { ConfirmationDialogComponent } from '../../../../shared/components/confirmation-dialog/confirmation-dialog.component';
+import { BookUpdate } from '../../services/book.service';
 
 @Component({
   selector: 'app-library-list',
@@ -56,496 +57,301 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
               </div>
             </div>
           </div>
-        } @empty {
-          <div class="no-books">
-            <i class="fas fa-books"></i>
-            <p>Nenhum livro cadastrado</p>
-          </div>
         }
       </div>
     </div>
 
-    <app-modal #bookModal>
-      <div class="book-form">
-        <h3>{{ selectedBook() ? 'Editar Livro' : 'Novo Livro' }}</h3>
-        <form [formGroup]="bookForm" (ngSubmit)="onSubmit()">
+    <app-modal #bookModal [title]="modalTitle()">
+      @if (bookForm()) {
+        <form [formGroup]="bookForm()" (ngSubmit)="submitBook()">
           <div class="form-group">
-            <label for="title">Título</label>
-            <input id="title" type="text" formControlName="title">
+            <label for="name">Nome do Livro *</label>
+            <input type="text" id="name" formControlName="name" class="form-control">
+            @if (bookForm().get('name')?.errors && bookForm().get('name')?.touched) {
+              <div class="error-message">
+                @if (bookForm().get('name')?.errors?.['required']) {
+                  <span>O nome do livro é obrigatório</span>
+                }
+              </div>
+            }
           </div>
 
           <div class="form-group">
-            <label for="author">Autor</label>
-            <input id="author" type="text" formControlName="author">
+            <label for="author">Autor *</label>
+            <input type="text" id="author" formControlName="author" class="form-control">
+            @if (bookForm().get('author')?.errors && bookForm().get('author')?.touched) {
+              <div class="error-message">
+                @if (bookForm().get('author')?.errors?.['required']) {
+                  <span>O autor é obrigatório</span>
+                }
+              </div>
+            }
           </div>
 
           <div class="form-group">
             <label for="year">Ano</label>
-            <input id="year" type="number" formControlName="year">
+            <input type="number" id="year" formControlName="year" class="form-control">
+            @if (bookForm().get('year')?.errors && bookForm().get('year')?.touched) {
+              <div class="error-message">
+                @if (bookForm().get('year')?.errors?.['min']) {
+                  <span>O ano deve ser maior que 1800</span>
+                }
+                @if (bookForm().get('year')?.errors?.['max']) {
+                  <span>O ano não pode ser maior que o ano atual</span>
+                }
+              </div>
+            }
           </div>
 
           <div class="form-group">
-            <label for="pages">Páginas</label>
-            <input id="pages" type="number" formControlName="pages">
+            <label for="pages">Número de Páginas</label>
+            <input type="number" id="pages" formControlName="pages" class="form-control">
+            @if (bookForm().get('pages')?.errors && bookForm().get('pages')?.touched) {
+              <div class="error-message">
+                @if (bookForm().get('pages')?.errors?.['min']) {
+                  <span>O número de páginas deve ser maior que 0</span>
+                }
+              </div>
+            }
           </div>
 
           <div class="form-group">
-            <label for="description">Descrição</label>
-            <textarea id="description" formControlName="description"></textarea>
+            <label for="image">Imagem da Capa {{ !isEditing() ? '*' : '' }}</label>
+            <input 
+              type="file" 
+              id="image" 
+              (change)="onImageSelected($event)" 
+              accept="image/*" 
+              class="form-control"
+              [required]="!isEditing()"
+            >
           </div>
 
           <div class="form-group">
-            <label for="isbn">ISBN</label>
-            <input id="isbn" type="text" formControlName="isbn">
-          </div>
-
-          <div class="form-group">
-            <label for="publisher">Editora</label>
-            <input id="publisher" type="text" formControlName="publisher">
-          </div>
-
-          <div class="form-group">
-            <label for="language">Idioma</label>
-            <input id="language" type="text" formControlName="language">
-          </div>
-
-          <div class="form-group">
-            <label for="category">Categoria</label>
-            <input id="category" type="text" formControlName="category">
-          </div>
-
-          <div class="form-group">
-            <label for="image">Imagem da Capa</label>
-            <input id="image" type="file" (change)="onImageSelected($event)" accept="image/*">
-          </div>
-
-          <div class="form-group">
-            <label for="pdf">Arquivo PDF</label>
-            <input id="pdf" type="file" (change)="onPdfSelected($event)" accept="application/pdf">
+            <label for="pdf">Arquivo PDF {{ !isEditing() ? '*' : '' }}</label>
+            <input 
+              type="file" 
+              id="pdf" 
+              (change)="onPdfSelected($event)" 
+              accept="application/pdf" 
+              class="form-control"
+              [required]="!isEditing()"
+            >
           </div>
 
           <div class="form-actions">
             <button type="button" class="btn-cancel" (click)="closeModal()">Cancelar</button>
-            <button type="submit" class="btn-submit" [disabled]="!bookForm.valid || (!selectedBook() && (!selectedImage || !selectedPdf))">
-              {{ selectedBook() ? 'Atualizar' : 'Criar' }}
+            <button 
+              type="submit" 
+              class="btn-submit" 
+              [disabled]="isSubmitDisabled()"
+            >
+              {{ isEditing() ? 'Atualizar' : 'Criar' }}
             </button>
           </div>
         </form>
-      </div>
+      }
     </app-modal>
   `,
   styles: [`
     .library-container {
-      padding: 2rem;
+      padding: 20px;
     }
 
     .library-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 2rem;
+      margin-bottom: 20px;
+    }
 
-      h2 {
-        font-size: 1.75rem;
-        color: var(--text-color);
-        margin: 0;
-      }
-
-      .btn-add {
-        background-color: var(--primary-color);
-        color: white;
-        border: none;
-        padding: 0.75rem 1.5rem;
-        border-radius: 8px;
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        cursor: pointer;
-        transition: background-color 0.2s;
-
-        &:hover {
-          background-color: var(--primary-600);
-        }
-
-        i {
-          font-size: 1rem;
-        }
-      }
+    .btn-add {
+      padding: 10px 20px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
     }
 
     .books-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 2rem;
+      gap: 20px;
     }
 
     .book-card {
-      background: white;
-      border-radius: 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
       overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: transform 0.2s;
+      background: white;
+    }
 
-      &:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      }
+    .book-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
 
     .book-image {
-      width: 100%;
       height: 200px;
       overflow: hidden;
+    }
 
-      img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.3s;
-
-        &:hover {
-          transform: scale(1.05);
-        }
-      }
+    .book-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
     .book-content {
-      padding: 1.5rem;
+      color: black;
+      padding: 15px;
+    }
 
-      h3 {
-        margin: 0 0 0.5rem;
-        color: var(--text-color);
-        font-size: 1.25rem;
-      }
-
-      .author {
-        color: var(--text-color-secondary);
-        margin: 0 0 1rem;
-        font-size: 0.9rem;
-      }
-
-      .book-info {
-        display: flex;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-
-        span {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          color: var(--text-color-secondary);
-          font-size: 0.875rem;
-
-          i {
-            color: var(--primary-color);
-          }
-        }
-      }
+    .book-info {
+      display: flex;
+      gap: 10px;
+      margin: 10px 0;
+      color: #666;
     }
 
     .book-actions {
       display: flex;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-
-      button, .btn-view {
-        flex: 1;
-        min-width: 100px;
-        padding: 0.6rem 1rem;
-        border: none;
-        border-radius: 6px;
-        font-weight: 500;
-        font-size: 0.875rem;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        transition: all 0.2s;
-        text-decoration: none;
-
-        i {
-          font-size: 0.875rem;
-        }
-      }
-
-      .btn-view {
-        background-color: var(--primary-color);
-        color: white;
-
-        &:hover {
-          background-color: var(--primary-600);
-        }
-      }
-
-      .btn-edit {
-        background-color: var(--success-color);
-        color: white;
-
-        &:hover {
-          background-color: var(--success-600);
-        }
-      }
-
-      .btn-delete {
-        background-color: var(--danger-color);
-        color: white;
-
-        &:hover {
-          background-color: var(--danger-600);
-        }
-      }
+      gap: 10px;
+      margin-top: 15px;
     }
 
-    .no-books {
-      text-align: center;
-      padding: 3rem;
+    .btn-view, .btn-edit, .btn-delete {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .btn-view {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    .btn-edit {
+      background-color: #2196F3;
+      color: white;
+    }
+
+    .btn-delete {
+      background-color: #f44336;
+      color: white;
+    }
+
+    .form-group {
+      color: black;
+      margin-bottom: 15px;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
       background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-
-      i {
-        font-size: 3rem;
-        color: var(--text-color-secondary);
-        margin-bottom: 1rem;
-      }
-
-      p {
-        color: var(--text-color);
-        margin: 0 0 1.5rem;
-        font-size: 1.1rem;
-      }
-
-      .btn-add {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        background-color: var(--primary-color);
-        color: white;
-        border: none;
-        padding: 0.75rem 1.5rem;
-        border-radius: 8px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: background-color 0.2s;
-
-        &:hover {
-          background-color: var(--primary-600);
-        }
-
-        i {
-          font-size: 1rem;
-          color: white;
-          margin: 0;
-        }
-      }
     }
 
-    // Estilos do Modal
-    .book-form {
-      padding: 1.5rem;
+    .error-message {
+      color: #f44336;
+      font-size: 12px;
+      margin-top: 4px;
+    }
 
-      h3 {
-        margin: 0 0 1.5rem;
-        color: var(--text-color);
-        font-size: 1.5rem;
-      }
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
 
-      .form-group {
-        margin-bottom: 1.25rem;
+    .btn-cancel {
+      padding: 8px 16px;
+      background-color: #9e9e9e;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
 
-        label {
-          display: block;
-          margin-bottom: 0.5rem;
-          color: var(--text-color);
-          font-weight: 500;
-        }
+    .btn-submit {
+      padding: 8px 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
 
-        input, textarea {
-          width: 100%;
-          padding: 0.75rem;
-          border: 1px solid var(--surface-border);
-          border-radius: 6px;
-          font-size: 0.9rem;
-          transition: border-color 0.2s;
+    .btn-submit:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
 
-          &:focus {
-            outline: none;
-            border-color: var(--primary-color);
-          }
-        }
-
-        textarea {
-          min-height: 100px;
-          resize: vertical;
-        }
-      }
-
-      .form-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 1rem;
-        margin-top: 2rem;
-
-        button {
-          padding: 0.75rem 1.5rem;
-          border: none;
-          border-radius: 6px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.2s;
-
-          &.btn-cancel {
-            background-color: var(--surface-hover);
-            color: var(--text-color);
-
-            &:hover {
-              background-color: var(--surface-ground);
-            }
-          }
-
-          &.btn-submit {
-            background-color: var(--primary-color);
-            color: white;
-
-            &:hover:not(:disabled) {
-              background-color: var(--primary-600);
-            }
-
-            &:disabled {
-              opacity: 0.6;
-              cursor: not-allowed;
-            }
-          }
-        }
-      }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
     }
   `]
 })
-export class LibraryListComponent implements OnInit {
-  private bookService = inject(BookService);
-  private fb = inject(FormBuilder);
-  private notificationService = inject(NotificationService);
-  private confirmationService = inject(ConfirmationService);
+export class LibraryListComponent {
+  private readonly bookService = inject(BookService);
+  private readonly formBuilder = inject(FormBuilder);
+  private readonly notificationService = inject(NotificationService);
+  private readonly confirmationService = inject(ConfirmationService);
 
   @ViewChild('bookModal') bookModal!: ModalComponent;
 
-  books = signal<Book[]>([]);
-  selectedBook = signal<Book | null>(null);
-  selectedImage: File | null = null;
-  selectedPdf: File | null = null;
+  // Signals
+  readonly books = this.bookService.books;
+  readonly modalTitle = signal<string>('Adicionar Novo Livro');
+  readonly isEditing = signal<boolean>(false);
+  readonly bookForm = signal<FormGroup>(this.createBookForm());
+  
+  private selectedImageFile = signal<File | null>(null);
+  private selectedPdfFile = signal<File | null>(null);
+  private editingBookId = signal<string | null>(null);
 
-  bookForm: FormGroup = this.fb.group({
-    title: ['', Validators.required],
-    author: ['', Validators.required],
-    year: [null],
-    pages: [null],
-    description: [''],
-    isbn: [''],
-    publisher: [''],
-    language: [''],
-    category: ['']
-  });
-
-  ngOnInit() {
-    this.loadBooks();
-  }
-
-  async loadBooks() {
-    try {
-      const books = await this.bookService.getAllBooks();
-      this.books.set(books);
-    } catch (error) {
-      this.notificationService.error('Erro ao carregar livros');
-      console.error(error);
-    }
-  }
-
-  openBookForm() {
-    this.selectedBook.set(null);
-    this.bookForm.reset();
-    this.selectedImage = null;
-    this.selectedPdf = null;
-    this.bookModal.toggle();
-  }
-
-  editBook(book: Book) {
-    this.selectedBook.set(book);
-    this.bookForm.patchValue({
-      title: book.name,
-      author: book.author,
-      year: book.year,
-      pages: book.pages,
-      description: book.description,
-      isbn: book.isbn,
-      publisher: book.publisher,
-      language: book.language,
-      category: book.category
+  private createBookForm(): FormGroup {
+    return this.formBuilder.group({
+      name: ['', [Validators.required]],
+      author: ['', [Validators.required]],
+      year: [null, [Validators.min(1800), Validators.max(new Date().getFullYear())]],
+      pages: [null, [Validators.min(1)]],
     });
+  }
+
+  openBookForm(): void {
+    this.resetForm();
+    this.modalTitle.set('Adicionar Novo Livro');
+    this.isEditing.set(false);
     this.bookModal.toggle();
   }
 
-  onImageSelected(event: any) {
-    const file = event.target.files[0];
-    if (file && file.type.startsWith('image/')) {
-      this.selectedImage = file;
-    } else {
-      this.notificationService.error('Por favor, selecione uma imagem válida');
-      event.target.value = '';
-    }
-  }
-
-  onPdfSelected(event: any) {
-    const file = event.target.files[0];
-    if (file && file.type === 'application/pdf') {
-      this.selectedPdf = file;
-    } else {
-      this.notificationService.error('Por favor, selecione um arquivo PDF válido');
-      event.target.value = '';
-    }
-  }
-
-  async onSubmit() {
-    if (this.bookForm.valid) {
-      try {
-        const bookData = this.bookForm.value;
-
-        if (this.selectedBook()) {
-          await this.bookService.updateBook(
-            { ...this.selectedBook(), ...bookData },
-            this.selectedImage || undefined,
-            this.selectedPdf || undefined
-          );
-          this.notificationService.success('Livro atualizado com sucesso');
-        } else {
-          if (!this.selectedImage || !this.selectedPdf) {
-            this.notificationService.error('Por favor, selecione uma imagem e um PDF');
-            return;
-          }
-          await this.bookService.createBook(
-            bookData,
-            this.selectedImage,
-            this.selectedPdf
-          );
-          this.notificationService.success('Livro criado com sucesso');
-        }
-
-        this.closeModal();
-        this.loadBooks();
-      } catch (error) {
-        this.notificationService.error('Erro ao salvar livro');
-        console.error(error);
-      }
-    }
-  }
-
-  closeModal() {
+  editBook(book: Book): void {
+    this.resetForm();
+    this.modalTitle.set('Editar Livro');
+    this.bookForm.set(this.formBuilder.group({
+      name: [book.name, [Validators.required]],
+      author: [book.author, [Validators.required]],
+      year: [book.year, [Validators.min(1800), Validators.max(new Date().getFullYear())]],
+      pages: [book.pages, [Validators.min(1)]],
+    }));
+    this.isEditing.set(true);
+    this.editingBookId.set(book.id);
     this.bookModal.toggle();
-    this.selectedBook.set(null);
-    this.bookForm.reset();
-    this.selectedImage = null;
-    this.selectedPdf = null;
   }
 
   deleteBook(book: Book) {
@@ -556,7 +362,6 @@ export class LibraryListComponent implements OnInit {
       accept: async () => {
         try {
           await this.bookService.deleteBook(book.id!);
-          this.books.set(this.books().filter(b => b.id !== book.id));
           this.notificationService.success('Livro excluído com sucesso');
         } catch (error) {
           console.error('Erro ao deletar livro:', error);
@@ -564,5 +369,81 @@ export class LibraryListComponent implements OnInit {
         }
       }
     });
+  }
+
+  async submitBook(): Promise<void> {
+    if (this.bookForm().invalid) {
+      this.notificationService.error('Por favor, preencha todos os campos obrigatórios');
+      return;
+    }
+
+    const formValue = this.bookForm().value;
+
+    try {
+      if (this.isEditing()) {
+        if (!this.editingBookId()) {
+          throw new Error('ID do livro não encontrado');
+        }
+
+        const updateData: BookUpdate = {
+          ...formValue,
+          imageFile: this.selectedImageFile(),
+          pdfFile: this.selectedPdfFile()
+        };
+
+        await this.bookService.updateBook(this.editingBookId()!, updateData);
+        this.notificationService.success('Livro atualizado com sucesso');
+      } else {
+        if (!this.selectedImageFile() || !this.selectedPdfFile()) {
+          this.notificationService.error('Por favor, selecione a imagem e o PDF do livro');
+          return;
+        }
+
+        await this.bookService.createBook(
+          formValue,
+          this.selectedImageFile()!,
+          this.selectedPdfFile()!
+        );
+        this.notificationService.success('Livro criado com sucesso');
+      }
+
+      this.closeModal();
+    } catch (error) {
+      // Erro já tratado no serviço
+    }
+  }
+
+  onImageSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (file) {
+      this.selectedImageFile.set(file);
+    }
+  }
+
+  onPdfSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (file) {
+      this.selectedPdfFile.set(file);
+    }
+  }
+
+  closeModal(): void {
+    this.resetForm();
+    this.bookModal.toggle();
+  }
+
+  private resetForm(): void {
+    this.bookForm.set(this.createBookForm());
+    this.selectedImageFile.set(null);
+    this.selectedPdfFile.set(null);
+    this.editingBookId.set(null);
+  }
+
+  isSubmitDisabled(): boolean {
+    if (this.isEditing()) {
+      return this.bookForm().invalid;
+    } else {
+      return this.bookForm().invalid || !this.selectedImageFile() || !this.selectedPdfFile();
+    }
   }
 }

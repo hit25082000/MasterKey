@@ -1,9 +1,14 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal, computed } from '@angular/core';
 import { FirestoreService } from '../../../core/services/firestore.service';
 import { StorageService } from '../../../core/services/storage.service';
 import { Book } from '../../../core/models/book.model';
-import { from, Observable } from 'rxjs';
 import { NotificationService } from '../../../shared/services/notification.service';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+
+export interface BookUpdate extends Partial<Book> {
+  imageFile?: File;
+  pdfFile?: File;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -13,15 +18,30 @@ export class BookService {
   private readonly storage = inject(StorageService);
   private readonly notificationService = inject(NotificationService);
 
-  async getAllBooks(): Promise<Book[]> {
+  // Signals
+  private readonly booksSignal = signal<Book[]>([]);
+  readonly books = computed(() => this.booksSignal());
+
+  constructor() {
+    this.loadBooks();
+  }
+
+  getAll(): Promise<Book[]> {
+    return this.firestore.getCollection<Book>('books');
+  }
+
+  private async loadBooks(): Promise<void> {
     try {
       const books = await this.firestore.getCollection<Book>('books');
-      return books.filter(book => book && book.id);
+      this.booksSignal.set(books.filter(book => book && book.id));
     } catch (error) {
-      console.error('Erro ao buscar livros:', error);
       this.notificationService.error('Erro ao carregar livros');
-      return [];
+      this.booksSignal.set([]);
     }
+  }
+
+  async refreshBooks(): Promise<void> {
+    await this.loadBooks();
   }
 
   async createBook(
@@ -34,33 +54,33 @@ export class BookService {
         throw new Error('Dados do livro são obrigatórios');
       }
 
-      const initialBook: Book = {
+      // Primeiro criar o documento com os dados básicos
+      const docRef = await this.firestore.addToCollection('books', {
         ...book,
-        id: '',
         active: true,
         imageUrl: '',
         pdfUrl: ''
-      };
+      });
 
-      const bookId = await this.firestore.addToCollection('books', initialBook);
-      if (!bookId) {
+      if (!docRef.id) {
         throw new Error('Erro ao gerar ID do livro');
       }
 
-      const imageUrl = await this.storage.uploadBookImage(imageFile, bookId);
-      const pdfUrl = await this.storage.uploadBookPdf(pdfFile, bookId);
+      // Fazer upload dos arquivos
+      const [imageUrl, pdfUrl] = await Promise.all([
+        this.storage.uploadBookImage(imageFile, docRef.id),
+        this.storage.uploadBookPdf(pdfFile, docRef.id)
+      ]);
 
-      const updatedBook: Book = {
-        ...initialBook,
-        id: bookId,
+      // Atualizar o documento com as URLs
+      await this.firestore.updateDocument('books', docRef.id, {
         imageUrl,
         pdfUrl
-      };
+      });
 
-      await this.firestore.updateDocument('books', bookId, updatedBook);
+      await this.refreshBooks();
+      return docRef.id;
 
-      this.notificationService.success('Livro criado com sucesso');
-      return bookId;
     } catch (error) {
       console.error('Erro ao criar livro:', error);
       this.notificationService.error('Erro ao criar livro');
@@ -68,27 +88,22 @@ export class BookService {
     }
   }
 
-  async updateBook(
-    book: Book,
-    imageFile?: File,
-    pdfFile?: File
-  ): Promise<void> {
+  async updateBook(bookId: string, updates: BookUpdate): Promise<void> {
     try {
-      if (!book || !book.id) {
-        throw new Error('ID do livro é obrigatório');
+      const updateData: Partial<Book> = { ...updates };
+      delete (updateData as any).imageFile;
+      delete (updateData as any).pdfFile;
+
+      // Upload de novos arquivos, se fornecidos
+      if (updates.imageFile) {
+        updateData.imageUrl = await this.storage.uploadBookImage(updates.imageFile, bookId);
+      }
+      if (updates.pdfFile) {
+        updateData.pdfUrl = await this.storage.uploadBookPdf(updates.pdfFile, bookId);
       }
 
-      const updatedBook = { ...book };
-
-      if (imageFile) {
-        updatedBook.imageUrl = await this.storage.uploadBookImage(imageFile, book.id);
-      }
-
-      if (pdfFile) {
-        updatedBook.pdfUrl = await this.storage.uploadBookPdf(pdfFile, book.id);
-      }
-
-      await this.firestore.updateDocument('books', book.id, updatedBook);
+      await this.firestore.updateDocument('books', bookId, updateData);
+      await this.refreshBooks();
       this.notificationService.success('Livro atualizado com sucesso');
     } catch (error) {
       console.error('Erro ao atualizar livro:', error);
@@ -99,33 +114,8 @@ export class BookService {
 
   async deleteBook(bookId: string): Promise<void> {
     try {
-      if (!bookId) {
-        throw new Error('ID do livro é obrigatório');
-      }
-
-      const book = await this.firestore.getDocument<Book>('books', bookId);
-      if (!book) {
-        throw new Error('Livro não encontrado');
-      }
-
-      if (book.imageUrl) {
-        try {
-          await this.storage.deleteFile(`book-images/${bookId}`);
-        } catch (error) {
-          console.warn('Erro ao deletar imagem do livro:', error);
-        }
-      }
-
-      if (book.pdfUrl) {
-        try {
-          await this.storage.deleteFile(`book-pdfs/${bookId}`);
-        } catch (error) {
-          console.warn('Erro ao deletar PDF do livro:', error);
-        }
-      }
-
       await this.firestore.deleteDocument('books', bookId);
-      this.notificationService.success('Livro excluído com sucesso');
+      await this.refreshBooks();
     } catch (error) {
       console.error('Erro ao excluir livro:', error);
       this.notificationService.error('Erro ao excluir livro');
@@ -180,28 +170,6 @@ export class BookService {
     } catch (error) {
       console.error('Erro ao adicionar livro ao curso:', error);
       this.notificationService.error('Erro ao adicionar livro ao curso');
-      throw error;
-    }
-  }
-
-  async add(book: Book): Promise<Book> {
-    try {
-      if (!book) {
-        throw new Error('Dados do livro são obrigatórios');
-      }
-
-      const docRef = await this.firestore.addToCollection<Book>('books', book);
-      if (!docRef?.id) {
-        throw new Error('Erro ao gerar ID do livro');
-      }
-
-      return {
-        ...book,
-        id: docRef.id
-      };
-    } catch (error) {
-      console.error('Erro ao adicionar livro:', error);
-      this.notificationService.error('Erro ao adicionar livro');
       throw error;
     }
   }

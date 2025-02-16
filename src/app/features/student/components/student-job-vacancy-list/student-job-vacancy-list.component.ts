@@ -17,6 +17,5 @@ export class StudentJobVacancyListComponent {
 
   openVacancyDetails(vacancy: JobVacancy): void {
     // TODO: Implementar visualização detalhada da vaga
-    console.log('Detalhes da vaga:', vacancy);
   }
 }

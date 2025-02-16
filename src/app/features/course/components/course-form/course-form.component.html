@@ -156,7 +156,9 @@
               <span class="button-text">Biblioteca</span>
             </button>
             <app-modal #bookSelectorModal>
-              <app-book-selector [courseId]="courseId()!"></app-book-selector>
+
+                <app-book-selector #bookSelector [courseId]="courseId()!"></app-book-selector>
+              
             </app-modal>
           </div>
   

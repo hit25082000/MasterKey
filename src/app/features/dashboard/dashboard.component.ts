@@ -82,8 +82,6 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     const courses = await this.courseService.getAll();
     const payments = await firstValueFrom(this.paymentService.getAllTransactions());
 
-    console.log(payments)
-
     this._courses.set(courses);
     this._payments.set(payments);
   }
