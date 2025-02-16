@@ -1,5 +1,26 @@
 <div class="history-container">
-  <mat-tab-group animationDuration="500ms" class="custom-tabs">
+  <!-- Dropdown para telas menores -->
+  <div class="mobile-tab-selector">
+    <mat-form-field appearance="fill">
+      <mat-label>Selecione uma opção</mat-label>
+      <mat-select [(value)]="selectedTabIndex" (selectionChange)="onTabChange($event)">
+        <mat-option [value]="0">
+          <mat-icon>receipt</mat-icon>
+          <span>Pagamentos</span>
+        </mat-option>
+        <mat-option [value]="1">
+          <mat-icon>subscriptions</mat-icon>
+          <span>Assinaturas</span>
+        </mat-option>
+        <mat-option [value]="2">
+          <mat-icon>payments</mat-icon>
+          <span>Parcelamento</span>
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <mat-tab-group [(selectedIndex)]="selectedTabIndex" animationDuration="500ms" class="custom-tabs">
     <!-- Aba de Pagamentos -->
     <mat-tab>
       <ng-template mat-tab-label>

@@ -4,6 +4,38 @@
   margin: 0 auto;
 }
 
+.mobile-tab-selector {
+  display: none;
+  margin-bottom: 20px;
+
+  mat-form-field {
+    width: 100%;
+  }
+
+  .mat-mdc-select-trigger {
+    display: flex;
+    align-items: center;
+    
+    mat-icon {
+      margin-right: 8px;
+    }
+  }
+}
+
+@media screen and (max-width: 1024px) {
+  .mobile-tab-selector {
+    display: block;
+  }
+
+  .custom-tabs {
+    ::ng-deep {
+      .mat-mdc-tab-header {
+        display: none;
+      }
+    }
+  }
+}
+
 .custom-tabs {
   background: white;
   border-radius: 8px;

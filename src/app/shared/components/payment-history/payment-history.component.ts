@@ -82,6 +82,7 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
   asaasPaymentUrl: string = '';
   installmentOptions: Array<{value: number, label: string, installmentValue: number}> = [];
   courseNames: { [key: string]: string } = {};
+  selectedTabIndex = 0;
 
   constructor(
     private paymentService: PaymentService,
@@ -712,5 +713,9 @@ export class PaymentHistoryComponent implements OnInit, OnDestroy {
       .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
     
     return pendingPayments[0]?.id === payment.id;
+  }
+
+  onTabChange(event: any): void {
+    this.selectedTabIndex = event.value;
   }
 } 
