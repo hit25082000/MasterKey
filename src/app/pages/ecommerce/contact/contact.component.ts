@@ -36,7 +36,7 @@ interface ContactInformation{
     FaqComponent
   ],
   templateUrl: './contact.component.html',
-  styleUrl: './contact.component.scss'
+  styleUrls: ['./contact.component.scss']
 })
 export class ContactComponent {
   contactInfo : ContactInformation = {
@@ -57,8 +57,11 @@ export class ContactComponent {
 
   onSubmit(): void {
     if (this.contatoForm.valid) {
-      console.log(this.contatoForm.value);
-
+      const { nome, email, mensagem } = this.contatoForm.value;
+      
+      const mailtoLink = `mailto:${this.contactInfo.email}?subject=Contato de ${nome}&body=Nome: ${nome}%0D%0AEmail: ${email}%0D%0AMensagem: ${mensagem}`;
+      
+      window.location.href = mailtoLink;
       this.contatoForm.reset();
     }
   }

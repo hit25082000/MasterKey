@@ -1,7 +1,9 @@
 <header class="header">
   <!-- Grupo 1: Logo/Ícone -->
   <div class="header-logo">
-    <img src="assets/logo.png" alt="Logo" class="logo">
+    <a routerLink="/home">
+      <img src="assets/logo.png" alt="Logo" class="logo">
+    </a>
   </div>
 
   <button class="hamburger-btn" (click)="toggleMenu()" [class.active]="isMenuOpen()">
