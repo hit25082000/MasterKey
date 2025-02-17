@@ -42,6 +42,16 @@ import { NotificationService } from '../../shared/services/notification.service'
                 formControlName="email"
                 [class.error]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
               >
+              @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
+                <div class="error-message">
+                  @if (loginForm.get('email')?.errors?.['required']) {
+                    <span>Email é obrigatório</span>
+                  }
+                  @if (loginForm.get('email')?.errors?.['email']) {
+                    <span>Email inválido</span>
+                  }
+                </div>
+              }
             </div>
 
             <div class="form-group">
@@ -60,7 +70,7 @@ import { NotificationService } from '../../shared/services/notification.service'
                 >
                   <i [class]="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
                 </button>
-              </div>
+              </div>              
             </div>
 
             <button
@@ -76,10 +86,10 @@ import { NotificationService } from '../../shared/services/notification.service'
                 Entrar
               }
             </button>
-            <a               class="login-button"
-            href="https://masterkeycursos.com.br/metodo/login.php">Alunos de 2024</a>
+            <a class="login-button" href="https://masterkeycursos.com.br/metodo/login.php">
+              Alunos de 2024
+            </a>
           </form>
-
         </div>
       </div>
     </div>
@@ -283,6 +293,58 @@ import { NotificationService } from '../../shared/services/notification.service'
         }
       }
     }
+
+    .password-requirements {
+      margin-top: 0.5rem;
+      padding: 0.5rem;
+      background: #f8f9fa;
+      border-radius: 4px;
+      font-size: 0.875rem;
+
+      p {
+        margin: 0 0 0.5rem 0;
+        color: #666;
+      }
+
+      ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+
+        li {
+          margin: 0.25rem 0;
+          padding-left: 1.5rem;
+          position: relative;
+
+          &::before {
+            font-family: "Font Awesome 5 Free";
+            font-weight: 900;
+            position: absolute;
+            left: 0;
+          }
+
+          &.valid {
+            color: #28a745;
+            &::before {
+              content: "\\f00c";
+            }
+          }
+
+          &.invalid {
+            color: #dc3545;
+            &::before {
+              content: "\\f00d";
+            }
+          }
+        }
+      }
+    }
+
+    .error-message {
+      color: #dc3545;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+    }
   `]
 })
 export class LoginComponent {
@@ -298,12 +360,13 @@ export class LoginComponent {
     private systemLogService: SystemLogService
   ) {
     this.authService.logout();
+    this.initForm();
   }
 
-  ngOnInit(): void {
+  private initForm(): void {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
-      password: ['', Validators.required]
+      password: ['', [Validators.required]]
     });
   }
 

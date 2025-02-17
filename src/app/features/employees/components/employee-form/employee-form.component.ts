@@ -12,6 +12,7 @@ import { Employee } from '../../../../core/models/employee.model';
 import { RoleService } from '../../../role/service/role.service';
 import { Role } from '../../../../core/models/role.model';
 import { LoadingService } from '../../../../shared/services/loading.service';
+import { ValidatorPassword } from '../../../../shared/Validators/password.validator';
 
 @Component({
   selector: 'app-employee-form',
@@ -382,6 +383,32 @@ export class EmployeeFormComponent implements OnInit {
         })),
         validators: [Validators.required],
         value: employee?.role || ''
+      },
+      {
+        name: 'password',
+        label: 'Senha',
+        type: 'password',
+        value: employee?.password || '',
+        validators: [Validators.required, ValidatorPassword],
+        errorMessages: {
+          required: 'Senha é obrigatória',
+          minLength: 'A senha deve ter no mínimo 8 caracteres',
+          noUpperCase: 'A senha deve conter pelo menos uma letra maiúscula',
+          noLowerCase: 'A senha deve conter pelo menos uma letra minúscula',
+          noNumber: 'A senha deve conter pelo menos um número',
+          noSpecialChar: 'A senha deve conter pelo menos um caractere especial'
+        }
+      },
+      {
+        name: 'confirmPassword',
+        label: 'Confirmar Senha',
+        type: 'password',
+        value: '',
+        validators: [Validators.required],
+        errorMessages: {
+          required: 'Confirmação de senha é obrigatória',
+          passwordMismatch: 'As senhas não coincidem'
+        }
       }
     ];
 

@@ -17,6 +17,7 @@ import { NotificationService } from '../../../../shared/services/notification.se
 import { LoadingOverlayComponent } from "../../../../shared/components/loading-overlay/loading-overlay.component";
 import { ClassManagementService } from '../../../class/services/class-management.service';
 import { ClassService } from '../../../class/services/class.service';
+import { ValidatorPassword } from '../../../../shared/Validators/password.validator';
 
 @Component({
   selector: 'app-student-register',
@@ -54,8 +55,8 @@ export class StudentFormComponent {
   readonly currentImage = signal<string>('');
 
   // Inicialização do formulário
-  private initFormConfig(): FormFieldConfig[] {
-    return [
+  private initFormConfig(student?: Student): FormFieldConfig[] {
+    const config: FormFieldConfig[] = [
       {
         name: 'name',
         label: 'Nome',
@@ -260,10 +261,14 @@ export class StudentFormComponent {
         label: 'Senha',
         type: 'password',
         value: '',
-        validators: [Validators.required],
+        validators: [Validators.required, ValidatorPassword],
         errorMessages: {
           required: 'Senha é obrigatória',
-          passwordMismatch: 'As senhas não coincidem'
+          minLength: 'A senha deve ter no mínimo 8 caracteres',
+          noUpperCase: 'A senha deve conter pelo menos uma letra maiúscula',
+          noLowerCase: 'A senha deve conter pelo menos uma letra minúscula',
+          noNumber: 'A senha deve conter pelo menos um número',
+          noSpecialChar: 'A senha deve conter pelo menos um caractere especial'
         }
       },
       {
@@ -278,6 +283,18 @@ export class StudentFormComponent {
         }
       }
     ];
+
+    if (student) {
+      config.forEach(field => {
+        if (field.name === 'password' || field.name === 'confirmPassword') {
+          field.value = student[field.name as keyof Student] || '';
+        } else {
+          field.value = student[field.name as keyof Student] || '';
+        }
+      });
+    }
+
+    return config;
   }
 
   onFileChange(event: any): void {
