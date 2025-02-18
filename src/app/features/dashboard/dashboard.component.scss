@@ -58,3 +58,49 @@
     .mat-mdc-header-cell, .mat-mdc-cell {
       color: black;
     }
+
+    @media screen and (max-width: 420px) {
+      .dashboard-container {
+        padding: 10px;
+      }
+
+      .summary-cards {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .charts-container {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .chart-wrapper {
+        height: 250px;
+      }
+
+      .chart-card {
+        padding: 10px;
+        margin-bottom: 10px;
+      }
+
+      .chart-card mat-card-content {
+        padding: 10px;
+      }
+
+      mat-card-subtitle {
+        font-size: 1.2em;
+      }
+
+      .table-card {
+        margin-top: 10px;
+        overflow-x: auto;
+      }
+
+      .payments-table {
+        font-size: 0.9em;
+      }
+
+      .mat-mdc-header-cell, .mat-mdc-cell {
+        padding: 8px;
+      }
+    }

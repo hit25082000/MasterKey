@@ -147,7 +147,7 @@ import { ClassService } from '../../services/class.service';
       left: 0;
       background: white;
       z-index: 1;
-      width: 200px;
+      width: 100px;
       text-align: left;
       border-right: 2px solid #e0e0e0;
     }

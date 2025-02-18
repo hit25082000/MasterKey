@@ -256,4 +256,16 @@ export class SidenavComponent {
       console.error('Erro ao fazer logout:', error);
     }
   }
+
+  toggleSidenav() {
+    this.isExpanded = !this.isExpanded;
+    this.expanded.emit(this.isExpanded);
+    
+    // Se estiver colapsando, fechar todos os dropdowns
+    if (!this.isExpanded) {
+      Object.keys(this.dropdownState).forEach(key => {
+        this.dropdownState[key] = false;
+      });
+    }
+  }
 }

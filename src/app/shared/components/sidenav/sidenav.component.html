@@ -4,6 +4,9 @@
   (mouseenter)="expandSidenav()"
   (mouseleave)="collapseSidenav()"
 >
+  <div class="collapse-button" (click)="toggleSidenav()">
+    <i class="fas" [class.fa-chevron-left]="isExpanded" [class.fa-chevron-right]="!isExpanded"></i>
+  </div>
   <ul class="menu-list">
     <li *ngFor="let item of menuItems">
       <button

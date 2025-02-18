@@ -19,8 +19,6 @@ const cors = require('cors')({
 
 const { Storage } = require('@google-cloud/storage');
 const fetch = require('node-fetch');
-const crypto = require('crypto');
-const { FieldValue } = require('@google-cloud/firestore');
 
 admin.initializeApp();
 const storage = new Storage();
