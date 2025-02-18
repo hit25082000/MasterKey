@@ -252,39 +252,33 @@ export class PaymentComponent implements OnInit {
       }
 
       if (isSubscription) {
-        const subscriptionValue = this.getSubscriptionValue();
-        const subscriptionData: SubscriptionData = {
+        const subscriptionData = {
           customer: customerResponse.customerId,
           billingType: this.selectedPaymentType,
-          value: subscriptionValue,
           nextDueDate: new Date().toISOString().split('T')[0],
           cycle: this.selectedCycle,
-          description: `Assinatura do curso ${this.courseName || 'Não identificado'} - ${this.getCycleLabel(this.selectedCycle)}`,
-          totalValue: this.courseValue,
-          installments: this.getInstallmentsCount(),
+          courseId: this.courseId,
           maxInstallments: this.maxInstallments
         };
 
         const subscriptionResponse = await firstValueFrom(
-          this.asaasService.createSubscription(subscriptionData, this.courseId)
+          this.asaasService.createSubscription(subscriptionData)
         );
 
         if (subscriptionResponse?.firstPayment) {
-            this.handlePaymentResponse(subscriptionResponse.firstPayment);
+          this.handlePaymentResponse(subscriptionResponse.firstPayment);
           if (subscriptionResponse.firstPayment.invoiceUrl) {
             window.location.href = subscriptionResponse.firstPayment.invoiceUrl;
-            }
-          } else {
-            this.snackBar.open('Assinatura criada com sucesso!', 'OK', { duration: 3000 });
+          }
+        } else {
+          this.snackBar.open('Assinatura criada com sucesso!', 'OK', { duration: 3000 });
         }
       } else if (this.isInstallment) {
         const installmentData = {
           customer: customerResponse.customerId,
           billingType: this.selectedPaymentType,
-          totalValue: this.courseValue,
           installmentCount: this.installmentForm.get('installmentCount')?.value || 1,
           dueDate: this.installmentForm.get('dueDate')?.value,
-          description: `Pagamento parcelado do curso ${this.courseName || 'Não identificado'}`,
           courseId: this.courseId
         };
 
@@ -299,21 +293,19 @@ export class PaymentComponent implements OnInit {
           }
         }
       } else {
-        const paymentData: AsaasPayment = {
+        const paymentData = {
           customer: customerResponse.customerId,
           billingType: this.selectedPaymentType,
           paymentMethod: this.selectedPaymentType,
-          amount: this.courseValue,
           dueDate: new Date().toISOString().split('T')[0],
-          description: `Pagamento do curso ${this.courseName || 'Não identificado'}`,
           courseId: this.courseId
-        }; 
+        };
 
         const paymentResponse = await firstValueFrom(
           this.asaasService.createPayment(paymentData)
         );
 
-            if (paymentResponse) {
+        if (paymentResponse) {
           this.handlePaymentResponse(paymentResponse);
           if (paymentResponse['invoiceUrl']) {
             window.location.href = paymentResponse['invoiceUrl'];

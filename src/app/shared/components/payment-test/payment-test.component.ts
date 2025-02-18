@@ -695,7 +695,7 @@ export class PaymentTestComponent implements OnInit, OnDestroy {
         maxInstallments: formData.maxInstallments || 1
       };
       const subscriptionResponse = await firstValueFrom(
-        this.asaasService.createSubscription(subscriptionData, formData.subscriptionId)
+        this.asaasService.createSubscription(subscriptionData)
       ).catch(error => {
         console.error('Erro ao criar assinatura:', error);
         if (error.status === 0) {

@@ -184,27 +184,18 @@ export class AsaasService {
   createInstallmentPayment(data: {
     customer: string;
     billingType: string;
-    totalValue: number;
     installmentCount: number;
     dueDate: string;
-    description: string;
     courseId: string;
-    fineValue?: number;         // Percentual de multa por atraso
-    interestValue?: number;     // Percentual de juros por dia de atraso
   }): Observable<InstallmentResponse> {
     const url = `${this.apiUrl}/createInstallmentPayment`;
     
-    // Adiciona configurações padrão de juros e multa se não fornecidas
-    const paymentData = {
-      ...data
-    };
-
-    return this.http.post<InstallmentResponse>(url, paymentData).pipe(
+    return this.http.post<InstallmentResponse>(url, data).pipe(
       map(response => {
         if (!response) {
           throw new Error('Resposta vazia do servidor');
         }
-        // Remove campos undefined antes de retornar
+        
         const cleanResponse: Partial<InstallmentResponse> = {};
         
         if (response.viewUrl) cleanResponse.viewUrl = response.viewUrl;
@@ -541,7 +532,7 @@ export class AsaasService {
   }
 
   // Método para criar assinatura com validações melhoradas
-  createSubscription(subscriptionData: AsaasSubscriptionRequest, courseId: string): Observable<AsaasSubscriptionWithPayment> {
+  createSubscription(subscriptionData: AsaasSubscriptionRequest): Observable<AsaasSubscriptionWithPayment> {
     return from(this.updateHeaders()).pipe(
       switchMap(() => {
         const validationError = this.validatePaymentData(subscriptionData);
@@ -551,12 +542,11 @@ export class AsaasService {
 
         const subscriptionRequest = {
           ...subscriptionData,
-          courseId,
           postalService: false,
           nextDueDate: new Date(subscriptionData.nextDueDate).toISOString().split('T')[0]
         };
 
-        return from(this.checkExistingSubscription(subscriptionData, courseId)).pipe(
+        return from(this.checkExistingSubscription(subscriptionData, subscriptionData.courseId!)).pipe(
           switchMap(existingSubscription => {
             if (existingSubscription) {
               return of({
@@ -576,7 +566,6 @@ export class AsaasService {
               }
             ).pipe(
               map(subscription => {
-                // O primeiro pagamento já está incluído na resposta do backend
                 return subscription;
               })
             );

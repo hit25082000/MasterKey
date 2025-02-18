@@ -722,6 +722,25 @@ exports.createCustomer = functions.https.onRequest(applyMiddleware(async (req, r
   }
 }));
 
+// Função auxiliar para buscar dados do curso
+async function getCourseData(courseId) {
+  try {
+    const courseDoc = await admin.firestore()
+      .collection('courses')
+      .doc(courseId)
+      .get();
+
+    if (!courseDoc.exists) {
+      throw new Error('Curso não encontrado');
+    }
+
+    return courseDoc.data();
+  } catch (error) {
+    console.error('Erro ao buscar dados do curso:', error);
+    throw error;
+  }
+}
+
 // Atualizar o endpoint createAsaasPayment
 exports.createAsaasPayment = functions.https.onRequest(applyMiddleware(async (req, res) => {
   if (req.method === 'OPTIONS') {
@@ -731,38 +750,39 @@ exports.createAsaasPayment = functions.https.onRequest(applyMiddleware(async (re
 
   try {
     const { 
-      value, 
       externalReference, 
       billingType, 
       creditCardInfo,
-      description,
       dueDate,
-      customer 
+      customer,
+      courseId 
     } = req.body;
 
-    console.log(req.body)
-    if (!value || !externalReference || !billingType || !customer) {
+    if (!courseId || !billingType || !customer) {
       return res.status(400).json({
         error: 'Dados incompletos para criar pagamento'
       });
     }
 
+    // Buscar dados do curso
+    const courseData = await getCourseData(courseId);
+
     // Preparar dados do pagamento
     const paymentData = {
-      customer: customer, // Usar o ID do Asaas
+      customer: customer,
       billingType: billingType,
-      value: value,
+      value: courseData.price,
       dueDate: dueDate,
-      description: description,
-      externalReference: externalReference,
+      description: `Pagamento do curso: ${courseData.name}`,
+      externalReference: courseId,
     };       
 
     const paymentResponse = await fetch(`${config.asaas.apiUrl}/payments`, {
       method: 'POST',
-          headers: {
+      headers: {
         accept: 'application/json',
-            'Content-Type': 'application/json',
-            'access_token': config.asaas.apiKey
+        'Content-Type': 'application/json',
+        'access_token': config.asaas.apiKey
       },
       body: JSON.stringify(paymentData)
     });
@@ -781,12 +801,12 @@ exports.createAsaasPayment = functions.https.onRequest(applyMiddleware(async (re
     await transactionRef.set({
       asaasId: asaasPayment.id,
       customerId: asaasPayment.customer,
-      courseId: externalReference,
-      amount: value,
+      courseId: courseId,
+      amount: courseData.price,
       status: asaasPayment.status,
       paymentMethod: billingType,
       createdAt: new Date(),
-      updatedAt:  new Date(),
+      updatedAt: new Date(),
       dueDate: asaasPayment.dueDate,
       invoiceUrl: asaasPayment.invoiceUrl,
       bankSlipUrl: asaasPayment.bankSlipUrl
@@ -1387,11 +1407,14 @@ exports.createAsaasSubscription = functions.https.onRequest((req, res) => {
 exports.createInstallmentPayment = functions.https.onRequest((req, res) => {
   return applyMiddleware(async (req, res) => {
     try {
-      const { customer, billingType, totalValue, installmentCount, dueDate, description, courseId } = req.body;
+      const { customer, billingType, installmentCount, dueDate, courseId } = req.body;
 
-      if (!customer || !billingType || !totalValue || !installmentCount || !dueDate || !description || !courseId) {
+      if (!customer || !billingType || !installmentCount || !dueDate || !courseId) {
         return res.status(400).json({ error: 'Dados incompletos para criar parcelamento' });
       }
+
+      // Buscar dados do curso
+      const courseData = await getCourseData(courseId);
 
       // Calcular datas de vencimento para cada parcela
       const installmentDates = [];
@@ -1399,7 +1422,6 @@ exports.createInstallmentPayment = functions.https.onRequest((req, res) => {
       
       for (let i = 0; i < installmentCount; i++) {
         installmentDates.push(new Date(currentDate));
-        // Adiciona um mês para a próxima parcela
         currentDate.setMonth(currentDate.getMonth() + 1);
       }
 
@@ -1407,21 +1429,21 @@ exports.createInstallmentPayment = functions.https.onRequest((req, res) => {
       const installmentData = {
         customer,
         billingType,
-        totalValue,
+        totalValue: courseData.price,
         installmentCount,
         dueDate,
-        description,
+        description: `Pagamento parcelado do curso: ${courseData.name}`,
         externalReference: courseId,
         fine: {
-          value: 10,  // 10% de multa por atraso
+          value: 10,
           type: 'PERCENTAGE'
         },
         interest: {
-          value: 0,   // Sem juros diários
+          value: 0,
           type: 'PERCENTAGE'
         },
         installments: installmentDates.map((date, index) => ({
-          value: totalValue / installmentCount,
+          value: courseData.price / installmentCount,
           dueDate: date.toISOString().split('T')[0]
         }))
       };
@@ -1441,8 +1463,6 @@ exports.createInstallmentPayment = functions.https.onRequest((req, res) => {
         throw new Error(installmentResponse.message || 'Erro ao criar parcelamento');
       }
 
-
-      console.log(installmentResponse)
       // Buscar detalhes das parcelas
       const paymentsResponse = await fetch(`${config.asaas.apiUrl}/installments/${installmentResponse.id}/payments`, {
         method: 'GET',
@@ -1453,8 +1473,6 @@ exports.createInstallmentPayment = functions.https.onRequest((req, res) => {
       });
 
       const paymentsData = await paymentsResponse.json();
-
-      console.log(paymentsData)
 
       // Salvar dados do parcelamento no Firestore
       const db = admin.firestore();
@@ -1469,15 +1487,15 @@ exports.createInstallmentPayment = functions.https.onRequest((req, res) => {
         status: 'PENDING',
         type: 'INSTALLMENT',
         paymentMethod: billingType,
-        totalValue,
+        totalValue: courseData.price,
         installmentCount,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        description,
+        description: `Pagamento parcelado do curso: ${courseData.name}`,
         dueDate
       });
 
-      // Salvar cada parcela individualmente com sua respectiva data de vencimento
+      // Salvar cada parcela individualmente
       paymentsData.data.forEach((payment, index) => {
         const paymentRef = db.collection('transactions').doc(payment.id);
         const transactionData = {
@@ -1494,9 +1512,9 @@ exports.createInstallmentPayment = functions.https.onRequest((req, res) => {
           installmentNumber: payment.installmentNumber,
           totalInstallments: installmentCount,
           invoiceUrl: payment.invoiceUrl,
-          description: `${description} - Parcela ${payment.installmentNumber}/${installmentCount}`,
+          description: `${courseData.name} - Parcela ${payment.installmentNumber}/${installmentCount}`,
           paymentDetails: {
-            description: description,
+            description: `${courseData.name} - Parcela ${payment.installmentNumber}/${installmentCount}`,
             invoiceUrl: payment.invoiceUrl,
             bankSlipUrl: payment.bankSlipUrl,
             dueDate: payment.dueDate,
@@ -1524,7 +1542,7 @@ exports.createInstallmentPayment = functions.https.onRequest((req, res) => {
       res.json({
         id: installmentResponse.id,
         status: 'PENDING',
-        totalValue,
+        totalValue: courseData.price,
         installmentCount,
         payments: sortedPayments,
         invoiceUrl: firstPayment?.invoiceUrl,
