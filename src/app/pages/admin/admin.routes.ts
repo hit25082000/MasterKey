@@ -31,6 +31,7 @@ import { ClassAttendanceListComponent } from '../../features/class/components/cl
 import { StudentFinancialComponent } from '../../features/student/components/student-financial/student-financial.component';
 import { StudentFinancialListComponent } from '../../features/student/components/student-financial-list/student-financial-list.component';
 import { FinancialReportsComponent } from '../../features/financial/components/financial-reports/financial-reports.component';
+import { PaymentCreateComponent } from '../../features/financial/components/payment-create/payment-create.component';
 
 export const ADMIN_ROUTES: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
@@ -254,6 +255,12 @@ export const ADMIN_ROUTES: Routes = [
       {
         path: 'financial-reports',
         component: FinancialReportsComponent,
+        canActivate: [RoleGuard],
+        data: { permission: RoutePermission.VIEW_STUDENT_FINANCIAL }
+      },
+      {
+        path: 'payment-create',
+        component: PaymentCreateComponent,
         canActivate: [RoleGuard],
         data: { permission: RoutePermission.VIEW_STUDENT_FINANCIAL }
       },

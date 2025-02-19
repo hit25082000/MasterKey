@@ -68,6 +68,7 @@ export class SidenavComponent {
       label: 'Financeiro',
       icon: 'fas fa-dollar-sign',
       subItems: [
+        { label: 'Criar Pagamento', route: '/admin/payment-create' },
         { label: 'Lista de Clientes', route: '/admin/student-financial-list' },
         { label: 'Relatórios', route: '/admin/financial-reports' }
       ]

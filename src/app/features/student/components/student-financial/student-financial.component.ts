@@ -15,7 +15,6 @@ import { environment } from '../../../../../environments/environment';
 import { StudentService } from '../../services/student.service';
 import { ActivatedRoute } from '@angular/router';
 import { PaymentHistoryComponent } from "../../../../shared/components/payment-history/payment-history.component";
-import { PaymentTestComponent } from "../../../../shared/components/payment-test/payment-test.component";
 import { PaymentComponent } from '../../../../shared/components/payment/payment.component';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
