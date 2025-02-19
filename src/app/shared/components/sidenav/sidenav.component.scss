@@ -232,14 +232,10 @@
   }
 
   .collapse-button {
-    position: absolute;
-    top: 50vh;
-    right: -15px;
-    width: 60px;
-    height: 60px;
-    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-    border-radius: 50%;
+    background: #384A87;
     display: flex;
+    padding: 1rem;
+    margin: .5rem;
     align-items: center;
     justify-content: center;
     cursor: pointer;

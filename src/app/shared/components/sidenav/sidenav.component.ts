@@ -43,7 +43,6 @@ export class SidenavComponent {
   activeRoute = '';
   auth = inject(AuthService)
 
-
   @ViewChild('whatsAppModal') whatsAppModal!: ModalComponent;
 
   menuItems: MenuItem[] = [
@@ -69,7 +68,7 @@ export class SidenavComponent {
       label: 'Financeiro',
       icon: 'fas fa-dollar-sign',
       subItems: [
-        { label: 'Histórico Financeiro', route: '/admin/student-financial-list' },
+        { label: 'Lista de Clientes', route: '/admin/student-financial-list' },
         { label: 'Relatórios', route: '/admin/financial-reports' }
       ]
     },

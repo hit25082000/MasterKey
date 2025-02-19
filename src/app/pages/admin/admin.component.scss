@@ -4,7 +4,9 @@
   transition: margin-left 0.3s ease;
 
    .expanded ~ & {
-    margin-left: 240px; // Alinhe com a largura da sidenav quando expandida
+    margin-left: 240px;
+    @media (max-width: 1024px) {
+      margin-left: 60px; // Alinhe com a largura da sidenav quando expandida
+    }  
   }
 }
-

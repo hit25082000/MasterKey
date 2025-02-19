@@ -4,9 +4,7 @@
   (mouseenter)="expandSidenav()"
   (mouseleave)="collapseSidenav()"
 >
-  <div class="collapse-button" (click)="toggleSidenav()">
-    <i class="fas" [class.fa-chevron-left]="isExpanded" [class.fa-chevron-right]="!isExpanded"></i>
-  </div>
+  
   <ul class="menu-list">
     <li *ngFor="let item of menuItems">
       <button
@@ -36,11 +34,13 @@
         </li>
       </ul>
     </li>
+    <li class="collapse-button" (click)="toggleSidenav()">
+      <i class="fas" [class.fa-chevron-left]="isExpanded" [class.fa-chevron-right]="!isExpanded"></i>
+    </li>
   </ul>
 
   <!-- Botão de Logout -->
   <div class="logout-container">
-    <app-google-auth-button class="google-auth-button"></app-google-auth-button>
     <button class="logout-button" (click)="logout()">
       <i class="fas fa-sign-out-alt"></i>
       <span class="label">Sair</span>
