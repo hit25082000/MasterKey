@@ -6,7 +6,7 @@ import { StudentService } from '../../features/student/services/student.service'
 import { FirestorePayment } from '../../shared/models/asaas.model';
 import { Course } from '../../core/models/course.model';
 import { Student } from '../../core/models/student.model';
-import { SystemLogService, LogCategory } from '../../core/services/system-log.service';
+import { SystemLogService, LogCategory, LogEntry } from '../../core/services/system-log.service';
 import { MatTableModule } from '@angular/material/table';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -114,7 +114,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     setTimeout(() => {
-      this.initializeCharts();
+      this.initializeCharts(0, 0);
     }, 100);
   }
 
@@ -138,7 +138,8 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     const endCurrentMonth = new Date(currentYear, currentMonth + 1, 0);
     const endPreviousMonth = new Date(previousYear, previousMonth < 0 ? 12 : previousMonth + 1, 0);
 
-    const currentMonthLogs = await firstValueFrom(
+    // Logs de registro
+    const registrationLogs = await firstValueFrom(
       this.systemLogService.getLogsByDateRange(
         LogCategory.USER_REGISTRATION,
         'Registro',
@@ -156,15 +157,49 @@ export class DashboardComponent implements OnInit, AfterViewInit {
       )
     );
 
+    // Logs de presença
+    const attendanceLogs = await firstValueFrom(
+      this.systemLogService.getLogsByDateRange(
+        LogCategory.STUDENT_ACTION,
+        'attendance',
+        startCurrentMonth,
+        endCurrentMonth
+      )
+    );
+
+    // Agrupa logs de presença por aluno
+    const studentAttendance = attendanceLogs.reduce((acc, log) => {
+      const studentId = log.details.studentId;
+      if (!acc[studentId]) {
+        acc[studentId] = [];
+      }
+      acc[studentId].push(log);
+      return acc;
+    }, {} as { [key: string]: LogEntry[] });
+
+    // Conta alunos presentes e ausentes
+    const { presentStudents, absentStudents } = this._students().reduce((acc, student) => {
+      const studentLogs = studentAttendance[student.id] || [];
+      const lastLog = studentLogs[studentLogs.length - 1];
+      
+      if (lastLog?.details?.present) {
+        acc.presentStudents++;
+      } else {
+        acc.absentStudents++;
+      }
+      
+      return acc;
+    }, { presentStudents: 0, absentStudents: 0 });
+
     this._registrations.set({
-      currentMonth: currentMonthLogs.length,
+      currentMonth: registrationLogs.length,
       previousMonth: previousMonthLogs.length
     });
 
-    this.initializeCharts();
+    this.initializeCharts(presentStudents, absentStudents);
   }
 
-  private initializeCharts() {
+  private initializeCharts(presentStudents: number, absentStudents: number) {
     if (this.registrationsChart && this.studentStatusChart) {
       const registrationsCtx = this.registrationsChart.nativeElement.getContext('2d');
       const statusCtx = this.studentStatusChart.nativeElement.getContext('2d');
@@ -205,15 +240,12 @@ export class DashboardComponent implements OnInit, AfterViewInit {
       });
 
       // Gráfico de Status dos Alunos
-      const activeStudents = this._students().filter(student => student.active).length;
-      const inactiveStudents = this._students().length - activeStudents;
-
       new Chart(statusCtx, {
         type: 'pie',
         data: {
-          labels: ['Ativos', 'Inativos'],
+          labels: ['Presentes', 'Ausentes'],
           datasets: [{
-            data: [activeStudents, inactiveStudents],
+            data: [presentStudents, absentStudents],
             backgroundColor: ['#4CAF50', '#F44336']
           }]
         },
