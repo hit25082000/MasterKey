@@ -20,6 +20,9 @@
             "outputPath": "dist/master-key",
             "index": "src/index.html",
             "browser": "src/main.ts",
+            "allowedCommonJsDependencies": [
+            "lodash"
+            ],
             "polyfills": [
               "zone.js"
             ],

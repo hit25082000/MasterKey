@@ -5,14 +5,12 @@ import { Course } from '../../../../core/models/course.model';
 import { CourseService } from '../../services/course.service';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { ConfirmationService } from '../../../../shared/services/confirmation.service';
-import { ConfirmationDialogComponent } from '../../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 
 @Component({
   selector: 'app-course-list',
   standalone: true,
   imports: [
     CommonModule,
-    ConfirmationDialogComponent
   ],
   templateUrl: './course-list.component.html',
   styleUrls: ['./course-list.component.scss']

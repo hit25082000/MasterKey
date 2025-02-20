@@ -259,7 +259,6 @@ export class SidenavComponent {
 
   toggleSidenav() {
     this.isExpanded = !this.isExpanded;
-    this.expanded.emit(this.isExpanded);
     
     // Se estiver colapsando, fechar todos os dropdowns
     if (!this.isExpanded) {
@@ -267,5 +266,7 @@ export class SidenavComponent {
         this.dropdownState[key] = false;
       });
     }
+    
+    this.expanded.emit(this.isExpanded);
   }
 }

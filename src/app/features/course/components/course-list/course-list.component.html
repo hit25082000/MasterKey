@@ -12,16 +12,16 @@
       <div class="modules-section">
         <h4>
           <i class="pi pi-folder"></i>
-          Módulos ({{ course.modules?.length || 0 }})
+          Módulos ({{ course.modules.length || 0 }})
         </h4>
-        @if (course.modules?.length) {
+        @if (course.modules.length) {
           <div class="modules-list">
             @for (module of course.modules; track module.name) {
               <div class="module-item">
                 <div class="module-header">
                   <i class="pi pi-folder"></i>
                   <span class="module-name">{{ module.name }}</span>
-                  <span class="video-count">{{ module.videos?.length || 0 }} vídeos</span>
+                  <span class="video-count">{{ module.videos.length || 0 }} vídeos</span>
                 </div>
                 <div class="video-list">
                   @for (video of module.videos; track video.videoId) {
