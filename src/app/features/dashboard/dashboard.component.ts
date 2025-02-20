@@ -88,6 +88,20 @@ export class DashboardComponent implements OnInit, AfterViewInit {
 
   displayedColumns = ['date', 'description', 'value', 'status'];
 
+  getStatusClass(status: string): string {
+    switch (status) {
+      case 'CONFIRMED':
+      case 'RECEIVED':
+        return 'status-confirmed';
+      case 'PENDING':
+        return 'status-pending';
+      case 'OVERDUE':
+        return 'status-overdue';
+      default:
+        return 'status-default';
+    }
+  }
+
   constructor() {
     effect(() => {
       this.loadData();
