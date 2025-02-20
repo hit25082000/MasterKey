@@ -1,4 +1,4 @@
-import { Component, inject, Input, OnInit, signal } from '@angular/core';
+import { Component, inject, input, Input, OnInit, signal, effect } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -14,6 +14,7 @@ import { AsaasService } from '../../../core/services/asaas.service';
 import { firstValueFrom } from 'rxjs';
 import { LoadingService } from '../../services/loading.service';
 import { AsaasInstallmentPayment, AsaasPayment } from '../../services/payment.service';
+import { Course } from '../../../core/models/course.model';
 
 interface SubscriptionData {
   customer: string;
@@ -62,9 +63,8 @@ interface SubscriptionData {
   styleUrl: './payment.component.scss'
 })
 export class PaymentComponent implements OnInit {
-  @Input() courseId!: string;
-  @Input() courseValue!: number;
-  @Input() courseName!: string;
+  course = input.required<Course>(); 
+
   @Input() maxInstallments!: number;
   @Input() interestRate: number = 0; // Taxa de juros mensal para parcelamento
 
@@ -95,7 +95,15 @@ export class PaymentComponent implements OnInit {
     private fb: FormBuilder,
     private asaasService: AsaasService,
     private snackBar: MatSnackBar
-  ) {}
+  ) {
+    effect(() => {
+      // Quando o course mudar, recalcular os valores
+      if (this.course()) {
+        this.calculateSubscriptionOptions();
+        this.calculateInstallmentOptions();
+      }
+    });
+  }
 
   ngOnInit() {
     this.initializeForms();
@@ -159,7 +167,7 @@ export class PaymentComponent implements OnInit {
   }
 
   private calculateSubscriptionOptions() {
-    const baseMonthlyValue = this.courseValue / this.maxInstallments;
+    const baseMonthlyValue = this.course().price / this.maxInstallments;
 
     this.availableSubscriptionOptions = [
       {
@@ -190,7 +198,7 @@ export class PaymentComponent implements OnInit {
   calculateInstallmentOptions() {
     this.installmentOptions = [];
     for (let i = 1; i <= this.maxInstallments; i++) {
-      const installmentValue = this.courseValue / i;
+      const installmentValue = this.course().price / i;
       this.installmentOptions.push({
         value: i,
         label: `${i}x de R$ ${installmentValue.toFixed(2)}`,
@@ -200,7 +208,7 @@ export class PaymentComponent implements OnInit {
   }
 
   calculateInstallmentValue(installments: number): number {
-    return this.courseValue / installments;
+    return this.course().price / installments;
   }
 
   updateInstallmentValue(installments: number) {
@@ -257,7 +265,7 @@ export class PaymentComponent implements OnInit {
           billingType: this.selectedPaymentType,
           nextDueDate: new Date().toISOString().split('T')[0],
           cycle: this.selectedCycle,
-          courseId: this.courseId,
+          courseId: this.course().id,
           maxInstallments: this.maxInstallments
         };
 
@@ -279,7 +287,7 @@ export class PaymentComponent implements OnInit {
           billingType: this.selectedPaymentType,
           installmentCount: this.installmentForm.get('installmentCount')?.value || 1,
           dueDate: this.installmentForm.get('dueDate')?.value,
-          courseId: this.courseId
+          courseId: this.course().id
         };
 
         const paymentResponse = await firstValueFrom(
@@ -298,7 +306,7 @@ export class PaymentComponent implements OnInit {
           billingType: this.selectedPaymentType,
           paymentMethod: this.selectedPaymentType,
           dueDate: new Date().toISOString().split('T')[0],
-          courseId: this.courseId
+          courseId: this.course().id
         };
 
         const paymentResponse = await firstValueFrom(

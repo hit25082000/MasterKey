@@ -5,13 +5,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { PaymentComponent } from '../../../../shared/components/payment/payment.component';
 import { CourseService } from '../../../course/services/course.service';
-
-interface Course {
-  id: string;
-  name: string;
-  price: number;
-  portionCount: number;
-}
+import { Course } from '../../../../core/models/course.model';
 
 @Component({
   selector: 'app-payment-create',

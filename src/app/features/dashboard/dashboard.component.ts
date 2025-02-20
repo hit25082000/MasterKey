@@ -55,9 +55,35 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     const now = new Date();
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     
-    return this._payments()
-      .filter(payment => new Date(payment.createdAt) >= firstDayOfMonth)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const payments = this._payments()
+      .filter(payment => new Date(payment.createdAt) >= firstDayOfMonth);
+
+    // Agrupa pagamentos por installmentId
+    const groupedPayments = payments.reduce((groups, payment) => {
+      if (payment.installmentId) {
+        if (!groups[payment.installmentId]) {
+          groups[payment.installmentId] = [];
+        }
+        groups[payment.installmentId].push(payment);
+      } else {
+        if (!groups['outros']) {
+          groups['outros'] = [];
+        }
+        groups['outros'].push(payment);
+      }
+      return groups;
+    }, {} as { [key: string]: PaymentTransaction[] });
+
+    // Ordena cada grupo por número da parcela e concatena todos os grupos
+    return Object.values(groupedPayments)
+      .map(group => 
+        group.sort((a, b) => {
+          const numA = a.paymentDetails?.installmentInfo?.installmentNumber || 0;
+          const numB = b.paymentDetails?.installmentInfo?.installmentNumber || 0;
+          return numA - numB;
+        })
+      )
+      .flat();
   });
 
   displayedColumns = ['date', 'description', 'value', 'status'];
