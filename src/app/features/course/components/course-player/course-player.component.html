@@ -142,7 +142,7 @@
           Material de Apoio
         </h3>
         <div class="materials-list">
-          @if (books()?.length || handouts()?.length) {
+          @if (books().length || handouts().length) {
             @for (book of books(); track book.id) {
               <div class="material-item">
                 <i class="fas fa-book"></i>
