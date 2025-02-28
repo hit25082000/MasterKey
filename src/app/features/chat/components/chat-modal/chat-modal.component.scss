@@ -601,8 +601,7 @@
   }
 }
 
-// Estilos responsivos para telas menores que 1024px
-@media (max-width: 1024px) {
+@media (min-width: 300px) {
   .chat-modal {
     &.minimized {
       width: 60px;

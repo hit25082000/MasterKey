@@ -18,33 +18,56 @@ export class CategoryService {
   ) {}
 
   getAll(): Promise<Category[]> {
-    return this.firestore.getCollection<Category>('categorys');
+    try {
+      return this.firestore.getCollection<Category>('categorys');
+    } catch (error) {
+      console.error('Erro ao carregar categorias:', error);
+      return Promise.resolve([]);
+    }
   }
 
   async getById(id: string): Promise<Category> {
-    return await this.firestore.getDocument<Category>('categorys', id);
+    try {
+      return await this.firestore.getDocument<Category>('categorys', id);
+    } catch (error) {
+      console.error('Erro ao carregar categoria:', error);
+      throw error;
+    }
   }
 
   async getCourses(id: string) {
-    const courses = (await this.firestore.getDocument('categorys', id)) as any;
-
-    return courses.courses;
+    try {
+      const category = await this.firestore.getDocument('categorys', id);
+      return category?.courses || [];
+    } catch (error) {
+      console.error('Erro ao carregar cursos da categoria:', error);
+      return [];
+    }
   }
 
   async getPackages(id: string) {
-    const packages = (await this.firestore.getDocument('categorys', id)) as any;
-
-    return packages.packages;
+    try {
+      const category = await this.firestore.getDocument('categorys', id);
+      return category?.packages || [];
+    } catch (error) {
+      console.error('Erro ao carregar pacotes da categoria:', error);
+      return [];
+    }
   }
 
   async addCourseToCategory(categoryId: string, courseId: string) {
-    const courses = await this.getCourses(categoryId);
-    if (courses.includes(courseId)) {
-      return;
+    try {
+      const courses = await this.getCourses(categoryId);
+      if (courses.includes(courseId)) {
+        return;
+      }
+      return this.firestore.updateDocument('categorys', categoryId, {
+        courses: [...courses, courseId],
+      });
+    } catch (error) {
+      console.error('Erro ao adicionar curso à categoria:', error);
+      throw error;
     }
-    return this.firestore.updateDocument('categorys', categoryId, {
-      courses: [...courses, courseId],
-    });
   }
 
   delete(id: string): Observable<void> {

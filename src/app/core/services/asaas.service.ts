@@ -447,16 +447,6 @@ export class AsaasService {
               } as AsaasResponse);
             }
 
-            // Se encontrou pagamento pendente com método diferente, deletar
-            if (existingPayment && existingPayment.id) {
-              return from(this.firestore.deleteDocument('transactions', existingPayment.id)).pipe(
-                switchMap(() => this.http.post<AsaasResponse>(
-                  `${this.apiUrl}/createAsaasPayment`,
-                  paymentRequest,
-                  { headers: this.headers }
-                ))
-              );
-            }
 
             // Se não encontrou pagamento pendente, criar novo
             return this.http.post<AsaasResponse>(

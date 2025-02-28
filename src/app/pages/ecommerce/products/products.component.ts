@@ -87,34 +87,42 @@ export class ProductsComponent implements OnInit {
   async ngOnInit() {
     this.loadingService.show();
     try {    
-      const [allCourses, allCategories] = await Promise.all([
-        this.courseService.getAll(),
-        this.categoryService.getAll()
-      ]);
-      
+      // Primeiro carrega os cursos
+      const allCourses = await this.courseService.getAll();
       this.allCourses.set(allCourses);
       this.courses.set(allCourses);
-      
-      // Transformar categorias em array de objetos com id e nome
-      const categoryOptions: Category[] = [
-        { id: 'todos', name: 'Todos' },
-        ...allCategories.map(cat => ({
-          id: cat.id,
-          name: cat.name
-        }))
-      ];
-      this.categories.set(categoryOptions);
 
-      // Calcular o preço máximo com base nos cursos
+      // Depois tenta carregar as categorias
+      try {
+        const allCategories = await this.categoryService.getAll();
+        const categoryOptions: Category[] = [
+          { id: 'todos', name: 'Todos' },
+          ...allCategories.map(cat => ({
+            id: cat.id,
+            name: cat.name
+          }))
+        ];
+        this.categories.set(categoryOptions);
+      } catch (categoryError) {
+        console.error('Erro ao carregar categorias:', categoryError);
+        // Mantém apenas a categoria "Todos" se houver erro
+        this.categories.set([{ id: 'todos', name: 'Todos' }]);
+      }
+
+      // Calcula o preço máximo apenas com os cursos carregados
       const maxCoursePrice = Math.max(...allCourses
         .filter(course => !course.hidePrice)
-        .map(course => course.price));
+        .map(course => course.price || 0));
       
       const roundedMaxPrice = Math.ceil(maxCoursePrice / 1000) * 1000;
       this.maxPrice.set(roundedMaxPrice);
       this.priceRange.set(roundedMaxPrice);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
+      this.notificationService.show(
+        'Não foi possível carregar os cursos. Por favor, tente novamente mais tarde.',
+        NotificationType.ERROR
+      );
     } finally {
       this.loadingService.hide();
     }

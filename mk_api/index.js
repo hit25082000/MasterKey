@@ -1528,14 +1528,12 @@ exports.createInstallmentPayment = functions.https.onRequest((req, res) => {
 
       await batch.commit();
 
-      // Ordenar pagamentos por data de vencimento e pegar o mais próximo
+      // Ordenar pagamentos por numero da parcela de vencimento e pegar o mais próximo
       const sortedPayments = paymentsData.data.sort((a, b) => {
-        const dateA = new Date(a.dueDate);
-        const dateB = new Date(b.dueDate);
-        return dateA.getTime() - dateB.getTime();
+        return a.installmentNumber - b.installmentNumber;
       });
 
-      const firstPayment = sortedPayments[0] || null;
+      const firstPayment = sortedPayments.find(payment => payment.installmentNumber === 1) || sortedPayments[0];
 
       res.json({
         id: installmentResponse.id,

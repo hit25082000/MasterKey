@@ -22,12 +22,11 @@ import { PaymentHistoryComponent } from "../../../../shared/components/payment-h
 @Component({
   selector: 'app-course-checkout',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, PaymentComponent, PaymentHistoryComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, PaymentComponent],
   templateUrl: './course-checkout.component.html',
   styleUrls: ['./course-checkout.component.scss']
 })
 export class CourseCheckoutComponent implements OnInit {
-  private studentService = inject(StudentService);
   private courseService = inject(CourseService);
   private paymentService = inject(PaymentService);
   private loadingService = inject(LoadingService);

@@ -13,7 +13,12 @@ export class CourseService {
   selectedCourse = signal<Course | undefined>(undefined);
 
   getAll(): Promise<Course[]> {
-    return this.firestore.getCollection<Course>('courses');
+    try {
+      return this.firestore.getCollection<Course>('courses');
+    } catch (error) {
+      console.error('Erro ao carregar cursos:', error);
+      return Promise.resolve([]);
+    }
   }
 
   async getById(id: string): Promise<Course> {

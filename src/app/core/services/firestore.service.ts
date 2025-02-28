@@ -22,12 +22,8 @@ import {
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
-  deleteObject,
-  getStorage,
   ref,
   Storage,
-  uploadBytesResumable,
-  getDownloadURL,
   getBytes,
 } from '@angular/fire/storage';
 import { FirebaseApp } from '@angular/fire/app';

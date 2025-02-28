@@ -112,6 +112,11 @@ export class PaymentComponent implements OnInit {
   }
 
   initializeForms() {
+    // Calcula a data do próximo mês
+    const dataProximoMes = new Date();
+    dataProximoMes.setMonth(dataProximoMes.getMonth() + 1);
+    dataProximoMes.setDate(1); // Define para o primeiro dia do próximo mês
+    
     this.customerForm = this.fb.group({
       name: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
@@ -127,12 +132,12 @@ export class PaymentComponent implements OnInit {
       expiryMonth: ['', Validators.required],
       expiryYear: ['', Validators.required],
       ccv: ['', Validators.required],
-      installments: [1] // Novo campo para número de parcelas
+      installments: [1]
     });
 
     this.installmentForm = this.fb.group({
       installmentCount: [1, [Validators.required, Validators.min(1), Validators.max(this.maxInstallments)]],
-      dueDate: [new Date().toISOString().split('T')[0], Validators.required]
+      dueDate: [dataProximoMes.toISOString().split('T')[0], Validators.required]
     });
 
     // Atualizar valor da parcela quando mudar o número de parcelas
@@ -293,7 +298,7 @@ export class PaymentComponent implements OnInit {
         const paymentResponse = await firstValueFrom(
           this.asaasService.createInstallmentPayment(installmentData)
         );
-
+        
         if (paymentResponse) {
           this.handlePaymentResponse(paymentResponse);
           if (paymentResponse.invoiceUrl) {
@@ -334,11 +339,15 @@ export class PaymentComponent implements OnInit {
   }
 
   private resetForms() {
+    const dataProximoMes = new Date();
+    dataProximoMes.setMonth(dataProximoMes.getMonth() + 1);
+    dataProximoMes.setDate(1);
+
     this.customerForm.reset();
     this.creditCardForm.reset();
     this.installmentForm.reset({
       installmentCount: 1,
-      dueDate: new Date().toISOString().split('T')[0]
+      dueDate: dataProximoMes.toISOString().split('T')[0]
     });
     this.isInstallment = false;
     this.isSubscription = false;

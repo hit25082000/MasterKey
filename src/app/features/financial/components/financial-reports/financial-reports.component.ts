@@ -260,6 +260,9 @@ export class FinancialReportsComponent implements OnInit {
     const doc = new jsPDF();
     const title = this.getReportTitle(filters);
     
+    // Adiciona a logo no canto superior direito
+    doc.addImage('/assets/logo.png', 'PNG', 170, 10, 30, 15);
+    
     doc.setFontSize(16);
     doc.text(title, 14, 20);
     doc.setFontSize(10);
