@@ -25,8 +25,8 @@ export class CourseManagementService {
       );
 
       if (existingCourses.length > 0) {
-        this.notificationService.error('Já existe um curso com este nome');
-        return;
+        this.notificationService.error('Já existe um curso com este nome!');
+        throw Error;
       }
 
       // Processa a imagem se fornecida

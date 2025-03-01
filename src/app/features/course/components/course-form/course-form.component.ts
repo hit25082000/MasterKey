@@ -1,6 +1,6 @@
 import { Component, OnInit, signal, computed, inject, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormArray, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormArray, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CourseService } from '../../services/course.service';
 import { CourseManagementService } from '../../services/course-management.service';
@@ -69,11 +69,33 @@ export class CourseFormComponent implements OnInit {
   accessToken = signal<string | null>(null);
   moduleIndex: number = 0;
 
+  // Validador personalizado para verificar se existe pelo menos um módulo
+  modulesValidator() {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const modules = control as FormArray;
+      if (modules.length === 0) {
+        return { 'moduloObrigatorio': true };
+      }
+      
+      // Verifica se pelo menos um módulo tem vídeos
+      const hasVideos = modules.controls.some((moduleControl: AbstractControl) => {
+        const videosArray = (moduleControl as FormGroup).get('videos') as FormArray;
+        return videosArray && videosArray.length > 0;
+      });
+      
+      if (!hasVideos) {
+        return { 'videoObrigatorio': true };
+      }
+      
+      return null;
+    };
+  }
+
   private createForm(): FormGroup {
     return this.fb.group({
       name: ['', [Validators.required]],
       description: ['', [Validators.required]],
-      price: [0, [Validators.required]],
+      price: [0, [Validators.required, Validators.min(0.01)]],
       promoPrice: [0, [Validators.min(0)]],
       portionCount: [1, [Validators.min(1)]],
       hidePrice: [false],
@@ -82,7 +104,7 @@ export class CourseFormComponent implements OnInit {
       highlight: [false],
       checkoutUrl: ['', [Validators.required]],
       workHours: [0, [Validators.required, Validators.min(1)]],
-      modules: this.fb.array([])
+      modules: this.fb.array([], [this.modulesValidator()])
     });
   }
 
@@ -209,8 +231,11 @@ export class CourseFormComponent implements OnInit {
         label: 'Preço',
         type: 'number',
         value: '',
-        validators: [Validators.required],
-        errorMessages: { required: 'Preço é obrigatório' }
+        validators: [Validators.required, Validators.min(0.01)],
+        errorMessages: { 
+          required: 'Preço é obrigatório',
+          min: 'Preço deve ser maior que zero'
+        }
       },
       {
         name: 'promoPrice',
@@ -428,6 +453,29 @@ export class CourseFormComponent implements OnInit {
 
     if (!this.categoryControl?.valid) {
       this.notificationService.error('Por favor, selecione uma categoria', 5000);
+      return;
+    }
+
+    // Validação específica para módulos e vídeos
+    if (this.modulesArray.length === 0) {
+      this.notificationService.error('É necessário adicionar pelo menos um módulo ao curso', 5000);
+      return;
+    }
+
+    // Verifica se pelo menos um módulo tem vídeos
+    const hasVideos = this.modulesArray.controls.some((moduleControl: AbstractControl) => {
+      const videosArray = (moduleControl as FormGroup).get('videos') as FormArray;
+      return videosArray && videosArray.length > 0;
+    });
+
+    if (!hasVideos) {
+      this.notificationService.error('É necessário adicionar pelo menos um vídeo a um módulo', 5000);
+      return;
+    }
+
+    // Validação do preço
+    if (formData.price <= 0 && !formData.hidePrice) {
+      this.notificationService.error('O preço do curso deve ser maior que zero', 5000);
       return;
     }
 

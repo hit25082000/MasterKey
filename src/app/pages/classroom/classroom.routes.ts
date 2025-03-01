@@ -9,6 +9,7 @@ import { StudentIdCardComponent } from '../../features/student/components/studen
 import { PackageCatalogComponent } from '../../features/package/components/package-catalog/package-catalog.component';
 import { CourseCatalogComponent } from '../../features/course/components/course-catalog/course-catalog.component';
 import { StudentFinancialComponent } from '../../features/student/components/student-financial/student-financial.component';
+import { PaymentCreateComponent } from '../../features/financial/components/payment-create/payment-create.component';
 // import { JobVacancyDetailsComponent } from '../../features/student/components/job-vacancy-details/job-vacancy-details.component';
 
 export const CLASSROOM_ROUTES: Routes = [
@@ -52,6 +53,10 @@ export const CLASSROOM_ROUTES: Routes = [
       {
         path: 'student-financial',
         component: StudentFinancialComponent,
+      },
+      {
+        path: 'payment-create',
+        component: PaymentCreateComponent,
       },
       // {
       //   path: 'job-vacancy-details/:id',

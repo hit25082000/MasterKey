@@ -59,6 +59,12 @@ import { AuthService } from '../../../core/services/auth.service';
             <span>Financeiro</span>
           </a>
         </li>
+        <li>
+          <a routerLink="/classroom/payment-create" routerLinkActive="active" [title]="'Pagamentos'" (click)="onNavClick()">
+            <i class="fas fa-credit-card"></i>
+            <span>Comprar curso</span>
+          </a>
+        </li>
       </ul>
 
       <div class="nav-footer">
