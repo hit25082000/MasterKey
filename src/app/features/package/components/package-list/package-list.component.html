@@ -1,50 +1,52 @@
-<div class="package-list-container">
-  <div class="list-header">
-    <h2>Lista de Pacotes</h2>
-    <button class="btn-add" (click)="createPackage()">
-      <i class="fas fa-plus"></i>
-      Criar Novo Pacote
+<div class="container">
+  <div class="flex justify-between items-center">
+    <h1>Lista de Pacotes</h1>
+    <button (click)="createPackage()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+      Novo Pacote
     </button>
   </div>
 
   <div class="package-grid">
-    @for (package of packages(); track package.id) {
-      <div class="package-card">
-        <div class="package-content">
-          <div class="package-header">
-            <h3>{{ package.name }}</h3>
-            <span class="package-price">{{ package.price | currency:'BRL' }}</span>
-          </div>
-
-          <p class="package-description">{{ package.description }}</p>
-
-          <div class="package-info">
-            <span class="info-item">
-              <i class="fas fa-book"></i>
-              {{ package.courses.length || 0 }} cursos
-            </span>
-          </div>
+    <div *ngFor="let package of packages()" class="package-card">
+      <div class="package-content">
+        <div class="package-header">
+          <span class="package-name">{{package.name}}</span>
+          <span class="package-price">{{package.price | currency:'BRL'}}</span>
         </div>
 
-        <div class="package-actions">
-          <button class="btn-edit" (click)="editStudent(package.id)">
-            <i class="fas fa-edit"></i>
-            Editar
-          </button>
-          <button class="btn-delete" (click)="deleteStudent(package.id)">
-            <i class="fas fa-trash"></i>
-            Excluir
-          </button>
+        <p class="package-description">{{package.description}}</p>
+
+        <div class="package-info">
+          <div class="info-item">
+            <span class="info-label">Carga Horária:</span>
+            <span class="info-value">{{package.workHours}}h</span>
+          </div>
+
+          <div class="info-item">
+            <span class="info-label">Cursos Incluídos:</span>
+          </div>
+          <div class="courses-list">
+            {{getCoursesNames(package)}}
+          </div>
         </div>
       </div>
-    } @empty {
-      <div class="no-packages">
-        <i class="fas fa-box-open"></i>
-        <p>Nenhum pacote encontrado</p>
-        <button class="btn-add" (click)="createPackage()">
-          Criar Primeiro Pacote
+
+      <div class="package-actions">
+        <button (click)="editPackage(package.id)" class="edit-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+          </svg>
+        </button>
+        <button (click)="deletePackage(package.id)" class="delete-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
         </button>
       </div>
-    }
+    </div>
   </div>
 </div>
+
+<app-confirmation-dialog></app-confirmation-dialog>

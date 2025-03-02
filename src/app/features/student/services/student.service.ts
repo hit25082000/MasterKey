@@ -1,6 +1,6 @@
 import { inject, Injectable, Signal, signal, WritableSignal } from '@angular/core';
 import { Student } from '../../../core/models/student.model';
-import { collection, collectionData, CollectionReference, Firestore } from '@angular/fire/firestore';
+import { collection, collectionData, CollectionReference, Firestore, where } from '@angular/fire/firestore';
 import { FirestoreService } from '../../../core/services/firestore.service';
 import { Package } from '../../../core/models/package.model';
 import { Course } from '../../../core/models/course.model';
@@ -174,6 +174,68 @@ export class StudentService {
       );
     } catch (error) {
       console.error('Erro ao remover progresso do vídeo:', error);
+      throw error;
+    }
+  }
+
+  async removeAllVideoProgress(courseId: string): Promise<void> {
+    try {
+      // Busca todos os documentos de progresso relacionados a este curso
+      const progressDocs = await this.firestoreS.getDocumentsByQuery<any>(
+        STUDENT_PROGRESS_PATH,
+        where('courseId', '==', courseId)
+      );
+      
+      // Exclui cada documento de progresso
+      for (const progressDoc of progressDocs) {
+        await this.firestoreS.deleteDocument(STUDENT_PROGRESS_PATH, progressDoc.id);
+      }
+    } catch (error) {
+      console.error('Erro ao remover progresso de todos os vídeos do curso:', error);
+      throw error;
+    }
+  }
+
+  async removeCourseFromStudent(studentId: string, courseId: string): Promise<void> {
+    try {
+      // Busca os cursos do estudante
+      const studentCourses = await this.getCourses(studentId);
+      
+      // Remove o curso da lista
+      const updatedCourses = studentCourses.filter(id => id !== courseId);
+      
+      // Atualiza a lista de cursos do estudante
+      await this.firestoreS.updateDocument(
+        STUDENT_COURSES_PATH,
+        studentId,
+        { courses: updatedCourses }
+      );
+      
+      // Remove o progresso do estudante para este curso
+      const progressId = `${courseId}_${studentId}`;
+      await this.firestoreS.deleteDocument(STUDENT_PROGRESS_PATH, progressId);
+    } catch (error) {
+      console.error('Erro ao remover curso do estudante:', error);
+      throw error;
+    }
+  }
+
+  async removePackageFromStudent(studentId: string, packageId: string): Promise<void> {
+    try {
+      // Busca os pacotes do estudante
+      const studentPackages = await this.getPackages(studentId);
+      
+      // Remove o pacote da lista
+      const updatedPackages = studentPackages.filter(id => id !== packageId);
+      
+      // Atualiza a lista de pacotes do estudante
+      await this.firestoreS.updateDocument(
+        STUDENT_PACKAGES_PATH,
+        studentId,
+        { packages: updatedPackages }
+      );
+    } catch (error) {
+      console.error('Erro ao remover pacote do estudante:', error);
       throw error;
     }
   }

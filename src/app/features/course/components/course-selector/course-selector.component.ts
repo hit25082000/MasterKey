@@ -96,9 +96,15 @@ export class CourseSelectorComponent implements OnInit {
   }
 
   private async loadPackageCourses() {
-    const courses = await this.packageService.selectedPackage()?.courses;
+    this.loadingService.show();
+    try {
+     await this.packageService.selectPackage(this.packageId())!;
+     const courses = this.packageService.selectedPackage()?.courses;
     if (courses != undefined) {
       this.selectedCourseIds.set(new Set(Array.from(courses) || []));
+    }
+    } finally {
+      this.loadingService.hide();
     }
   }
 

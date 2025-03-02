@@ -72,13 +72,15 @@ export class StudentListComponent implements OnInit {
         try {
           this.loadingService.show();
           await this.studentManagementService.delete(student.id);
+          
+          // Atualiza a lista de estudantes apenas após a exclusão bem-sucedida
           this.students.update(students => 
             students.filter(s => s.id !== student.id)
           );
           this.notificationService.success('Estudante excluído com sucesso');
-        } catch (error) {
+        } catch (error: any) {
           console.error('Erro ao excluir estudante:', error);
-          this.notificationService.error('Erro ao excluir estudante');
+          this.notificationService.error(error.message || 'Erro ao excluir estudante');
         } finally {
           this.loadingService.hide();
         }

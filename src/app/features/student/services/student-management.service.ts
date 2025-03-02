@@ -11,7 +11,7 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NotificationService } from '../../../shared/services/notification.service';
-import { addDoc, collection, updateDoc } from '@angular/fire/firestore';
+import { addDoc, collection, updateDoc, where } from '@angular/fire/firestore';
 
 const STUDENT_PROGRESS_PATH = 'student_progress';
 const STUDENT_COURSES_PATH = 'student_courses';
@@ -83,18 +83,41 @@ export class StudentManagementService {
       if(student() === undefined)
         throw new Error('Estudante não encontrado');
 
+      // 1. Remover registros de progresso do estudante
+      const progressDocs = await this.firestoreService.getDocumentsByQuery<any>('student_progress', 
+        where('studentId', '==', userId));
+      
+      for (const progressDoc of progressDocs) {
+        await this.firestoreService.deleteDocument('student_progress', progressDoc.id);
+      }
+
+      // 2. Remover registros de cursos do estudante
+      await this.firestoreService.deleteDocument('student_courses', userId);
+
+      // 3. Remover registros de pacotes do estudante
+      await this.firestoreService.deleteDocument('student_packages', userId);
+
+      // 4. Remover registros de exames do estudante
+      const studentExams = await this.firestoreService.getDocumentsByAttribute('student_exams', 'studentId', userId);
+      for (const exam of studentExams) {
+        await this.firestoreService.deleteDocument('student_exams', exam.id);
+      }
+
+      // 5. Finalmente, excluir o estudante
       return new Promise((resolve, reject) => {
         this.adminService.deleteUser(userId).subscribe({
           next: () => {
             this.logSuccessfulDelete(student()!);
-            resolve('Estudante deletado com sucesso!');
+            resolve('Estudante excluído com sucesso!');
           },
           error: (error) => {
+            console.error('Erro ao excluir estudante:', error);
             reject(this.handleError(error));
           }
         });
       });
     } catch (error) {
+      console.error('Erro ao excluir estudante:', error);
       throw this.handleError(error);
     }
   }

@@ -3,12 +3,16 @@ import { Observable, from, map, switchMap } from 'rxjs';
 import { FirestoreService } from './firestore.service';
 import { Exam, ExamTake, StudentExam, Answer } from '../models/exam.model';
 import { where } from '@firebase/firestore';
+import { CascadeDeleteService } from './cascade-delete.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ExamService {
-  constructor(private firestore: FirestoreService) {}
+  constructor(
+    private firestore: FirestoreService,
+    private cascadeDeleteService: CascadeDeleteService
+  ) {}
 
   getExamsByCourse(courseId: string): Observable<Exam[]> {
     return this.firestore.getCollectionWithQuery<Exam>('exams', [
@@ -49,7 +53,7 @@ export class ExamService {
   }
 
   deleteExam(examId: string): Observable<void> {
-    return from(this.firestore.deleteDocument('exams', examId));
+    return from(this.cascadeDeleteService.deleteExam(examId));
   }
 
   submitStudentExam(studentExam: StudentExam): Observable<void> {

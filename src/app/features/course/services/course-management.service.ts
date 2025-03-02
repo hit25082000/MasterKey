@@ -6,6 +6,8 @@ import { CourseReview } from '../../../core/models/course.model';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { firstValueFrom } from 'rxjs';
 import { GoogleAuthService } from '../../../core/services/google-auth.service';
+import { where } from 'firebase/firestore';
+import { CascadeDeleteService } from '../../../core/services/cascade-delete.service';
 
 @Injectable({
   providedIn: 'root',
@@ -14,6 +16,7 @@ export class CourseManagementService {
   private firestore = inject(FirestoreService);
   private notificationService = inject(NotificationService);
   private googleAuthService = inject(GoogleAuthService);
+  private cascadeDeleteService = inject(CascadeDeleteService);
 
   async create(courseData: Course, imageFile: File | null = null): Promise<string | undefined> {
     try {
@@ -77,6 +80,17 @@ export class CourseManagementService {
     } catch (error) {
       console.error('Erro ao atualizar curso:', error);
       this.notificationService.error('Erro ao atualizar curso');
+      throw error;
+    }
+  }
+
+  async delete(courseId: string): Promise<void> {
+    try {
+      await this.cascadeDeleteService.deleteCourse(courseId);
+      this.notificationService.success('Curso excluído com sucesso');
+    } catch (error) {
+      console.error('Erro ao excluir curso:', error);
+      this.notificationService.error('Erro ao excluir curso');
       throw error;
     }
   }
@@ -269,6 +283,17 @@ export class CourseManagementService {
     } catch (error) {
       console.error('Erro ao remover avaliação:', error);
       this.notificationService.error('Erro ao remover avaliação');
+      throw error;
+    }
+  }
+
+  async deleteVideo(courseId: string, videoId: string): Promise<void> {
+    try {
+      await this.cascadeDeleteService.deleteVideo(courseId, videoId);
+      this.notificationService.success('Vídeo removido com sucesso');
+    } catch (error) {
+      console.error('Erro ao remover vídeo:', error);
+      this.notificationService.error('Erro ao remover vídeo');
       throw error;
     }
   }

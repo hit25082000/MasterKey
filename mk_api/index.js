@@ -28,7 +28,7 @@ const bucket = storage.bucket('master-key-a3c69.appspot.com');
 const config = {
   asaas: {
     apiKey: process.env.ASAAS_API_KEY,
-    apiUrl: 'https://sandbox.asaas.com/api/v3'
+    apiUrl: 'https://api.asaas.com/v3'
   }
 };
 
